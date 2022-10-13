@@ -1,0 +1,10 @@
+import xarray as xr
+import os
+
+
+data_directory = r"/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/Atmosphere_Forcing/ccsm4_rcp8.5/Regridded_8km/"
+file = r"CCSM4_8km_anomaly_1950-1994.nc"
+dataset = xr.open_dataset(data_directory+file, engine='netcdf4')
+
+print(dataset)
+
