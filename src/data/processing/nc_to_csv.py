@@ -1,4 +1,7 @@
+from data.classes.AtmosphereForcing import AtmosphereForcing
+
 directory = "/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/Atmosphere_Forcing/"
+directory = r"/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/ISMIP6_sectors/"
 files = get_all_filepaths(path=directory, filetype='netcdf')
 
 for i, nc_filepath in enumerate(nc_files):

@@ -7,6 +7,7 @@ cfg = get_configs()
 class AtmosphereForcing:
     def __init__(self, path):
         self.path = path
+        self.model = path.split('/')[-3]  # 3rd to last folder in directory structure
         
         if path[-2:] == 'nc':
             self.data = xr.open_dataset(self.path, decode_times=False)
@@ -26,19 +27,21 @@ class AtmosphereForcing:
         return self
 
     def save_as_csv(self):
-
-        if self.datatype != "NetCDF":
-            raise AttributeError(f'Data type must be \"NetCDF\", received {self.datatype}.')
-            
-        csv_path = f"{self.path[:-3]}.csv"
-        df = self.data.to_dataframe()
-        df.to_csv(csv_path)
+        if not isinstance(selt.data, pd.DataFrame):
+            if self.datatype != "NetCDF":
+                raise AttributeError(f'Data type must be \"NetCDF\", received {self.datatype}.')
+                
+            csv_path = f"{self.path[:-3]}.csv"
+            self.data = self.data.to_dataframe()
+        self.data.to_csv(csv_path)
         return self
 
-    def _add_sectors
+    def add_sectors(self, GridSectors):
+        self.data = self.data.drop(labels=['lon_bnds', 'lat_bnds', 'lat2d', 'lon2d'])
+        self.data = self.data.to_dataframe().reset_index(level='time', drop=True)
+        self.data = pd.merge(self.data, GridSectors.data, left_index=True, right_index=True)
+        return self
 
-
-# forcing = AtmosphereForcing(simulation='ccsm4_rcp2.6', time_frame='1995-2100')
-# forcing = AtmosphereForcing(path=r"/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/Atmosphere_Forcing/ccsm4_rcp2.6/Regridded_8km/CCSM4_8km_anomaly_rcp26_1995-2100.nc")
-# print(forcing.data)
-# stop = []
+    def group(self, columns):
+        self.data = self.data.groupby(columns).mean()
+        return self

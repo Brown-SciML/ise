@@ -11,8 +11,9 @@ class GridSectors:
         self.grids_dir = r"/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/ISMIP6_sectors/"
         
         if filetype.lower() == 'nc':
-            self.path = self.grids_dir + f"sector_{grid_size}.nc"
-            self.data = xr.open_dataset(self.path, decode_times=False)
+            self.path = self.grids_dir + f"sectors_{grid_size}km.nc"
+            self.data = xr.open_dataset(self.path, engine='scipy', decode_times=False)
+            self.data = self._format_index(self)
         elif filetype.lower() == 'csv':
             self.path = self.grids_dir + f"sector_{grid_size}.csv"
             self.data = pd.read_csv(self.path)
@@ -27,13 +28,13 @@ class GridSectors:
         df = self.data.to_dataframe()
         df.to_csv(csv_path)
 
-    def to_dataframe(self):
+    def _to_dataframe(self):
         if not isinstance(self, pd.DataFrame):
             self.data = self.data.to_dataframe()
-        return self
+        return self.data
 
-    def format_index(self):
-        self = self.to_dataframe(self)
+    def _format_index(self):
+        self.data = self._to_dataframe(self)
         index_array = list(np.arange(0,761))
         self.data.index = pd.MultiIndex.from_product([index_array, index_array], names=['x', 'y'])
         return self

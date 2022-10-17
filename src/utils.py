@@ -20,7 +20,8 @@ def get_configs():
 
 def check_input(input, options):
     # simple assert that input is in the designated options (readability purposes only)
-    input = input.lower()
+    if isinstance(input, str):
+        input = input.lower()
     assert input in options, f"input must be in {options}, received {input}"
 
 def get_all_filepaths(path, filetype):
