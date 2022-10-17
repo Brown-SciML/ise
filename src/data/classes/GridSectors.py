@@ -2,6 +2,7 @@ import xarray as xr
 from utils import check_input, get_configs
 import os
 import pandas as pd
+import numpy as np
 cfg = get_configs()
 
 class GridSectors:
@@ -12,8 +13,8 @@ class GridSectors:
         
         if filetype.lower() == 'nc':
             self.path = self.grids_dir + f"sectors_{grid_size}km.nc"
-            self.data = xr.open_dataset(self.path, engine='scipy', decode_times=False)
-            self.data = self._format_index(self)
+            self.data = xr.open_dataset(self.path, decode_times=False)
+            self = self._format_index()
         elif filetype.lower() == 'csv':
             self.path = self.grids_dir + f"sector_{grid_size}.csv"
             self.data = pd.read_csv(self.path)
@@ -31,10 +32,10 @@ class GridSectors:
     def _to_dataframe(self):
         if not isinstance(self, pd.DataFrame):
             self.data = self.data.to_dataframe()
-        return self.data
+        return self
 
     def _format_index(self):
-        self.data = self._to_dataframe(self)
+        self = self._to_dataframe()
         index_array = list(np.arange(0,761))
         self.data.index = pd.MultiIndex.from_product([index_array, index_array], names=['x', 'y'])
         return self

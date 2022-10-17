@@ -36,12 +36,8 @@ class AtmosphereForcing:
         self.data.to_csv(csv_path)
         return self
 
-    def add_sectors(self, GridSectors):
+    def add_sectors(self, grids):
         self.data = self.data.drop(labels=['lon_bnds', 'lat_bnds', 'lat2d', 'lon2d'])
         self.data = self.data.to_dataframe().reset_index(level='time', drop=True)
-        self.data = pd.merge(self.data, GridSectors.data, left_index=True, right_index=True)
-        return self
-
-    def group(self, columns):
-        self.data = self.data.groupby(columns).mean()
+        self.data = pd.merge(self.data, grids.data, left_index=True, right_index=True)
         return self
