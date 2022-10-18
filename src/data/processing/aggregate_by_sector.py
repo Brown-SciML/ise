@@ -37,29 +37,39 @@ def aggregate_all(af_directory):
         af_directory (str): Directory containing atmospheric forcing files
     """
     start_time = time.time()
+
+    # Get all NC files that contain data from 1995-2100
     filepaths = get_all_filepaths(path=af_directory, filetype='nc')
     filepaths = [f for f in filepaths if "1995-2100" in f]
 
+    # Useful progress prints
     print(f"Files to be processed...")
     print([f.split("/")[-1] for f in filepaths])
 
+    # Loop over each file specified above
     all_data = pd.DataFrame()
     for i, fp in enumerate(filepaths):
         print('')
         print(f'File {i+1} / {len(filepaths)}')
         print(f'File: {fp.split("/")[-1]}')
         print(f'Time since start: {(time.time()-start_time) // 60} minutes')
+
+        # attach the sector to the data and groupby sectors & year
         atmosphere = aggregate_by_sector(fp)
 
-        # Handle files that don't have mrro_anomaly input
+        # Handle files that don't have mrro_anomaly input (ISPL RCP 85?)
         try:
             atmosphere.data['mrro_anomaly']
         except KeyError:
             atmosphere.data['mrro_anomaly'] = np.nan
 
+        # Keep selected columns and output each file individually
         atmosphere.data = atmosphere.data[['pr_anomaly', 'evspsbl_anomaly', 'mrro_anomaly', 'smb_anomaly', 'ts_anomaly', 'regions', 'model',]]
         atmosphere.data.to_csv(f"{fp[:-3]}_sectoryeargrouped.csv")
+
+        # meanwhile, create a concatenated dataset
         all_data = pd.concat([all_data, atmosphere.data])
         print(' -- ')
     
+    # export concatenated dataset
     all_data.to_csv(af_directory+'all_data.csv')
