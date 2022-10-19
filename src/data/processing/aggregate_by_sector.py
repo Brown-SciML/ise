@@ -28,7 +28,7 @@ def aggregate_by_sector(path):
     af.data['model'] = af.model
     return af
 
-def aggregate_all(af_directory):
+def aggregate_all(af_directory, export, model_in_columns=False, ):
     """Loops through every NC file in the provided atmospheric forcing directory
     from 1995-2100 and applies the aggregate_by_sector function. It then outputs
     the concatenation of all processed data to all_data.csv 
@@ -71,5 +71,24 @@ def aggregate_all(af_directory):
         all_data = pd.concat([all_data, atmosphere.data])
         print(' -- ')
     
-    # export concatenated dataset
-    all_data.to_csv(af_directory+'all_data.csv')
+    
+    if model_in_columns:
+        separate_model_dataframes = [y for x, y in all_data.groupby('model')]
+        
+        # Change columns names in each dataframe
+        for df in separate_model_dataframes:
+            model = df.model.iloc[0]
+            df.columns = [f"{x}_{model}" if x not in ['sectors', 'year', 'region', 'model'] else x for x in df.columns ]
+            
+        # Merge dataframes together on common columns [sectors, year], resulting in 
+        # one dataframe with sector, year, region, and columns for each model variables
+        all_data = model_dataframes[0]
+        all_data = all_data.drop(columns=['model'])
+        for df in model_dataframes[1:]:
+            df = df.drop(columns=['model'])
+            all_data = pd.merge(all_data, df, on=['sectors', 'year',])
+        all_data = all_data[[c for c in all_data.columns if 'region' not in c]]
+        all_data['region'] = model_dataframes[0]['regions_CESM2_ssp585'].reset_index(drop=True)
+    
+    if export:
+        all_data.to_csv(export)
