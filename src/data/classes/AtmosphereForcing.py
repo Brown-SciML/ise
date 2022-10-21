@@ -1,11 +1,11 @@
 import xarray as xr
-from utils import check_input, get_configs
-import os
+from utils import get_configs
 import pandas as pd
 cfg = get_configs()
 
 class AtmosphereForcing:
     def __init__(self, path):
+        self.forcing_type = 'atmosphere'
         self.path = path
         self.model = path.split('/')[-3]  # 3rd to last folder in directory structure
         
@@ -27,7 +27,7 @@ class AtmosphereForcing:
         return self
 
     def save_as_csv(self):
-        if not isinstance(selt.data, pd.DataFrame):
+        if not isinstance(self.data, pd.DataFrame):
             if self.datatype != "NetCDF":
                 raise AttributeError(f'Data type must be \"NetCDF\", received {self.datatype}.')
                 

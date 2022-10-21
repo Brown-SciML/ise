@@ -6,7 +6,7 @@ import numpy as np
 cfg = get_configs()
 
 class GridSectors:
-    def __init__(self, grid_size=8, filetype='nc'):
+    def __init__(self, grid_size=8, filetype='nc', format_index=True):
         check_input(grid_size, [4, 8, 16, 32])
         check_input(filetype.lower(), ['nc', 'csv'])
         self.grids_dir = r"/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/ISMIP6_sectors/"
@@ -14,7 +14,8 @@ class GridSectors:
         if filetype.lower() == 'nc':
             self.path = self.grids_dir + f"sectors_{grid_size}km.nc"
             self.data = xr.open_dataset(self.path, decode_times=False)
-            self = self._format_index()
+            if format_index:
+                self = self._format_index()
         elif filetype.lower() == 'csv':
             self.path = self.grids_dir + f"sector_{grid_size}.csv"
             self.data = pd.read_csv(self.path)
