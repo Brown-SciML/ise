@@ -1,0 +1,752 @@
+Files to be processed...
+['NorESM1-M_8km_anomaly_1995-2100.nc', 'IPSL-CM5A-MR_8km_anomaly_rcp85_1995-2100.nc', 'CNRM-ESM2-1_anomaly_ssp585_1995-2100_8km_ISMIP6.nc', 'CNRM-CM6-1_anomaly_ssp585_1995-2100_8km_ISMIP6.nc', 'CESM2_anomaly_ssp585_1995-2100_8km_v1.nc', 'CESM2_anomaly_ssp585_1995-2100_8km_v2.nc', 'IPSL-CM5A-MR_8km_anomaly_rcp26_1995-2100.nc', 'CNRM-CM6-1_anomaly_ssp126_1995-2100_8km_ISMIP6.nc', 'UKESM1-0-LL_anomaly_ssp585_1995-2100_8km.nc', 'CCSM4_8km_anomaly_1995-2100.nc', 'HadGEM2-ES_8km_anomaly_rcp85_1995-2100.nc', 'MIROC-ESM-CHEM_8km_anomaly_rcp26_1995-2100.nc', 'CCSM4_8km_anomaly_rcp26_1995-2100.nc', 'CSIRO-Mk3-6-0_8km_anomaly_rcp85_1995-2100.nc', 'NorESM1-M_8km_anomaly_rcp26_1995-2100.nc', 'MIROC-ESM-CHEM_8km_anomaly_1995-2100.nc']
+
+File 1 / 16
+File: NorESM1-M_8km_anomaly_1995-2100.nc
+Time since start: 0.0 minutes
+
+ -- 
+
+File 2 / 16
+File: IPSL-CM5A-MR_8km_anomaly_rcp85_1995-2100.nc
+Time since start: 1.0 minutes
+
+ -- 
+
+File 3 / 16
+File: CNRM-ESM2-1_anomaly_ssp585_1995-2100_8km_ISMIP6.nc
+Time since start: 2.0 minutes
+
+ -- 
+
+File 4 / 16
+File: CNRM-CM6-1_anomaly_ssp585_1995-2100_8km_ISMIP6.nc
+Time since start: 4.0 minutes
+
+ -- 
+
+File 5 / 16
+File: CESM2_anomaly_ssp585_1995-2100_8km_v1.nc
+Time since start: 5.0 minutes
+
+ -- 
+
+File 6 / 16
+File: CESM2_anomaly_ssp585_1995-2100_8km_v2.nc
+Time since start: 7.0 minutes
+
+ -- 
+
+File 7 / 16
+File: IPSL-CM5A-MR_8km_anomaly_rcp26_1995-2100.nc
+Time since start: 8.0 minutes
+
+ -- 
+
+File 8 / 16
+File: CNRM-CM6-1_anomaly_ssp126_1995-2100_8km_ISMIP6.nc
+Time since start: 9.0 minutes
+
+ -- 
+
+File 9 / 16
+File: UKESM1-0-LL_anomaly_ssp585_1995-2100_8km.nc
+Time since start: 11.0 minutes
+
+ -- 
+
+File 10 / 16
+File: CCSM4_8km_anomaly_1995-2100.nc
+Time since start: 12.0 minutes
+
+ -- 
+
+File 11 / 16
+File: HadGEM2-ES_8km_anomaly_rcp85_1995-2100.nc
+Time since start: 14.0 minutes
+
+ -- 
+
+File 12 / 16
+File: MIROC-ESM-CHEM_8km_anomaly_rcp26_1995-2100.nc
+Time since start: 15.0 minutes
+
+ -- 
+
+File 13 / 16
+File: CCSM4_8km_anomaly_rcp26_1995-2100.nc
+Time since start: 16.0 minutes
+
+ -- 
+
+File 14 / 16
+File: CSIRO-Mk3-6-0_8km_anomaly_rcp85_1995-2100.nc
+Time since start: 18.0 minutes
+
+ -- 
+
+File 15 / 16
+File: NorESM1-M_8km_anomaly_rcp26_1995-2100.nc
+Time since start: 19.0 minutes
+
+ -- 
+
+File 16 / 16
+File: MIROC-ESM-CHEM_8km_anomaly_1995-2100.nc
+Time since start: 21.0 minutes
+
+ -- 
+Files to be processed...
+['hadgem2-es_rcp8.5', 'ipsl-cm5a-mr_rcp2.6', 'cnrm-esm2-1_ssp585', 'noresm1-m_rcp2.6', 'cnrm-cm6-1_ssp126', 'ipsl-cm5a-mr_rcp8.5', 'noresm1-m_rcp8.5', 'miroc-esm-chem_rcp8.5', 'ukesm1-0-ll_ssp585', 'cesm2_ssp585', 'ccsm4_rcp8.5', 'cnrm-cm6-1_ssp585', 'csiro-mk3-6-0_rcp8.5']
+
+Directory 1 / 13
+Directory: hadgem2-es_rcp8.5
+Time since start: 0.0 minutes
+
+               salinity  regions              model
+sectors year                                       
+1.0     1995  34.538212      1.0  hadgem2-es_rcp8.5
+        1996  34.536491      1.0  hadgem2-es_rcp8.5
+        1997  34.536125      1.0  hadgem2-es_rcp8.5
+        1998  34.534901      1.0  hadgem2-es_rcp8.5
+        1999  34.537617      1.0  hadgem2-es_rcp8.5
+...                 ...      ...                ...
+18.0    2096  33.958584      3.0  hadgem2-es_rcp8.5
+        2097  33.933254      3.0  hadgem2-es_rcp8.5
+        2098  33.902672      3.0  hadgem2-es_rcp8.5
+        2099  33.909443      3.0  hadgem2-es_rcp8.5
+        2100  33.924416      3.0  hadgem2-es_rcp8.5
+
+[1908 rows x 3 columns]
+              temperature  regions              model
+sectors year                                         
+1.0     1995     1.420566      1.0  hadgem2-es_rcp8.5
+        1996     1.377485      1.0  hadgem2-es_rcp8.5
+        1997     1.319596      1.0  hadgem2-es_rcp8.5
+        1998     1.317988      1.0  hadgem2-es_rcp8.5
+        1999     1.348989      1.0  hadgem2-es_rcp8.5
+...                   ...      ...                ...
+18.0    2096     1.008678      3.0  hadgem2-es_rcp8.5
+        2097     1.002692      3.0  hadgem2-es_rcp8.5
+        2098     1.040479      3.0  hadgem2-es_rcp8.5
+        2099     1.120082      3.0  hadgem2-es_rcp8.5
+        2100     1.117759      3.0  hadgem2-es_rcp8.5
+
+[1908 rows x 3 columns]
+              thermal_forcing  regions              model
+sectors year                                             
+1.0     1995         4.013569      1.0  hadgem2-es_rcp8.5
+        1996         3.970487      1.0  hadgem2-es_rcp8.5
+        1997         3.912531      1.0  hadgem2-es_rcp8.5
+        1998         3.910683      1.0  hadgem2-es_rcp8.5
+        1999         3.941839      1.0  hadgem2-es_rcp8.5
+...                       ...      ...                ...
+18.0    2096         3.568648      3.0  hadgem2-es_rcp8.5
+        2097         3.561240      3.0  hadgem2-es_rcp8.5
+        2098         3.597297      3.0  hadgem2-es_rcp8.5
+        2099         3.677305      3.0  hadgem2-es_rcp8.5
+        2100         3.675843      3.0  hadgem2-es_rcp8.5
+
+[1908 rows x 3 columns]
+
+Directory 2 / 13
+Directory: ipsl-cm5a-mr_rcp2.6
+Time since start: 7.0 minutes
+
+               salinity  regions                model
+sectors year                                         
+1.0     1995  34.532391      1.0  ipsl-cm5a-mr_rcp2.6
+        1996  34.530544      1.0  ipsl-cm5a-mr_rcp2.6
+        1997  34.531376      1.0  ipsl-cm5a-mr_rcp2.6
+        1998  34.530937      1.0  ipsl-cm5a-mr_rcp2.6
+        1999  34.531158      1.0  ipsl-cm5a-mr_rcp2.6
+...                 ...      ...                  ...
+18.0    2096  34.320179      3.0  ipsl-cm5a-mr_rcp2.6
+        2097  34.328255      3.0  ipsl-cm5a-mr_rcp2.6
+        2098  34.332134      3.0  ipsl-cm5a-mr_rcp2.6
+        2099  34.340740      3.0  ipsl-cm5a-mr_rcp2.6
+        2100  34.342464      3.0  ipsl-cm5a-mr_rcp2.6
+
+[1908 rows x 3 columns]
+              temperature  regions                model
+sectors year                                           
+1.0     1995     1.437292      1.0  ipsl-cm5a-mr_rcp2.6
+        1996     1.480790      1.0  ipsl-cm5a-mr_rcp2.6
+        1997     1.481712      1.0  ipsl-cm5a-mr_rcp2.6
+        1998     1.484315      1.0  ipsl-cm5a-mr_rcp2.6
+        1999     1.475243      1.0  ipsl-cm5a-mr_rcp2.6
+...                   ...      ...                  ...
+18.0    2096     0.314024      3.0  ipsl-cm5a-mr_rcp2.6
+        2097     0.389695      3.0  ipsl-cm5a-mr_rcp2.6
+        2098     0.304273      3.0  ipsl-cm5a-mr_rcp2.6
+        2099     0.329334      3.0  ipsl-cm5a-mr_rcp2.6
+        2100     0.335303      3.0  ipsl-cm5a-mr_rcp2.6
+
+[1908 rows x 3 columns]
+              thermal_forcing  regions                model
+sectors year                                               
+1.0     1995         4.030306      1.0  ipsl-cm5a-mr_rcp2.6
+        1996         4.073434      1.0  ipsl-cm5a-mr_rcp2.6
+        1997         4.074572      1.0  ipsl-cm5a-mr_rcp2.6
+        1998         4.077295      1.0  ipsl-cm5a-mr_rcp2.6
+        1999         4.068073      1.0  ipsl-cm5a-mr_rcp2.6
+...                       ...      ...                  ...
+18.0    2096         2.894625      3.0  ipsl-cm5a-mr_rcp2.6
+        2097         2.970758      3.0  ipsl-cm5a-mr_rcp2.6
+        2098         2.885557      3.0  ipsl-cm5a-mr_rcp2.6
+        2099         2.911110      3.0  ipsl-cm5a-mr_rcp2.6
+        2100         2.917179      3.0  ipsl-cm5a-mr_rcp2.6
+
+[1908 rows x 3 columns]
+
+Directory 3 / 13
+Directory: cnrm-esm2-1_ssp585
+Time since start: 15.0 minutes
+
+               salinity  regions               model
+sectors year                                        
+1.0     1995  34.539124      1.0  cnrm-esm2-1_ssp585
+        1996  34.537868      1.0  cnrm-esm2-1_ssp585
+        1997  34.539768      1.0  cnrm-esm2-1_ssp585
+        1998  34.539440      1.0  cnrm-esm2-1_ssp585
+        1999  34.537083      1.0  cnrm-esm2-1_ssp585
+...                 ...      ...                 ...
+18.0    2096  34.135628      3.0  cnrm-esm2-1_ssp585
+        2097  34.124519      3.0  cnrm-esm2-1_ssp585
+        2098  34.137970      3.0  cnrm-esm2-1_ssp585
+        2099  34.149994      3.0  cnrm-esm2-1_ssp585
+        2100  34.083054      3.0  cnrm-esm2-1_ssp585
+
+[1908 rows x 3 columns]
+              temperature  regions               model
+sectors year                                          
+1.0     1995     1.405473      1.0  cnrm-esm2-1_ssp585
+        1996     1.402682      1.0  cnrm-esm2-1_ssp585
+        1997     1.419256      1.0  cnrm-esm2-1_ssp585
+        1998     1.408732      1.0  cnrm-esm2-1_ssp585
+        1999     1.389835      1.0  cnrm-esm2-1_ssp585
+...                   ...      ...                 ...
+18.0    2096     1.255706      3.0  cnrm-esm2-1_ssp585
+        2097     1.229837      3.0  cnrm-esm2-1_ssp585
+        2098     1.219955      3.0  cnrm-esm2-1_ssp585
+        2099     1.318302      3.0  cnrm-esm2-1_ssp585
+        2100     1.219912      3.0  cnrm-esm2-1_ssp585
+
+[1908 rows x 3 columns]
+              thermal_forcing  regions               model
+sectors year                                              
+1.0     1995         3.998574      1.0  cnrm-esm2-1_ssp585
+        1996         3.995548      1.0  cnrm-esm2-1_ssp585
+        1997         4.012230      1.0  cnrm-esm2-1_ssp585
+        1998         4.001691      1.0  cnrm-esm2-1_ssp585
+        1999         3.982715      1.0  cnrm-esm2-1_ssp585
+...                       ...      ...                 ...
+18.0    2096         3.825757      3.0  cnrm-esm2-1_ssp585
+        2097         3.799254      3.0  cnrm-esm2-1_ssp585
+        2098         3.790141      3.0  cnrm-esm2-1_ssp585
+        2099         3.889175      3.0  cnrm-esm2-1_ssp585
+        2100         3.786960      3.0  cnrm-esm2-1_ssp585
+
+[1908 rows x 3 columns]
+
+Directory 4 / 13
+Directory: noresm1-m_rcp2.6
+Time since start: 20.0 minutes
+
+               salinity  regions             model
+sectors year                                      
+1.0     1995  34.533901      1.0  noresm1-m_rcp2.6
+        1996  34.533455      1.0  noresm1-m_rcp2.6
+        1997  34.536194      1.0  noresm1-m_rcp2.6
+        1998  34.541069      1.0  noresm1-m_rcp2.6
+        1999  34.540909      1.0  noresm1-m_rcp2.6
+...                 ...      ...               ...
+18.0    2096  34.302029      3.0  noresm1-m_rcp2.6
+        2097  34.308037      3.0  noresm1-m_rcp2.6
+        2098  34.296333      3.0  noresm1-m_rcp2.6
+        2099  34.286713      3.0  noresm1-m_rcp2.6
+        2100  34.286381      3.0  noresm1-m_rcp2.6
+
+[1908 rows x 3 columns]
+              temperature  regions             model
+sectors year                                        
+1.0     1995     1.383330      1.0  noresm1-m_rcp2.6
+        1996     1.401177      1.0  noresm1-m_rcp2.6
+        1997     1.380709      1.0  noresm1-m_rcp2.6
+        1998     1.380637      1.0  noresm1-m_rcp2.6
+        1999     1.365758      1.0  noresm1-m_rcp2.6
+...                   ...      ...               ...
+18.0    2096     0.404621      3.0  noresm1-m_rcp2.6
+        2097     0.443670      3.0  noresm1-m_rcp2.6
+        2098     0.423258      3.0  noresm1-m_rcp2.6
+        2099     0.390027      3.0  noresm1-m_rcp2.6
+        2100     0.423540      3.0  noresm1-m_rcp2.6
+
+[1908 rows x 3 columns]
+              thermal_forcing  regions             model
+sectors year                                            
+1.0     1995         3.975969      1.0  noresm1-m_rcp2.6
+        1996         3.993790      1.0  noresm1-m_rcp2.6
+        1997         3.973478      1.0  noresm1-m_rcp2.6
+        1998         3.973685      1.0  noresm1-m_rcp2.6
+        1999         3.958796      1.0  noresm1-m_rcp2.6
+...                       ...      ...               ...
+18.0    2096         2.984182      3.0  noresm1-m_rcp2.6
+        2097         3.023574      3.0  noresm1-m_rcp2.6
+        2098         3.002493      3.0  noresm1-m_rcp2.6
+        2099         2.968710      3.0  noresm1-m_rcp2.6
+        2100         3.002204      3.0  noresm1-m_rcp2.6
+
+[1908 rows x 3 columns]
+
+Directory 5 / 13
+Directory: cnrm-cm6-1_ssp126
+Time since start: 28.0 minutes
+
+               salinity  regions              model
+sectors year                                       
+1.0     1995  34.540672      1.0  cnrm-cm6-1_ssp126
+        1996  34.541256      1.0  cnrm-cm6-1_ssp126
+        1997  34.542385      1.0  cnrm-cm6-1_ssp126
+        1998  34.541687      1.0  cnrm-cm6-1_ssp126
+        1999  34.540318      1.0  cnrm-cm6-1_ssp126
+...                 ...      ...                ...
+18.0    2096  34.158512      3.0  cnrm-cm6-1_ssp126
+        2097  34.220146      3.0  cnrm-cm6-1_ssp126
+        2098  34.170559      3.0  cnrm-cm6-1_ssp126
+        2099  34.181335      3.0  cnrm-cm6-1_ssp126
+        2100  34.210674      3.0  cnrm-cm6-1_ssp126
+
+[1908 rows x 3 columns]
+              temperature  regions              model
+sectors year                                         
+1.0     1995     1.421628      1.0  cnrm-cm6-1_ssp126
+        1996     1.414181      1.0  cnrm-cm6-1_ssp126
+        1997     1.397102      1.0  cnrm-cm6-1_ssp126
+        1998     1.391209      1.0  cnrm-cm6-1_ssp126
+        1999     1.392736      1.0  cnrm-cm6-1_ssp126
+...                   ...      ...                ...
+18.0    2096     0.626084      3.0  cnrm-cm6-1_ssp126
+        2097     0.623909      3.0  cnrm-cm6-1_ssp126
+        2098     0.592583      3.0  cnrm-cm6-1_ssp126
+        2099     0.592521      3.0  cnrm-cm6-1_ssp126
+        2100     0.524880      3.0  cnrm-cm6-1_ssp126
+
+[1908 rows x 3 columns]
+              thermal_forcing  regions              model
+sectors year                                             
+1.0     1995         4.014684      1.0  cnrm-cm6-1_ssp126
+        1996         4.007240      1.0  cnrm-cm6-1_ssp126
+        1997         3.990494      1.0  cnrm-cm6-1_ssp126
+        1998         3.984297      1.0  cnrm-cm6-1_ssp126
+        1999         3.985742      1.0  cnrm-cm6-1_ssp126
+...                       ...      ...                ...
+18.0    2096         3.197441      3.0  cnrm-cm6-1_ssp126
+        2097         3.198785      3.0  cnrm-cm6-1_ssp126
+        2098         3.164624      3.0  cnrm-cm6-1_ssp126
+        2099         3.165176      3.0  cnrm-cm6-1_ssp126
+        2100         3.099211      3.0  cnrm-cm6-1_ssp126
+
+[1908 rows x 3 columns]
+
+Directory 6 / 13
+Directory: ipsl-cm5a-mr_rcp8.5
+Time since start: 33.0 minutes
+
+               salinity  regions                model
+sectors year                                         
+1.0     1995  34.533840      1.0  ipsl-cm5a-mr_rcp8.5
+        1996  34.531994      1.0  ipsl-cm5a-mr_rcp8.5
+        1997  34.532825      1.0  ipsl-cm5a-mr_rcp8.5
+        1998  34.532387      1.0  ipsl-cm5a-mr_rcp8.5
+        1999  34.532612      1.0  ipsl-cm5a-mr_rcp8.5
+...                 ...      ...                  ...
+18.0    2096  34.283688      3.0  ipsl-cm5a-mr_rcp8.5
+        2097  34.294514      3.0  ipsl-cm5a-mr_rcp8.5
+        2098  34.287731      3.0  ipsl-cm5a-mr_rcp8.5
+        2099  34.278179      3.0  ipsl-cm5a-mr_rcp8.5
+        2100  34.269711      3.0  ipsl-cm5a-mr_rcp8.5
+
+[1908 rows x 3 columns]
+              temperature  regions                model
+sectors year                                           
+1.0     1995     1.394516      1.0  ipsl-cm5a-mr_rcp8.5
+        1996     1.438014      1.0  ipsl-cm5a-mr_rcp8.5
+        1997     1.438936      1.0  ipsl-cm5a-mr_rcp8.5
+        1998     1.441539      1.0  ipsl-cm5a-mr_rcp8.5
+        1999     1.432467      1.0  ipsl-cm5a-mr_rcp8.5
+...                   ...      ...                  ...
+18.0    2096     0.258832      3.0  ipsl-cm5a-mr_rcp8.5
+        2097     0.256344      3.0  ipsl-cm5a-mr_rcp8.5
+        2098     0.265835      3.0  ipsl-cm5a-mr_rcp8.5
+        2099     0.297426      3.0  ipsl-cm5a-mr_rcp8.5
+        2100     0.290333      3.0  ipsl-cm5a-mr_rcp8.5
+
+[1908 rows x 3 columns]
+              thermal_forcing  regions                model
+sectors year                                               
+1.0     1995         3.987152      1.0  ipsl-cm5a-mr_rcp8.5
+        1996         4.030544      1.0  ipsl-cm5a-mr_rcp8.5
+        1997         4.031514      1.0  ipsl-cm5a-mr_rcp8.5
+        1998         4.034116      1.0  ipsl-cm5a-mr_rcp8.5
+        1999         4.025118      1.0  ipsl-cm5a-mr_rcp8.5
+...                       ...      ...                  ...
+18.0    2096         2.837339      3.0  ipsl-cm5a-mr_rcp8.5
+        2097         2.835470      3.0  ipsl-cm5a-mr_rcp8.5
+        2098         2.844573      3.0  ipsl-cm5a-mr_rcp8.5
+        2099         2.875619      3.0  ipsl-cm5a-mr_rcp8.5
+        2100         2.868040      3.0  ipsl-cm5a-mr_rcp8.5
+
+[1908 rows x 3 columns]
+
+Directory 7 / 13
+Directory: noresm1-m_rcp8.5
+Time since start: 40.0 minutes
+
+               salinity  regions             model
+sectors year                                      
+1.0     1995  34.535191      1.0  noresm1-m_rcp8.5
+        1996  34.534740      1.0  noresm1-m_rcp8.5
+        1997  34.537483      1.0  noresm1-m_rcp8.5
+        1998  34.542355      1.0  noresm1-m_rcp8.5
+        1999  34.542198      1.0  noresm1-m_rcp8.5
+...                 ...      ...               ...
+18.0    2096  34.197392      3.0  noresm1-m_rcp8.5
+        2097  34.172600      3.0  noresm1-m_rcp8.5
+        2098  34.164543      3.0  noresm1-m_rcp8.5
+        2099  34.195164      3.0  noresm1-m_rcp8.5
+        2100  34.206570      3.0  noresm1-m_rcp8.5
+
+[1908 rows x 3 columns]
+              temperature  regions             model
+sectors year                                        
+1.0     1995     1.382298      1.0  noresm1-m_rcp8.5
+        1996     1.400145      1.0  noresm1-m_rcp8.5
+        1997     1.379677      1.0  noresm1-m_rcp8.5
+        1998     1.379604      1.0  noresm1-m_rcp8.5
+        1999     1.364725      1.0  noresm1-m_rcp8.5
+...                   ...      ...               ...
+18.0    2096     0.710005      3.0  noresm1-m_rcp8.5
+        2097     0.672670      3.0  noresm1-m_rcp8.5
+        2098     0.691582      3.0  noresm1-m_rcp8.5
+        2099     0.742271      3.0  noresm1-m_rcp8.5
+        2100     0.775009      3.0  noresm1-m_rcp8.5
+
+[1908 rows x 3 columns]
+              thermal_forcing  regions             model
+sectors year                                            
+1.0     1995         3.975010      1.0  noresm1-m_rcp8.5
+        1996         3.992831      1.0  noresm1-m_rcp8.5
+        1997         3.972519      1.0  noresm1-m_rcp8.5
+        1998         3.972726      1.0  noresm1-m_rcp8.5
+        1999         3.957837      1.0  noresm1-m_rcp8.5
+...                       ...      ...               ...
+18.0    2096         3.283581      3.0  noresm1-m_rcp8.5
+        2097         3.244828      3.0  noresm1-m_rcp8.5
+        2098         3.263280      3.0  noresm1-m_rcp8.5
+        2099         3.315720      3.0  noresm1-m_rcp8.5
+        2100         3.349110      3.0  noresm1-m_rcp8.5
+
+[1908 rows x 3 columns]
+
+Directory 8 / 13
+Directory: miroc-esm-chem_rcp8.5
+Time since start: 48.0 minutes
+
+               salinity  regions                  model
+sectors year                                           
+1.0     1995  34.536545      1.0  miroc-esm-chem_rcp8.5
+        1996  34.533859      1.0  miroc-esm-chem_rcp8.5
+        1997  34.535770      1.0  miroc-esm-chem_rcp8.5
+        1998  34.533470      1.0  miroc-esm-chem_rcp8.5
+        1999  34.534000      1.0  miroc-esm-chem_rcp8.5
+...                 ...      ...                    ...
+18.0    2096  34.141209      3.0  miroc-esm-chem_rcp8.5
+        2097  34.105389      3.0  miroc-esm-chem_rcp8.5
+        2098  34.086452      3.0  miroc-esm-chem_rcp8.5
+        2099  34.081951      3.0  miroc-esm-chem_rcp8.5
+        2100  34.070702      3.0  miroc-esm-chem_rcp8.5
+
+[1908 rows x 3 columns]
+              temperature  regions                  model
+sectors year                                             
+1.0     1995     1.379898      1.0  miroc-esm-chem_rcp8.5
+        1996     1.402617      1.0  miroc-esm-chem_rcp8.5
+        1997     1.398648      1.0  miroc-esm-chem_rcp8.5
+        1998     1.404250      1.0  miroc-esm-chem_rcp8.5
+        1999     1.401344      1.0  miroc-esm-chem_rcp8.5
+...                   ...      ...                    ...
+18.0    2096     0.341053      3.0  miroc-esm-chem_rcp8.5
+        2097     0.255208      3.0  miroc-esm-chem_rcp8.5
+        2098     0.224178      3.0  miroc-esm-chem_rcp8.5
+        2099     0.213908      3.0  miroc-esm-chem_rcp8.5
+        2100     0.244070      3.0  miroc-esm-chem_rcp8.5
+
+[1908 rows x 3 columns]
+              thermal_forcing  regions                  model
+sectors year                                                 
+1.0     1995         3.972687      1.0  miroc-esm-chem_rcp8.5
+        1996         3.995254      1.0  miroc-esm-chem_rcp8.5
+        1997         3.991393      1.0  miroc-esm-chem_rcp8.5
+        1998         3.996867      1.0  miroc-esm-chem_rcp8.5
+        1999         3.994028      1.0  miroc-esm-chem_rcp8.5
+...                       ...      ...                    ...
+18.0    2096         2.912048      3.0  miroc-esm-chem_rcp8.5
+        2097         2.824958      3.0  miroc-esm-chem_rcp8.5
+        2098         2.793075      3.0  miroc-esm-chem_rcp8.5
+        2099         2.783124      3.0  miroc-esm-chem_rcp8.5
+        2100         2.812179      3.0  miroc-esm-chem_rcp8.5
+
+[1908 rows x 3 columns]
+
+Directory 9 / 13
+Directory: ukesm1-0-ll_ssp585
+Time since start: 55.0 minutes
+
+               salinity  regions               model
+sectors year                                        
+1.0     1995  34.543957      1.0  ukesm1-0-ll_ssp585
+        1996  34.542358      1.0  ukesm1-0-ll_ssp585
+        1997  34.540325      1.0  ukesm1-0-ll_ssp585
+        1998  34.539974      1.0  ukesm1-0-ll_ssp585
+        1999  34.536129      1.0  ukesm1-0-ll_ssp585
+...                 ...      ...                 ...
+18.0    2096  33.995335      3.0  ukesm1-0-ll_ssp585
+        2097  33.985802      3.0  ukesm1-0-ll_ssp585
+        2098  33.950329      3.0  ukesm1-0-ll_ssp585
+        2099  33.941460      3.0  ukesm1-0-ll_ssp585
+        2100  33.933559      3.0  ukesm1-0-ll_ssp585
+
+[1908 rows x 3 columns]
+              temperature  regions               model
+sectors year                                          
+1.0     1995     1.355527      1.0  ukesm1-0-ll_ssp585
+        1996     1.359377      1.0  ukesm1-0-ll_ssp585
+        1997     1.354005      1.0  ukesm1-0-ll_ssp585
+        1998     1.362809      1.0  ukesm1-0-ll_ssp585
+        1999     1.369237      1.0  ukesm1-0-ll_ssp585
+...                   ...      ...                 ...
+18.0    2096     0.597073      3.0  ukesm1-0-ll_ssp585
+        2097     0.623628      3.0  ukesm1-0-ll_ssp585
+        2098     0.564832      3.0  ukesm1-0-ll_ssp585
+        2099     0.650685      3.0  ukesm1-0-ll_ssp585
+        2100     0.772610      3.0  ukesm1-0-ll_ssp585
+
+[1908 rows x 3 columns]
+              thermal_forcing  regions               model
+sectors year                                              
+1.0     1995         3.948739      1.0  ukesm1-0-ll_ssp585
+        1996         3.952544      1.0  ukesm1-0-ll_ssp585
+        1997         3.947159      1.0  ukesm1-0-ll_ssp585
+        1998         3.956121      1.0  ukesm1-0-ll_ssp585
+        1999         3.962290      1.0  ukesm1-0-ll_ssp585
+...                       ...      ...                 ...
+18.0    2096         3.159159      3.0  ukesm1-0-ll_ssp585
+        2097         3.185157      3.0  ukesm1-0-ll_ssp585
+        2098         3.124336      3.0  ukesm1-0-ll_ssp585
+        2099         3.209663      3.0  ukesm1-0-ll_ssp585
+        2100         3.331172      3.0  ukesm1-0-ll_ssp585
+
+[1908 rows x 3 columns]
+
+Directory 10 / 13
+Directory: cesm2_ssp585
+Time since start: 60.0 minutes
+
+               salinity  regions         model
+sectors year                                  
+1.0     1995  34.531704      1.0  cesm2_ssp585
+        1996  34.533363      1.0  cesm2_ssp585
+        1997  34.539764      1.0  cesm2_ssp585
+        1998  34.542320      1.0  cesm2_ssp585
+        1999  34.535744      1.0  cesm2_ssp585
+...                 ...      ...           ...
+18.0    2093  34.058540      3.0  cesm2_ssp585
+        2094  34.072773      3.0  cesm2_ssp585
+        2095  34.075424      3.0  cesm2_ssp585
+        2096  34.061829      3.0  cesm2_ssp585
+        2097  34.063663      3.0  cesm2_ssp585
+
+[1854 rows x 3 columns]
+              temperature  regions         model
+sectors year                                    
+1.0     1995     1.412665      1.0  cesm2_ssp585
+        1996     1.392827      1.0  cesm2_ssp585
+        1997     1.394554      1.0  cesm2_ssp585
+        1998     1.410843      1.0  cesm2_ssp585
+        1999     1.380588      1.0  cesm2_ssp585
+...                   ...      ...           ...
+18.0    2093     0.588291      3.0  cesm2_ssp585
+        2094     0.631211      3.0  cesm2_ssp585
+        2095     0.609926      3.0  cesm2_ssp585
+        2096     0.598011      3.0  cesm2_ssp585
+        2097     0.543137      3.0  cesm2_ssp585
+
+[1854 rows x 3 columns]
+              thermal_forcing  regions         model
+sectors year                                        
+1.0     1995         4.005180      1.0  cesm2_ssp585
+        1996         3.985598      1.0  cesm2_ssp585
+        1997         3.987533      1.0  cesm2_ssp585
+        1998         4.003962      1.0  cesm2_ssp585
+        1999         3.973613      1.0  cesm2_ssp585
+...                       ...      ...           ...
+18.0    2093         3.153928      3.0  cesm2_ssp585
+        2094         3.197662      3.0  cesm2_ssp585
+        2095         3.176528      3.0  cesm2_ssp585
+        2096         3.163836      3.0  cesm2_ssp585
+        2097         3.109065      3.0  cesm2_ssp585
+
+[1854 rows x 3 columns]
+
+Directory 11 / 13
+Directory: ccsm4_rcp8.5
+Time since start: 65.0 minutes
+
+               salinity  regions         model
+sectors year                                  
+1.0     1995  34.538136      1.0  ccsm4_rcp8.5
+        1996  34.540131      1.0  ccsm4_rcp8.5
+        1997  34.538998      1.0  ccsm4_rcp8.5
+        1998  34.539516      1.0  ccsm4_rcp8.5
+        1999  34.540878      1.0  ccsm4_rcp8.5
+...                 ...      ...           ...
+18.0    2096  34.183788      3.0  ccsm4_rcp8.5
+        2097  34.174992      3.0  ccsm4_rcp8.5
+        2098  34.194103      3.0  ccsm4_rcp8.5
+        2099  34.184914      3.0  ccsm4_rcp8.5
+        2100  34.175449      3.0  ccsm4_rcp8.5
+
+[1908 rows x 3 columns]
+              temperature  regions         model
+sectors year                                    
+1.0     1995     1.377195      1.0  ccsm4_rcp8.5
+        1996     1.371622      1.0  ccsm4_rcp8.5
+        1997     1.379679      1.0  ccsm4_rcp8.5
+        1998     1.392100      1.0  ccsm4_rcp8.5
+        1999     1.388944      1.0  ccsm4_rcp8.5
+...                   ...      ...           ...
+18.0    2096     0.465629      3.0  ccsm4_rcp8.5
+        2097     0.553866      3.0  ccsm4_rcp8.5
+        2098     0.509507      3.0  ccsm4_rcp8.5
+        2099     0.389607      3.0  ccsm4_rcp8.5
+        2100     0.480164      3.0  ccsm4_rcp8.5
+
+[1908 rows x 3 columns]
+              thermal_forcing  regions         model
+sectors year                                        
+1.0     1995         3.970127      1.0  ccsm4_rcp8.5
+        1996         3.964721      1.0  ccsm4_rcp8.5
+        1997         3.972609      1.0  ccsm4_rcp8.5
+        1998         3.985060      1.0  ccsm4_rcp8.5
+        1999         3.981981      1.0  ccsm4_rcp8.5
+...                       ...      ...           ...
+18.0    2096         3.038424      3.0  ccsm4_rcp8.5
+        2097         3.126158      3.0  ccsm4_rcp8.5
+        2098         3.082890      3.0  ccsm4_rcp8.5
+        2099         2.962465      3.0  ccsm4_rcp8.5
+        2100         3.052482      3.0  ccsm4_rcp8.5
+
+[1908 rows x 3 columns]
+
+Directory 12 / 13
+Directory: cnrm-cm6-1_ssp585
+Time since start: 72.0 minutes
+
+               salinity  regions              model
+sectors year                                       
+1.0     1995  34.540672      1.0  cnrm-cm6-1_ssp585
+        1996  34.541256      1.0  cnrm-cm6-1_ssp585
+        1997  34.542385      1.0  cnrm-cm6-1_ssp585
+        1998  34.541687      1.0  cnrm-cm6-1_ssp585
+        1999  34.540318      1.0  cnrm-cm6-1_ssp585
+...                 ...      ...                ...
+18.0    2096  34.185040      3.0  cnrm-cm6-1_ssp585
+        2097  34.138393      3.0  cnrm-cm6-1_ssp585
+        2098  34.128204      3.0  cnrm-cm6-1_ssp585
+        2099  34.119411      3.0  cnrm-cm6-1_ssp585
+        2100  34.101254      3.0  cnrm-cm6-1_ssp585
+
+[1908 rows x 3 columns]
+              temperature  regions              model
+sectors year                                         
+1.0     1995     1.421628      1.0  cnrm-cm6-1_ssp585
+        1996     1.414181      1.0  cnrm-cm6-1_ssp585
+        1997     1.397102      1.0  cnrm-cm6-1_ssp585
+        1998     1.391209      1.0  cnrm-cm6-1_ssp585
+        1999     1.392736      1.0  cnrm-cm6-1_ssp585
+...                   ...      ...                ...
+18.0    2096     0.911579      3.0  cnrm-cm6-1_ssp585
+        2097     1.013325      3.0  cnrm-cm6-1_ssp585
+        2098     1.158464      3.0  cnrm-cm6-1_ssp585
+        2099     1.148190      3.0  cnrm-cm6-1_ssp585
+        2100     1.129159      3.0  cnrm-cm6-1_ssp585
+
+[1908 rows x 3 columns]
+              thermal_forcing  regions              model
+sectors year                                             
+1.0     1995         4.014684      1.0  cnrm-cm6-1_ssp585
+        1996         4.007240      1.0  cnrm-cm6-1_ssp585
+        1997         3.990494      1.0  cnrm-cm6-1_ssp585
+        1998         3.984297      1.0  cnrm-cm6-1_ssp585
+        1999         3.985742      1.0  cnrm-cm6-1_ssp585
+...                       ...      ...                ...
+18.0    2096         3.484453      3.0  cnrm-cm6-1_ssp585
+        2097         3.583534      3.0  cnrm-cm6-1_ssp585
+        2098         3.728095      3.0  cnrm-cm6-1_ssp585
+        2099         3.717318      3.0  cnrm-cm6-1_ssp585
+        2100         3.697247      3.0  cnrm-cm6-1_ssp585
+
+[1908 rows x 3 columns]
+
+Directory 13 / 13
+Directory: csiro-mk3-6-0_rcp8.5
+Time since start: 77.0 minutes
+
+               salinity  regions                 model
+sectors year                                          
+1.0     1995  34.537506      1.0  csiro-mk3-6-0_rcp8.5
+        1996  34.535324      1.0  csiro-mk3-6-0_rcp8.5
+        1997  34.534386      1.0  csiro-mk3-6-0_rcp8.5
+        1998  34.533539      1.0  csiro-mk3-6-0_rcp8.5
+        1999  34.535290      1.0  csiro-mk3-6-0_rcp8.5
+...                 ...      ...                   ...
+18.0    2096  34.132275      3.0  csiro-mk3-6-0_rcp8.5
+        2097  34.133972      3.0  csiro-mk3-6-0_rcp8.5
+        2098  34.144829      3.0  csiro-mk3-6-0_rcp8.5
+        2099  34.153744      3.0  csiro-mk3-6-0_rcp8.5
+        2100  34.140621      3.0  csiro-mk3-6-0_rcp8.5
+
+[1908 rows x 3 columns]
+              temperature  regions                 model
+sectors year                                            
+1.0     1995     1.397662      1.0  csiro-mk3-6-0_rcp8.5
+        1996     1.392427      1.0  csiro-mk3-6-0_rcp8.5
+        1997     1.391097      1.0  csiro-mk3-6-0_rcp8.5
+        1998     1.391241      1.0  csiro-mk3-6-0_rcp8.5
+        1999     1.380578      1.0  csiro-mk3-6-0_rcp8.5
+...                   ...      ...                   ...
+18.0    2096     0.353664      3.0  csiro-mk3-6-0_rcp8.5
+        2097     0.340447      3.0  csiro-mk3-6-0_rcp8.5
+        2098     0.375347      3.0  csiro-mk3-6-0_rcp8.5
+        2099     0.400777      3.0  csiro-mk3-6-0_rcp8.5
+        2100     0.413099      3.0  csiro-mk3-6-0_rcp8.5
+
+[1908 rows x 3 columns]
+              thermal_forcing  regions                 model
+sectors year                                                
+1.0     1995         3.990515      1.0  csiro-mk3-6-0_rcp8.5
+        1996         3.985153      1.0  csiro-mk3-6-0_rcp8.5
+        1997         3.983763      1.0  csiro-mk3-6-0_rcp8.5
+        1998         3.983859      1.0  csiro-mk3-6-0_rcp8.5
+        1999         3.973296      1.0  csiro-mk3-6-0_rcp8.5
+...                       ...      ...                   ...
+18.0    2096         2.923643      3.0  csiro-mk3-6-0_rcp8.5
+        2097         2.910482      3.0  csiro-mk3-6-0_rcp8.5
+        2098         2.946055      3.0  csiro-mk3-6-0_rcp8.5
+        2099         2.971912      3.0  csiro-mk3-6-0_rcp8.5
+        2100         2.983492      3.0  csiro-mk3-6-0_rcp8.5
+
+[1908 rows x 3 columns]
+ -- 
+Creating column variables for individual models...

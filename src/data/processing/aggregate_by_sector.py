@@ -18,14 +18,16 @@ def aggregate_by_sector(path):
         Obj: AtmosphereForcing instance with aggregated data
     """
     # Load grid data with 8km grid size
-    grids = GridSectors(grid_size=8)
+    
     print('')
 
     # Load in Atmospheric forcing data and add the sector numbers to it
     if 'Atmosphere' in path:
+        grids = GridSectors(grid_size=8)
         forcing = AtmosphereForcing(path=path)
         
     elif 'Ocean' in path:
+        grids = GridSectors(grid_size=8, format_index=False)
         forcing = OceanForcing(model_dir=path)
 
     forcing = forcing.add_sectors(grids)
@@ -94,6 +96,8 @@ def aggregate_atmosphere(directory, export, model_in_columns=False,):
         print(' -- ')
     
     
+    
+    # TODO Put this in its own function? Make it so that it recognizes how many times it needs to iterate
     if model_in_columns:
         separate_model_dataframes = [y for x, y in all_data.groupby('model')]
         
@@ -111,6 +115,7 @@ def aggregate_atmosphere(directory, export, model_in_columns=False,):
             all_data = pd.merge(all_data, df, on=['sectors', 'year',])
         all_data = all_data[[c for c in all_data.columns if 'region' not in c]]
         all_data['region'] = separate_model_dataframes[0]['regions_CESM2_ssp585'].reset_index(drop=True)
+        all_data = all_data.drop_duplicates()  # TODO: See why there are duplicates -- until then, this works
     
     if export:
         all_data.to_csv(export)
@@ -157,7 +162,9 @@ def aggregate_ocean(directory, export, model_in_columns=False, ):
         forcing.temperature_data = forcing.temperature_data[['temperature', 'regions', 'model']]
         forcing.thermal_forcing_data = forcing.thermal_forcing_data[['thermal_forcing', 'regions', 'model']]
         
-        # save them somewhere?
+        print(forcing.salinity_data)
+        print(forcing.temperature_data)
+        print(forcing.thermal_forcing_data)
         
         
         # meanwhile, create a concatenated dataset
@@ -165,13 +172,16 @@ def aggregate_ocean(directory, export, model_in_columns=False, ):
         temperature_data = pd.concat([temperature_data, forcing.temperature_data])
         thermal_forcing_data = pd.concat([thermal_forcing_data, forcing.thermal_forcing_data])
         
-    salinity_data.to_csv(export+'/_salinity.csv')
-    temperature_data.to_csv(export+'/_temperature.csv')
-    thermal_forcing_data.to_csv(export+'/_thermal_forcing.csv')
+        salinity_data.to_csv(export+'/_salinity.csv')
+        temperature_data.to_csv(export+'/_temperature.csv')
+        thermal_forcing_data.to_csv(export+'/_thermal_forcing.csv')
         
     print(' -- ')
     
     print('Creating column variables for individual models...')
+    
+    # ! BUG: somowhow the last three rows (2098-2100) get dropped off. Not sure exactly where but i think
+    # ! its here because it exists in _salinity but not after this chunk.
     if model_in_columns:
         # For each concatenated dataset
         datasets = [salinity_data, temperature_data, thermal_forcing_data]
@@ -194,6 +204,7 @@ def aggregate_ocean(directory, export, model_in_columns=False, ):
             region_cols = [c for c in all_data.columns if 'region' in c]
             all_data = all_data[[c for c in all_data.columns if 'region' not in c]]
             all_data['region'] = separate_model_dataframes[0][region_cols[0]].reset_index(drop=True)
+            all_data = all_data.drop_duplicates()
             
             if export:
                 all_data.to_csv(f"{export}/{labels[i]}.csv")

@@ -14,6 +14,7 @@ class GridSectors:
         if filetype.lower() == 'nc':
             self.path = self.grids_dir + f"sectors_{grid_size}km.nc"
             self.data = xr.open_dataset(self.path, decode_times=False)
+            self = self._to_dataframe()
             if format_index:
                 self = self._format_index()
         elif filetype.lower() == 'csv':
@@ -36,7 +37,6 @@ class GridSectors:
         return self
 
     def _format_index(self):
-        self = self._to_dataframe()
         index_array = list(np.arange(0,761))
         self.data.index = pd.MultiIndex.from_product([index_array, index_array], names=['x', 'y'])
         return self
