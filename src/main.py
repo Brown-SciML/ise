@@ -4,7 +4,7 @@ from utils import get_configs
 cfg = get_configs()
 
 data_directory = cfg['data']['path']
-generate_atmospheric_forcing = True
+generate_atmospheric_forcing = False
 generate_oceanic_forcing = True
 
 if generate_atmospheric_forcing:

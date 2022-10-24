@@ -96,8 +96,6 @@ def aggregate_atmosphere(directory, export, model_in_columns=False,):
         print(' -- ')
     
     
-    
-    # TODO Put this in its own function? Make it so that it recognizes how many times it needs to iterate
     if model_in_columns:
         data = {'atmospheric_forcing': all_data}
         all_data = aogcm_to_features(data=data, export=export)
@@ -187,6 +185,9 @@ def aggregate_ocean(directory, export, model_in_columns=False, ):
 def aogcm_to_features(data: dict, export=True):
         
     for key, all_data in data.items():
+        print(f'------- {key} -------')
+        print('Checkpoint 1 -- In loop')
+        print(all_data)
         separate_model_dataframes = [y for x, y in all_data.groupby('model')]
         
         # Change columns names in each dataframe
@@ -194,18 +195,30 @@ def aogcm_to_features(data: dict, export=True):
             model = df.model.iloc[0]
             df.columns = [f"{x}_{model}" if x not in ['sectors', 'year', 'region', 'model'] else x for x in df.columns ]
             
+        print('Checkpoint 2 -- Separate_model_dataframe[0]')
+        print(separate_model_dataframes[0])
+            
         # Merge dataframes together on common columns [sectors, year], resulting in 
         # one dataframe with sector, year, region, and columns for each model variables
         all_data = separate_model_dataframes[0]
         all_data = all_data.drop(columns=['model'])
+        
+        print('Checkpoint 3 -- Before merge loop')
+        print(all_data)
         for df in separate_model_dataframes[1:]:
             df = df.drop(columns=['model'])
             all_data = pd.merge(all_data, df, on=['sectors', 'year',])
+            print('Checkpoints in Loop -- After pd.merge')
+            print(all_data)
         region_cols = [c for c in all_data.columns if 'region' in c]
         non_region_cols = [c for c in all_data.columns if 'region' not in c]
         all_data = all_data[non_region_cols]
+        print('Checkpoint 5 -- only non-region data')
+        print(all_data)
         all_data['region'] = separate_model_dataframes[0][region_cols[0]].reset_index(drop=True)
         all_data = all_data.drop_duplicates() # TODO: See why there are duplicates -- until then, this works
+        print('Final Checkpoint -- before export')
+        print(all_data)
         
         if export:
                 all_data.to_csv(f"{export}/{key}.csv")
