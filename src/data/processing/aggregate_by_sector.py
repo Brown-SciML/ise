@@ -126,8 +126,11 @@ def aggregate_ocean(directory, export, model_in_columns=False, ):
     from 1995-2100 and applies the aggregate_by_sector function. It then outputs
     the concatenation of all processed data to all_data.csv 
 
+
     Args:
-        directory (str): Directory containing forcing files
+        directory (str): Import directory for oceanic forcing files (".../Ocean_Forcing/")
+        export (str): Export directory to store output files
+        model_in_columns (bool, optional): Wither to format AOGCM model as columns. Defaults to False.
     """
     start_time = time.time()
 
@@ -184,6 +187,7 @@ def aggregate_ocean(directory, export, model_in_columns=False, ):
     # ! its here because it exists in _salinity but not after this chunk.
     if model_in_columns:
         # For each concatenated dataset
+        data = {'salinity': salinity_data, 'temperature': temperature_data, 'thermal_forcing': thermal_forcing_data}
         datasets = [salinity_data, temperature_data, thermal_forcing_data]
         labels = ['salinity', 'temperature', 'thermal_forcing']
         for i, all_data in enumerate(datasets):
@@ -214,3 +218,32 @@ def aggregate_ocean(directory, export, model_in_columns=False, ):
             salinity_data.to_csv(export+'/salinity.csv')
             temperature_data.to_csv(export+'/temperature.csv')
             thermal_forcing_data.to_csv(export+'/thermal_forcing.csv')
+            
+            
+
+def aogcm_to_features(data: dict, export=True):
+        
+    for key, all_data in data.items:
+        separate_model_dataframes = [y for x, y in all_data.groupby('model')]
+        
+        # Change columns names in each dataframe
+        for df in separate_model_dataframes:
+            model = df.model.iloc[0]
+            df.columns = [f"{x}_{model}" if x not in ['sectors', 'year', 'region', 'model'] else x for x in df.columns ]
+            
+        # Merge dataframes together on common columns [sectors, year], resulting in 
+        # one dataframe with sector, year, region, and columns for each model variables
+        all_data = separate_model_dataframes[0]
+        all_data = all_data.drop(columns=['model'])
+        for df in separate_model_dataframes[1:]:
+            df = df.drop(columns=['model'])
+            all_data = pd.merge(all_data, df, on=['sectors', 'year',])
+        region_cols = [c for c in all_data.columns if 'region' in c]
+        all_data = all_data[[c for c in all_data.columns if 'region' not in c]]
+        all_data['region'] = separate_model_dataframes[0][region_cols[0]].reset_index(drop=True)
+        all_data = all_data.drop_duplicates()
+        
+        if export:
+                all_data.to_csv(f"{export}/{key}.csv")
+            
+    return all_data
