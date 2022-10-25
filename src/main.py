@@ -1,9 +1,10 @@
 from data.processing.aggregate_by_sector import aggregate_atmosphere, aggregate_ocean
-from utils import get_all_filepaths
 from utils import get_configs
 cfg = get_configs()
 
 data_directory = cfg['data']['path']
+
+# TODO: Set these as config variables
 generate_atmospheric_forcing = False
 generate_oceanic_forcing = True
 
@@ -17,9 +18,9 @@ if generate_oceanic_forcing:
     of_directory = f"{data_directory}/Ocean_Forcing/"
     aggregate_ocean(of_directory, export=of_directory, model_in_columns=True, )
     
+# TODO: Add Ice Collapse Forcing Object & Aggregation
+# TODO: Add Output Object
+# TODO: Concatenate inputs to output object
     
-    
-all_files = get_all_filepaths(path=f"{data_directory}/Ocean_Forcing/", filetype='nc')
-files = [f for f in all_files if '1995-2100' in f]
 
 stop = ''

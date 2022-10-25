@@ -1,6 +1,7 @@
 from data.classes.AtmosphereForcing import AtmosphereForcing
 from data.classes.GridSectors import GridSectors
 from data.classes.OceanForcing import OceanForcing
+from data.classes.IceCollapse import IceCollapse
 from utils import get_all_filepaths
 import pandas as pd
 import numpy as np
@@ -23,12 +24,16 @@ def aggregate_by_sector(path):
 
     # Load in Atmospheric forcing data and add the sector numbers to it
     if 'Atmosphere' in path:
-        grids = GridSectors(grid_size=8)
+        grids = GridSectors(grid_size=8,)
         forcing = AtmosphereForcing(path=path)
         
     elif 'Ocean' in path:
         grids = GridSectors(grid_size=8, format_index=False)
         forcing = OceanForcing(model_dir=path)
+        
+    elif 'Ice' in path:
+        grids = GridSectors(grid_size=8,)
+        forcing = IceCollapse(path)
 
     forcing = forcing.add_sectors(grids)
     
@@ -36,7 +41,7 @@ def aggregate_by_sector(path):
     # SOMEHOW ONLY SECTOR THREE IS SHOWING UP. IT HAPPENS BEFORE HERE (I THINK IN ADD_SECTORS)
     
     # Group the dataset and assign model column to the model simulation
-    if forcing.forcing_type == 'atmosphere':
+    if forcing.forcing_type in ('atmosphere', 'ice_collapse'):
         forcing.data = forcing.data.groupby(['sectors', 'year']).mean()
         forcing.data['model'] = forcing.model
     elif forcing.forcing_type == 'ocean':
@@ -49,6 +54,9 @@ def aggregate_by_sector(path):
     
     return forcing
 
+
+
+# TODO: Maybe make each of these aggregate functions a method?
 def aggregate_atmosphere(directory, export, model_in_columns=False,):
     """Loops through every NC file in the provided forcing directory
     from 1995-2100 and applies the aggregate_by_sector function. It then outputs
@@ -149,26 +157,18 @@ def aggregate_ocean(directory, export, model_in_columns=False, ):
         forcing.temperature_data = forcing.temperature_data[['temperature', 'regions', 'model']]
         forcing.thermal_forcing_data = forcing.thermal_forcing_data[['thermal_forcing', 'regions', 'model']]
         
-        print(forcing.salinity_data)
-        print(forcing.temperature_data)
-        print(forcing.thermal_forcing_data)
-        
         
         # meanwhile, create a concatenated dataset
         salinity_data = pd.concat([salinity_data, forcing.salinity_data])
         temperature_data = pd.concat([temperature_data, forcing.temperature_data])
         thermal_forcing_data = pd.concat([thermal_forcing_data, forcing.thermal_forcing_data])
         
-        salinity_data.to_csv(export+'/_salinity.csv')
-        temperature_data.to_csv(export+'/_temperature.csv')
-        thermal_forcing_data.to_csv(export+'/_thermal_forcing.csv')
+        # salinity_data.to_csv(export+'/_salinity.csv')
+        # temperature_data.to_csv(export+'/_temperature.csv')
+        # thermal_forcing_data.to_csv(export+'/_thermal_forcing.csv')
         
     print(' -- ')
     
-    print('Creating column variables for individual models...')
-    
-    # ! BUG: somowhow the last three rows (2098-2100) get dropped off. Not sure exactly where but i think
-    # ! its here because it exists in _salinity but not after this chunk.
     if model_in_columns:
         # For each concatenated dataset
         data = {'salinity': salinity_data, 'temperature': temperature_data, 'thermal_forcing': thermal_forcing_data}
@@ -180,14 +180,67 @@ def aggregate_ocean(directory, export, model_in_columns=False, ):
             temperature_data.to_csv(export+'/temperature.csv')
             thermal_forcing_data.to_csv(export+'/thermal_forcing.csv')
             
+def aggregate_icecollapse(directory, export, model_in_columns=False, ):
+    """Loops through every NC file in the provided forcing directory
+    from 1995-2100 and applies the aggregate_by_sector function. It then outputs
+    the concatenation of all processed data to all_data.csv 
+
+
+    Args:
+        directory (str): Import directory for oceanic forcing files (".../Ocean_Forcing/")
+        export (str): Export directory to store output files
+        model_in_columns (bool, optional): Wither to format AOGCM model as columns. Defaults to False.
+    """
+    start_time = time.time()
+
+    # Get all NC files that contain data from 1995-2100
+    filepaths = get_all_filepaths(path=directory, filetype='nc')
+    
+    # In the case of ocean forcings, use the filepaths of the files to determine
+    # which directories need to be used for OceanForcing processing. Change to
+    # those directories rather than individual files.
+    models = list(set([f.split('/')[-3] for f in filepaths]))
+    filepaths = [f"{directory}/{model}/" for model in models]
+
+    # Useful progress prints
+    print(f"Files to be processed...")
+    print([f.split("/")[-2] for f in filepaths])
+
+    # Loop over each directory specified above
+    ice_collapse = pd.DataFrame()
+    for i, fp in enumerate(filepaths):
+        print('')
+        print(f'Directory {i+1} / {len(filepaths)}')
+        print(f'Directory: {fp.split("/")[-2]}')
+        print(f'Time since start: {(time.time()-start_time) // 60} minutes')
+
+        # attach the sector to the data and groupby sectors & year
+        forcing = aggregate_by_sector(fp)
+
+        forcing.data = forcing.data[['mask', 'regions', 'model']]
+        
+        
+        # meanwhile, create a concatenated dataset
+        ice_collapse = pd.concat([ice_collapse, forcing.data])
+
+        
+    print(' -- ')
+    
+    if model_in_columns:
+        # For each concatenated dataset
+        data = {'ice_collapse': ice_collapse,}
+        all_data = aogcm_to_features(data, export=export)
+    
+    else:
+        if export:
+            ice_collapse.to_csv(export+'/ice_collapse.csv')
+
+            
             
 
 def aogcm_to_features(data: dict, export=True):
         
     for key, all_data in data.items():
-        print(f'------- {key} -------')
-        print('Checkpoint 1 -- In loop')
-        print(all_data)
         separate_model_dataframes = [y for x, y in all_data.groupby('model')]
         
         # Change columns names in each dataframe
@@ -195,30 +248,22 @@ def aogcm_to_features(data: dict, export=True):
             model = df.model.iloc[0]
             df.columns = [f"{x}_{model}" if x not in ['sectors', 'year', 'region', 'model'] else x for x in df.columns ]
             
-        print('Checkpoint 2 -- Separate_model_dataframe[0]')
-        print(separate_model_dataframes[0])
-            
         # Merge dataframes together on common columns [sectors, year], resulting in 
         # one dataframe with sector, year, region, and columns for each model variables
         all_data = separate_model_dataframes[0]
         all_data = all_data.drop(columns=['model'])
-        
-        print('Checkpoint 3 -- Before merge loop')
-        print(all_data)
+    
         for df in separate_model_dataframes[1:]:
             df = df.drop(columns=['model'])
             all_data = pd.merge(all_data, df, on=['sectors', 'year',], how='left')
-            print('Checkpoints in Loop -- After pd.merge')
-            print(all_data)
+            
         region_cols = [c for c in all_data.columns if 'region' in c]
         non_region_cols = [c for c in all_data.columns if 'region' not in c]
         all_data = all_data[non_region_cols]
-        print('Checkpoint 5 -- only non-region data')
-        print(all_data)
+        
+        # TODO: region assignment produces NA's, low priority -- do later
         # all_data['region'] = separate_model_dataframes[0][region_cols[0]].reset_index(drop=True)
         all_data = all_data.drop_duplicates() # TODO: See why there are duplicates -- until then, this works
-        print('Final Checkpoint -- before export')
-        print(all_data)
         
         if export:
                 all_data.to_csv(f"{export}/{key}.csv")
