@@ -207,7 +207,7 @@ def aogcm_to_features(data: dict, export=True):
         print(all_data)
         for df in separate_model_dataframes[1:]:
             df = df.drop(columns=['model'])
-            all_data = pd.merge(all_data, df, on=['sectors', 'year',])
+            all_data = pd.merge(all_data, df, on=['sectors', 'year',], how='left')
             print('Checkpoints in Loop -- After pd.merge')
             print(all_data)
         region_cols = [c for c in all_data.columns if 'region' in c]
@@ -215,7 +215,7 @@ def aogcm_to_features(data: dict, export=True):
         all_data = all_data[non_region_cols]
         print('Checkpoint 5 -- only non-region data')
         print(all_data)
-        all_data['region'] = separate_model_dataframes[0][region_cols[0]].reset_index(drop=True)
+        # all_data['region'] = separate_model_dataframes[0][region_cols[0]].reset_index(drop=True)
         all_data = all_data.drop_duplicates() # TODO: See why there are duplicates -- until then, this works
         print('Final Checkpoint -- before export')
         print(all_data)
