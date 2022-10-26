@@ -1,4 +1,4 @@
-from data.processing.aggregate_by_sector import aggregate_atmosphere, aggregate_ocean
+from data.processing.aggregate_by_sector import aggregate_atmosphere, aggregate_icecollapse, aggregate_ocean
 from utils import get_configs
 cfg = get_configs()
 
@@ -6,7 +6,8 @@ data_directory = cfg['data']['path']
 
 # TODO: Set these as config variables
 generate_atmospheric_forcing = False
-generate_oceanic_forcing = True
+generate_oceanic_forcing = False
+generate_icecollapse_forcing = True
 
 if generate_atmospheric_forcing:
     af_directory = f"{data_directory}/Atmosphere_Forcing/"
@@ -17,6 +18,10 @@ if generate_atmospheric_forcing:
 if generate_oceanic_forcing:
     of_directory = f"{data_directory}/Ocean_Forcing/"
     aggregate_ocean(of_directory, export=of_directory, model_in_columns=True, )
+    
+if generate_icecollapse_forcing:
+    ice_directory = f"{data_directory}/Ice_Shelf_Fracture"
+    aggregate_icecollapse(ice_directory, export=ice_directory, model_in_columns=True, )
     
 # TODO: Add Ice Collapse Forcing Object & Aggregation
 # TODO: Add Output Object

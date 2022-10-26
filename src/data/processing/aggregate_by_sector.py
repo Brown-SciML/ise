@@ -199,7 +199,7 @@ def aggregate_icecollapse(directory, export, model_in_columns=False, ):
     # In the case of ocean forcings, use the filepaths of the files to determine
     # which directories need to be used for OceanForcing processing. Change to
     # those directories rather than individual files.
-    models = list(set([f.split('/')[-3] for f in filepaths]))
+    models = list(set([f.split('/')[-2] for f in filepaths]))
     filepaths = [f"{directory}/{model}/" for model in models]
 
     # Useful progress prints

@@ -18,6 +18,8 @@ class IceCollapse:
                     self.data = xr.open_dataset(file)
                 else:
                     pass
+        else:
+            self.data = xr.open_dataset(files[0])
 
 
     def save_as_csv(self):
@@ -30,7 +32,8 @@ class IceCollapse:
         self.data.to_csv(csv_path)
         return self
 
-    def add_sectors(self, grids):      
+    def add_sectors(self, grids):
+        # ! IceCollapse object has no attribute 'data'      
         self.data = self.data.drop(labels=['lon', 'lon_bnds', 'lat', 'lat_bnds'])
         self.data = self.data.to_dataframe().reset_index(level='time', drop=True)
         self.data = pd.merge(self.data, grids.data, left_index=True, right_index=True)
