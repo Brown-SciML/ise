@@ -1,3 +1,4 @@
 data:
-  path: "/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/"
-  export: "/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/processed_GHub-ISMIP6-Forcing"
+  forcings: "/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/"
+  output: "/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/Zenodo_Outputs/"
+  export: "/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/processed_GHub-ISMIP6-Forcing/"

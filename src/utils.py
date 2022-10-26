@@ -24,10 +24,16 @@ def check_input(input, options):
         input = input.lower()
     assert input in options, f"input must be in {options}, received {input}"
 
-def get_all_filepaths(path, filetype):
-    listOfFiles = list()
+def get_all_filepaths(path, filetype=None, contains=None):
+    all_files = list()
     for (dirpath, dirnames, filenames) in os.walk(path):
-        listOfFiles += [os.path.join(dirpath, file) for file in filenames]
-    if filetype.lower() != 'all':
-        listOfFiles = [file for file in listOfFiles if file.endswith(filetype)]
-    return listOfFiles
+        all_files += [os.path.join(dirpath, file) for file in filenames]
+        
+    if filetype:
+        if filetype.lower() != 'all':
+            all_files = [file for file in all_files if file.endswith(filetype)]
+    
+    if contains:
+        all_files = [file for file in all_files if contains in file]
+        
+    return all_files
