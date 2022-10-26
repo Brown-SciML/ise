@@ -7,7 +7,7 @@ class AtmosphereForcing:
     def __init__(self, path):
         self.forcing_type = 'atmosphere'
         self.path = path
-        self.model = path.split('/')[-3]  # 3rd to last folder in directory structure
+        self.aogcm = path.split('/')[-3]  # 3rd to last folder in directory structure
         
         if path[-2:] == 'nc':
             self.data = xr.open_dataset(self.path, decode_times=False)
@@ -39,5 +39,5 @@ class AtmosphereForcing:
     def add_sectors(self, grids):
         self.data = self.data.drop(labels=['lon_bnds', 'lat_bnds', 'lat2d', 'lon2d'])
         self.data = self.data.to_dataframe().reset_index(level='time', drop=True)
-        self.data = pd.merge(self.data, grids.data, left_index=True, right_index=True)
+        self.data = pd.merge(self.data, grids.data, left_index=True, right_index=True, how='outer')
         return self
