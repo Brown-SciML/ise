@@ -8,9 +8,9 @@ zenodo_directory = cfg['data']['output']
 export_dir = cfg['data']['export']
 
 # TODO: Set these as config variables
-generate_atmospheric_forcing = False
-generate_oceanic_forcing = False
-generate_icecollapse_forcing = False
+generate_atmospheric_forcing = True
+generate_oceanic_forcing = True
+generate_icecollapse_forcing = True
 process_outputs = True
 
 
@@ -28,22 +28,9 @@ if generate_icecollapse_forcing:
     aggregate_icecollapse(ice_directory, export=export_dir, model_in_columns=False, )
     
 if process_outputs:
-    process_repository(zenodo_directory, export_filepath=f"{export_dir}/outputs.csv")
+    outputs = process_repository(zenodo_directory, export_filepath=f"{export_dir}/outputs.csv")
     
-# TODO: Add Ice Collapse Forcing Object & Aggregation
-# TODO: Add Output Object
 # TODO: Concatenate inputs to output object
-
-# files = get_all_filepaths(data_directory, 'csv')
-# fs = [f for f in files if 'sectoryeargrouped' in f]
-
-# import pandas as pd
-# all_data = pd.DataFrame()
-# for f in fs:
-#     temp = pd.read_csv(f)
-#     temp = temp.groupby(['sectors', 'year', 'model']).mean()
-#     print(len(temp))
-#     all_data = pd.concat([all_data, temp],)
 
 
 

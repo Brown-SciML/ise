@@ -110,7 +110,7 @@ def aggregate_atmosphere(directory, export, model_in_columns=False,):
     
     else:
         if export:
-            all_data.to_csv(f"{export}/atmospheric_forcing_nomodelincolumns.csv")
+            all_data.to_csv(f"{export}/atmospheric_forcing.csv")
         
         
 def aggregate_ocean(directory, export, model_in_columns=False, ):
@@ -176,9 +176,9 @@ def aggregate_ocean(directory, export, model_in_columns=False, ):
     
     else:
         if export:
-            salinity_data.to_csv(export+'/salinity_nomodelincolumns.csv')
-            temperature_data.to_csv(export+'/temperature_nomodelincolumns.csv')
-            thermal_forcing_data.to_csv(export+'/thermal_forcing_nomodelincolumns.csv')
+            salinity_data.to_csv(export+'/salinity.csv')
+            temperature_data.to_csv(export+'/temperature.csv')
+            thermal_forcing_data.to_csv(export+'/thermal_forcing.csv')
             
 def aggregate_icecollapse(directory, export, model_in_columns=False, ):
     """Loops through every NC file in the provided forcing directory
@@ -233,7 +233,7 @@ def aggregate_icecollapse(directory, export, model_in_columns=False, ):
     
     else:
         if export:
-            ice_collapse.to_csv(export+'/ice_collapse_nomodelincolumns.csv')
+            ice_collapse.to_csv(export+'/ice_collapse.csv')
 
             
             
