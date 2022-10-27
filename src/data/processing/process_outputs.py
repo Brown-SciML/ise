@@ -52,7 +52,7 @@ def process_experiment(experiment_directory):
     all_data = process_single_file(files[0])
     for file in files[1:]:
         temp = process_single_file(file)
-        all_data = pd.merge(all_data, temp, on=['time', 'sector', 'groupname', 'modelname', 'exp_id', 'rhoi', 'rhow'], how='outer')
+        all_data = pd.merge(all_data, temp, on=['year', 'sector', 'groupname', 'modelname', 'exp_id', 'rhoi', 'rhow'], how='outer')
         
     return all_data
         

@@ -8,9 +8,9 @@ zenodo_directory = cfg['data']['output']
 export_dir = cfg['data']['export']
 
 # TODO: Set these as config variables
-generate_atmospheric_forcing = True
-generate_oceanic_forcing = True
-generate_icecollapse_forcing = True
+generate_atmospheric_forcing = False
+generate_oceanic_forcing = False
+generate_icecollapse_forcing = False
 process_outputs = True
 
 

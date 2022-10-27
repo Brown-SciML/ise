@@ -3752,3 +3752,227 @@ NO MODEL IN columns
 
 
 
+Files to be processed...
+['NorESM1-M_8km_anomaly_1995-2100.nc', 'IPSL-CM5A-MR_8km_anomaly_rcp85_1995-2100.nc', 'CNRM-ESM2-1_anomaly_ssp585_1995-2100_8km_ISMIP6.nc', 'CNRM-CM6-1_anomaly_ssp585_1995-2100_8km_ISMIP6.nc', 'CESM2_anomaly_ssp585_1995-2100_8km_v1.nc', 'CESM2_anomaly_ssp585_1995-2100_8km_v2.nc', 'IPSL-CM5A-MR_8km_anomaly_rcp26_1995-2100.nc', 'CNRM-CM6-1_anomaly_ssp126_1995-2100_8km_ISMIP6.nc', 'UKESM1-0-LL_anomaly_ssp585_1995-2100_8km.nc', 'CCSM4_8km_anomaly_1995-2100.nc', 'HadGEM2-ES_8km_anomaly_rcp85_1995-2100.nc', 'MIROC-ESM-CHEM_8km_anomaly_rcp26_1995-2100.nc', 'CCSM4_8km_anomaly_rcp26_1995-2100.nc', 'CSIRO-Mk3-6-0_8km_anomaly_rcp85_1995-2100.nc', 'NorESM1-M_8km_anomaly_rcp26_1995-2100.nc', 'MIROC-ESM-CHEM_8km_anomaly_1995-2100.nc']
+
+File 1 / 16
+File: NorESM1-M_8km_anomaly_1995-2100.nc
+Time since start: 0.0 minutes
+
+ -- 
+
+File 2 / 16
+File: IPSL-CM5A-MR_8km_anomaly_rcp85_1995-2100.nc
+Time since start: 1.0 minutes
+
+ -- 
+
+File 3 / 16
+File: CNRM-ESM2-1_anomaly_ssp585_1995-2100_8km_ISMIP6.nc
+Time since start: 3.0 minutes
+
+ -- 
+
+File 4 / 16
+File: CNRM-CM6-1_anomaly_ssp585_1995-2100_8km_ISMIP6.nc
+Time since start: 5.0 minutes
+
+ -- 
+
+File 5 / 16
+File: CESM2_anomaly_ssp585_1995-2100_8km_v1.nc
+Time since start: 6.0 minutes
+
+ -- 
+
+File 6 / 16
+File: CESM2_anomaly_ssp585_1995-2100_8km_v2.nc
+Time since start: 8.0 minutes
+
+ -- 
+
+File 7 / 16
+File: IPSL-CM5A-MR_8km_anomaly_rcp26_1995-2100.nc
+Time since start: 10.0 minutes
+
+ -- 
+
+File 8 / 16
+File: CNRM-CM6-1_anomaly_ssp126_1995-2100_8km_ISMIP6.nc
+Time since start: 11.0 minutes
+
+ -- 
+
+File 9 / 16
+File: UKESM1-0-LL_anomaly_ssp585_1995-2100_8km.nc
+Time since start: 13.0 minutes
+
+ -- 
+
+File 10 / 16
+File: CCSM4_8km_anomaly_1995-2100.nc
+Time since start: 15.0 minutes
+
+ -- 
+
+File 11 / 16
+File: HadGEM2-ES_8km_anomaly_rcp85_1995-2100.nc
+Time since start: 16.0 minutes
+
+ -- 
+
+File 12 / 16
+File: MIROC-ESM-CHEM_8km_anomaly_rcp26_1995-2100.nc
+Time since start: 18.0 minutes
+
+ -- 
+
+File 13 / 16
+File: CCSM4_8km_anomaly_rcp26_1995-2100.nc
+Time since start: 19.0 minutes
+
+ -- 
+
+File 14 / 16
+File: CSIRO-Mk3-6-0_8km_anomaly_rcp85_1995-2100.nc
+Time since start: 21.0 minutes
+
+ -- 
+
+File 15 / 16
+File: NorESM1-M_8km_anomaly_rcp26_1995-2100.nc
+Time since start: 23.0 minutes
+
+ -- 
+
+File 16 / 16
+File: MIROC-ESM-CHEM_8km_anomaly_1995-2100.nc
+Time since start: 24.0 minutes
+
+ -- 
+Files to be processed...
+['miroc-esm-chem_rcp8.5', 'noresm1-m_rcp2.6', 'cnrm-cm6-1_ssp126', 'ccsm4_rcp8.5', 'cnrm-cm6-1_ssp585', 'ukesm1-0-ll_ssp585', 'noresm1-m_rcp8.5', 'hadgem2-es_rcp8.5', 'ipsl-cm5a-mr_rcp2.6', 'ipsl-cm5a-mr_rcp8.5', 'cnrm-esm2-1_ssp585', 'csiro-mk3-6-0_rcp8.5', 'cesm2_ssp585']
+
+Directory 1 / 13
+Directory: miroc-esm-chem_rcp8.5
+Time since start: 0.0 minutes
+
+
+Directory 2 / 13
+Directory: noresm1-m_rcp2.6
+Time since start: 8.0 minutes
+
+
+Directory 3 / 13
+Directory: cnrm-cm6-1_ssp126
+Time since start: 18.0 minutes
+
+
+Directory 4 / 13
+Directory: ccsm4_rcp8.5
+Time since start: 23.0 minutes
+
+
+Directory 5 / 13
+Directory: cnrm-cm6-1_ssp585
+Time since start: 31.0 minutes
+
+
+Directory 6 / 13
+Directory: ukesm1-0-ll_ssp585
+Time since start: 37.0 minutes
+
+
+Directory 7 / 13
+Directory: noresm1-m_rcp8.5
+Time since start: 42.0 minutes
+
+
+Directory 8 / 13
+Directory: hadgem2-es_rcp8.5
+Time since start: 51.0 minutes
+
+
+Directory 9 / 13
+Directory: ipsl-cm5a-mr_rcp2.6
+Time since start: 60.0 minutes
+
+
+Directory 10 / 13
+Directory: ipsl-cm5a-mr_rcp8.5
+Time since start: 69.0 minutes
+
+
+Directory 11 / 13
+Directory: cnrm-esm2-1_ssp585
+Time since start: 77.0 minutes
+
+
+Directory 12 / 13
+Directory: csiro-mk3-6-0_rcp8.5
+Time since start: 83.0 minutes
+
+
+Directory 13 / 13
+Directory: cesm2_ssp585
+Time since start: 92.0 minutes
+
+ -- 
+Files to be processed...
+['miroc-esm-chem_rcp8.5', 'CESM2_ssp585', 'csiro-mk3-6-08.5', 'CNRM-ESM2-1_ssp585', 'ccsm4_rcp8.5', 'UKESM1-0-LL_ssp585', 'ipsl-cm5a-mr8.5', 'noresm1-m_rcp8.5', 'CNRM-CM6-1_ssp126', 'hadgem2-es8.5', 'CNRM-CM6-1_ssp585']
+
+Directory 1 / 11
+Directory: miroc-esm-chem_rcp8.5
+Time since start: 0.0 minutes
+
+
+Directory 2 / 11
+Directory: CESM2_ssp585
+Time since start: 2.0 minutes
+
+
+Directory 3 / 11
+Directory: csiro-mk3-6-08.5
+Time since start: 5.0 minutes
+
+
+Directory 4 / 11
+Directory: CNRM-ESM2-1_ssp585
+Time since start: 7.0 minutes
+
+
+Directory 5 / 11
+Directory: ccsm4_rcp8.5
+Time since start: 10.0 minutes
+
+
+Directory 6 / 11
+Directory: UKESM1-0-LL_ssp585
+Time since start: 13.0 minutes
+
+
+Directory 7 / 11
+Directory: ipsl-cm5a-mr8.5
+Time since start: 15.0 minutes
+
+
+Directory 8 / 11
+Directory: noresm1-m_rcp8.5
+Time since start: 18.0 minutes
+
+
+Directory 9 / 11
+Directory: CNRM-CM6-1_ssp126
+Time since start: 21.0 minutes
+
+
+Directory 10 / 11
+Directory: hadgem2-es8.5
+Time since start: 23.0 minutes
+
+
+Directory 11 / 11
+Directory: CNRM-CM6-1_ssp585
+Time since start: 26.0 minutes
+
+ -- 
