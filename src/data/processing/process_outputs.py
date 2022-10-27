@@ -52,7 +52,7 @@ def process_experiment(experiment_directory):
     all_data = process_single_file(files[0])
     for file in files[1:]:
         temp = process_single_file(file)
-        all_data = pd.merge(all_data, temp, on=['year', 'sector', 'groupname', 'modelname', 'exp_id', 'rhoi', 'rhow'], how='outer')
+        all_data = pd.merge(all_data, temp, on=['year', 'sectors', 'groupname', 'modelname', 'exp_id', 'rhoi', 'rhow'], how='outer')
         
     return all_data
         
@@ -87,7 +87,7 @@ def process_single_file(path):
     data = data.drop(columns='time')
     data = pd.melt(data, id_vars='year')
 
-    data['sector'] = data.variable.apply(get_sector)
+    data['sectors'] = data.variable.apply(get_sector)
     data = data.dropna().drop(columns=['variable'])
     data[var] = data['value']
     data = data.drop(columns=['value'])

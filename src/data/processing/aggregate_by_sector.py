@@ -43,14 +43,14 @@ def aggregate_by_sector(path):
     # Group the dataset and assign aogcm column to the aogcm simulation
     if forcing.forcing_type in ('atmosphere', 'ice_collapse'):
         forcing.data = forcing.data.groupby(['sectors', 'year']).mean()
-        forcing.data['aogcm'] = forcing.aogcm
+        forcing.data['aogcm'] = forcing.aogcm.lower()
     elif forcing.forcing_type == 'ocean':
         forcing.salinity_data = forcing.salinity_data.groupby(['sectors', 'year']).mean()
-        forcing.salinity_data['aogcm'] = forcing.aogcm
+        forcing.salinity_data['aogcm'] = forcing.aogcm.lower()
         forcing.temperature_data = forcing.temperature_data.groupby(['sectors', 'year']).mean()
-        forcing.temperature_data['aogcm'] = forcing.aogcm
+        forcing.temperature_data['aogcm'] = forcing.aogcm.lower()
         forcing.thermal_forcing_data = forcing.thermal_forcing_data.groupby(['sectors', 'year']).mean()
-        forcing.thermal_forcing_data['aogcm'] = forcing.aogcm        
+        forcing.thermal_forcing_data['aogcm'] = forcing.aogcm.lower()
     
     return forcing
 
