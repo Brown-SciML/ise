@@ -1,8 +1,9 @@
 data:
+  directory: "/users/pvankatw/emulator/src/data/files/"
   forcing: "/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/"
   output: "/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/Zenodo_Outputs/"
   export: "/users/pvankatw/emulator/src/data/files/"
-  ismip6_experiments_json: "/users/pvankatw/emulator/src/data/files/ismip6_experiments.json"
+  ismip6_experiments_json: "/users/pvankatw/emulator/src/data/files/ismip6_experiments.json" 
 
 processing:
   generate_atmospheric_forcing: False
@@ -13,5 +14,13 @@ processing:
   combine_datasets: True
   include_icecollapse: False
 
+training:
+  model: "Emulator"
+  epochs: 25
+  batch_size: 50
+  test_split_ratio: 0.1
+  verbose: True
+  plot_loss: True
+  save_metrics: False
 
 
