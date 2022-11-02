@@ -77,9 +77,9 @@ def combine_datasets(processed_data_dir=export_dir, include_icecollapse=with_ice
     master = pd.merge(inputs, outputs, on=['year', 'sectors', 'aogcm'])
     
     if export:
-        master.to_csv(f"{export}/master.csv")
-        inputs.to_csv(f"{export}/inputs.csv")
-        outputs.to_csv(f"{export}/outputs.csv")
+        master.to_csv(f"{export}/master.csv", index=False)
+        inputs.to_csv(f"{export}/inputs.csv", index=False)
+        outputs.to_csv(f"{export}/outputs.csv", index=False)
     
     return master, inputs, outputs
     

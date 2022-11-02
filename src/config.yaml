@@ -11,7 +11,7 @@ processing:
   generate_icecollapse_forcing: False
   generate_outputs: False
 
-  combine_datasets: True
+  combine_datasets: False
   include_icecollapse: False
 
 training:
