@@ -53,9 +53,10 @@ emulator_data = EmulatorData(directory=export_dir)
 emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
     target_column='ivaf',
     drop_missing=True,
-    drop_columns=['experiment', 'exp_id', 'groupname', 'regions'],
+    drop_columns=False,
     boolean_indices=True,
     scale=True,
+    split_type='random'
 )
 
 class Emulator(torch.nn.Module):
