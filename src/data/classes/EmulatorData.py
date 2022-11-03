@@ -114,6 +114,8 @@ class EmulatorData:
 
             self.train_features = self.X.drop(testing_indices)
             self.train_labels = pd.Series(self.y.squeeze()).drop(testing_indices)
+            
+            self.test_scenarios = test_scenarios
 
         return self
 

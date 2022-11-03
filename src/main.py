@@ -2,7 +2,8 @@ from data.processing.aggregate_by_sector import aggregate_atmosphere, aggregate_
 from data.processing.process_outputs import process_repository
 from data.processing.combine_datasets import combine_datasets
 from data.classes.EmulatorData import EmulatorData
-from models.SimpleEmulator import SimpleEmulator
+from models import FC3_N128, FC6_N256
+from training.EmulatorTrainingDataset import EmulatorTrainingDataset
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from utils import get_configs
@@ -51,6 +52,7 @@ if processing['combine_datasets']:
 
 
 emulator_data = EmulatorData(directory=export_dir)
+split_type = 'batch'
 emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
     target_column='ivaf',
     drop_missing=True,
@@ -59,21 +61,6 @@ emulator_data, train_features, test_features, train_labels, test_labels = emulat
     scale=True,
     split_type='batch'
 )
-
-
-
-class EmulatorTrainingDataset(Dataset):
-    
-    def __init__(self, X_data, y_data):
-        self.X_data = X_data
-        self.y_data = y_data
-        
-    def __getitem__(self, index):
-        return self.X_data[index], self.y_data[index]
-        
-    def __len__ (self):
-        return len(self.X_data)
-    
     
 X_train = np.array(train_features, dtype=np.float64)
 y_train = np.array(train_labels, dtype=np.float64)
@@ -81,9 +68,10 @@ X_test = np.array(test_features, dtype=np.float64)
 y_test = np.array(test_labels, dtype=np.float64)
 
 train_dataset = EmulatorTrainingDataset(torch.from_numpy(X_train).float(), torch.from_numpy(y_train).float().squeeze())
-train_loader = DataLoader(dataset=train_dataset, batch_size=100)
+train_loader = DataLoader(dataset=train_dataset, batch_size=100, shuffle=True)
 
-model = Emulator()
+# model = FC3_N128.FC3_N128(input_layer_size=X_train.shape[1])
+model = FC6_N256.FC6_N256(input_layer_size=X_train.shape[1])
 criterion = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(),)
 epochs = 100
@@ -148,5 +136,24 @@ plt.ylabel('Loss (MSE)')
 # plt.ylim([0,0.1])
 plt.savefig('batch_loss.png')
 plt.show()
+
+
+if split_type == 'batch':
+    single_scenario = emulator_data.test_scenarios[10]
+    test_model = single_scenario[0]
+    test_exp = single_scenario[2]
+    test_sector = single_scenario[1]
+    single_test_features = torch.tensor(np.array(test_features[(test_features[test_model] == 1) & (test_features[test_exp] == 1) & (test_features.sectors == test_sector)], dtype=np.float64), dtype=torch.float)
+    single_test_labels = np.array(test_labels[(test_features[test_model] == 1) & (test_features[test_exp] == 1) & (test_features.sectors == test_sector)], dtype=np.float64)
+    preds = model(single_test_features).detach().numpy()
+
+    plt.figure()
+    plt.plot(single_test_labels, 'r-', label='True')
+    plt.plot(preds, 'b-', label='Predicted')
+    plt.xlabel('Time (years since 2015)')
+    plt.ylabel('IVAF')
+    plt.title(f'Model={test_model}, Exp={test_exp}')
+    plt.legend()
+    plt.savefig('single_test.png')
 
 stop = ''
