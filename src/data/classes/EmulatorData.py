@@ -25,7 +25,7 @@ class EmulatorData:
         self.scaler_X = None
         self.scaler_y = None
         
-    def process(self, target_column, drop_missing=True, drop_columns=True, boolean_indices=True, scale=True, ):
+    def process(self, target_column, drop_missing=True, drop_columns=True, boolean_indices=True, scale=True, split_type='random'):
         if drop_missing:
             self = self.drop_missing()
         if drop_columns:

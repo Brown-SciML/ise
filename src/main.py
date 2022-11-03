@@ -44,16 +44,12 @@ if processing['combine_datasets']:
     master, inputs, outputs = combine_datasets(processed_data_dir=export_dir, 
                                                include_icecollapse=processing['include_icecollapse'], 
                                                export=export_dir)
-    
 
-# TODO: Start using my EmulatorData class -- find out what step is causing problems
+
+
+
+
 emulator_data = EmulatorData(directory=export_dir)
-# emulator_data = emulator_data.drop_missing().drop_columns(columns=['experiment', 'exp_id', 'groupname', 'regions']).create_boolean_indices()
-# emulator_data = emulator_data.split_data(target_column='ivaf')
-# emulator_data.X = emulator_data.scale(emulator_data.X, 'inputs', scaler='MinMaxScaler')
-# emulator_data.y = emulator_data.scale(emulator_data.y, 'outputs', scaler='MinMaxScaler')
-# emulator_data = emulator_data.train_test_split()
-
 emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
     target_column='ivaf',
     drop_missing=True,
@@ -61,11 +57,6 @@ emulator_data, train_features, test_features, train_labels, test_labels = emulat
     boolean_indices=True,
     scale=True,
 )
-
-# train_features = emulator_data.train_features
-# test_features = emulator_data.test_features
-# train_labels = emulator_data.train_labels
-# test_labels = emulator_data.test_labels
 
 class Emulator(torch.nn.Module):
     def __init__(self):
@@ -109,6 +100,7 @@ optimizer = optim.Adam(model.parameters(),)
 epochs = 100
 verbose = True
 loss_list = []
+batch_losses = []
 for epoch in range(1, epochs+1):
 
     iteration = 0
@@ -123,6 +115,7 @@ for epoch in range(1, epochs+1):
         optimizer.step()
         
         total_loss += loss.item()
+        batch_losses.append(loss.item())
             
     # loss_list.append(loss)
     avg_loss = total_loss / len(train_loader)
@@ -141,8 +134,30 @@ Mean Absolute Error: {mean_absolute_error(y_test, preds.detach().numpy())}
 Mean Squared Error: {mean_squared_error(y_test, preds.detach().numpy())}
 R2 Score: {r2_score(y_test, preds.detach().numpy())}""")
 
-plt.scatter(preds.detach().numpy(), y_test, s=3)
+plt.figure()
+plt.scatter(y_test, preds.detach().numpy(), s=3)
 plt.plot([min(y_test),max(y_test)], [min(y_test),max(y_test)], 'r-')
-# plt.savefig("nn.png")
+plt.title('Neural Network True vs Predicted')
+plt.xlabel('True')
+plt.ylabel('Predicted')
+plt.savefig("nn.png")
+plt.show()
+
+# plt.figure()
+# plt.plot(loss_list, '-')
+# plt.title('Loss per Epoch')
+# plt.xlabel('Epoch')
+# plt.ylabel('Average Loss (MSE)')
+# plt.savefig('epoch_loss.png')
+# plt.show()
+
+# plt.figure()
+# plt.plot(batch_losses, 'r-')
+# plt.title('Loss per Batch')
+# plt.xlabel('Batch')
+# plt.ylabel('Loss (MSE)')
+# # plt.ylim([0,0.1])
+# plt.savefig('batch_loss.png')
+# plt.show()
 
 stop = ''
