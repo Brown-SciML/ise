@@ -2,6 +2,7 @@ from data.processing.aggregate_by_sector import aggregate_atmosphere, aggregate_
 from data.processing.process_outputs import process_repository
 from data.processing.combine_datasets import combine_datasets
 from data.classes.EmulatorData import EmulatorData
+from models.SimpleEmulator import SimpleEmulator
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from utils import get_configs
@@ -56,23 +57,10 @@ emulator_data, train_features, test_features, train_labels, test_labels = emulat
     drop_columns=False,
     boolean_indices=True,
     scale=True,
-    split_type='random'
+    split_type='batch'
 )
 
-class Emulator(torch.nn.Module):
-    def __init__(self):
-        super(Emulator, self).__init__()
-        self.input_layer_size = X_train.shape[1]
-        self.layer = torch.nn.Linear(self.input_layer_size, 128)
-        self.layer2 = torch.nn.Linear(128, 32)
-        self.layer3 = torch.nn.Linear(32, 1)
-        self.relu = nn.ReLU()
 
-    def forward(self, x):
-        x = self.relu(self.layer(x))
-        x = self.relu(self.layer2(x))
-        x = self.layer3(x)     
-        return x
 
 class EmulatorTrainingDataset(Dataset):
     
@@ -144,21 +132,21 @@ plt.ylabel('Predicted')
 plt.savefig("nn.png")
 plt.show()
 
-# plt.figure()
-# plt.plot(loss_list, '-')
-# plt.title('Loss per Epoch')
-# plt.xlabel('Epoch')
-# plt.ylabel('Average Loss (MSE)')
-# plt.savefig('epoch_loss.png')
-# plt.show()
+plt.figure()
+plt.plot(loss_list, '-')
+plt.title('Loss per Epoch')
+plt.xlabel('Epoch')
+plt.ylabel('Average Loss (MSE)')
+plt.savefig('epoch_loss.png')
+plt.show()
 
-# plt.figure()
-# plt.plot(batch_losses, 'r-')
-# plt.title('Loss per Batch')
-# plt.xlabel('Batch')
-# plt.ylabel('Loss (MSE)')
-# # plt.ylim([0,0.1])
-# plt.savefig('batch_loss.png')
-# plt.show()
+plt.figure()
+plt.plot(batch_losses, 'r-')
+plt.title('Loss per Batch')
+plt.xlabel('Batch')
+plt.ylabel('Loss (MSE)')
+# plt.ylim([0,0.1])
+plt.savefig('batch_loss.png')
+plt.show()
 
 stop = ''
