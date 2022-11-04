@@ -1,6 +1,6 @@
 from torch.utils.data import Dataset
 
-class EmulatorTrainingDataset(Dataset):
+class PyTorchDataset(Dataset):
     
     def __init__(self, X_data, y_data):
         self.X_data = X_data
