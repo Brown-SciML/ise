@@ -1,6 +1,5 @@
 import pandas as pd
 from sklearn import preprocessing as sp
-from sklearn.model_selection import train_test_split
 import numpy as np
 import random
 
@@ -130,6 +129,7 @@ class EmulatorData:
                     pass
             self.train_features = np.array(train_features)
             self.train_labels = np.array(train_labels)
+            self.test_scenarios = test_scenarios
             
                 
             
