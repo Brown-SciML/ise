@@ -1,4 +1,3 @@
-from multiprocessing.sharedctypes import Value
 import pandas as pd
 from sklearn import preprocessing as sp
 from sklearn.model_selection import train_test_split
