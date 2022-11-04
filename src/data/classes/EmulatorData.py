@@ -78,7 +78,7 @@ class EmulatorData:
             self.test_features = self.X.drop(training_indices)
             self.test_labels = pd.Series(self.y.squeeze()).drop(training_indices)
 
-        elif "batch" in split_type.lower():
+        elif split_type.lower() == "batch":
             # batch -- grouping of 85 years of a particular model, experiment, and sector
 
             # Calculate how many batches you'll need (roughly) for train/test proportion
@@ -133,7 +133,7 @@ class EmulatorData:
             
                 
             
-        elif "batch_test" in split_type.lower():
+        elif split_type.lower() == "batch_test":
             # batch -- grouping of 85 years of a particular model, experiment, and sector
             # Calculate how many batches you'll need (roughly) for train/test proportion
             test_num_rows = len(self.X) * (1 - train_size)

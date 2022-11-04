@@ -1,146 +1,129 @@
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, mean_absolute_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import matplotlib.pyplot as plt
 import pandas as pd
-
+import numpy as np
 import torch
 from torch import nn, optim
+from training.PyTorchDataset import PyTorchDataset
+from torch.utils.data import DataLoader
+import time
+
 
 
 class Trainer:
     def __init__(self, cfg):
-        self.Model = None
+        self.model = None
         self.data = {}
         self.cfg = cfg
-        self.data_dir = self.cfg['data']['directory'] if self.cfg['data']['directory'] is not None else self.cfg['data']['export']
-        self.model_name = cfg['training']['model']
-        self.num_epochs = cfg['training']['epochs']
-        self.verbose = cfg['training']['verbose']
-        self.batch_size = cfg['training']['batch_size']
+        # self.data_dir = self.cfg['data']['directory'] if self.cfg['data']['directory'] is not None else self.cfg['data']['export']
+        # self.model_name = cfg['training']['model']
+        # self.num_epochs = cfg['training']['epochs']
+        # self.verbose = cfg['training']['verbose']
+        # self.batch_size = cfg['training']['batch_size']
         self.num_input_features = None
         self.loss_logs = {'training_loss': [], 'val_loss': [],}
+        self.train_loader = None
+        self.test_loader = None
+        self.data_dict = None
+        self.logs = {'training': {'epoch': [], 'batch': []}, 'testing': []}
 
-    def load_data(self):
-        inputs = pd.read_csv(f"{self.data_dir}/inputs.csv")
-        labels = pd.read_csv(f"{self.data_dir}/outputs.csv")
-        X_train, X_test, y_train, y_test = train_test_split(inputs, labels,
-                                                            test_size=self.cfg['training']['test_split_ratio'], )
-        self.data['X_train'] = X_train
-        self.data['X_test'] = X_test
-        self.data['y_train'] = y_train
-        self.data['y_test'] = y_test
+    def _format_data(self, train_features, train_labels, test_features, test_labels, train_batch_size=100, test_batch_size=10,):
+        self.X_train = np.array(train_features, dtype=np.float64)
+        self.y_train = np.array(train_labels, dtype=np.float64)
+        self.X_test = np.array(test_features, dtype=np.float64)
+        self.y_test = np.array(test_labels, dtype=np.float64)
 
+        train_dataset = PyTorchDataset(torch.from_numpy(self.X_train).float(), torch.from_numpy(self.y_train).float().squeeze())
+        test_dataset = PyTorchDataset(torch.from_numpy(self.X_test).float(), torch.from_numpy(self.y_test).float().squeeze())
+        self.train_loader = DataLoader(dataset=train_dataset, batch_size=train_batch_size, shuffle=True)
+        self.test_loader = DataLoader(dataset=test_dataset, batch_size=test_batch_size,)
+        
         return self
 
-    def calc_predictor_losses(self, pred, y, aggregate_fxn='add'):
-        # Use if composite loss (e.g. MSE + L1)
-        losses = self.losses
-        total_loss = 0
+    def train(self, model, data_dict, criterion, epochs, batch_size, tensorboard=False):
+        self.data_dict = data_dict
+        if self.train_loader is None or self.train_loader is None:
+            self._format_data(data_dict['train_features'], data_dict['train_labels'], data_dict['test_features'], data_dict['test_labels'],
+                              train_batch_size=batch_size)
+        
+        self.num_input_features = self.data_dict['train_features'].shape[1]
+        self.model = model(input_layer_size=self.num_input_features)
+        
+        optimizer = optim.Adam(self.model.parameters(),)
+        # criterion = nn.MSELoss()
 
-        for loss in losses.keys():
-            if aggregate_fxn in ('add', 'average'):
-                total_loss += losses[loss](pred, y)
+        self.model.train()
+        for epoch in range(1, epochs+1):
+            epoch_start = time.time()
 
-        if aggregate_fxn == 'average':
-            total_loss /= len(losses.keys())
-
-        return total_loss
-
-
-    def train(self):
-
-        # Load data if it hasn't been loaded already
-        if len(self.data) == 0:
-            self.load_data()
-
-        # setup model type, optimizers and losses
-        if self.model_name == 'GrIS_HybridFlow':
-            from src.models.GrIS_HybridFlow import GrIS_HybridFlow
-            self.HybridFlow = GrIS_HybridFlow()
-        elif self.model_name == 'Glacier_HybridFlow':
-            from src.models.Glacier_HybridFlow import Glacier_HybridFlow
-            self.HybridFlow = Glacier_HybridFlow()
-        elif self.model_name == 'AIS_HybridFlow':
-            from src.models.AIS_HybridFlow import AIS_HybridFlow
-            self.HybridFlow = AIS_HybridFlow()
-        else:
-            raise NameError(f'Model: {self.model_name} either does not exist or is not supported yet.')
-
-        self.num_input_features = self.HybridFlow.Flow.num_input_features
-        optimizer = optim.Adam(list(self.HybridFlow.Flow.parameters()) + list(self.HybridFlow.Predictor.parameters()))
-        self.losses = {'mse': nn.MSELoss(), 'mae': nn.L1Loss()}
-        scaling_constant = self.cfg['training']['generative_scaling_constant']
-
-        for epoch in range(self.num_epochs):
-            if self.verbose and epoch % 1 == 0:
-                print(f'---------- EPOCH: {epoch} ----------')
-
-            for i in range(0, len(self.data['X_train']), self.batch_size):
-                if self.num_input_features == 1:
-                    x = torch.tensor(self.data['X_train'][i:i + self.batch_size], dtype=torch.float32).reshape(-1, 1)
-                else:
-                    x = torch.tensor(self.data['X_train'][i:i + self.batch_size, :], dtype=torch.float32)
-                y = torch.tensor(self.data['y_train'][i:i + self.batch_size], dtype=torch.float32).reshape(-1, 1)
-
-                # Train model
+            total_loss = 0
+            for X_train_batch, y_train_batch in self.train_loader:
+                
                 optimizer.zero_grad()
 
-                # Generative loss
-                neg_log_prob = -self.HybridFlow.Flow.flow.log_prob(inputs=x).mean()
-
-                # Predictor Loss
-                pred, uq = self.HybridFlow(x)
-                pred_loss = self.calc_predictor_losses(pred, y, aggregate_fxn='add')
-
-                # Cumulative loss (loss = scaling_constant * neg_log_prob + pred_loss)
-                loss = torch.add(pred_loss, neg_log_prob, alpha=scaling_constant)
+                pred = self.model(X_train_batch)
+                loss = criterion(pred, y_train_batch.unsqueeze(1))
                 loss.backward()
-
-                # Keep track of metrics
-                self.loss_logs['total_loss'].append(loss.detach().numpy())
-                self.loss_logs['flow_loss'].append(neg_log_prob.detach().numpy())
-                self.loss_logs['predictor_loss'].append(pred_loss.detach().numpy())
-
                 optimizer.step()
+                
+                total_loss += loss.item()
+                self.logs['training']['batch'].append(loss.item())
+                
+            avg_loss = total_loss / len(self.train_loader)
+            self.logs['training']['epoch'].append(avg_loss)
+            training_end = time.time()
+            
+            self.model.eval()
+            test_total_loss = 0
+            for X_test_batch, y_test_batch in self.test_loader:
+                test_pred = self.model(X_test_batch)
+                loss = criterion(test_pred, y_test_batch.unsqueeze(1))
+                test_total_loss += loss.item()
+                
+            test_loss = test_total_loss / len(self.test_loader)
+            self.logs['testing'].append(test_loss)
+            testing_end = time.time()
 
-                if self.verbose and i % 500 == 0:
-                    print(f"Total Loss: {loss}, -Log Prob: {neg_log_prob}, MSE: {pred_loss}")
+            if epoch % 1 == 0:
+                print('')
+                print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_loss:0.8f}, Validation Loss (MSE): {test_loss:0.8f}
+Training time: {training_end - epoch_start: 0.2f} seconds, Validation time: {testing_end - training_end: 0.2f} seconds""")
+
 
         return self
 
-    def plot_loss(self):
-        plt.plot(self.loss_logs['total_loss'], 'r-', label='Total Loss')
-        plt.plot(self.loss_logs['flow_loss'], 'b-', label='Flow Loss')
-        plt.plot(self.loss_logs['predictor_loss'], 'g-', label='Predictor Loss')
-        plt.title('GrIS_HybridFlow Loss per Batch')
-        plt.xlabel(f'Batch # ({self.batch_size} per batch)')
-        plt.ylabel('Loss')
+    def plot_loss(self, save=False):
+        plt.plot(self.logs['training']['epoch'], 'r-', label='Training Loss')
+        plt.plot(self.logs['testing'], 'b-', label='Validation Loss')
+        plt.title('Emulator MSE loss per Epoch')
+        plt.xlabel(f'Epoch #')
+        plt.ylabel('Loss (MSE)')
         plt.legend()
+        
+        if save:
+            plt.savefig(save)
         plt.show()
 
     def evaluate(self):
         # Test predictions
-        self.HybridFlow.eval()
+        self.model.eval()
 
-        if self.num_input_features == 1:
-            X_test = torch.tensor(self.data['X_test'], dtype=torch.float32).reshape(-1, 1)
-        else:
-            X_test = torch.tensor(self.data['X_test'], dtype=torch.float32)
-
-        with torch.no_grad():
-            predictions, uncertainties = self.HybridFlow(X_test)
-
-        predictions = predictions.numpy().squeeze()
-        uncertainties = uncertainties.numpy().squeeze()
+        X_test = torch.tensor(self.X_test, dtype=torch.float)  # .reshape(-1, X_train.size()[2])
+        preds = self.model(X_test)
 
         # Calculate metrics
-        mae = mean_absolute_error(y_true=self.data['y_test'], y_pred=predictions)
-        pred_loss = mean_squared_error(y_true=self.data['y_test'], y_pred=predictions, squared=True)
-        rmse = mean_squared_error(y_true=self.data['y_test'], y_pred=predictions, squared=False)
+        mae = mean_absolute_error(self.y_test, preds.detach().numpy())
+        mse = mean_squared_error(self.y_test, preds.detach().numpy())
+        rmse = np.sqrt(mean_squared_error(self.y_test, preds.detach().numpy()))
+        r2 = r2_score(self.y_test, preds.detach().numpy())
+        
+        metrics = {'MSE': mse, 'MAE': mae, 'RMSE': rmse, 'R2': r2}
 
-        # Format outputs
-        data = {'X_test': self.data['X_test'], 'y_test': self.data['y_test'], 'predictions': predictions,
-                'uncertainties': uncertainties}
-        metrics = {f'Test Loss ({self.loss_logs["total_loss"][-1]})': pred_loss, 'MAE': mae, 'RMSE': rmse}
-
-        return data, metrics
+        print(f"""Test Metrics
+MSE: {mse:0.6f}
+MAE: {mae:0.6f}
+RMSE: {rmse:0.6f}
+R2: {r2:0.6f}""")
+        
+        return metrics, preds

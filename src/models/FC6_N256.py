@@ -4,6 +4,9 @@ from torch import nn
 class FC6_N256(torch.nn.Module):
     def __init__(self, input_layer_size):
         super(FC6_N256, self).__init__()
+        self.num_fc = 6
+        self.num_nodes_max = 256
+        self.model_name = 'FC6_N256'
         self.input_layer_size = input_layer_size
         self.layer = torch.nn.Linear(self.input_layer_size, 256)
         self.layer2 = torch.nn.Linear(256, 128)
