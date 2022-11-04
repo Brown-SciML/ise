@@ -176,6 +176,9 @@ if split_type == 'batch':
         single_test_labels = np.array(test_labels[(test_features[test_model] == 1) & (test_features[test_exp] == 1) & (test_features.sectors == test_sector)], dtype=np.float64)
         preds = model(single_test_features).detach().numpy()
 
+        single_test_labels = emulator_data.unscale(single_test_labels, 'outputs') * 1e-9 / 361.8
+        preds = emulator_data.unscale(preds, 'outputs') * 1e-9 / 361.8
+
         plt.figure()
         plt.plot(single_test_labels, 'r-', label='True')
         plt.plot(preds, 'b-', label='Predicted')
