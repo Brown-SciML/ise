@@ -50,9 +50,11 @@ if processing['combine_datasets']:
 
 
 
-
+print('1/4: Loading in Data')
 emulator_data = EmulatorData(directory=export_dir)
 split_type = 'batch'
+
+print('2/4: Processing Data')
 emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
     target_column='ivaf',
     drop_missing=True,
@@ -72,6 +74,8 @@ test_dataset = PyTorchDataset(torch.from_numpy(X_test).float(), torch.from_numpy
 train_loader = DataLoader(dataset=train_dataset, batch_size=200, shuffle=True)
 test_loader = DataLoader(dataset=test_dataset, batch_size=200,)
 
+
+print('3/4: Training Model')
 # model = FC3_N128.FC3_N128(input_layer_size=X_train.shape[1])
 model = FC6_N256.FC6_N256(input_layer_size=X_train.shape[1])
 # model = FC12_N1024.FC12_N1024(input_layer_size=X_train.shape[1])
@@ -114,11 +118,12 @@ for epoch in range(1, epochs+1):
     avg_loss = total_loss / len(train_loader)
     logs['training']['epoch'].append(avg_loss)
 
-    if epoch % 5 == 0:
+    if epoch % 1 == 0:
         print('')
         print(f"""Epoch: {epoch}, Training Loss (MSE): {avg_loss:0.8f}, Validation Loss (MSE): {test_loss:0.8f}
 Training time: {training_end - epoch_start: 0.2f} seconds, Validation time: {testing_end - training_end: 0.2f} seconds""")
-        
+
+print('4/4: Testing & Plotting')
 model.eval()
 X_test = torch.tensor(X_test, dtype=torch.float)
 preds = model(X_test)
@@ -139,7 +144,8 @@ plt.savefig("nn.png")
 plt.show()
 
 plt.figure()
-plt.plot(logs['training']['epoch'], '-')
+plt.plot(logs['training']['epoch'], '-', label='Training')
+plt.plot(logs['testing'], 'b-', label='Validation')
 plt.title('Loss per Epoch')
 plt.xlabel('Epoch')
 plt.ylabel('Average Loss (MSE)')
