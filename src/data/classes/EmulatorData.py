@@ -2,6 +2,7 @@ import pandas as pd
 from sklearn import preprocessing as sp
 from sklearn.model_selection import train_test_split
 import numpy as np
+import random
 
 
 class EmulatorData:
@@ -18,9 +19,16 @@ class EmulatorData:
             except FileNotFoundError:
                 raise FileNotFoundError('Files not found, make sure to run all processing functions.')
 
-        # self.modelnames = list(set(self.data.modelname))
-        # self.experiments = list(set(self.data.exp_id))
+
+        self.data['modelname'] = self.data.groupname + '_' + self.data.modelname
+        # self.data.smb = self.data.smb.fillna(method="ffill")
+        
+        unique_batches = self.data.groupby(['modelname','sectors', 'exp_id']).size().reset_index().rename(columns={0:'count'}).drop(columns='count')
+        self.batches = unique_batches.values.tolist()
         self.output_columns = ['icearea', 'iareafl', 'iareagr', 'ivol', 'ivaf', 'smb', 'smbgr', 'bmbfl']
+        
+        for col in ['icearea', 'iareafl', 'iareagr', 'ivol', 'smb', 'smbgr', 'bmbfl']:
+            self.data[col] = self.data[col].fillna(self.data[col].mean())
         self.X = None
         self.y = None
         self.scaler_X = None
@@ -82,39 +90,129 @@ class EmulatorData:
             test_num_rows = len(self.X) * (1 - train_size)
             num_years = len(set(self.data.year))
             num_test_batches = test_num_rows // num_years
+            
+            sectors_scaler = sp.MinMaxScaler().fit(np.array(self.data.sectors).reshape(-1,1))
+            
+            
+            train_features = pd.DataFrame()
+            test_features = pd.DataFrame()
+            
+            test_batches_idx = np.array(random.sample(range(len(self.batches)), int(num_test_batches)))
+            test_batches = np.array(self.batches)[test_batches_idx].tolist()
+            # test_batches = [self.batches[i] for i in test_batches_idx]
+            # train_batches = self.batches[:]
+            # train_batches = [train_batches.pop(i) for i in test_batches_idx]
+            train_batches = np.delete(np.array(self.batches), test_batches_idx, axis=0).tolist()
+            train_batches = [[x[0], float(x[1]), x[2]] for x in train_batches]
+            test_batches = [[x[0], float(x[1]), x[2]] for x in test_batches]
+            
+            train_features = np.zeros([num_years, self.X.shape[1], len(train_batches)])
+            test_features = np.zeros([num_years, self.X.shape[1], len(test_batches)])
+            train_labels = np.zeros([num_years, len(train_batches)])
+            test_labels = np.zeros([num_years, len(test_batches)])
+            
+            test_index = 0
+            train_index = 0
+            test_scenarios = []
+            test_indices = []
+            test_features = []
+            test_labels = []
+            # Keep this running until you have enough samples
+            while len(test_scenarios) < num_test_batches:
+                try:
+                    random_index = random.sample(range(len(self.batches)), 1)[0]
+                    batch = self.batches[random_index]
+                    if batch not in test_scenarios:
+                        data = self.X[(self.X[f"modelname_{batch[0]}"] == 1) & (self.X['sectors'] == sectors_scaler.transform(np.array(batch[1]).reshape(1,-1)).squeeze()) & (self.X[f"exp_id_{batch[2]}"] == 1)]
+                        labels = self.y[(self.X[f"modelname_{batch[0]}"] == 1) & (self.X['sectors'] == sectors_scaler.transform(np.array(batch[1]).reshape(1,-1)).squeeze()) & (self.X[f"exp_id_{batch[2]}"] == 1)]
+                        if not data.empty:
+                            test_scenarios.append(batch)
+                            test_indices.append(random_index)
+                            test_features.append(np.array(data))
+                            test_labels.append(labels.squeeze())
+                            # test_features[:,:,test_index] = data.to_numpy()
+                            # test_labels[:,test_index] = labels.squeeze()
+                            test_index += 1
+                except KeyError:
+                    pass
+            
+            self.test_features = np.array(test_features)
+            self.test_labels = np.array(test_labels)
+            train_scenarios = np.delete(np.array(self.batches), test_indices, axis=0).tolist()
+            
+            train_features = []
+            train_labels = []
+            for batch in train_scenarios:
+                try:
+                    data = self.X[(self.X[f"modelname_{batch[0]}"] == 1) & (self.X['sectors'] == sectors_scaler.transform(np.array(batch[1]).reshape(1,-1)).squeeze()) & (self.X[f"exp_id_{batch[2]}"] == 1)]
+                    labels = self.y[(self.X[f"modelname_{batch[0]}"] == 1) & (self.X['sectors'] == sectors_scaler.transform(np.array(batch[1]).reshape(1,-1)).squeeze()) & (self.X[f"exp_id_{batch[2]}"] == 1)]
+                    if not data.empty:
+                        train_features.append(np.array(data))
+                        # train_features[:,:,train_index] = data.to_numpy()
+                        train_labels.append(labels.squeeze())
+                        # train_labels[:,train_index] = labels.squeeze()
+                except KeyError:
+                    pass
+            self.train_features = np.array(train_features)
+            self.train_labels = np.array(train_labels)
+            
+                
+            
+        
+            # for batch in self.batches:
+            #     try:
+            #         data = self.X[(self.X[f"modelname_{batch[0]}"] == 1) & (self.X['sectors'] == sectors_scaler.transform(np.array(batch[1]).reshape(1,-1)).squeeze()) & (self.X[f"exp_id_{batch[2]}"] == 1)]
+            #         labels = self.y[(self.X[f"modelname_{batch[0]}"] == 1) & (self.X['sectors'] == sectors_scaler.transform(np.array(batch[1]).reshape(1,-1)).squeeze()) & (self.X[f"exp_id_{batch[2]}"] == 1)]
+            #         test = True if batch in test_batches else False   
 
-            # Get all possible values for sector, experiment, and model
-            all_sectors = list(set(self.X.sectors))
-            all_experiments = [col for col in self.X.columns if "exp_id" in col]
-            all_modelnames = [col for col in self.X.columns if "modelname" in col]
+            #         if not data.empty:
+            #             if test:
+            #                 test_features[:,:,test_index] = data.to_numpy()
+            #                 test_labels[:,test_index] = labels.squeeze()
+            #                 # train_features = pd.concat([train_features, data])
+            #                 test_index += 1 
+            #             else:
+            #                 train_features[:,:,train_index] = data.to_numpy()
+            #                 train_labels[:,train_index] = labels.squeeze()
+            #                 train_index += 1
+            #             # test_features = pd.concat([test_features, data])
+            #     except KeyError:  # scenario was processed out.. doesn't exist
+            #         pass
+            
+                
+            
+            # for sector in all_sectors:
+            #     for exp in all_experiments:
+            #         for model in all_modelnames:
+                        
 
             # Set up concatenation of test data scenarios...
             test_scenarios = []
             test_dataset = pd.DataFrame()
 
             # Keep this running until you have enough samples
-            while len(test_scenarios) < num_test_batches:
+            # while len(test_scenarios) < num_test_batches:
 
-                # Get a random
-                random_model = np.random.choice(all_modelnames)
-                random_sector = np.random.choice(all_sectors)
-                random_experiment = np.random.choice(all_experiments)
-                test_scenario = [random_model, random_sector, random_experiment]
-                if test_scenario not in test_scenarios:
-                    scenario_df = self.X[(self.X[random_model] == 1) & (self.X['sectors'] == random_sector) & (
-                                self.X[random_experiment] == 1)]
-                    if not scenario_df.empty:
-                        test_scenarios.append(test_scenario)
-                        test_dataset = pd.concat([test_dataset, scenario_df])
+            #     # Get a random
+            #     random_model = np.random.choice(all_modelnames)
+            #     random_sector = np.random.choice(all_sectors)
+            #     random_experiment = np.random.choice(all_experiments)
+            #     test_scenario = [random_model, random_sector, random_experiment]
+            #     if test_scenario not in test_scenarios:
+            #         scenario_df = self.X[(self.X[random_model] == 1) & (self.X['sectors'] == random_sector) & (
+            #                     self.X[random_experiment] == 1)]
+            #         if not scenario_df.empty:
+            #             test_scenarios.append(test_scenario)
+            #             test_dataset = pd.concat([test_dataset, scenario_df])
 
-            self.test_features = test_dataset
-            testing_indices = self.test_features.index
-            self.test_labels = self.y[testing_indices].squeeze()
+            # self.test_features = test_dataset
+            # testing_indices = self.test_features.index
+            # self.test_labels = self.y[testing_indices].squeeze()
 
-            self.train_features = self.X.drop(testing_indices)
-            self.train_labels = pd.Series(self.y.squeeze()).drop(testing_indices)
+            # self.train_features = self.X.drop(testing_indices)
+            # self.train_labels = pd.Series(self.y.squeeze()).drop(testing_indices)
             
-            self.test_scenarios = test_scenarios
+            # self.test_scenarios = test_scenarios
 
         return self
 
@@ -181,3 +279,4 @@ class EmulatorData:
 
         else:
             raise ValueError(f"values_type must be in ['inputs', 'outputs'], received {values_type}")
+
