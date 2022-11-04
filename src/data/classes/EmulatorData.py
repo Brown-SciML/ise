@@ -67,11 +67,7 @@ class EmulatorData:
         return self
 
     def train_test_split(self, train_size=0.7, split_type='random'):
-        # if isinstance(self.X, pd.DataFrame):
-        #     train_dataset = dataset.sample(frac=0.8, random_state=0)
-        #     test_dataset = dataset.drop(train_dataset.index)
-        # self.train_features, self.test_features, self.train_labels, self.test_labels = train_test_split(self.X, self.y, train_size=train_size, random_state=0, shuffle=False)
-
+        
         if not isinstance(self.X, pd.DataFrame):
             self.X = pd.DataFrame(self.X, columns=self.input_columns)
 
@@ -94,25 +90,8 @@ class EmulatorData:
             sectors_scaler = sp.MinMaxScaler().fit(np.array(self.data.sectors).reshape(-1,1))
             
             
-            train_features = pd.DataFrame()
-            test_features = pd.DataFrame()
-            
-            test_batches_idx = np.array(random.sample(range(len(self.batches)), int(num_test_batches)))
-            test_batches = np.array(self.batches)[test_batches_idx].tolist()
-            # test_batches = [self.batches[i] for i in test_batches_idx]
-            # train_batches = self.batches[:]
-            # train_batches = [train_batches.pop(i) for i in test_batches_idx]
-            train_batches = np.delete(np.array(self.batches), test_batches_idx, axis=0).tolist()
-            train_batches = [[x[0], float(x[1]), x[2]] for x in train_batches]
-            test_batches = [[x[0], float(x[1]), x[2]] for x in test_batches]
-            
-            train_features = np.zeros([num_years, self.X.shape[1], len(train_batches)])
-            test_features = np.zeros([num_years, self.X.shape[1], len(test_batches)])
-            train_labels = np.zeros([num_years, len(train_batches)])
-            test_labels = np.zeros([num_years, len(test_batches)])
             
             test_index = 0
-            train_index = 0
             test_scenarios = []
             test_indices = []
             test_features = []
@@ -130,8 +109,6 @@ class EmulatorData:
                             test_indices.append(random_index)
                             test_features.append(np.array(data))
                             test_labels.append(labels.squeeze())
-                            # test_features[:,:,test_index] = data.to_numpy()
-                            # test_labels[:,test_index] = labels.squeeze()
                             test_index += 1
                 except KeyError:
                     pass
@@ -148,9 +125,7 @@ class EmulatorData:
                     labels = self.y[(self.X[f"modelname_{batch[0]}"] == 1) & (self.X['sectors'] == sectors_scaler.transform(np.array(batch[1]).reshape(1,-1)).squeeze()) & (self.X[f"exp_id_{batch[2]}"] == 1)]
                     if not data.empty:
                         train_features.append(np.array(data))
-                        # train_features[:,:,train_index] = data.to_numpy()
                         train_labels.append(labels.squeeze())
-                        # train_labels[:,train_index] = labels.squeeze()
                 except KeyError:
                     pass
             self.train_features = np.array(train_features)
@@ -158,62 +133,41 @@ class EmulatorData:
             
                 
             
-        
-            # for batch in self.batches:
-            #     try:
-            #         data = self.X[(self.X[f"modelname_{batch[0]}"] == 1) & (self.X['sectors'] == sectors_scaler.transform(np.array(batch[1]).reshape(1,-1)).squeeze()) & (self.X[f"exp_id_{batch[2]}"] == 1)]
-            #         labels = self.y[(self.X[f"modelname_{batch[0]}"] == 1) & (self.X['sectors'] == sectors_scaler.transform(np.array(batch[1]).reshape(1,-1)).squeeze()) & (self.X[f"exp_id_{batch[2]}"] == 1)]
-            #         test = True if batch in test_batches else False   
-
-            #         if not data.empty:
-            #             if test:
-            #                 test_features[:,:,test_index] = data.to_numpy()
-            #                 test_labels[:,test_index] = labels.squeeze()
-            #                 # train_features = pd.concat([train_features, data])
-            #                 test_index += 1 
-            #             else:
-            #                 train_features[:,:,train_index] = data.to_numpy()
-            #                 train_labels[:,train_index] = labels.squeeze()
-            #                 train_index += 1
-            #             # test_features = pd.concat([test_features, data])
-            #     except KeyError:  # scenario was processed out.. doesn't exist
-            #         pass
-            
-                
-            
-            # for sector in all_sectors:
-            #     for exp in all_experiments:
-            #         for model in all_modelnames:
-                        
-
+        elif "batch_test" in split_type.lower():
+            # batch -- grouping of 85 years of a particular model, experiment, and sector
+            # Calculate how many batches you'll need (roughly) for train/test proportion
+            test_num_rows = len(self.X) * (1 - train_size)
+            num_years = len(set(self.data.year))
+            num_test_batches = test_num_rows // num_years
+            # Get all possible values for sector, experiment, and model
+            all_sectors = list(set(self.X.sectors))
+            all_experiments = [col for col in self.X.columns if "exp_id" in col]
+            all_modelnames = [col for col in self.X.columns if "modelname" in col]
             # Set up concatenation of test data scenarios...
             test_scenarios = []
             test_dataset = pd.DataFrame()
-
             # Keep this running until you have enough samples
-            # while len(test_scenarios) < num_test_batches:
+            while len(test_scenarios) < num_test_batches:
+                # Get a random
+                random_model = np.random.choice(all_modelnames)
+                random_sector = np.random.choice(all_sectors)
+                random_experiment = np.random.choice(all_experiments)
+                test_scenario = [random_model, random_sector, random_experiment]
+                if test_scenario not in test_scenarios:
+                    scenario_df = self.X[(self.X[random_model] == 1) & (self.X['sectors'] == random_sector) & (
+                                self.X[random_experiment] == 1)]
+                    if not scenario_df.empty:
+                        test_scenarios.append(test_scenario)
+                        test_dataset = pd.concat([test_dataset, scenario_df])
+            self.test_features = test_dataset
+            testing_indices = self.test_features.index
+            self.test_labels = self.y[testing_indices].squeeze()
 
-            #     # Get a random
-            #     random_model = np.random.choice(all_modelnames)
-            #     random_sector = np.random.choice(all_sectors)
-            #     random_experiment = np.random.choice(all_experiments)
-            #     test_scenario = [random_model, random_sector, random_experiment]
-            #     if test_scenario not in test_scenarios:
-            #         scenario_df = self.X[(self.X[random_model] == 1) & (self.X['sectors'] == random_sector) & (
-            #                     self.X[random_experiment] == 1)]
-            #         if not scenario_df.empty:
-            #             test_scenarios.append(test_scenario)
-            #             test_dataset = pd.concat([test_dataset, scenario_df])
+            self.train_features = self.X.drop(testing_indices)
+            self.train_labels = pd.Series(self.y.squeeze()).drop(testing_indices)
 
-            # self.test_features = test_dataset
-            # testing_indices = self.test_features.index
-            # self.test_labels = self.y[testing_indices].squeeze()
-
-            # self.train_features = self.X.drop(testing_indices)
-            # self.train_labels = pd.Series(self.y.squeeze()).drop(testing_indices)
-            
-            # self.test_scenarios = test_scenarios
-
+            self.test_scenarios = test_scenarios
+        
         return self
 
     def drop_missing(self):
