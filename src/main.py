@@ -18,6 +18,7 @@ from sklearn.preprocessing import MinMaxScaler
 cfg = get_configs()
 import pandas as pd
 import time
+import tensorflow as tf
 
 forcing_directory = cfg['data']['forcing']
 zenodo_directory = cfg['data']['output']
@@ -71,8 +72,8 @@ y_test = np.array(test_labels, dtype=np.float64)
 
 train_dataset = PyTorchDataset(torch.from_numpy(X_train).float(), torch.from_numpy(y_train).float().squeeze())
 test_dataset = PyTorchDataset(torch.from_numpy(X_test).float(), torch.from_numpy(y_test).float().squeeze())
-train_loader = DataLoader(dataset=train_dataset, batch_size=200, shuffle=True)
-test_loader = DataLoader(dataset=test_dataset, batch_size=200,)
+train_loader = DataLoader(dataset=train_dataset, batch_size=100, shuffle=True)
+test_loader = DataLoader(dataset=test_dataset, batch_size=50,)
 
 
 print('3/4: Training Model')
@@ -81,7 +82,7 @@ model = FC6_N256.FC6_N256(input_layer_size=X_train.shape[1])
 # model = FC12_N1024.FC12_N1024(input_layer_size=X_train.shape[1])
 criterion = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(),)
-epochs = 100
+epochs = 20
 verbose = True
 logs = {'training': {'epoch': [], 'batch': []}, 'testing': []}
 batch_losses = []
@@ -135,7 +136,7 @@ Mean Squared Error: {mean_squared_error(y_test, preds.detach().numpy())}
 R2 Score: {r2_score(y_test, preds.detach().numpy())}""")
 
 plt.figure()
-plt.scatter(y_test, preds.detach().numpy(), s=3)
+plt.scatter(y_test, preds.detach().numpy(), s=3, alpha=0.2)
 plt.plot([min(y_test),max(y_test)], [min(y_test),max(y_test)], 'r-')
 plt.title('Neural Network True vs Predicted')
 plt.xlabel('True')
@@ -144,11 +145,13 @@ plt.savefig("nn.png")
 plt.show()
 
 plt.figure()
-plt.plot(logs['training']['epoch'], '-', label='Training')
+plt.plot(logs['training']['epoch'], 'r-', label='Training')
 plt.plot(logs['testing'], 'b-', label='Validation')
 plt.title('Loss per Epoch')
 plt.xlabel('Epoch')
 plt.ylabel('Average Loss (MSE)')
+plt.ylim([0,0.005])
+plt.legend()
 plt.savefig('epoch_loss.png')
 plt.show()
 
@@ -179,6 +182,7 @@ if split_type == 'batch':
         plt.xlabel('Time (years since 2015)')
         plt.ylabel('IVAF')
         plt.title(f'Model={test_model}, Exp={test_exp}')
+        plt.ylim([0.5,1])
         plt.legend()
         plt.savefig(f'{test_model}_{test_exp}_{round(test_sector)}.png')
 
