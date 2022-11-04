@@ -121,7 +121,7 @@ for epoch in range(1, epochs+1):
 
     if epoch % 1 == 0:
         print('')
-        print(f"""Epoch: {epoch}, Training Loss (MSE): {avg_loss:0.8f}, Validation Loss (MSE): {test_loss:0.8f}
+        print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_loss:0.8f}, Validation Loss (MSE): {test_loss:0.8f}
 Training time: {training_end - epoch_start: 0.2f} seconds, Validation time: {testing_end - training_end: 0.2f} seconds""")
 
 print('4/4: Testing & Plotting')
@@ -141,7 +141,7 @@ plt.plot([min(y_test),max(y_test)], [min(y_test),max(y_test)], 'r-')
 plt.title('Neural Network True vs Predicted')
 plt.xlabel('True')
 plt.ylabel('Predicted')
-plt.savefig("nn.png")
+plt.savefig("results/nn.png")
 plt.show()
 
 plt.figure()
@@ -150,9 +150,9 @@ plt.plot(logs['testing'], 'b-', label='Validation')
 plt.title('Loss per Epoch')
 plt.xlabel('Epoch')
 plt.ylabel('Average Loss (MSE)')
-plt.ylim([0,0.005])
+# plt.ylim([0,0.005])
 plt.legend()
-plt.savefig('epoch_loss.png')
+plt.savefig('results/epoch_loss.png')
 plt.show()
 
 plt.figure()
@@ -161,7 +161,7 @@ plt.title('Loss per Batch')
 plt.xlabel('Batch')
 plt.ylabel('Loss (MSE)')
 # plt.ylim([0,0.1])
-plt.savefig('batch_loss.png')
+plt.savefig('results/batch_loss.png')
 plt.show()
 # TODO: Plot validation
 # TODO: Try other metrics / tensorboard
@@ -176,17 +176,17 @@ if split_type == 'batch':
         single_test_labels = np.array(test_labels[(test_features[test_model] == 1) & (test_features[test_exp] == 1) & (test_features.sectors == test_sector)], dtype=np.float64)
         preds = model(single_test_features).detach().numpy()
 
-        single_test_labels = emulator_data.unscale(single_test_labels, 'outputs') * 1e-9 / 361.8
-        preds = emulator_data.unscale(preds, 'outputs') * 1e-9 / 361.8
+        single_test_labels = emulator_data.unscale(single_test_labels.reshape(-1,1), 'outputs') * 1e-9 / 361.8
+        preds = emulator_data.unscale(preds.reshape(-1,1), 'outputs') * 1e-9 / 361.8
 
         plt.figure()
         plt.plot(single_test_labels, 'r-', label='True')
         plt.plot(preds, 'b-', label='Predicted')
         plt.xlabel('Time (years since 2015)')
-        plt.ylabel('IVAF')
+        plt.ylabel('SLE (mm)')
         plt.title(f'Model={test_model}, Exp={test_exp}')
-        plt.ylim([0.5,1])
+        plt.ylim([-10,10])
         plt.legend()
-        plt.savefig(f'{test_model}_{test_exp}_{round(test_sector)}.png')
+        plt.savefig(f'results/{test_model}_{test_exp}_{round(test_sector)}.png')
 
 stop = ''
