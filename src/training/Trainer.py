@@ -1,10 +1,8 @@
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
 import torch
-from torch import nn, optim
+from torch import optim
 from training.PyTorchDataset import PyTorchDataset
 from torch.utils.data import DataLoader
 import time
@@ -41,14 +39,19 @@ class Trainer:
         
         return self
 
-    def train(self, model, data_dict, criterion, epochs, batch_size, tensorboard=False):
+    def train(self, model, data_dict, criterion, epochs, batch_size, tensorboard=False, num_linear_layers=None, nodes=None,):
         self.data_dict = data_dict
         if self.train_loader is None or self.train_loader is None:
             self._format_data(data_dict['train_features'], data_dict['train_labels'], data_dict['test_features'], data_dict['test_labels'],
                               train_batch_size=batch_size)
         
         self.num_input_features = self.data_dict['train_features'].shape[1]
-        self.model = model(input_layer_size=self.num_input_features)
+        
+        
+        if num_linear_layers is not None and nodes is not None:
+            self.model = model(input_layer_size=self.num_input_features, num_linear_layers=num_linear_layers, nodes=nodes)
+        else:
+            self.model = model(input_layer_size=self.num_input_features)
         
         optimizer = optim.Adam(self.model.parameters(),)
         # criterion = nn.MSELoss()

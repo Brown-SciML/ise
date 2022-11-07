@@ -3,7 +3,7 @@ from data.processing.process_outputs import process_repository
 from data.processing.combine_datasets import combine_datasets
 from data.classes.EmulatorData import EmulatorData
 from training.Trainer import Trainer
-from models import FC3_N128, FC6_N256, FC12_N1024
+from models import FC3_N128, FC6_N256, FC12_N1024, ExploratoryModel
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from utils import get_configs
 import matplotlib.pyplot as plt
@@ -14,8 +14,7 @@ import numpy as np
 # from tqdm import tqdm
 # from sklearn.preprocessing import MinMaxScaler
 cfg = get_configs()
-import time
-import tensorflow as tf
+
 
 forcing_directory = cfg['data']['forcing']
 zenodo_directory = cfg['data']['output']
@@ -143,12 +142,14 @@ data_dict = {'train_features': train_features,
 
 trainer = Trainer(cfg)
 trainer.train(
-    model=FC6_N256.FC6_N256, 
+    model=ExploratoryModel.ExploratoryModel, 
     data_dict=data_dict, 
     criterion=nn.MSELoss(), 
     epochs=100, 
     batch_size=200,
-    tensorboard=True
+    tensorboard=True,
+    num_linear_layers=4,
+    nodes=[256, 128, 64, 1],
 )
 
 print('4/4: Evaluating Model')
