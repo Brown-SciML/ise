@@ -2,10 +2,11 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from torch import optim
+from torch import optim, nn
 from training.PyTorchDataset import PyTorchDataset
 from torch.utils.data import DataLoader
 import time
+from torch.utils.tensorboard import SummaryWriter
 
 
 
@@ -20,7 +21,7 @@ class Trainer:
         # self.verbose = cfg['training']['verbose']
         # self.batch_size = cfg['training']['batch_size']
         self.num_input_features = None
-        self.loss_logs = {'training_loss': [], 'val_loss': [],}
+        self.loss_logs = {'training_loss': [], 'vasqrtl_loss': [],}
         self.train_loader = None
         self.test_loader = None
         self.data_dict = None
@@ -55,12 +56,17 @@ class Trainer:
         
         optimizer = optim.Adam(self.model.parameters(),)
         # criterion = nn.MSELoss()
+        
+        comment = f"FC={num_linear_layers}, Nodes={nodes}, batch_size={batch_size}, criterion={criterion}, epochs={epochs}"
+        tb = SummaryWriter(comment=comment)
+        mae = nn.L1Loss()
 
         self.model.train()
         for epoch in range(1, epochs+1):
             epoch_start = time.time()
 
             total_loss = 0
+            total_mae = 0
             for X_train_batch, y_train_batch in self.train_loader:
                 
                 optimizer.zero_grad()
@@ -73,25 +79,60 @@ class Trainer:
                 total_loss += loss.item()
                 self.logs['training']['batch'].append(loss.item())
                 
-            avg_loss = total_loss / len(self.train_loader)
-            self.logs['training']['epoch'].append(avg_loss)
+                if tensorboard:
+                    total_mae += mae(pred, y_train_batch.unsqueeze(1)).item()
+                
+            
+                
+            avg_mse = total_loss / len(self.train_loader)
+            self.logs['training']['epoch'].append(avg_mse)
+            
+            if tensorboard:
+                avg_rmse = np.sqrt(avg_mse)
+                avg_mae = total_mae / len(self.train_loader)
+
+            
             training_end = time.time()
             
             self.model.eval()
             test_total_loss = 0
+            test_total_mae = 0
             for X_test_batch, y_test_batch in self.test_loader:
                 test_pred = self.model(X_test_batch)
                 loss = criterion(test_pred, y_test_batch.unsqueeze(1))
                 test_total_loss += loss.item()
+                test_total_mae += mae(pred, y_train_batch.unsqueeze(1)).item()
                 
-            test_loss = test_total_loss / len(self.test_loader)
-            self.logs['testing'].append(test_loss)
+            test_mse = test_total_loss / len(self.test_loader)
+            test_mae = test_total_mae / len(self.test_loader)
+            self.logs['testing'].append(test_mse)            
             testing_end = time.time()
+            
+            if tensorboard:
+                tb.add_scalar("Training MSE", avg_mse, epoch)
+                tb.add_scalar("Training RMSE", avg_rmse, epoch)
+                tb.add_scalar("Training MAE", avg_mae, epoch)
+                
+                tb.add_scalar("Validation MSE", test_mse, epoch)
+                tb.add_scalar("Validation RMSE", np.sqrt(test_mse), epoch)
+                tb.add_scalar("Validation MAE", test_mae, epoch)
 
             if epoch % 1 == 0:
                 print('')
-                print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_loss:0.8f}, Validation Loss (MSE): {test_loss:0.8f}
+                print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}, Validation Loss (MSE): {test_mse:0.8f}
 Training time: {training_end - epoch_start: 0.2f} seconds, Validation time: {testing_end - training_end: 0.2f} seconds""")
+        
+        if tensorboard:
+            tb.add_hparams(
+                        {"FC": num_linear_layers, "nodes": str(nodes), "batch_size": batch_size, "epochs": epochs},
+                        
+                        {
+                            "Test MSE": test_mse,
+                        },
+                    )
+                    
+            tb.close()
+        
 
 
         return self

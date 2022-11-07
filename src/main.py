@@ -61,78 +61,6 @@ emulator_data, train_features, test_features, train_labels, test_labels = emulat
     split_type='batch_test'
 )
 
-
-
-# model = tf.keras.Sequential([
-# #       normalizer,
-#       tf.keras.layers.Dense(128, activation='relu'),
-#       tf.keras.layers.Dense(64, activation='relu'),
-#       tf.keras.layers.Dense(1)
-#   ])
-
-# model.compile(loss='mean_squared_error',
-#                 optimizer=tf.keras.optimizers.Adam())
-
-# history = model.fit(
-#     train_features,
-#     train_labels,
-#     shuffle=True,
-#     validation_split=0.2,
-#     verbose=2, epochs=20)
-
-# def plot_loss(history):
-#     plt.plot(history.history['loss'], label='loss')
-#     plt.plot(history.history['val_loss'], label='val_loss')
-#     plt.xlabel('Epoch')
-#     plt.ylabel('Error [MSE]')
-#     plt.legend()
-#     plt.grid(True)
-#     plt.savefig(r'results/training.png')
-    
-# plot_loss(history)
-
-# model.evaluate(test_features, test_labels)
-
-# preds = model.predict(test_features)
-
-# print(f"""--- Tensorflow Test ---
-# Mean Absolute Error: {mean_absolute_error(test_labels, preds)}
-# Mean Squared Error: {mean_squared_error(test_labels, preds)}
-# R2 Score: {r2_score(test_labels, preds)}""")
-    
-# plt.figure()
-# plt.plot(preds, test_labels, 'o')
-# plt.savefig(r'results/nn.png')
-
-# if split_type == 'batch':
-#     for scen in emulator_data.test_scenarios[:10]:
-#         single_scenario = scen
-#         test_model = single_scenario[0]
-#         test_exp = single_scenario[2]
-#         test_sector = single_scenario[1]
-#         single_test_features = np.array(test_features[(test_features[test_model] == 1) & (test_features[test_exp] == 1) & (test_features.sectors == test_sector)], dtype=np.float64)
-#         single_test_labels = np.array(test_labels[(test_features[test_model] == 1) & (test_features[test_exp] == 1) & (test_features.sectors == test_sector)], dtype=np.float64)
-#         preds = model(single_test_features)
-
-#         single_test_labels = emulator_data.unscale(single_test_labels.reshape(-1,1), 'outputs') * 1e-9 / 361.8
-#         preds = emulator_data.unscale(np.array(preds).reshape(-1,1), 'outputs') * 1e-9 / 361.8
-
-#         plt.figure()
-#         plt.plot(single_test_labels, 'r-', label='True')
-#         plt.plot(preds, 'b-', label='Predicted')
-#         plt.xlabel('Time (years since 2015)')
-#         plt.ylabel('SLE (mm)')
-#         plt.title(f'Model={test_model}, Exp={test_exp}')
-#         plt.ylim([-10,10])
-#         plt.legend()
-#         plt.savefig(f'results/{test_model}_{test_exp}_{round(test_sector)}.png')
-
-# X_train = torch.from_numpy(train_features).float()
-# y_train = torch.from_numpy(train_labels).float()
-# X_test = torch.from_numpy(test_features).float()
-# y_test = torch.from_numpy(test_labels).float()
-
-
 print('3/4: Training Model')
 
 data_dict = {'train_features': train_features,
@@ -140,17 +68,26 @@ data_dict = {'train_features': train_features,
              'test_features': test_features,
              'test_labels': test_labels,  }
 
-trainer = Trainer(cfg)
-trainer.train(
-    model=ExploratoryModel.ExploratoryModel, 
-    data_dict=data_dict, 
-    criterion=nn.MSELoss(), 
-    epochs=100, 
-    batch_size=200,
-    tensorboard=True,
-    num_linear_layers=4,
-    nodes=[256, 128, 64, 1],
-)
+
+
+runs = {'1': {'num_linear_layers': 6,
+                  'nodes': [256, 128, 64, 32, 16, 1]},
+        '2': {'num_linear_layers': 4,
+                  'nodes': [128, 64, 32, 1]}}
+
+
+for run_number, settings in runs.items():
+    trainer = Trainer(cfg)
+    trainer.train(
+        model=ExploratoryModel.ExploratoryModel, 
+        num_linear_layers=settings['num_linear_layers'],
+        nodes=settings['nodes'],
+        data_dict=data_dict, 
+        criterion=nn.MSELoss(), 
+        epochs=50, 
+        batch_size=100,
+        tensorboard=True,
+    )
 
 print('4/4: Evaluating Model')
 
