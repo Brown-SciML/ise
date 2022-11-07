@@ -9,12 +9,14 @@ import time
 from torch.utils.tensorboard import SummaryWriter
 
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class Trainer:
     def __init__(self, cfg):
         self.model = None
         self.data = {}
         self.cfg = cfg
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         # self.data_dir = self.cfg['data']['directory'] if self.cfg['data']['directory'] is not None else self.cfg['data']['export']
         # self.model_name = cfg['training']['model']
         # self.num_epochs = cfg['training']['epochs']
@@ -50,14 +52,14 @@ class Trainer:
         
         
         if num_linear_layers is not None and nodes is not None:
-            self.model = model(input_layer_size=self.num_input_features, num_linear_layers=num_linear_layers, nodes=nodes)
+            self.model = model(input_layer_size=self.num_input_features, num_linear_layers=num_linear_layers, nodes=nodes).to(self.device )
         else:
-            self.model = model(input_layer_size=self.num_input_features)
+            self.model = model(input_layer_size=self.num_input_features).to(self.device )
         
         optimizer = optim.Adam(self.model.parameters(),)
         # criterion = nn.MSELoss()
         
-        comment = f"FC={num_linear_layers}, Nodes={nodes}, batch_size={batch_size}, criterion={criterion}, epochs={epochs}"
+        comment = f" -- FC={num_linear_layers}, Nodes={nodes}, batch_size={batch_size}, criterion={criterion}, epochs={epochs}"
         tb = SummaryWriter(comment=comment)
         mae = nn.L1Loss()
 
@@ -68,6 +70,7 @@ class Trainer:
             total_loss = 0
             total_mae = 0
             for X_train_batch, y_train_batch in self.train_loader:
+                X_train_batch, y_train_batch = X_train_batch.to(self.device ), y_train_batch.to(self.device )
                 
                 optimizer.zero_grad()
 
@@ -98,6 +101,7 @@ class Trainer:
             test_total_loss = 0
             test_total_mae = 0
             for X_test_batch, y_test_batch in self.test_loader:
+                X_test_batch, y_test_batch = X_test_batch.to(self.device ), y_test_batch.to(self.device )
                 test_pred = self.model(X_test_batch)
                 loss = criterion(test_pred, y_test_batch.unsqueeze(1))
                 test_total_loss += loss.item()

@@ -72,8 +72,9 @@ data_dict = {'train_features': train_features,
 
 runs = {'1': {'num_linear_layers': 6,
                   'nodes': [256, 128, 64, 32, 16, 1]},
-        '2': {'num_linear_layers': 4,
-                  'nodes': [128, 64, 32, 1]}}
+        # '2': {'num_linear_layers': 4,
+        #           'nodes': [128, 64, 32, 1]}
+        }
 
 
 for run_number, settings in runs.items():
