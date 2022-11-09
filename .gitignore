@@ -6,7 +6,6 @@ __pycache__/
 results/
 logs/
 runs/
-*.pt
 
 .vscode/
 .vscode

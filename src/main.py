@@ -73,68 +73,68 @@ data_dict = {'train_features': train_features,
 
 
 
-models = {
-    'normal': {
-        'num_linear_layers': 6,
-        'nodes': [256, 128, 64, 32, 16, 1],
-        },
+# models = {
+#     'normal': {
+#         'num_linear_layers': 6,
+#         'nodes': [256, 128, 64, 32, 16, 1],
+#         },
     
-    'smaller': {
-        'num_linear_layers': 4,
-        'nodes': [128, 64, 32, 1]
-        },
+#     'smaller': {
+#         'num_linear_layers': 4,
+#         'nodes': [128, 64, 32, 1]
+#         },
         
-    'smallest': {
-        'num_linear_layers': 3,
-        'nodes': [64, 20, 1]
-    },
+#     'smallest': {
+#         'num_linear_layers': 3,
+#         'nodes': [64, 20, 1]
+#     },
     
-    'largest': {
-        'num_linear_layers': 8,
-        'nodes': [256, 128, 64, 32, 16, 8, 4, 1]
-    },
+#     'largest': {
+#         'num_linear_layers': 8,
+#         'nodes': [256, 128, 64, 32, 16, 8, 4, 1]
+#     },
     
-    'normal_expanding': {
-        'num_linear_layers': 6,
-        'nodes': [64, 128, 32, 16, 8, 1]
-    },
-}
+#     'normal_expanding': {
+#         'num_linear_layers': 6,
+#         'nodes': [64, 128, 32, 16, 8, 1]
+#     },
+# }
 
-count = 0
-for iteration in range(5):
-    for batch_size in [50, 100, 250]:
-        for run, settings in models.items():
-            print('')
-            print(f"Training... Model: {run}, Batch Size: {batch_size}, Iteration: {iteration}, Trained {count} models")
-            trainer = Trainer(cfg)
-            trainer.train(
-                model=ExploratoryModel.ExploratoryModel, 
-                num_linear_layers=settings['num_linear_layers'],
-                nodes=settings['nodes'],
-                data_dict=data_dict, 
-                criterion=nn.MSELoss(), 
-                epochs=100, 
-                batch_size=batch_size,
-                tensorboard=True,
-                save_model=False,
-            )
+# count = 0
+# for iteration in range(5):
+#     for batch_size in [50, 100, 250]:
+#         for run, settings in models.items():
+#             print('')
+#             print(f"Training... Model: {run}, Batch Size: {batch_size}, Iteration: {iteration}, Trained {count} models")
+#             trainer = Trainer(cfg)
+#             trainer.train(
+#                 model=ExploratoryModel.ExploratoryModel, 
+#                 num_linear_layers=settings['num_linear_layers'],
+#                 nodes=settings['nodes'],
+#                 data_dict=data_dict, 
+#                 criterion=nn.MSELoss(), 
+#                 epochs=100, 
+#                 batch_size=batch_size,
+#                 tensorboard=True,
+#                 save_model=False,
+#             )
             
-            count += 1
+#             count += 1
 
 
 
-# trainer = Trainer(cfg)
-# trainer.train(
-#     model=ExploratoryModel.ExploratoryModel, 
-#     num_linear_layers=6,
-#     nodes=[256, 128, 64, 32, 16, 1],
-#     data_dict=data_dict, 
-#     criterion=nn.MSELoss(), 
-#     epochs=200, 
-#     batch_size=200,
-#     tensorboard=True,
-#     save_model=True,
-# )
+trainer = Trainer(cfg)
+trainer.train(
+    model=ExploratoryModel.ExploratoryModel, 
+    num_linear_layers=6,
+    nodes=[256, 128, 64, 32, 16, 1],
+    data_dict=data_dict, 
+    criterion=nn.MSELoss(), 
+    epochs=200, 
+    batch_size=200,
+    tensorboard=False,
+    save_model=True,
+)
 
 
 # print('4/4: Evaluating Model')
