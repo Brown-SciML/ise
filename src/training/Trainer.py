@@ -7,6 +7,7 @@ from training.PyTorchDataset import PyTorchDataset
 from torch.utils.data import DataLoader
 import time
 from torch.utils.tensorboard import SummaryWriter
+from datetime import datetime
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -42,7 +43,7 @@ class Trainer:
         
         return self
 
-    def train(self, model, data_dict, criterion, epochs, batch_size, tensorboard=False, num_linear_layers=None, nodes=None,):
+    def train(self, model, data_dict, criterion, epochs, batch_size, tensorboard=False, num_linear_layers=None, nodes=None, save_model=False):
         self.data_dict = data_dict
         if self.train_loader is None or self.train_loader is None:
             self._format_data(data_dict['train_features'], data_dict['train_labels'], data_dict['test_features'], data_dict['test_labels'],
@@ -58,8 +59,9 @@ class Trainer:
         
         optimizer = optim.Adam(self.model.parameters(),)
         # criterion = nn.MSELoss()
+        self.time = datetime.now().strftime(r"%d-%m-%Y %H.%M.%S")
         
-        comment = f" -- FC={num_linear_layers}, Nodes={nodes}, batch_size={batch_size}, criterion={criterion}, epochs={epochs}"
+        comment = f" -- {self.time}, FC={num_linear_layers}, nodes={nodes}, batch_size={batch_size},"
         tb = SummaryWriter(comment=comment)
         mae = nn.L1Loss()
 
@@ -112,6 +114,10 @@ class Trainer:
             self.logs['testing'].append(test_mse)            
             testing_end = time.time()
             
+            X_test = torch.tensor(self.X_test, dtype=torch.float)  # .reshape(-1, X_train.size()[2])
+            preds = self.model(X_test)
+            r2 = r2_score(self.y_test, preds.detach().numpy())
+            
             if tensorboard:
                 tb.add_scalar("Training MSE", avg_mse, epoch)
                 tb.add_scalar("Training RMSE", avg_rmse, epoch)
@@ -120,15 +126,16 @@ class Trainer:
                 tb.add_scalar("Validation MSE", test_mse, epoch)
                 tb.add_scalar("Validation RMSE", np.sqrt(test_mse), epoch)
                 tb.add_scalar("Validation MAE", test_mae, epoch)
+                tb.add_scalar("R^2", r2, epoch)
 
-            if epoch % 1 == 0:
-                print('')
-                print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}, Validation Loss (MSE): {test_mse:0.8f}
-Training time: {training_end - epoch_start: 0.2f} seconds, Validation time: {testing_end - training_end: 0.2f} seconds""")
+#             if epoch % 1 == 0:
+#                 print('')
+#                 print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}, Validation Loss (MSE): {test_mse:0.8f}
+# Training time: {training_end - epoch_start: 0.2f} seconds, Validation time: {testing_end - training_end: 0.2f} seconds""")
         
         if tensorboard:
             tb.add_hparams(
-                        {"FC": num_linear_layers, "nodes": str(nodes), "batch_size": batch_size, "epochs": epochs},
+                        {"FC": num_linear_layers, "nodes": str(nodes), "batch_size": batch_size,},
                         
                         {
                             "Test MSE": test_mse,
@@ -136,6 +143,9 @@ Training time: {training_end - epoch_start: 0.2f} seconds, Validation time: {tes
                     )
                     
             tb.close()
+            
+        if save_model:
+            torch.save(self.model.state_dict(), f"/users/pvankatw/emulator/src/models/saved_models/{self.time}.pt")
         
 
 

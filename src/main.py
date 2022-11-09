@@ -63,6 +63,9 @@ emulator_data, train_features, test_features, train_labels, test_labels = emulat
 
 print('3/4: Training Model')
 
+# emulator_data.unscale(test_features)
+emulator_data.unscale(test_labels, 'outputs')
+
 data_dict = {'train_features': train_features,
              'train_labels': train_labels,
              'test_features': test_features,
@@ -70,65 +73,109 @@ data_dict = {'train_features': train_features,
 
 
 
-runs = {'1': {'num_linear_layers': 6,
-                  'nodes': [256, 128, 64, 32, 16, 1]},
-        # '2': {'num_linear_layers': 4,
-        #           'nodes': [128, 64, 32, 1]}
-        }
+models = {
+    'normal': {
+        'num_linear_layers': 6,
+        'nodes': [256, 128, 64, 32, 16, 1],
+        },
+    
+    'smaller': {
+        'num_linear_layers': 4,
+        'nodes': [128, 64, 32, 1]
+        },
+        
+    'smallest': {
+        'num_linear_layers': 3,
+        'nodes': [64, 20, 1]
+    },
+    
+    'largest': {
+        'num_linear_layers': 8,
+        'nodes': [256, 128, 64, 32, 16, 8, 4, 1]
+    },
+    
+    'normal_expanding': {
+        'num_linear_layers': 6,
+        'nodes': [64, 128, 32, 16, 8, 1]
+    },
+}
+
+count = 0
+for iteration in range(5):
+    for batch_size in [50, 100, 250]:
+        for run, settings in models.items():
+            print('')
+            print(f"Training... Model: {run}, Batch Size: {batch_size}, Iteration: {iteration}, Trained {count} models")
+            trainer = Trainer(cfg)
+            trainer.train(
+                model=ExploratoryModel.ExploratoryModel, 
+                num_linear_layers=settings['num_linear_layers'],
+                nodes=settings['nodes'],
+                data_dict=data_dict, 
+                criterion=nn.MSELoss(), 
+                epochs=100, 
+                batch_size=batch_size,
+                tensorboard=True,
+                save_model=False,
+            )
+            
+            count += 1
 
 
-for run_number, settings in runs.items():
-    trainer = Trainer(cfg)
-    trainer.train(
-        model=ExploratoryModel.ExploratoryModel, 
-        num_linear_layers=settings['num_linear_layers'],
-        nodes=settings['nodes'],
-        data_dict=data_dict, 
-        criterion=nn.MSELoss(), 
-        epochs=50, 
-        batch_size=100,
-        tensorboard=True,
-    )
 
-print('4/4: Evaluating Model')
-
-model = trainer.model
-metrics, preds = trainer.evaluate()
+# trainer = Trainer(cfg)
+# trainer.train(
+#     model=ExploratoryModel.ExploratoryModel, 
+#     num_linear_layers=6,
+#     nodes=[256, 128, 64, 32, 16, 1],
+#     data_dict=data_dict, 
+#     criterion=nn.MSELoss(), 
+#     epochs=200, 
+#     batch_size=200,
+#     tensorboard=True,
+#     save_model=True,
+# )
 
 
-y_test = trainer.y_test
-plt.figure()
-plt.scatter(y_test, preds.detach().numpy(), s=3, alpha=0.2)
-plt.plot([min(y_test),max(y_test)], [min(y_test),max(y_test)], 'r-')
-plt.title('Neural Network True vs Predicted')
-plt.xlabel('True')
-plt.ylabel('Predicted')
-plt.savefig("results/nn.png")
-plt.show()
+# print('4/4: Evaluating Model')
 
-# TODO: Plot validation
-# TODO: Try other metrics / tensorboard
+# model = trainer.model
+# metrics, preds = trainer.evaluate()
 
-for scen in emulator_data.test_scenarios[:10]:
-    single_scenario = scen
-    test_model = single_scenario[0]
-    test_exp = single_scenario[2]
-    test_sector = single_scenario[1]
-    single_test_features = torch.tensor(np.array(test_features[(test_features[test_model] == 1) & (test_features[test_exp] == 1) & (test_features.sectors == test_sector)], dtype=np.float64), dtype=torch.float)
-    single_test_labels = np.array(test_labels[(test_features[test_model] == 1) & (test_features[test_exp] == 1) & (test_features.sectors == test_sector)], dtype=np.float64)
-    preds = model(single_test_features).detach().numpy()
 
-    single_test_labels = emulator_data.unscale(single_test_labels.reshape(-1,1), 'outputs') * 1e-9 / 361.8
-    preds = emulator_data.unscale(preds.reshape(-1,1), 'outputs') * 1e-9 / 361.8
+# y_test = trainer.y_test
+# plt.figure()
+# plt.scatter(y_test, preds.detach().numpy(), s=3, alpha=0.2)
+# plt.plot([min(y_test),max(y_test)], [min(y_test),max(y_test)], 'r-')
+# plt.title('Neural Network True vs Predicted')
+# plt.xlabel('True')
+# plt.ylabel('Predicted')
+# plt.savefig("results/nn.png")
+# plt.show()
 
-    plt.figure()
-    plt.plot(single_test_labels, 'r-', label='True')
-    plt.plot(preds, 'b-', label='Predicted')
-    plt.xlabel('Time (years since 2015)')
-    plt.ylabel('SLE (mm)')
-    plt.title(f'Model={test_model}, Exp={test_exp}')
-    plt.ylim([-10,10])
-    plt.legend()
-    plt.savefig(f'results/{1}_{test_model}_{test_exp}.png')
+# # TODO: Plot validation
+# # TODO: Try other metrics / tensorboard
 
-stop = ''
+# for scen in emulator_data.test_scenarios[:10]:
+#     single_scenario = scen
+#     test_model = single_scenario[0]
+#     test_exp = single_scenario[2]
+#     test_sector = single_scenario[1]
+#     single_test_features = torch.tensor(np.array(test_features[(test_features[test_model] == 1) & (test_features[test_exp] == 1) & (test_features.sectors == test_sector)], dtype=np.float64), dtype=torch.float)
+#     single_test_labels = np.array(test_labels[(test_features[test_model] == 1) & (test_features[test_exp] == 1) & (test_features.sectors == test_sector)], dtype=np.float64)
+#     preds = model(single_test_features).detach().numpy()
+
+#     single_test_labels = emulator_data.unscale(single_test_labels.reshape(-1,1), 'outputs') * 1e-9 / 361.8
+#     preds = emulator_data.unscale(preds.reshape(-1,1), 'outputs') * 1e-9 / 361.8
+
+#     plt.figure()
+#     plt.plot(single_test_labels, 'r-', label='True')
+#     plt.plot(preds, 'b-', label='Predicted')
+#     plt.xlabel('Time (years since 2015)')
+#     plt.ylabel('SLE (mm)')
+#     plt.title(f'Model={test_model}, Exp={test_exp}')
+#     plt.ylim([-10,10])
+#     plt.legend()
+#     plt.savefig(f'results/{1}_{test_model}_{test_exp}.png')
+
+# stop = ''

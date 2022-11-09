@@ -3,7 +3,6 @@ from sklearn import preprocessing as sp
 import numpy as np
 import random
 
-
 class EmulatorData:
     def __init__(self, directory):
 
@@ -201,35 +200,41 @@ class EmulatorData:
             raise AttributeError('Data must be split before scaling using model.split_data method.')
 
         if "minmax" in scaler.lower():
-            self.scaler_X = sp.MinMaxScaler()
-            self.scaler_y = sp.MinMaxScaler()
+            if 'input' in values_type.lower():
+                self.scaler_X = sp.MinMaxScaler()
+            else:
+                self.scaler_y = sp.MinMaxScaler()
         elif "standard" in scaler.lower():
-            self.scaler_X = sp.StandardScaler()
-            self.scaler_y = sp.StandardScaler()
+            if 'input' in values_type.lower():
+                self.scaler_X = sp.StandardScaler()
+            else:
+                self.scaler_y = sp.StandardScaler()
         else:
             raise ValueError(f'scaler argument must be in [\'MinMaxScaler\', \'StandardScaler\'], received {scaler}')
 
         if 'input' in values_type.lower():
             self.input_columns = self.X.columns
             self.scaler_X.fit(self.X)
+            # dump(self.scaler_X, open('./src/data/files/scaler_X.pkl', 'wb'))
             return pd.DataFrame(self.scaler_X.transform(values), columns=self.X.columns)
 
         elif 'output' in values_type.lower():
             self.scaler_y.fit(np.array(self.y).reshape(-1, 1))
+            # dump(self.scaler_y, open('./src/data/files/scaler_y.pkl', 'wb'))
             return self.scaler_y.transform(np.array(values).reshape(-1, 1))
 
         else:
             raise ValueError(f"values_type must be in ['inputs', 'outputs'], received {values_type}")
 
     def unscale(self, values, values_type):
-        if not self.scaler_X and not self.scaler_y:
-            raise AttributeError('Data has not been scaled.')
+        # self.scaler_X = load(open('./src/data/files/scaler_X.pkl', 'rb'))
+        # self.scaler_y = load(open('./src/data/files/scaler_y.pkl', 'rb'))
 
         if 'input' in values_type.lower():
             return pd.DataFrame(self.scaler_X.inverse_transform(values), columns=self.input_columns)
 
         elif 'output' in values_type.lower():
-            return self.scaler_y.inverse_transform(values)
+            return self.scaler_y.inverse_transform(values.reshape(-1,1))
 
         else:
             raise ValueError(f"values_type must be in ['inputs', 'outputs'], received {values_type}")
