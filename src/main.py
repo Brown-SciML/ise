@@ -15,6 +15,8 @@ import numpy as np
 # from sklearn.preprocessing import MinMaxScaler
 cfg = get_configs()
 
+np.random.seed(10)
+
 
 forcing_directory = cfg['data']['forcing']
 zenodo_directory = cfg['data']['output']
@@ -130,8 +132,8 @@ trainer.train(
     nodes=[256, 128, 64, 32, 16, 1],
     data_dict=data_dict, 
     criterion=nn.MSELoss(), 
-    epochs=200, 
-    batch_size=200,
+    epochs=100, 
+    batch_size=100,
     tensorboard=False,
     save_model=True,
 )

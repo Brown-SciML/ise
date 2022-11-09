@@ -128,10 +128,10 @@ class Trainer:
                 tb.add_scalar("Validation MAE", test_mae, epoch)
                 tb.add_scalar("R^2", r2, epoch)
 
-#             if epoch % 1 == 0:
-#                 print('')
-#                 print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}, Validation Loss (MSE): {test_mse:0.8f}
-# Training time: {training_end - epoch_start: 0.2f} seconds, Validation time: {testing_end - training_end: 0.2f} seconds""")
+            if epoch % 1 == 0:
+                print('')
+                print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}, Validation Loss (MSE): {test_mse:0.8f}
+Training time: {training_end - epoch_start: 0.2f} seconds, Validation time: {testing_end - training_end: 0.2f} seconds""")
         
         if tensorboard:
             tb.add_hparams(
