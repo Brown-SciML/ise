@@ -33,7 +33,7 @@ class EmulatorData:
         self.scaler_y = None
 
     def process(self, target_column, drop_missing=True, drop_columns=True, boolean_indices=True, scale=True,
-                split_type='random'):
+                split_type='batch_test', drop_outliers=False):
         if drop_missing:
             self = self.drop_missing()
         if drop_columns:
@@ -46,7 +46,13 @@ class EmulatorData:
 
         if boolean_indices:
             self = self.create_boolean_indices()
-
+            
+        if drop_outliers:
+            column = drop_outliers['column']
+            operator = drop_outliers['operator']
+            value = drop_outliers['value']
+            self = self.drop_outliers(column, operator, value, )
+            
         self = self.split_data(target_column=target_column)
 
         if scale:
@@ -56,6 +62,38 @@ class EmulatorData:
         self = self.train_test_split(split_type=split_type)
 
         return self, self.train_features, self.test_features, self.train_labels, self.test_labels
+    
+    def drop_outliers(self, column, operator, value, ):
+        if operator.lower() in ('equal', 'equals', '=', '=='):
+            outlier_data = self.data[self.data[column] == value]
+        elif operator.lower() in ('not equal', 'not equals', '!=', '~='):
+            outlier_data = self.data[self.data[column] != value]
+        elif operator.lower() in ('greather than', 'greater', '>=', '>'):
+            outlier_data = self.data[self.data[column] > value]
+        elif operator.lower() in ('less than', 'less', '<=', '<'):
+            outlier_data = self.data[self.data[column] < value]
+        else:
+            raise ValueError(f'Operator must be in [\"==\", \"!=\", \">\", \"<\"], received {operator}')
+ 
+        cols = outlier_data.columns
+        nonzero_columns = outlier_data.apply(lambda x: x > 0).apply(lambda x: list(cols[x.values]), axis=1)
+        
+        # Create dataframe of experiments with outliers (want to delete the entire 85 rows)
+        outlier_runs = pd.DataFrame()
+        outlier_runs['modelname'] = nonzero_columns.apply(lambda x: x[-6])
+        outlier_runs['exp_id'] = nonzero_columns.apply(lambda x: x[-5])
+        outlier_runs['sectors'] = outlier_data.sectors
+        outlier_runs_list = outlier_runs.values.tolist()
+        unique_outliers = [list(x) for x in set(tuple(x) for x in outlier_runs_list)]
+        
+        # Drop those runs
+        for i in unique_outliers:
+            modelname = i[0]
+            exp_id = i[1]
+            sector = i[2]
+            self.data = self.data.drop(self.data[(self.data[modelname] == 1) & (self.data[exp_id] == 1) & (self.data.sectors == sector)].index)
+        
+        return self
 
     def split_data(self, target_column: str, ):
         self.target_column = target_column

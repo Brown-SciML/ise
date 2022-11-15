@@ -10,7 +10,7 @@ from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
 
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 class Trainer:
     def __init__(self, cfg):
@@ -43,7 +43,7 @@ class Trainer:
         
         return self
 
-    def train(self, model, data_dict, criterion, epochs, batch_size, tensorboard=False, num_linear_layers=None, nodes=None, save_model=False):
+    def train(self, model, data_dict, criterion, epochs, batch_size, tensorboard=False, num_linear_layers=None, nodes=None, save_model=False, gpu_optimized=False):
         self.data_dict = data_dict
         if self.train_loader is None or self.train_loader is None:
             self._format_data(data_dict['train_features'], data_dict['train_labels'], data_dict['test_features'], data_dict['test_labels'],
@@ -53,9 +53,12 @@ class Trainer:
         
         
         if num_linear_layers is not None and nodes is not None:
-            self.model = model(input_layer_size=self.num_input_features, num_linear_layers=num_linear_layers, nodes=nodes).to(self.device )
+            self.model = model(input_layer_size=self.num_input_features, num_linear_layers=num_linear_layers, nodes=nodes).to(self.device)
         else:
-            self.model = model(input_layer_size=self.num_input_features).to(self.device )
+            self.model = model(input_layer_size=self.num_input_features).to(self.device)
+            
+        # if torch.cuda.device_count() > 1:
+        #     self.model = nn.DataParallel(self.model)
         
         optimizer = optim.Adam(self.model.parameters(),)
         # criterion = nn.MSELoss()
@@ -65,6 +68,8 @@ class Trainer:
         tb = SummaryWriter(comment=comment)
         mae = nn.L1Loss()
 
+        X_test = torch.tensor(self.X_test, dtype=torch.float).to(self.device)
+        y_test = torch.tensor(self.y_test, dtype=torch.float).to(self.device)
         self.model.train()
         for epoch in range(1, epochs+1):
             epoch_start = time.time()
@@ -72,7 +77,7 @@ class Trainer:
             total_loss = 0
             total_mae = 0
             for X_train_batch, y_train_batch in self.train_loader:
-                X_train_batch, y_train_batch = X_train_batch.to(self.device ), y_train_batch.to(self.device )
+                X_train_batch, y_train_batch = X_train_batch.to(self.device), y_train_batch.to(self.device)
                 
                 optimizer.zero_grad()
 
@@ -84,7 +89,7 @@ class Trainer:
                 total_loss += loss.item()
                 self.logs['training']['batch'].append(loss.item())
                 
-                if tensorboard:
+                if not gpu_optimized:
                     total_mae += mae(pred, y_train_batch.unsqueeze(1)).item()
                 
             
@@ -92,53 +97,64 @@ class Trainer:
             avg_mse = total_loss / len(self.train_loader)
             self.logs['training']['epoch'].append(avg_mse)
             
-            if tensorboard:
+            if not gpu_optimized:
                 avg_rmse = np.sqrt(avg_mse)
                 avg_mae = total_mae / len(self.train_loader)
 
             
             training_end = time.time()
             
-            self.model.eval()
-            test_total_loss = 0
-            test_total_mae = 0
-            for X_test_batch, y_test_batch in self.test_loader:
-                X_test_batch, y_test_batch = X_test_batch.to(self.device ), y_test_batch.to(self.device )
-                test_pred = self.model(X_test_batch)
-                loss = criterion(test_pred, y_test_batch.unsqueeze(1))
-                test_total_loss += loss.item()
-                test_total_mae += mae(pred, y_train_batch.unsqueeze(1)).item()
+            if not gpu_optimized:
+                self.model.eval()
+                test_total_loss = 0
+                test_total_mae = 0
+                for X_test_batch, y_test_batch in self.test_loader:
+                    X_test_batch, y_test_batch = X_test_batch.to(self.device), y_test_batch.to(self.device)
+                    test_pred = self.model(X_test_batch)
+                    loss = criterion(test_pred, y_test_batch.unsqueeze(1))
+                    test_total_loss += loss.item()
+                    test_total_mae += mae(pred, y_train_batch.unsqueeze(1)).item()
+                    
+                test_mse = test_total_loss / len(self.test_loader)
+                test_mae = test_total_mae / len(self.test_loader)
+                self.logs['testing'].append(test_mse)            
+                testing_end = time.time()
                 
-            test_mse = test_total_loss / len(self.test_loader)
-            test_mae = test_total_mae / len(self.test_loader)
-            self.logs['testing'].append(test_mse)            
-            testing_end = time.time()
-            
-            X_test = torch.tensor(self.X_test, dtype=torch.float)  # .reshape(-1, X_train.size()[2])
-            preds = self.model(X_test)
-            r2 = r2_score(self.y_test, preds.detach().numpy())
+                preds = self.model(X_test).to(device)
+                if self.device.type != 'cuda':
+                    r2 = r2_score(self.y_test, preds.detach().numpy())
+                else:
+                    r2 = r2_score(self.y_test, preds.cpu().detach().numpy())
             
             if tensorboard:
                 tb.add_scalar("Training MSE", avg_mse, epoch)
-                tb.add_scalar("Training RMSE", avg_rmse, epoch)
-                tb.add_scalar("Training MAE", avg_mae, epoch)
                 
-                tb.add_scalar("Validation MSE", test_mse, epoch)
-                tb.add_scalar("Validation RMSE", np.sqrt(test_mse), epoch)
-                tb.add_scalar("Validation MAE", test_mae, epoch)
-                tb.add_scalar("R^2", r2, epoch)
+                if not gpu_optimized:
+                    tb.add_scalar("Training RMSE", avg_rmse, epoch)
+                    tb.add_scalar("Training MAE", avg_mae, epoch)
+                    
+                    tb.add_scalar("Validation MSE", test_mse, epoch)
+                    tb.add_scalar("Validation RMSE", np.sqrt(test_mse), epoch)
+                    tb.add_scalar("Validation MAE", test_mae, epoch)
+                    tb.add_scalar("R^2", r2, epoch)
 
-            if epoch % 1 == 0:
+            if not gpu_optimized:
                 print('')
                 print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}, Validation Loss (MSE): {test_mse:0.8f}
 Training time: {training_end - epoch_start: 0.2f} seconds, Validation time: {testing_end - training_end: 0.2f} seconds""")
+                
+            else:
+                print('')
+                print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}
+Training time: {training_end - epoch_start: 0.2f} seconds""")
         
         if tensorboard:
+            metrics, _ = self.evaluate()
             tb.add_hparams(
                         {"FC": num_linear_layers, "nodes": str(nodes), "batch_size": batch_size,},
                         
                         {
-                            "Test MSE": test_mse,
+                            "Test MSE": metrics['MSE'], "Test MAE": metrics['MAE'], "R^2": metrics['R2'], "RMSE": metrics["RMSE"]
                         },
                     )
                     
@@ -167,14 +183,19 @@ Training time: {training_end - epoch_start: 0.2f} seconds, Validation time: {tes
         # Test predictions
         self.model.eval()
 
-        X_test = torch.tensor(self.X_test, dtype=torch.float)  # .reshape(-1, X_train.size()[2])
+        X_test = torch.tensor(self.X_test, dtype=torch.float).to(self.device)  # .reshape(-1, X_train.size()[2])
         preds = self.model(X_test)
 
         # Calculate metrics
-        mae = mean_absolute_error(self.y_test, preds.detach().numpy())
-        mse = mean_squared_error(self.y_test, preds.detach().numpy())
-        rmse = np.sqrt(mean_squared_error(self.y_test, preds.detach().numpy()))
-        r2 = r2_score(self.y_test, preds.detach().numpy())
+        if self.device.type == 'cuda':
+            preds = preds.cpu().detach().numpy()
+        else:
+            preds = preds.detach().numpy()
+            
+        mae = mean_absolute_error(self.y_test, preds)
+        mse = mean_squared_error(self.y_test, preds)
+        rmse = np.sqrt(mean_squared_error(self.y_test, preds))
+        r2 = r2_score(self.y_test, preds)
         
         metrics = {'MSE': mse, 'MAE': mae, 'RMSE': rmse, 'R2': r2}
 

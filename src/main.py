@@ -3,16 +3,13 @@ from data.processing.process_outputs import process_repository
 from data.processing.combine_datasets import combine_datasets
 from data.classes.EmulatorData import EmulatorData
 from training.Trainer import Trainer
-from models import FC3_N128, FC6_N256, FC12_N1024, ExploratoryModel
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from models import ExploratoryModel
 from utils import get_configs
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import numpy as np
-# from tqdm import tqdm
-# from sklearn.preprocessing import MinMaxScaler
+import time
 cfg = get_configs()
 
 np.random.seed(10)
@@ -60,13 +57,14 @@ emulator_data, train_features, test_features, train_labels, test_labels = emulat
     drop_columns=False,
     boolean_indices=True,
     scale=True,
-    split_type='batch_test'
+    split_type='batch_test',
+    drop_outliers={'column': 'ivaf', 'operator': '<', 'value': -1e13}
 )
 
 print('3/4: Training Model')
 
 # emulator_data.unscale(test_features)
-emulator_data.unscale(test_labels, 'outputs')
+# emulator_data.unscale(test_labels, 'outputs')
 
 data_dict = {'train_features': train_features,
              'train_labels': train_labels,
@@ -102,6 +100,19 @@ data_dict = {'train_features': train_features,
 #     },
 # }
 
+# models = {
+#     'normal': {
+#         'num_linear_layers': 6,
+#         'nodes': [256, 128, 64, 32, 16, 1],
+#         },
+    
+#     'largest': {
+#         'num_linear_layers': 8,
+#         'nodes': [256, 128, 64, 32, 16, 8, 4, 1]
+#     },
+    
+# }
+
 # count = 0
 # for iteration in range(5):
 #     for batch_size in [50, 100, 250]:
@@ -118,66 +129,77 @@ data_dict = {'train_features': train_features,
 #                 epochs=100, 
 #                 batch_size=batch_size,
 #                 tensorboard=True,
-#                 save_model=False,
+#                 save_model=True,
+#                 gpu_optimized=True,
 #             )
             
 #             count += 1
 
 
 
+
+start = time.time()
 trainer = Trainer(cfg)
 trainer.train(
     model=ExploratoryModel.ExploratoryModel, 
     num_linear_layers=6,
-    nodes=[256, 128, 64, 32, 16, 1],
+    nodes=[256, 128, 64, 32, 16, 1],    
+    # num_linear_layers=12,
+    # nodes=[2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1],
     data_dict=data_dict, 
     criterion=nn.MSELoss(), 
     epochs=100, 
     batch_size=100,
     tensorboard=False,
     save_model=True,
+    gpu_optimized=True,
 )
+print(f'Total Time: {time.time() - start:0.4f} seconds')
+
+print('4/4: Evaluating Model')
+
+model = trainer.model
+metrics, preds = trainer.evaluate()
+
+try:
+    preds = preds.detach().numpy()
+except AttributeError:
+    pass
 
 
-# print('4/4: Evaluating Model')
+y_test = trainer.y_test
+plt.figure()
+plt.scatter(y_test, preds, s=3, alpha=0.2)
+plt.plot([min(y_test),max(y_test)], [min(y_test),max(y_test)], 'r-')
+plt.title('Neural Network True vs Predicted')
+plt.xlabel('True')
+plt.ylabel('Predicted')
+plt.savefig("results/nn.png")
+plt.show()
 
-# model = trainer.model
-# metrics, preds = trainer.evaluate()
+# TODO: Plot validation
+# TODO: Try other metrics / tensorboard
 
+for scen in emulator_data.test_scenarios[:10]:
+    single_scenario = scen
+    test_model = single_scenario[0]
+    test_exp = single_scenario[2]
+    test_sector = single_scenario[1]
+    single_test_features = torch.tensor(np.array(test_features[(test_features[test_model] == 1) & (test_features[test_exp] == 1) & (test_features.sectors == test_sector)], dtype=np.float64), dtype=torch.float).to(trainer.device)
+    single_test_labels = np.array(test_labels[(test_features[test_model] == 1) & (test_features[test_exp] == 1) & (test_features.sectors == test_sector)], dtype=np.float64)
+    preds = model(single_test_features).cpu().detach().numpy()
 
-# y_test = trainer.y_test
-# plt.figure()
-# plt.scatter(y_test, preds.detach().numpy(), s=3, alpha=0.2)
-# plt.plot([min(y_test),max(y_test)], [min(y_test),max(y_test)], 'r-')
-# plt.title('Neural Network True vs Predicted')
-# plt.xlabel('True')
-# plt.ylabel('Predicted')
-# plt.savefig("results/nn.png")
-# plt.show()
+    single_test_labels = emulator_data.unscale(single_test_labels.reshape(-1,1), 'outputs') * 1e-9 / 361.8
+    preds = emulator_data.unscale(preds.reshape(-1,1), 'outputs') * 1e-9 / 361.8
 
-# # TODO: Plot validation
-# # TODO: Try other metrics / tensorboard
-
-# for scen in emulator_data.test_scenarios[:10]:
-#     single_scenario = scen
-#     test_model = single_scenario[0]
-#     test_exp = single_scenario[2]
-#     test_sector = single_scenario[1]
-#     single_test_features = torch.tensor(np.array(test_features[(test_features[test_model] == 1) & (test_features[test_exp] == 1) & (test_features.sectors == test_sector)], dtype=np.float64), dtype=torch.float)
-#     single_test_labels = np.array(test_labels[(test_features[test_model] == 1) & (test_features[test_exp] == 1) & (test_features.sectors == test_sector)], dtype=np.float64)
-#     preds = model(single_test_features).detach().numpy()
-
-#     single_test_labels = emulator_data.unscale(single_test_labels.reshape(-1,1), 'outputs') * 1e-9 / 361.8
-#     preds = emulator_data.unscale(preds.reshape(-1,1), 'outputs') * 1e-9 / 361.8
-
-#     plt.figure()
-#     plt.plot(single_test_labels, 'r-', label='True')
-#     plt.plot(preds, 'b-', label='Predicted')
-#     plt.xlabel('Time (years since 2015)')
-#     plt.ylabel('SLE (mm)')
-#     plt.title(f'Model={test_model}, Exp={test_exp}')
-#     plt.ylim([-10,10])
-#     plt.legend()
-#     plt.savefig(f'results/{1}_{test_model}_{test_exp}.png')
+    plt.figure()
+    plt.plot(single_test_labels, 'r-', label='True')
+    plt.plot(preds, 'b-', label='Predicted')
+    plt.xlabel('Time (years since 2015)')
+    plt.ylabel('SLE (mm)')
+    plt.title(f'Model={test_model}, Exp={test_exp}')
+    plt.ylim([-10,10])
+    plt.legend()
+    plt.savefig(f'results/{1}_{test_model}_{test_exp}.png')
 
 # stop = ''

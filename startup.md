@@ -14,3 +14,7 @@ export PYTHONPATH="${PYTHONPATH}:/users/pvankatw/emulator"
 ## TO GET TO DATA DIRECTORY
 
 cd /users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/  
+
+## Tensorboard Partition
+
+(256, 128, 64, 32, 16, 1|64, 128, 32, 16, 8, 1|64, 20, 1|128, 64, 32, 1|256, 128, 64, 32, 16, 8, 4, 1)
