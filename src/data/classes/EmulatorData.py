@@ -36,8 +36,7 @@ class EmulatorData:
 
     def process(self, target_column='sle', drop_missing=True, drop_columns=True, boolean_indices=True, scale=True,
                 split_type='batch_test', drop_outliers=False):
-        if drop_missing:
-            self = self.drop_missing()
+        
         if drop_columns:
             if drop_columns is True:
                 self = self.drop_columns(columns=['experiment', 'exp_id', 'groupname', 'regions'])
@@ -45,6 +44,11 @@ class EmulatorData:
                 self = self.drop_columns(columns=drop_columns)
             else:
                 raise ValueError(f'drop_columns argument must be of type boolean|list, received {type(drop_columns)}')
+            
+        
+        if drop_missing:
+            self = self.drop_missing()
+        
 
         if boolean_indices:
             self = self.create_boolean_indices()
@@ -59,8 +63,11 @@ class EmulatorData:
 
         if scale:
             self.X = self.scale(self.X, 'inputs', scaler='MinMaxScaler')
-            self.y = np.array(self.y)
-            # self.y = self.scale(self.y, 'outputs', scaler='MinMaxScaler')
+            if target_column == 'sle':
+                self.y = np.array(self.y)
+            else:
+                self.y = self.scale(self.y, 'outputs', scaler='MinMaxScaler')
+                
 
         self = self.train_test_split(split_type=split_type)
 

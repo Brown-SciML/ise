@@ -43,7 +43,7 @@ class Trainer:
         
         return self
 
-    def train(self, model, data_dict, criterion, epochs, batch_size, tensorboard=False, num_linear_layers=None, nodes=None, save_model=False, gpu_optimized=False):
+    def train(self, model, data_dict, criterion, epochs, batch_size, tensorboard=False, num_linear_layers=None, nodes=None, save_model=False, performance_optimized=False):
         self.data_dict = data_dict
         if self.train_loader is None or self.train_loader is None:
             self._format_data(data_dict['train_features'], data_dict['train_labels'], data_dict['test_features'], data_dict['test_labels'],
@@ -67,7 +67,6 @@ class Trainer:
         comment = f" -- {self.time}, FC={num_linear_layers}, nodes={nodes}, batch_size={batch_size},"
         tb = SummaryWriter(comment=comment)
         mae = nn.L1Loss()
-        print(self.X_test[-1])
         X_test = torch.tensor(self.X_test, dtype=torch.float).to(self.device)
         y_test = torch.tensor(self.y_test, dtype=torch.float).to(self.device)
         self.model.train()
@@ -89,7 +88,7 @@ class Trainer:
                 total_loss += loss.item()
                 self.logs['training']['batch'].append(loss.item())
                 
-                if not gpu_optimized:
+                if not performance_optimized:
                     total_mae += mae(pred, y_train_batch.unsqueeze(1)).item()
                 
             
@@ -97,14 +96,14 @@ class Trainer:
             avg_mse = total_loss / len(self.train_loader)
             self.logs['training']['epoch'].append(avg_mse)
             
-            if not gpu_optimized:
+            if not performance_optimized:
                 avg_rmse = np.sqrt(avg_mse)
                 avg_mae = total_mae / len(self.train_loader)
 
             
             training_end = time.time()
             
-            if not gpu_optimized:
+            if not performance_optimized:
                 self.model.eval()
                 test_total_loss = 0
                 test_total_mae = 0
@@ -129,7 +128,7 @@ class Trainer:
             if tensorboard:
                 tb.add_scalar("Training MSE", avg_mse, epoch)
                 
-                if not gpu_optimized:
+                if not performance_optimized:
                     tb.add_scalar("Training RMSE", avg_rmse, epoch)
                     tb.add_scalar("Training MAE", avg_mae, epoch)
                     
@@ -138,7 +137,7 @@ class Trainer:
                     tb.add_scalar("Validation MAE", test_mae, epoch)
                     tb.add_scalar("R^2", r2, epoch)
 
-            if not gpu_optimized:
+            if not performance_optimized:
                 print('')
                 print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}, Validation Loss (MSE): {test_mse:0.8f}
 Training time: {training_end - epoch_start: 0.2f} seconds, Validation time: {testing_end - training_end: 0.2f} seconds""")

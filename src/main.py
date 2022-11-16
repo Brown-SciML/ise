@@ -10,6 +10,8 @@ import torch
 import torch.nn as nn
 import numpy as np
 import time
+import pandas as pd
+
 cfg = get_configs()
 
 np.random.seed(10)
@@ -44,7 +46,10 @@ if processing['combine_datasets']:
                                                export=export_dir)
 
 
-
+dataset1 = ['mrro_anomaly', 'rhoi', 'rhow', 'groupname', 'experiment']
+dataset2 = ['mrro_anomaly', 'rhoi', 'rhow', 'groupname', 'experiment', 'ice_shelf_fracture', 'tier', ]
+dataset3 = ['mrro_anomaly', 'groupname', 'experiment']
+dataset4 = ['groupname', 'experiment']
 
 print('1/4: Loading in Data')
 emulator_data = EmulatorData(directory=export_dir)
@@ -54,22 +59,36 @@ print('2/4: Processing Data')
 emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
     target_column='sle',
     drop_missing=True,
-    drop_columns=False,
+    drop_columns=dataset3,
+    # drop_columns=False,
     boolean_indices=True,
     scale=True,
     split_type='batch_test',
     drop_outliers={'column': 'ivaf', 'operator': '<', 'value': -1e13}
 )
 
-print('3/4: Training Model')
+for dataset in ['all_columns', 'dataset1', 'dataset2', 'dataset3', 'dataset4']:
+    
+    test_features = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/test_features.csv')
+    train_features = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/train_features.csv')
+    test_labels = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/test_labels.csv')
+    train_labels = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/train_labels.csv')
+    scenarios = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/test_scenarios.csv').values.tolist()
 
-# emulator_data.unscale(test_features)
-# emulator_data.unscale(test_labels, 'outputs')
 
-data_dict = {'train_features': train_features,
-             'train_labels': train_labels,
-             'test_features': test_features,
-             'test_labels': test_labels,  }
+    data_dict = {'train_features': train_features,
+                'train_labels': train_labels,
+                'test_features': test_features,
+                'test_labels': test_labels,  }
+
+# import pandas as pd
+# train_features.to_csv(r'/users/pvankatw/emulator/src/data/ml/dataset3/train_features.csv', index=False)
+# test_features.to_csv(r'/users/pvankatw/emulator/src/data/ml/dataset3/test_features.csv', index=False)
+# pd.Series(train_labels, name='sle').to_csv(r'/users/pvankatw/emulator/src/data/ml/dataset3/train_labels.csv', index=False)
+# pd.Series(test_labels, name='sle').to_csv(r'/users/pvankatw/emulator/src/data/ml/dataset3/test_labels.csv', index=False)
+# pd.DataFrame(emulator_data.test_scenarios).to_csv(r'/users/pvankatw/emulator/src/data/ml/dataset3/test_scenarios.csv', index=False)
+
+    print('Training Model')
 
 
 
@@ -137,28 +156,28 @@ data_dict = {'train_features': train_features,
 
 
 
-start = time.time()
-trainer = Trainer(cfg)
-trainer.train(
-    model=ExploratoryModel.ExploratoryModel, 
-    num_linear_layers=6,
-    nodes=[256, 128, 64, 32, 16, 1],    
-    # num_linear_layers=12,
-    # nodes=[2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1],
-    data_dict=data_dict, 
-    criterion=nn.MSELoss(), 
-    epochs=100, 
-    batch_size=100,
-    tensorboard=False,
-    save_model=True,
-    gpu_optimized=True,
-)
-print(f'Total Time: {time.time() - start:0.4f} seconds')
+    start = time.time()
+    trainer = Trainer(cfg)
+    trainer.train(
+        model=ExploratoryModel.ExploratoryModel, 
+        num_linear_layers=6,
+        nodes=[256, 128, 64, 32, 16, 1],    
+        # num_linear_layers=12,
+        # nodes=[2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1],
+        data_dict=data_dict, 
+        criterion=nn.MSELoss(), 
+        epochs=100, 
+        batch_size=100,
+        tensorboard=True,
+        save_model=True,
+        performance_optimized=False,
+    )
+    print(f'Total Time: {time.time() - start:0.4f} seconds')
 
-print('4/4: Evaluating Model')
+    print('4/4: Evaluating Model')
 
-model = trainer.model
-metrics, preds = trainer.evaluate()
+    model = trainer.model
+    metrics, preds = trainer.evaluate()
 
 try:
     preds = preds.detach().numpy()
@@ -179,7 +198,7 @@ plt.show()
 # TODO: Plot validation
 # TODO: Try other metrics / tensorboard
 
-for scen in emulator_data.test_scenarios[:10]:
+for scen in scenarios[:10]:
     single_scenario = scen
     test_model = single_scenario[0]
     test_exp = single_scenario[2]
@@ -188,8 +207,8 @@ for scen in emulator_data.test_scenarios[:10]:
     single_test_labels = np.array(test_labels[(test_features[test_model] == 1) & (test_features[test_exp] == 1) & (test_features.sectors == test_sector)], dtype=np.float64)
     preds = model(single_test_features).cpu().detach().numpy()
 
-    single_test_labels = emulator_data.unscale(single_test_labels.reshape(-1,1), 'outputs') * 1e-9 / 361.8
-    preds = emulator_data.unscale(preds.reshape(-1,1), 'outputs') * 1e-9 / 361.8
+    # single_test_labels = emulator_data.unscale(single_test_labels.reshape(-1,1), 'outputs') * 1e-9 / 361.8
+    # preds = emulator_data.unscale(preds.reshape(-1,1), 'outputs') * 1e-9 / 361.8
 
     plt.figure()
     plt.plot(single_test_labels, 'r-', label='True')
@@ -199,6 +218,6 @@ for scen in emulator_data.test_scenarios[:10]:
     plt.title(f'Model={test_model}, Exp={test_exp}')
     plt.ylim([-10,10])
     plt.legend()
-    plt.savefig(f'results/{1}_{test_model}_{test_exp}.png')
+    # plt.savefig(f'results/{1}_{test_model}_{test_exp}.png')
 
-# stop = ''
+stop = ''
