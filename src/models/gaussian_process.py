@@ -6,7 +6,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import matplotlib.pyplot as plt
 import time
 
-data = pd.read_csv(r"/users/pvankatw/emulator/src/data/files/master.csv", low_memory=False)
+data = pd.read_csv(r"/users/pvankatw/emulator/src/data/output_files/master.csv", low_memory=False)
 data = data[['salinity', 'temperature', 'thermal_forcing', 'pr_anomaly', 'evspsbl_anomaly', 'mrro_anomaly',
        'smb_anomaly', 'ts_anomaly', 'ivaf']]
 

@@ -256,21 +256,21 @@ class EmulatorData:
         if 'input' in values_type.lower():
             self.input_columns = self.X.columns
             self.scaler_X.fit(self.X)
-            # dump(self.scaler_X, open('./src/data/files/scaler_X.pkl', 'wb'))
+            # dump(self.scaler_X, open('./src/data/output_files/scaler_X.pkl', 'wb'))
             return pd.DataFrame(self.scaler_X.transform(values), columns=self.X.columns)
 
         # TODO: Don't need this anymore with SLE as the prediction
         elif 'output' in values_type.lower():
             self.scaler_y.fit(np.array(self.y).reshape(-1, 1))
-            # dump(self.scaler_y, open('./src/data/files/scaler_y.pkl', 'wb'))
+            # dump(self.scaler_y, open('./src/data/output_files/scaler_y.pkl', 'wb'))
             return self.scaler_y.transform(np.array(values).reshape(-1, 1))
 
         else:
             raise ValueError(f"values_type must be in ['inputs', 'outputs'], received {values_type}")
 
     def unscale(self, values, values_type):
-        # self.scaler_X = load(open('./src/data/files/scaler_X.pkl', 'rb'))
-        # self.scaler_y = load(open('./src/data/files/scaler_y.pkl', 'rb'))
+        # self.scaler_X = load(open('./src/data/output_files/scaler_X.pkl', 'rb'))
+        # self.scaler_y = load(open('./src/data/output_files/scaler_y.pkl', 'rb'))
 
         if 'input' in values_type.lower():
             return pd.DataFrame(self.scaler_X.inverse_transform(values), columns=self.input_columns)
