@@ -52,7 +52,7 @@ split_type = 'batch'
 
 print('2/4: Processing Data')
 emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
-    target_column='ivaf',
+    target_column='sle',
     drop_missing=True,
     drop_columns=False,
     boolean_indices=True,
@@ -134,7 +134,6 @@ data_dict = {'train_features': train_features,
 #             )
             
 #             count += 1
-
 
 
 

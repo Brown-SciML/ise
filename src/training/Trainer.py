@@ -67,7 +67,7 @@ class Trainer:
         comment = f" -- {self.time}, FC={num_linear_layers}, nodes={nodes}, batch_size={batch_size},"
         tb = SummaryWriter(comment=comment)
         mae = nn.L1Loss()
-
+        print(self.X_test[-1])
         X_test = torch.tensor(self.X_test, dtype=torch.float).to(self.device)
         y_test = torch.tensor(self.y_test, dtype=torch.float).to(self.device)
         self.model.train()
@@ -160,8 +160,9 @@ Training time: {training_end - epoch_start: 0.2f} seconds""")
                     
             tb.close()
             
+        # TODO: Change to relative path
         if save_model:
-            torch.save(self.model.state_dict(), f"/users/pvankatw/emulator/src/models/saved_models/{self.time}.pt")
+            torch.save(self.model.state_dict(), f"/users/pvankatw/emulator/src/models/experiment_models/{self.time}.pt")
         
 
 

@@ -18,21 +18,23 @@ class EmulatorData:
                 raise FileNotFoundError('Files not found, make sure to run all processing functions.')
 
 
+        self.data['sle'] = self.data.ivaf / 1e9 / 362.5 # m^3 / 1e9 / 362.5 = Gt / 1 mm --> mm SLE
         self.data['modelname'] = self.data.groupname + '_' + self.data.modelname
         # self.data.smb = self.data.smb.fillna(method="ffill")
         
         unique_batches = self.data.groupby(['modelname','sectors', 'exp_id']).size().reset_index().rename(columns={0:'count'}).drop(columns='count')
         self.batches = unique_batches.values.tolist()
-        self.output_columns = ['icearea', 'iareafl', 'iareagr', 'ivol', 'ivaf', 'smb', 'smbgr', 'bmbfl']
+        self.output_columns = ['icearea', 'iareafl', 'iareagr', 'ivol', 'ivaf', 'smb', 'smbgr', 'bmbfl', 'sle']
         
-        for col in ['icearea', 'iareafl', 'iareagr', 'ivol', 'smb', 'smbgr', 'bmbfl']:
+        for col in ['icearea', 'iareafl', 'iareagr', 'ivol', 'smb', 'smbgr', 'bmbfl', 'sle']:
             self.data[col] = self.data[col].fillna(self.data[col].mean())
+            
         self.X = None
         self.y = None
         self.scaler_X = None
         self.scaler_y = None
 
-    def process(self, target_column, drop_missing=True, drop_columns=True, boolean_indices=True, scale=True,
+    def process(self, target_column='sle', drop_missing=True, drop_columns=True, boolean_indices=True, scale=True,
                 split_type='batch_test', drop_outliers=False):
         if drop_missing:
             self = self.drop_missing()
@@ -57,7 +59,8 @@ class EmulatorData:
 
         if scale:
             self.X = self.scale(self.X, 'inputs', scaler='MinMaxScaler')
-            self.y = self.scale(self.y, 'outputs', scaler='MinMaxScaler')
+            self.y = np.array(self.y)
+            # self.y = self.scale(self.y, 'outputs', scaler='MinMaxScaler')
 
         self = self.train_test_split(split_type=split_type)
 
@@ -256,6 +259,7 @@ class EmulatorData:
             # dump(self.scaler_X, open('./src/data/files/scaler_X.pkl', 'wb'))
             return pd.DataFrame(self.scaler_X.transform(values), columns=self.X.columns)
 
+        # TODO: Don't need this anymore with SLE as the prediction
         elif 'output' in values_type.lower():
             self.scaler_y.fit(np.array(self.y).reshape(-1, 1))
             # dump(self.scaler_y, open('./src/data/files/scaler_y.pkl', 'wb'))
