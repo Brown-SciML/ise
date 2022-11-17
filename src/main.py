@@ -46,30 +46,38 @@ if processing['combine_datasets']:
                                                export=export_dir)
 
 
-dataset1 = ['mrro_anomaly', 'rhoi', 'rhow', 'groupname', 'experiment']
-dataset2 = ['mrro_anomaly', 'rhoi', 'rhow', 'groupname', 'experiment', 'ice_shelf_fracture', 'tier', ]
-dataset3 = ['mrro_anomaly', 'groupname', 'experiment']
+# dataset1 = ['mrro_anomaly', 'rhoi', 'rhow', 'groupname', 'experiment']
+# dataset2 = ['mrro_anomaly', 'rhoi', 'rhow', 'groupname', 'experiment', 'ice_shelf_fracture', 'tier', ]
+# dataset3 = ['mrro_anomaly', 'groupname', 'experiment']
 dataset4 = ['groupname', 'experiment']
+dataset5 = ['groupname', 'experiment', 'regions', 'tier']
 
-print('1/4: Loading in Data')
-emulator_data = EmulatorData(directory=export_dir)
-split_type = 'batch'
+# print('1/4: Loading in Data')
+# emulator_data = EmulatorData(directory=export_dir)
+# split_type = 'batch'
 
-print('2/4: Processing Data')
-emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
-    target_column='sle',
-    drop_missing=True,
-    drop_columns=dataset3,
-    # drop_columns=False,
-    boolean_indices=True,
-    scale=True,
-    split_type='batch_test',
-    drop_outliers={'column': 'ivaf', 'operator': '<', 'value': -1e13}
-)
+# print('2/4: Processing Data')
+# emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
+#     target_column='sle',
+#     drop_missing=True,
+#     drop_columns=dataset5,
+#     # drop_columns=False,
+#     boolean_indices=True,
+#     scale=True,
+#     split_type='batch_test',
+#     drop_outliers={'column': 'ivaf', 'operator': '<', 'value': -1e13}
+# )
+
+# import pandas as pd
+# train_features.to_csv(r'/users/pvankatw/emulator/src/data/ml/dataset5/train_features.csv', index=False)
+# test_features.to_csv(r'/users/pvankatw/emulator/src/data/ml/dataset5/test_features.csv', index=False)
+# pd.Series(train_labels, name='sle').to_csv(r'/users/pvankatw/emulator/src/data/ml/dataset5/train_labels.csv', index=False)
+# pd.Series(test_labels, name='sle').to_csv(r'/users/pvankatw/emulator/src/data/ml/dataset5/test_labels.csv', index=False)
+# pd.DataFrame(emulator_data.test_scenarios).to_csv(r'/users/pvankatw/emulator/src/data/ml/dataset5/test_scenarios.csv', index=False)
 
 count = 0
 for iteration in range(5):
-    for dataset in ['all_columns', 'dataset1', 'dataset2', 'dataset3', 'dataset4']:
+    for dataset in ['dataset5']:
         print('')
         print(f"Training... Dataset: {dataset}, Iteration: {iteration}, Trained {count} models")
         test_features = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/test_features.csv')

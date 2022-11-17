@@ -100,17 +100,19 @@ class Trainer:
         # criterion = nn.MSELoss()
         self.time = datetime.now().strftime(r"%d-%m-%Y %H.%M.%S")
         
-        cols = data_dict['train_features'].columns
-        if ('mrro_anomaly' in cols) and ('groupname_ILTS_PIK' not in cols):
-            dataset = 'dataset4'
-        elif 'tier' not in cols:
-            dataset = 'dataset2'
-        elif ('mrro_anomaly' not in cols) and ('rhoi' not in cols):
-            dataset = 'dataset1'
-        elif ('mrro_anomaly' not in cols) and ('rhoi' in cols):
-            dataset = 'dataset3'
-        else:
-            dataset = 'all_columns'
+        # cols = data_dict['train_features'].columns
+        # if ('mrro_anomaly' in cols) and ('groupname_ILTS_PIK' not in cols):
+        #     dataset = 'dataset4'
+        # elif 'tier' not in cols:
+        #     dataset = 'dataset2'
+        # elif ('mrro_anomaly' not in cols) and ('rhoi' not in cols):
+        #     dataset = 'dataset1'
+        # elif ('mrro_anomaly' not in cols) and ('rhoi' in cols):
+        #     dataset = 'dataset3'
+        # else:
+        #     dataset = 'all_columns'
+        
+        dataset = 'dataset5'
             
         
         # comment = f" -- {self.time}, FC={num_linear_layers}, nodes={nodes}, batch_size={batch_size},"
