@@ -17,7 +17,7 @@ class Trainer:
         self.model = None
         self.data = {}
         self.cfg = cfg
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # Determine whether on GPU or not
         # self.data_dir = self.cfg['data']['directory'] if self.cfg['data']['directory'] is not None else self.cfg['data']['export']
         # self.model_name = cfg['training']['model']
         # self.num_epochs = cfg['training']['epochs']
@@ -31,11 +31,27 @@ class Trainer:
         self.logs = {'training': {'epoch': [], 'batch': []}, 'testing': []}
 
     def _format_data(self, train_features, train_labels, test_features, test_labels, train_batch_size=100, test_batch_size=10,):
+        """Takes training and testing dataframes and converts them into PyTorch DataLoaders to be used in the training loop.
+
+        Args:
+            train_features (pd.DataFrame|np.array): training dataset features
+            train_labels (pd.Series|np.array): training dataset labels
+            test_features (pd.DataFrame|np.array): test dataset features
+            test_labels (pd.Series|np.array): test dataset labels
+            train_batch_size (int, optional): batch size for training loop. Defaults to 100.
+            test_batch_size (int, optional): batch size for validation loop. Defaults to 10.
+
+        Returns:
+            self (Trainer): Trainer object
+        """
+        
+        # Convert to Numpy first (no direct conversion from pd.DataFrame to torch.tensor)
         self.X_train = np.array(train_features, dtype=np.float64)
         self.y_train = np.array(train_labels, dtype=np.float64)
         self.X_test = np.array(test_features, dtype=np.float64)
         self.y_test = np.array(test_labels, dtype=np.float64)
 
+        # Create dataset and data loaders to be used in training loop
         train_dataset = PyTorchDataset(torch.from_numpy(self.X_train).float(), torch.from_numpy(self.y_train).float().squeeze())
         test_dataset = PyTorchDataset(torch.from_numpy(self.X_test).float(), torch.from_numpy(self.y_test).float().squeeze())
         self.train_loader = DataLoader(dataset=train_dataset, batch_size=train_batch_size, shuffle=True)
@@ -44,19 +60,39 @@ class Trainer:
         return self
 
     def train(self, model, data_dict, criterion, epochs, batch_size, tensorboard=False, num_linear_layers=None, nodes=None, save_model=False, performance_optimized=False):
+        """Training loop for training a PyTorch model. Include validation, GPU compatibility, and tensorboard integration.
+
+        Args:
+            model (ModelClass): Model to be trained. Usually custom model class.
+            data_dict (dict): Dictionary containing training and testing arrays/tensors.
+                    Example: {'train_features': train_features, train_labels': train_labels, 'test_features': test_features, 'test_labels': test_labels,}
+            criterion (torch.nn.Loss): Loss class from PyTorch NN module.
+                    Example: torch.nn.MSELoss()
+            epochs (int): Number of training epochs
+            batch_size (int): Number of training batches
+            tensorboard (bool, optional): Flag determining whether Tensorboard logs should be generated and outputted. Defaults to False.
+            num_linear_layers (int, optional): Number of linear layers in the model. Only used if paired with ExploratoryModel. Defaults to None.
+            nodes (list, optional): List of integers denoting the number of nodes in num_linear_layers. Len(nodes) must equal num_linear_layers. Defaults to None.
+            save_model (bool, optional): Flag determining whether the trained model should be saved. Defaults to False.
+            performance_optimized (bool, optional): Flag determining whether the training loop should be optimized for fast training. Defaults to False.
+        """
+        
+        # save attributes
         self.data_dict = data_dict
+        self.num_input_features = self.data_dict['train_features'].shape[1]
+        
+        # If the data loader hasn't been created, run _format_data function
         if self.train_loader is None or self.train_loader is None:
             self._format_data(data_dict['train_features'], data_dict['train_labels'], data_dict['test_features'], data_dict['test_labels'],
                               train_batch_size=batch_size)
         
-        self.num_input_features = self.data_dict['train_features'].shape[1]
-        
-        
+        # establish model - if using exploratory model, use num_linear_layers and nodes arg
         if num_linear_layers is not None and nodes is not None:
             self.model = model(input_layer_size=self.num_input_features, num_linear_layers=num_linear_layers, nodes=nodes).to(self.device)
         else:
             self.model = model(input_layer_size=self.num_input_features).to(self.device)
-            
+        
+        # Use multiple GPU parallelization if available
         # if torch.cuda.device_count() > 1:
         #     self.model = nn.DataParallel(self.model)
         
@@ -64,7 +100,21 @@ class Trainer:
         # criterion = nn.MSELoss()
         self.time = datetime.now().strftime(r"%d-%m-%Y %H.%M.%S")
         
-        comment = f" -- {self.time}, FC={num_linear_layers}, nodes={nodes}, batch_size={batch_size},"
+        cols = data_dict['train_features'].columns
+        if ('mrro_anomaly' in cols) and ('groupname_ILTS_PIK' not in cols):
+            dataset = 'dataset4'
+        elif 'tier' not in cols:
+            dataset = 'dataset2'
+        elif ('mrro_anomaly' not in cols) and ('rhoi' not in cols):
+            dataset = 'dataset1'
+        elif ('mrro_anomaly' not in cols) and ('rhoi' in cols):
+            dataset = 'dataset3'
+        else:
+            dataset = 'all_columns'
+            
+        
+        # comment = f" -- {self.time}, FC={num_linear_layers}, nodes={nodes}, batch_size={batch_size},"
+        comment = f" -- {self.time}, dataset={dataset},"
         tb = SummaryWriter(comment=comment)
         mae = nn.L1Loss()
         X_test = torch.tensor(self.X_test, dtype=torch.float).to(self.device)
@@ -137,15 +187,17 @@ class Trainer:
                     tb.add_scalar("Validation MAE", test_mae, epoch)
                     tb.add_scalar("R^2", r2, epoch)
 
-            if not performance_optimized:
-                print('')
-                print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}, Validation Loss (MSE): {test_mse:0.8f}
-Training time: {training_end - epoch_start: 0.2f} seconds, Validation time: {testing_end - training_end: 0.2f} seconds""")
+
+            # TODO: Add verbose parameter so you can turn these off
+#             if not performance_optimized:
+#                 print('')
+#                 print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}, Validation Loss (MSE): {test_mse:0.8f}
+# Training time: {training_end - epoch_start: 0.2f} seconds, Validation time: {testing_end - training_end: 0.2f} seconds""")
                 
-            else:
-                print('')
-                print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}
-Training time: {training_end - epoch_start: 0.2f} seconds""")
+#             else:
+#                 print('')
+#                 print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}
+# Training time: {training_end - epoch_start: 0.2f} seconds""")
         
         if tensorboard:
             metrics, _ = self.evaluate()
