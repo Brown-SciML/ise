@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from torch import optim, nn
-from training.PyTorchDataset import PyTorchDataset
+from training.PyTorchDataset import PyTorchDataset, TSDataset
 from torch.utils.data import DataLoader
 import time
 from torch.utils.tensorboard import SummaryWriter
@@ -51,6 +51,8 @@ class Trainer:
         self.X_test = np.array(test_features, dtype=np.float64)
         self.y_test = np.array(test_labels, dtype=np.float64)
 
+
+        # TODO: Implement time-series here. I already added the PyTorch Dataset for it...
         # Create dataset and data loaders to be used in training loop
         train_dataset = PyTorchDataset(torch.from_numpy(self.X_train).float(), torch.from_numpy(self.y_train).float().squeeze())
         test_dataset = PyTorchDataset(torch.from_numpy(self.X_test).float(), torch.from_numpy(self.y_test).float().squeeze())
@@ -100,23 +102,8 @@ class Trainer:
         # criterion = nn.MSELoss()
         self.time = datetime.now().strftime(r"%d-%m-%Y %H.%M.%S")
         
-        # cols = data_dict['train_features'].columns
-        # if ('mrro_anomaly' in cols) and ('groupname_ILTS_PIK' not in cols):
-        #     dataset = 'dataset4'
-        # elif 'tier' not in cols:
-        #     dataset = 'dataset2'
-        # elif ('mrro_anomaly' not in cols) and ('rhoi' not in cols):
-        #     dataset = 'dataset1'
-        # elif ('mrro_anomaly' not in cols) and ('rhoi' in cols):
-        #     dataset = 'dataset3'
-        # else:
-        #     dataset = 'all_columns'
-        
-        dataset = 'dataset5'
-            
-        
-        # comment = f" -- {self.time}, FC={num_linear_layers}, nodes={nodes}, batch_size={batch_size},"
-        comment = f" -- {self.time}, dataset={dataset},"
+        comment = f" -- {self.time}, FC={num_linear_layers}, nodes={nodes}, batch_size={batch_size},"
+        # comment = f" -- {self.time}, dataset={dataset},"
         tb = SummaryWriter(comment=comment)
         mae = nn.L1Loss()
         X_test = torch.tensor(self.X_test, dtype=torch.float).to(self.device)
