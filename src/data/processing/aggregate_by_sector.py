@@ -36,9 +36,7 @@ def aggregate_by_sector(path):
         forcing = IceCollapse(path)
 
     forcing = forcing.add_sectors(grids)
-    
-    
-    # SOMEHOW ONLY SECTOR THREE IS SHOWING UP. IT HAPPENS BEFORE HERE (I THINK IN ADD_SECTORS)
+
     
     # Group the dataset and assign aogcm column to the aogcm simulation
     if forcing.forcing_type in ('atmosphere', 'ice_collapse'):

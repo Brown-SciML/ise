@@ -46,11 +46,45 @@ if processing['combine_datasets']:
                                                export=export_dir)
 
 
+print('1/4: Loading in Data')
+emulator_data = EmulatorData(directory=export_dir)
+split_type = 'batch'
+print('2/4: Processing Data')
+emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
+    target_column='sle',
+    drop_missing=True,
+    drop_columns=['groupname', 'experiment'],
+    # drop_columns=False,
+    boolean_indices=True,
+    scale=True,
+    split_type='batch_test',
+    drop_outliers={'column': 'ivaf', 'operator': '<', 'value': -1e13},
+    time_series=True
+)
+
+
+
+dataset = 'dataset5'
+test_features = pd.read_csv(f'./data/ml/{dataset}/test_features.csv')
+train_features = pd.read_csv(f'./data/ml/{dataset}/train_features.csv')
+test_labels = pd.read_csv(f'./data/ml/{dataset}/test_labels.csv')
+train_labels = pd.read_csv(f'./data/ml/{dataset}/train_labels.csv')
+scenarios = pd.read_csv(f'./data/ml/{dataset}/test_scenarios.csv').values.tolist()
+
+
+
+
+train_features = train_features
+
+
+
+
+
 # dataset1 = ['mrro_anomaly', 'rhoi', 'rhow', 'groupname', 'experiment']
 # dataset2 = ['mrro_anomaly', 'rhoi', 'rhow', 'groupname', 'experiment', 'ice_shelf_fracture', 'tier', ]
 # dataset3 = ['mrro_anomaly', 'groupname', 'experiment']
-dataset4 = ['groupname', 'experiment']
-dataset5 = ['groupname', 'experiment', 'regions', 'tier']
+# dataset4 = ['groupname', 'experiment']
+# dataset5 = ['groupname', 'experiment', 'regions', 'tier']
 
 # print('1/4: Loading in Data')
 # emulator_data = EmulatorData(directory=export_dir)
@@ -75,47 +109,47 @@ dataset5 = ['groupname', 'experiment', 'regions', 'tier']
 # pd.Series(test_labels, name='sle').to_csv(r'/users/pvankatw/emulator/src/data/ml/dataset5/test_labels.csv', index=False)
 # pd.DataFrame(emulator_data.test_scenarios).to_csv(r'/users/pvankatw/emulator/src/data/ml/dataset5/test_scenarios.csv', index=False)
 
-count = 0
-for iteration in range(5):
-    for dataset in ['dataset5']:
-        print('')
-        print(f"Training... Dataset: {dataset}, Iteration: {iteration}, Trained {count} models")
-        test_features = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/test_features.csv')
-        train_features = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/train_features.csv')
-        test_labels = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/test_labels.csv')
-        train_labels = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/train_labels.csv')
-        scenarios = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/test_scenarios.csv').values.tolist()
-
-
-        data_dict = {'train_features': train_features,
-                    'train_labels': train_labels,
-                    'test_features': test_features,
-                    'test_labels': test_labels,  }
-        
-        start = time.time()
-        trainer = Trainer(cfg)
-        trainer.train(
-            model=ExploratoryModel.ExploratoryModel, 
-            num_linear_layers=6,
-            nodes=[256, 128, 64, 32, 16, 1],    
-            # num_linear_layers=12,
-            # nodes=[2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1],
-            data_dict=data_dict, 
-            criterion=nn.MSELoss(), 
-            epochs=100, 
-            batch_size=100,
-            tensorboard=True,
-            save_model=True,
-            performance_optimized=False,
-        )
-        print(f'Total Time: {time.time() - start:0.4f} seconds')
-
-        print('4/4: Evaluating Model')
-
-        model = trainer.model
-        metrics, preds = trainer.evaluate()
-        
-        count += 1
+# count = 0
+# for iteration in range(5):
+#     for dataset in ['dataset5']:
+#         print('')
+#         print(f"Training... Dataset: {dataset}, Iteration: {iteration}, Trained {count} models")
+#         test_features = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/test_features.csv')
+#         train_features = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/train_features.csv')
+#         test_labels = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/test_labels.csv')
+#         train_labels = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/train_labels.csv')
+#         scenarios = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/test_scenarios.csv').values.tolist()
+#
+#
+#         data_dict = {'train_features': train_features,
+#                     'train_labels': train_labels,
+#                     'test_features': test_features,
+#                     'test_labels': test_labels,  }
+#
+#         start = time.time()
+#         trainer = Trainer(cfg)
+#         trainer.train(
+#             model=ExploratoryModel.ExploratoryModel,
+#             num_linear_layers=6,
+#             nodes=[256, 128, 64, 32, 16, 1],
+#             # num_linear_layers=12,
+#             # nodes=[2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1],
+#             data_dict=data_dict,
+#             criterion=nn.MSELoss(),
+#             epochs=100,
+#             batch_size=100,
+#             tensorboard=True,
+#             save_model=True,
+#             performance_optimized=False,
+#         )
+#         print(f'Total Time: {time.time() - start:0.4f} seconds')
+#
+#         print('4/4: Evaluating Model')
+#
+#         model = trainer.model
+#         metrics, preds = trainer.evaluate()
+#
+#         count += 1
 
 
 
