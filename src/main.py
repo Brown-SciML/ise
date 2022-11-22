@@ -3,7 +3,7 @@ from data.processing.process_outputs import process_repository
 from data.processing.combine_datasets import combine_datasets
 from data.classes.EmulatorData import EmulatorData
 from training.Trainer import Trainer
-from models import ExploratoryModel
+from models import ExploratoryModel, TimeSeriesEmulator
 from utils import get_configs
 import matplotlib.pyplot as plt
 import torch
@@ -48,13 +48,11 @@ if processing['combine_datasets']:
 
 print('1/4: Loading in Data')
 emulator_data = EmulatorData(directory=export_dir)
-split_type = 'batch'
 print('2/4: Processing Data')
 emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
     target_column='sle',
     drop_missing=True,
     drop_columns=['groupname', 'experiment'],
-    # drop_columns=False,
     boolean_indices=True,
     scale=True,
     split_type='batch_test',
@@ -62,14 +60,36 @@ emulator_data, train_features, test_features, train_labels, test_labels = emulat
     time_series=True
 )
 
+data_dict = {'train_features': train_features,
+            'train_labels': train_labels,
+            'test_features': test_features,
+            'test_labels': test_labels,  }
+trainer = Trainer(cfg)
 
+print('3/4: Training Model')
+architecture = {''}
+trainer.train(
+    model=TimeSeriesEmulator.TimeSeriesEmulator,
+    num_linear_layers=6,
+    nodes=[256, 128, 64, 32, 16, 1],
+    data_dict=data_dict,
+    criterion=nn.MSELoss(),
+    epochs=100,
+    batch_size=100,
+    tensorboard=True,
+    save_model=True,
+    performance_optimized=False,
+)
+print('4/4: Evaluating Model')
+model = trainer.model
+metrics, preds = trainer.evaluate()
 
-dataset = 'dataset5'
-test_features = pd.read_csv(f'./data/ml/{dataset}/test_features.csv')
-train_features = pd.read_csv(f'./data/ml/{dataset}/train_features.csv')
-test_labels = pd.read_csv(f'./data/ml/{dataset}/test_labels.csv')
-train_labels = pd.read_csv(f'./data/ml/{dataset}/train_labels.csv')
-scenarios = pd.read_csv(f'./data/ml/{dataset}/test_scenarios.csv').values.tolist()
+# dataset = 'dataset5'
+# test_features = pd.read_csv(f'./data/ml/{dataset}/test_features.csv')
+# train_features = pd.read_csv(f'./data/ml/{dataset}/train_features.csv')
+# test_labels = pd.read_csv(f'./data/ml/{dataset}/test_labels.csv')
+# train_labels = pd.read_csv(f'./data/ml/{dataset}/train_labels.csv')
+# scenarios = pd.read_csv(f'./data/ml/{dataset}/test_scenarios.csv').values.tolist()
 
 
 
