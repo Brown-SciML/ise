@@ -13,6 +13,9 @@ class TimeSeriesEmulator(torch.nn.Module):
         self.num_rnn_hidden = architecture['num_rnn_hidden']
         self.time_series = True
 
+        if not all([self.num_rnn_layers, self.num_rnn_hidden, self.input_layer_size]):
+            raise AttributeError('Model architecture argument missing. Requires: [num_rnn_layers, num_rnn_hidden, input_layer_size].')
+
         self.rnn = nn.LSTM(
             input_size=self.input_layer_size,
             hidden_size=self.num_rnn_hidden,
@@ -22,7 +25,7 @@ class TimeSeriesEmulator(torch.nn.Module):
 
         self.relu = nn.ReLU()
 
-        self.linear1 = nn.Linear(in_features=self.self.num_rnn_hidden, out_features=32)
+        self.linear1 = nn.Linear(in_features=self.num_rnn_hidden, out_features=32)
         self.linear_out = nn.Linear(in_features=32, out_features=1)
 
     def forward(self, x):

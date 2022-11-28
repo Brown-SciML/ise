@@ -16,35 +16,32 @@ cfg = get_configs()
 
 np.random.seed(10)
 
-
 forcing_directory = cfg['data']['forcing']
 zenodo_directory = cfg['data']['output']
 export_dir = cfg['data']['export']
 processing = cfg['processing']
 data_directory = cfg['data']['directory']
 
-
 if processing['generate_atmospheric_forcing']:
     af_directory = f"{forcing_directory}/Atmosphere_Forcing/"
     # TODO: refactor model_in_columns as aogcm_as_features
     aggregate_atmosphere(af_directory, export=export_dir, model_in_columns=False, )
-    
+
 if processing['generate_oceanic_forcing']:
     of_directory = f"{forcing_directory}/Ocean_Forcing/"
     aggregate_ocean(of_directory, export=export_dir, model_in_columns=False, )
-    
+
 if processing['generate_icecollapse_forcing']:
     ice_directory = f"{forcing_directory}/Ice_Shelf_Fracture"
     aggregate_icecollapse(ice_directory, export=export_dir, model_in_columns=False, )
-    
+
 if processing['generate_outputs']:
     outputs = process_repository(zenodo_directory, export_filepath=f"{export_dir}/outputs.csv")
 
 if processing['combine_datasets']:
-    master, inputs, outputs = combine_datasets(processed_data_dir=export_dir, 
-                                               include_icecollapse=processing['include_icecollapse'], 
+    master, inputs, outputs = combine_datasets(processed_data_dir=export_dir,
+                                               include_icecollapse=processing['include_icecollapse'],
                                                export=export_dir)
-
 
 print('1/4: Loading in Data')
 emulator_data = EmulatorData(directory=export_dir)
@@ -61,17 +58,24 @@ emulator_data, train_features, test_features, train_labels, test_labels = emulat
 )
 
 data_dict = {'train_features': train_features,
-            'train_labels': train_labels,
-            'test_features': test_features,
-            'test_labels': test_labels,  }
+             'train_labels': train_labels,
+             'test_features': test_features,
+             'test_labels': test_labels, }
 trainer = Trainer(cfg)
 
 print('3/4: Training Model')
-architecture = {''}
+exploratory_architecture = {
+    'num_linear_layers': 6,
+    'nodes': [256, 128, 64, 32, 16, 1],
+}
+time_series_architecture = {
+    'num_rnn_layers': 8,
+    'num_rnn_hidden': 128,
+}
+
 trainer.train(
     model=TimeSeriesEmulator.TimeSeriesEmulator,
-    num_linear_layers=6,
-    nodes=[256, 128, 64, 32, 16, 1],
+    architecture=time_series_architecture,
     data_dict=data_dict,
     criterion=nn.MSELoss(),
     epochs=100,
@@ -92,13 +96,7 @@ metrics, preds = trainer.evaluate()
 # scenarios = pd.read_csv(f'./data/ml/{dataset}/test_scenarios.csv').values.tolist()
 
 
-
-
 train_features = train_features
-
-
-
-
 
 # dataset1 = ['mrro_anomaly', 'rhoi', 'rhow', 'groupname', 'experiment']
 # dataset2 = ['mrro_anomaly', 'rhoi', 'rhow', 'groupname', 'experiment', 'ice_shelf_fracture', 'tier', ]
@@ -170,8 +168,6 @@ train_features = train_features
 #         metrics, preds = trainer.evaluate()
 #
 #         count += 1
-
-
 
 
 # try:

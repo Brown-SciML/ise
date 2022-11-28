@@ -69,14 +69,14 @@ class Trainer:
             test_dataset = PyTorchDataset(torch.from_numpy(self.X_test).float(),
                                           torch.from_numpy(self.y_test).float().squeeze())
 
-        # TODO: Implement time-series here. I already added the PyTorch Dataset for it...
         # Create dataset and data loaders to be used in training loop
         self.train_loader = DataLoader(dataset=train_dataset, batch_size=train_batch_size, shuffle=True)
         self.test_loader = DataLoader(dataset=test_dataset, batch_size=test_batch_size, )
 
         return self
 
-    def train(self, model, data_dict, criterion, epochs, batch_size, tensorboard=False, architecture=None, save_model=False, performance_optimized=False):
+    def train(self, model, data_dict, criterion, epochs, batch_size, tensorboard=False, architecture=None,
+              save_model=False, performance_optimized=False):
         """Training loop for training a PyTorch model. Include validation, GPU compatibility, and tensorboard integration.
 
         Args:
@@ -105,16 +105,16 @@ class Trainer:
                               data_dict['test_labels'],
                               train_batch_size=batch_size)
 
-
         # Loop through possible architecture parameters and if it not given, set it to None
         for param in ['num_linear_layers', 'nodes', 'num_rnn_hidden', 'num_rnn_layers']:
             try:
                 architecture[param]
             except:
                 architecture[param] = None
+        architecture['input_layer_size'] = self.num_input_features
 
         # establish model - if using exploratory model, use num_linear_layers and nodes arg
-        self.model = model(input_layer_size=self.num_input_features, architecture=architecture).to(self.device)
+        self.model = model(architecture=architecture).to(self.device)
 
         # Use multiple GPU parallelization if available
         # if torch.cuda.device_count() > 1:
@@ -124,7 +124,7 @@ class Trainer:
         # criterion = nn.MSELoss()
         self.time = datetime.now().strftime(r"%d-%m-%Y %H.%M.%S")
 
-        comment = f" -- {self.time}, FC={num_linear_layers}, nodes={nodes}, batch_size={batch_size},"
+        comment = f" -- {self.time}, FC={architecture['num_linear_layers']}, nodes={architecture['nodes']}, batch_size={batch_size},"
         # comment = f" -- {self.time}, dataset={dataset},"
         tb = SummaryWriter(comment=comment)
         mae = nn.L1Loss()
