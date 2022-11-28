@@ -12,6 +12,7 @@ class TimeSeriesEmulator(torch.nn.Module):
         self.num_rnn_layers = architecture['num_rnn_layers']
         self.num_rnn_hidden = architecture['num_rnn_hidden']
         self.time_series = True
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # Determine whether on GPU or not
 
         if not all([self.num_rnn_layers, self.num_rnn_hidden, self.input_layer_size]):
             raise AttributeError('Model architecture argument missing. Requires: [num_rnn_layers, num_rnn_hidden, input_layer_size].')
@@ -30,10 +31,11 @@ class TimeSeriesEmulator(torch.nn.Module):
 
     def forward(self, x):
         batch_size = x.shape[0]
-        h0 = torch.zeros(self.num_layers, batch_size, self.hidden_units).requires_grad_()
-        c0 = torch.zeros(self.num_layers, batch_size, self.hidden_units).requires_grad_()
+        h0 = torch.zeros(self.num_rnn_layers, batch_size, self.num_rnn_hidden).requires_grad_().to(self.device)
+        c0 = torch.zeros(self.num_rnn_layers, batch_size, self.num_rnn_hidden).requires_grad_().to(self.device)
+        
 
-        _, (hn, _) = self.lstm(x, (h0, c0))
+        _, (hn, _) = self.rnn(x, (h0, c0))
         out = self.linear1(hn[0])
         out = self.relu(out)
         out = self.linear_out(out)

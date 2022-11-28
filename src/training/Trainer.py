@@ -56,12 +56,12 @@ class Trainer:
             train_dataset = TSDataset(
                 torch.from_numpy(self.X_train).float(),
                 torch.from_numpy(self.y_train).float().squeeze(),
-                sequence_length=10,
+                sequence_length=3,
             )
             test_dataset = TSDataset(
                 torch.from_numpy(self.X_test).float(),
                 torch.from_numpy(self.y_test).float().squeeze(),
-                sequence_length=10,
+                sequence_length=3,
             )
         else:
             train_dataset = PyTorchDataset(torch.from_numpy(self.X_train).float(),
@@ -93,18 +93,11 @@ class Trainer:
             save_model (bool, optional): Flag determining whether the trained model should be saved. Defaults to False.
             performance_optimized (bool, optional): Flag determining whether the training loop should be optimized for fast training. Defaults to False.
         """
-
+        
         # save attributes
         self.data_dict = data_dict
         self.num_input_features = self.data_dict['train_features'].shape[1]
-        self.time_series = True if hasattr(model, 'time_series') else False
-
-        # If the data loader hasn't been created, run _format_data function
-        if self.train_loader is None or self.train_loader is None:
-            self._format_data(data_dict['train_features'], data_dict['train_labels'], data_dict['test_features'],
-                              data_dict['test_labels'],
-                              train_batch_size=batch_size)
-
+        
         # Loop through possible architecture parameters and if it not given, set it to None
         for param in ['num_linear_layers', 'nodes', 'num_rnn_hidden', 'num_rnn_layers']:
             try:
@@ -115,6 +108,13 @@ class Trainer:
 
         # establish model - if using exploratory model, use num_linear_layers and nodes arg
         self.model = model(architecture=architecture).to(self.device)
+        self.time_series = True if hasattr(self.model, 'time_series') else False
+
+        # If the data loader hasn't been created, run _format_data function
+        if self.train_loader is None or self.train_loader is None:
+            self._format_data(data_dict['train_features'], data_dict['train_labels'], data_dict['test_features'],
+                              data_dict['test_labels'],
+                              train_batch_size=batch_size)
 
         # Use multiple GPU parallelization if available
         # if torch.cuda.device_count() > 1:
@@ -170,7 +170,7 @@ class Trainer:
                     test_pred = self.model(X_test_batch)
                     loss = criterion(test_pred, y_test_batch.unsqueeze(1))
                     test_total_loss += loss.item()
-                    test_total_mae += mae(pred, y_train_batch.unsqueeze(1)).item()
+                    test_total_mae += mae(test_pred, y_test_batch.unsqueeze(1)).item()
 
                 test_mse = test_total_loss / len(self.test_loader)
                 test_mae = test_total_mae / len(self.test_loader)
@@ -196,20 +196,20 @@ class Trainer:
                     tb.add_scalar("R^2", r2, epoch)
 
             # TODO: Add verbose parameter so you can turn these off
-        #             if not performance_optimized:
-        #                 print('')
-        #                 print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}, Validation Loss (MSE): {test_mse:0.8f}
-        # Training time: {training_end - epoch_start: 0.2f} seconds, Validation time: {testing_end - training_end: 0.2f} seconds""")
+            if not performance_optimized:
+                print('')
+                print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}, Validation Loss (MSE): {test_mse:0.8f}
+Training time: {training_end - epoch_start: 0.2f} seconds, Validation time: {testing_end - training_end: 0.2f} seconds""")
 
-        #             else:
-        #                 print('')
-        #                 print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}
-        # Training time: {training_end - epoch_start: 0.2f} seconds""")
+            else:
+                print('')
+                print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}
+Training time: {training_end - epoch_start: 0.2f} seconds""")
 
         if tensorboard:
             metrics, _ = self.evaluate()
             tb.add_hparams(
-                {"FC": num_linear_layers, "nodes": str(nodes), "batch_size": batch_size, },
+                {"FC": architecture['num_linear_layers'], "nodes": architecture['nodes'], "batch_size": batch_size, },
 
                 {
                     "Test MSE": metrics['MSE'], "Test MAE": metrics['MAE'], "R^2": metrics['R2'],
@@ -240,19 +240,20 @@ class Trainer:
     def evaluate(self):
         # Test predictions
         self.model.eval()
+        preds = torch.tensor([]).to(self.device)
+        for X_test_batch, y_test_batch in self.test_loader:
+            X_test_batch, y_test_batch = X_test_batch.to(self.device), y_test_batch.to(self.device)
+            test_pred = self.model(X_test_batch)
+            preds = torch.cat((preds, test_pred), 0)
 
-        X_test = torch.tensor(self.X_test, dtype=torch.float).to(self.device)  # .reshape(-1, X_train.size()[2])
-        preds = self.model(X_test)
-
-        # Calculate metrics
         if self.device.type == 'cuda':
-            preds = preds.cpu().detach().numpy()
+            preds = preds.squeeze().cpu().detach().numpy()
         else:
-            preds = preds.detach().numpy()
-
-        mae = mean_absolute_error(self.y_test, preds)
-        mse = mean_squared_error(self.y_test, preds)
-        rmse = np.sqrt(mean_squared_error(self.y_test, preds))
+            preds = preds.squeeze().detach().numpy()
+            
+        mse = sum((preds - self.y_test)**2) / len(preds)
+        mae = sum((preds - self.y_test)) / len(preds)
+        rmse = np.sqrt(mse)
         r2 = r2_score(self.y_test, preds)
 
         metrics = {'MSE': mse, 'MAE': mae, 'RMSE': rmse, 'R2': r2}

@@ -80,13 +80,16 @@ trainer.train(
     criterion=nn.MSELoss(),
     epochs=100,
     batch_size=100,
-    tensorboard=True,
-    save_model=True,
-    performance_optimized=False,
+    tensorboard=False,
+    save_model=False,
+    performance_optimized=True,
 )
 print('4/4: Evaluating Model')
 model = trainer.model
 metrics, preds = trainer.evaluate()
+
+
+print(metrics)
 
 # dataset = 'dataset5'
 # test_features = pd.read_csv(f'./data/ml/{dataset}/test_features.csv')
