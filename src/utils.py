@@ -75,3 +75,19 @@ def output_test_series(model, emulator_data, draws='random', k=10, save=True):
         plt.legend()
         if save:
             plt.savefig(f'results/{test_model}_{test_exp}_test_sector.png')
+            
+
+def plot_true_vs_predicted(preds, y_test, save=None):
+    try:
+        preds = preds.detach().numpy()
+    except AttributeError:
+        pass
+    plt.figure()
+    plt.scatter(y_test, preds, s=3, alpha=0.2)
+    plt.plot([min(y_test),max(y_test)], [min(y_test),max(y_test)], 'r-')
+    plt.title('Neural Network True vs Predicted')
+    plt.xlabel('True')
+    plt.ylabel('Predicted')
+    if save:
+        plt.savefig("results/nn.png")
+    plt.show()
