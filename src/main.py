@@ -115,6 +115,7 @@ def lag_sequence_test(lag_array, sequence_array, iterations):
                     lag=lag,
                 )
 
+                # TODO: I should be able to use emulator_data.train_features but I get error "AttributeError: 'tuple' object has no attribute 'train_features'"
                 data_dict = {'train_features': train_features,
                             'train_labels': train_labels,
                             'test_features': test_features,
@@ -248,9 +249,11 @@ def rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):
 #         count += 1
 
 if __name__ == '__main__':
-    lag_sequence_test(lag_array=[1, 3, 5, 7, 10],
-                      sequence_array=[3, 5, 10],
-                      iterations=5)
+    lag_sequence_test(
+        lag_array=[1, 3, 5, 10],
+        sequence_array=[3, 5, 10],
+        iterations=5
+    )
 
 
 stop = ''
