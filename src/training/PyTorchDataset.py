@@ -34,4 +34,7 @@ class TSDataset(Dataset):
             x = self.X[0:(i + 1), :]
             x = torch.cat((padding, x), 0)
 
+        if self.y is None:
+            return x
+        
         return x, self.y[i]

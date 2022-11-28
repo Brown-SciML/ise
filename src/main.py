@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import numpy as np
-import time
-import pandas as pd
+import random
+from datetime import datetime
 
 cfg = get_configs()
 
@@ -46,6 +46,7 @@ if processing['combine_datasets']:
 print('1/4: Loading in Data')
 emulator_data = EmulatorData(directory=export_dir)
 print('2/4: Processing Data')
+lag = 5
 emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
     target_column='sle',
     drop_missing=True,
@@ -54,7 +55,8 @@ emulator_data, train_features, test_features, train_labels, test_labels = emulat
     scale=True,
     split_type='batch_test',
     drop_outliers={'column': 'ivaf', 'operator': '<', 'value': -1e13},
-    time_series=True
+    time_series=True,
+    lag=lag,
 )
 
 data_dict = {'train_features': train_features,
@@ -69,7 +71,7 @@ exploratory_architecture = {
     'nodes': [256, 128, 64, 32, 16, 1],
 }
 time_series_architecture = {
-    'num_rnn_layers': 8,
+    'num_rnn_layers': 3,
     'num_rnn_hidden': 128,
 }
 
@@ -78,7 +80,7 @@ trainer.train(
     architecture=time_series_architecture,
     data_dict=data_dict,
     criterion=nn.MSELoss(),
-    epochs=100,
+    epochs=20,
     batch_size=100,
     tensorboard=False,
     save_model=False,
@@ -99,7 +101,6 @@ print(metrics)
 # scenarios = pd.read_csv(f'./data/ml/{dataset}/test_scenarios.csv').values.tolist()
 
 
-train_features = train_features
 
 # dataset1 = ['mrro_anomaly', 'rhoi', 'rhow', 'groupname', 'experiment']
 # dataset2 = ['mrro_anomaly', 'rhoi', 'rhow', 'groupname', 'experiment', 'ice_shelf_fracture', 'tier', ]
@@ -130,6 +131,8 @@ train_features = train_features
 # pd.Series(test_labels, name='sle').to_csv(r'/users/pvankatw/emulator/src/data/ml/dataset5/test_labels.csv', index=False)
 # pd.DataFrame(emulator_data.test_scenarios).to_csv(r'/users/pvankatw/emulator/src/data/ml/dataset5/test_scenarios.csv', index=False)
 
+# TODO: Write function for dataset_tests and other tests I've done before (reproducibility!!!), use dict{'dataset1':['columns']} to loop
+# def dataset_tests(datasets)
 # count = 0
 # for iteration in range(5):
 #     for dataset in ['dataset5']:
@@ -173,45 +176,150 @@ train_features = train_features
 #         count += 1
 
 
-# try:
-#     preds = preds.detach().numpy()
-# except AttributeError:
-#     pass
+try:
+    preds = preds.detach().numpy()
+except AttributeError:
+    pass
 
 
-# y_test = trainer.y_test
-# plt.figure()
-# plt.scatter(y_test, preds, s=3, alpha=0.2)
-# plt.plot([min(y_test),max(y_test)], [min(y_test),max(y_test)], 'r-')
-# plt.title('Neural Network True vs Predicted')
-# plt.xlabel('True')
-# plt.ylabel('Predicted')
-# plt.savefig("results/nn.png")
-# plt.show()
+y_test = trainer.y_test
+plt.figure()
+plt.scatter(y_test, preds, s=3, alpha=0.2)
+plt.plot([min(y_test),max(y_test)], [min(y_test),max(y_test)], 'r-')
+plt.title('Neural Network True vs Predicted')
+plt.xlabel('True')
+plt.ylabel('Predicted')
+plt.savefig("results/nn.png")
+plt.show()
 
-# # TODO: Plot validation
-# # TODO: Try other metrics / tensorboard
 
-# for scen in scenarios[:10]:
-#     single_scenario = scen
-#     test_model = single_scenario[0]
-#     test_exp = single_scenario[2]
-#     test_sector = single_scenario[1]
-#     single_test_features = torch.tensor(np.array(test_features[(test_features[test_model] == 1) & (test_features[test_exp] == 1) & (test_features.sectors == test_sector)], dtype=np.float64), dtype=torch.float).to(trainer.device)
-#     single_test_labels = np.array(test_labels[(test_features[test_model] == 1) & (test_features[test_exp] == 1) & (test_features.sectors == test_sector)], dtype=np.float64)
-#     preds = model(single_test_features).cpu().detach().numpy()
+def output_test_series(test_scenarios, draws='random', k=10, save=True):
+    sectors = list(set(test_features.sectors))
+    sectors.sort()
 
-#     # single_test_labels = emulator_data.unscale(single_test_labels.reshape(-1,1), 'outputs') * 1e-9 / 361.8
-#     # preds = emulator_data.unscale(preds.reshape(-1,1), 'outputs') * 1e-9 / 361.8
+    if draws == 'random':
+        data = random.sample(test_scenarios, k=k)
+    elif draws == 'first':
+        data = test_scenarios[:k]
+    else:
+        raise ValueError(f'draws must be in [random, first], received {draws}')
+    
+    for scen in data:
+        single_scenario = scen
+        test_model = single_scenario[0]
+        test_exp = single_scenario[2]
+        test_sector = single_scenario[1]
+        single_test_features = torch.tensor(np.array(test_features[(test_features[test_model] == 1) & (test_features[test_exp] == 1) & (test_features.sectors == test_sector)], dtype=np.float64), dtype=torch.float)
+        single_test_labels = np.array(test_labels[(test_features[test_model] == 1) & (test_features[test_exp] == 1) & (test_features.sectors == test_sector)], dtype=np.float64)
+        preds = model.predict(single_test_features)
 
-#     plt.figure()
-#     plt.plot(single_test_labels, 'r-', label='True')
-#     plt.plot(preds, 'b-', label='Predicted')
-#     plt.xlabel('Time (years since 2015)')
-#     plt.ylabel('SLE (mm)')
-#     plt.title(f'Model={test_model}, Exp={test_exp}')
-#     plt.ylim([-10,10])
-#     plt.legend()
-#     # plt.savefig(f'results/{1}_{test_model}_{test_exp}.png')
+        plt.figure(figsize=(15,8))
+        plt.plot(single_test_labels, 'r-', label='True')
+        plt.plot(preds, 'b-', label='Predicted')
+        plt.xlabel('Time (years since 2015)')
+        plt.ylabel('SLE (mm)')
+        plt.title(f'Model={test_model}, Exp={test_exp}, sector={sectors.index(test_sector)+1}')
+        plt.legend()
+        if save:
+            plt.savefig(f'results/{test_model}_{test_exp}_test_sector.png')
+    
+    
+def lag_sequence_test(lag_array, sequence_array, iterations):
+    count = 0
+    for iteration in range(1, iterations+1):
+        for lag in lag_array:
+            for sequence_length in sequence_array:
+                print(f"Training... Lag: {lag}, Sequence Length: {sequence_length}, Iteration: {iteration}, Trained {count} models")
+                emulator_data = EmulatorData(directory=export_dir)
+                emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
+                    target_column='sle',
+                    drop_missing=True,
+                    drop_columns=['groupname', 'experiment'],
+                    boolean_indices=True,
+                    scale=True,
+                    split_type='batch_test',
+                    drop_outliers={'column': 'ivaf', 'operator': '<', 'value': -1e13},
+                    time_series=True,
+                    lag=lag,
+                )
+
+                data_dict = {'train_features': train_features,
+                            'train_labels': train_labels,
+                            'test_features': test_features,
+                            'test_labels': test_labels, }
+                trainer = Trainer(cfg)
+                time_series_architecture = {
+                    'num_rnn_layers': 3,
+                    'num_rnn_hidden': 128,
+                }
+                current_time = datetime.now().strftime(r"%d-%m-%Y %H.%M.%S")
+                trainer.train(
+                    model=TimeSeriesEmulator.TimeSeriesEmulator,
+                    architecture=time_series_architecture,
+                    data_dict=data_dict,
+                    criterion=nn.MSELoss(),
+                    epochs=100,
+                    batch_size=100,
+                    tensorboard=True,
+                    save_model=False,
+                    performance_optimized=False,
+                    verbose=False,
+                    sequence_length=sequence_length,
+                    tensorboard_comment=f" -- {current_time}, lag={lag}, sequence_length={sequence_length}"
+                )
+                metrics, preds = trainer.evaluate()
+                print('Metrics:', metrics)
+                
+                count += 1
+                
+
+def architecture_test(rnn_layers_array, hidden_nodes_array, linear_layers_array, iterations):
+    count = 0
+    for iteration in range(1, iterations+1):
+        for num_rnn_layers in rnn_layers_array:
+            for num_rnn_hidden in hidden_nodes_array:
+                print(f"Training... RNN Layers: {num_rnn_layers}, Hidden: {num_rnn_hidden}, Iteration: {iteration}, Trained {count} models")
+                emulator_data = EmulatorData(directory=export_dir)
+                emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
+                    target_column='sle',
+                    drop_missing=True,
+                    drop_columns=['groupname', 'experiment'],
+                    boolean_indices=True,
+                    scale=True,
+                    split_type='batch_test',
+                    drop_outliers={'column': 'ivaf', 'operator': '<', 'value': -1e13},
+                    time_series=True,
+                    lag=lag,
+                )
+
+                data_dict = {'train_features': train_features,
+                            'train_labels': train_labels,
+                            'test_features': test_features,
+                            'test_labels': test_labels, }
+                trainer = Trainer(cfg)
+                time_series_architecture = {
+                    'num_rnn_layers': 3,
+                    'num_rnn_hidden': 128,
+                }
+                current_time = datetime.now().strftime(r"%d-%m-%Y %H.%M.%S")
+                trainer.train(
+                    model=TimeSeriesEmulator.TimeSeriesEmulator,
+                    architecture=time_series_architecture,
+                    data_dict=data_dict,
+                    criterion=nn.MSELoss(),
+                    epochs=100,
+                    batch_size=100,
+                    tensorboard=True,
+                    save_model=False,
+                    performance_optimized=False,
+                    verbose=False,
+                    sequence_length=10, # update with results from lag_sequence_test
+                    tensorboard_comment=f" -- {current_time}, num_rnn={num_rnn_layers}, num_hidden={num_rnn_hidden}"
+                )
+                metrics, preds = trainer.evaluate()
+                print('Metrics:', metrics)
+                
+                count += 1
+    
 
 stop = ''

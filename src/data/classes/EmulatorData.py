@@ -36,16 +36,17 @@ class EmulatorData:
         self.scaler_y = None
 
     def process(self, target_column='sle', drop_missing=True, drop_columns=True, boolean_indices=True, scale=True,
-                split_type='batch_test', drop_outliers=False, time_series=False):
+                split_type='batch_test', drop_outliers=False, time_series=False, lag=None):
 
 
         if time_series:
+            if lag is None:
+                raise ValueError('If time_series == True, lag cannot be None')
             time_dependent_columns = ['salinity', 'temperature', 'thermal_forcing',
                                       'pr_anomaly', 'evspsbl_anomaly', 'mrro_anomaly', 'smb_anomaly',
-                                      'ts_anomaly']
+                                      'ts_anomaly',]
             separated_dfs = [y for x, y in self.data.groupby(['sectors', 'exp_id', 'modelname'])]
             for df in separated_dfs:
-                lag = 2
                 for shift in range(1, lag + 1):
                     for column in time_dependent_columns:
                         df[f"{column}.lag{shift}"] = df[column].shift(shift, fill_value=0)

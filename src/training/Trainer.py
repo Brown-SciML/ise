@@ -31,7 +31,7 @@ class Trainer:
         self.logs = {'training': {'epoch': [], 'batch': []}, 'testing': []}
 
     def _format_data(self, train_features, train_labels, test_features, test_labels, train_batch_size=100,
-                     test_batch_size=10, ):
+                     test_batch_size=10, sequence_length=5):
         """Takes training and testing dataframes and converts them into PyTorch DataLoaders to be used in the training loop.
 
         Args:
@@ -56,12 +56,12 @@ class Trainer:
             train_dataset = TSDataset(
                 torch.from_numpy(self.X_train).float(),
                 torch.from_numpy(self.y_train).float().squeeze(),
-                sequence_length=3,
+                sequence_length=sequence_length,
             )
             test_dataset = TSDataset(
                 torch.from_numpy(self.X_test).float(),
                 torch.from_numpy(self.y_test).float().squeeze(),
-                sequence_length=3,
+                sequence_length=sequence_length,
             )
         else:
             train_dataset = PyTorchDataset(torch.from_numpy(self.X_train).float(),
@@ -76,7 +76,7 @@ class Trainer:
         return self
 
     def train(self, model, data_dict, criterion, epochs, batch_size, tensorboard=False, architecture=None,
-              save_model=False, performance_optimized=False):
+              save_model=False, performance_optimized=False, verbose=True, sequence_length=5, tensorboard_comment=None):
         """Training loop for training a PyTorch model. Include validation, GPU compatibility, and tensorboard integration.
 
         Args:
@@ -114,7 +114,9 @@ class Trainer:
         if self.train_loader is None or self.train_loader is None:
             self._format_data(data_dict['train_features'], data_dict['train_labels'], data_dict['test_features'],
                               data_dict['test_labels'],
-                              train_batch_size=batch_size)
+                              train_batch_size=batch_size,
+                              sequence_length=sequence_length,
+                              )
 
         # Use multiple GPU parallelization if available
         # if torch.cuda.device_count() > 1:
@@ -124,14 +126,14 @@ class Trainer:
         # criterion = nn.MSELoss()
         self.time = datetime.now().strftime(r"%d-%m-%Y %H.%M.%S")
 
-        comment = f" -- {self.time}, FC={architecture['num_linear_layers']}, nodes={architecture['nodes']}, batch_size={batch_size},"
+        # tensorboard_comment = f" -- {self.time}, FC={architecture['num_linear_layers']}, nodes={architecture['nodes']}, batch_size={batch_size},"
         # comment = f" -- {self.time}, dataset={dataset},"
-        tb = SummaryWriter(comment=comment)
+        tb = SummaryWriter(comment=tensorboard_comment)
         mae = nn.L1Loss()
         X_test = torch.tensor(self.X_test, dtype=torch.float).to(self.device)
         y_test = torch.tensor(self.y_test, dtype=torch.float).to(self.device)
-        self.model.train()
         for epoch in range(1, epochs + 1):
+            self.model.train()
             epoch_start = time.time()
 
             total_loss = 0
@@ -177,11 +179,11 @@ class Trainer:
                 self.logs['testing'].append(test_mse)
                 testing_end = time.time()
 
-                preds = self.model(X_test).to(device)
+                preds = self.model.predict(self.X_test)
                 if self.device.type != 'cuda':
-                    r2 = r2_score(self.y_test, preds.detach().numpy())
+                    r2 = r2_score(self.y_test, preds)
                 else:
-                    r2 = r2_score(self.y_test, preds.cpu().detach().numpy())
+                    r2 = r2_score(self.y_test, preds)
 
             if tensorboard:
                 tb.add_scalar("Training MSE", avg_mse, epoch)
@@ -195,16 +197,16 @@ class Trainer:
                     tb.add_scalar("Validation MAE", test_mae, epoch)
                     tb.add_scalar("R^2", r2, epoch)
 
-            # TODO: Add verbose parameter so you can turn these off
-            if not performance_optimized:
-                print('')
-                print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}, Validation Loss (MSE): {test_mse:0.8f}
-Training time: {training_end - epoch_start: 0.2f} seconds, Validation time: {testing_end - training_end: 0.2f} seconds""")
+            if verbose:
+                if not performance_optimized:
+                    print('')
+                    print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}, Validation Loss (MSE): {test_mse:0.8f}
+    Training time: {training_end - epoch_start: 0.2f} seconds, Validation time: {testing_end - training_end: 0.2f} seconds""")
 
-            else:
-                print('')
-                print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}
-Training time: {training_end - epoch_start: 0.2f} seconds""")
+                else:
+                    print('')
+                    print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}
+    Training time: {training_end - epoch_start: 0.2f} seconds""")
 
         if tensorboard:
             metrics, _ = self.evaluate()
