@@ -128,7 +128,8 @@ class Trainer:
 
         # tensorboard_comment = f" -- {self.time}, FC={architecture['num_linear_layers']}, nodes={architecture['nodes']}, batch_size={batch_size},"
         # comment = f" -- {self.time}, dataset={dataset},"
-        tb = SummaryWriter(comment=tensorboard_comment)
+        if tensorboard:
+            tb = SummaryWriter(comment=tensorboard_comment)
         mae = nn.L1Loss()
         X_test = torch.tensor(self.X_test, dtype=torch.float).to(self.device)
         y_test = torch.tensor(self.y_test, dtype=torch.float).to(self.device)

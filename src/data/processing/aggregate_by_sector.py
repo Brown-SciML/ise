@@ -235,7 +235,7 @@ def aggregate_icecollapse(directory, export, model_in_columns=False, ):
 
             
             
-
+# ! Deprecated -- not useful
 def aogcm_to_features(data: dict, export_dir: str):
         
     for key, all_data in data.items():
@@ -259,9 +259,9 @@ def aogcm_to_features(data: dict, export_dir: str):
         non_region_cols = [c for c in all_data.columns if 'region' not in c]
         all_data = all_data[non_region_cols]
         
-        # TODO: region assignment produces NA's, low priority -- do later
+        # region assignment produces NA's, low priority -- do later
         # all_data['region'] = separate_aogcm_dataframes[0][region_cols[0]].reset_index(drop=True)
-        all_data = all_data.drop_duplicates() # TODO: See why there are duplicates -- until then, this works
+        all_data = all_data.drop_duplicates() # See why there are duplicates -- until then, this works
         
         if export_dir:
                 all_data.to_csv(f"{export_dir}/{key}.csv")

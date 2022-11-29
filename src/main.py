@@ -24,16 +24,15 @@ data_directory = cfg['data']['directory']
 
 if processing['generate_atmospheric_forcing']:
     af_directory = f"{forcing_directory}/Atmosphere_Forcing/"
-    # TODO: refactor model_in_columns as aogcm_as_features
-    aggregate_atmosphere(af_directory, export=export_dir, model_in_columns=False, )
+    aggregate_atmosphere(af_directory, export=export_dir, )
 
 if processing['generate_oceanic_forcing']:
     of_directory = f"{forcing_directory}/Ocean_Forcing/"
-    aggregate_ocean(of_directory, export=export_dir, model_in_columns=False, )
+    aggregate_ocean(of_directory, export=export_dir, )
 
 if processing['generate_icecollapse_forcing']:
     ice_directory = f"{forcing_directory}/Ice_Shelf_Fracture"
-    aggregate_icecollapse(ice_directory, export=export_dir, model_in_columns=False, )
+    aggregate_icecollapse(ice_directory, export=export_dir, )
 
 if processing['generate_outputs']:
     outputs = process_repository(zenodo_directory, export_filepath=f"{export_dir}/outputs.csv")
@@ -59,6 +58,7 @@ def run_network():
         drop_outliers={'column': 'ivaf', 'operator': '<', 'value': -1e13},
         time_series=True,
         lag=lag,
+        
     )
 
     data_dict = {'train_features': train_features,
@@ -82,12 +82,12 @@ def run_network():
         architecture=time_series_architecture,
         data_dict=data_dict,
         criterion=nn.MSELoss(),
-        epochs=20,
+        epochs=100,
         batch_size=100,
         tensorboard=False,
-        save_model=False,
+        save_model=True,
         performance_optimized=True,
-        sequence_length=3
+        sequence_length=5
     )
     print('4/4: Evaluating Model')
     model = trainer.model
@@ -249,11 +249,13 @@ def rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):
 #         count += 1
 
 if __name__ == '__main__':
-    lag_sequence_test(
-        lag_array=[1, 3, 5, 10],
-        sequence_array=[3, 5, 10],
-        iterations=5
-    )
+    # lag_sequence_test(
+    #     lag_array=[1, 3, 5, 10],
+    #     sequence_array=[3, 5, 10],
+    #     iterations=5
+    # )
+    
+    run_network()
 
 
 stop = ''
