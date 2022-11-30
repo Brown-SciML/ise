@@ -183,14 +183,14 @@ def rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):
                     epochs=100,
                     batch_size=100,
                     tensorboard=True,
-                    save_model=False,
+                    save_model=True,
                     performance_optimized=False,
                     verbose=False,
-                    sequence_length=10, # TODO: update with results from lag_sequence_test
+                    sequence_length=5, # TODO: update with results from lag_sequence_test
                     tensorboard_comment=f" -- {current_time}, num_rnn={num_rnn_layers}, num_hidden={num_rnn_hidden}"
                 )
-                metrics, preds = trainer.evaluate()
-                print('Metrics:', metrics)
+                # metrics, preds = trainer.evaluate()
+                # print('Metrics:', metrics)
                 
                 count += 1
 
@@ -255,7 +255,13 @@ if __name__ == '__main__':
     #     iterations=5
     # )
     
-    run_network()
+    # run_network()
+    
+    rnn_architecture_test(
+        rnn_layers_array=[2, 4, 6, 10, 12], 
+        hidden_nodes_array=[64, 128, 256], 
+        iterations=5,
+        )
 
 
 stop = ''

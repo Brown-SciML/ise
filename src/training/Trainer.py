@@ -212,7 +212,7 @@ class Trainer:
         if tensorboard:
             metrics, _ = self.evaluate()
             tb.add_hparams(
-                {"FC": architecture['num_linear_layers'], "nodes": architecture['nodes'], "batch_size": batch_size, },
+                {"rnn_layers": architecture['num_rnn_layers'], "hidden": architecture['num_rnn_hidden'], "batch_size": batch_size, },
 
                 {
                     "Test MSE": metrics['MSE'], "Test MAE": metrics['MAE'], "R^2": metrics['R2'],
