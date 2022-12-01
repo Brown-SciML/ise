@@ -355,7 +355,7 @@ if __name__ == '__main__':
     #     iterations=5
     # )
     
-    run_network()
+    # run_network()
     # import os
     # models = os.listdir(r"/users/pvankatw/emulator/src/models/experiment_models/")
     # models = [m for m in models if m.startswith('29')]
@@ -366,13 +366,13 @@ if __name__ == '__main__':
     #     except:
     #         print('ERRORED OUT ... ')
     #     print('')
-    # faulty_rnn_architecture_test(
-    #     rnn_layers_array=[2, 4, 6, 10, 12], 
-    #     hidden_nodes_array=[64, 128, 256], 
-    #     iterations=1,
-    #     )
-    model = "30-11-2022 19.38.38.pt"
-    test_saved_network(path=f"/users/pvankatw/emulator/src/models/experiment_models/{model}", architecture={'num_rnn_layers': 3,'num_rnn_hidden': 128,})
+    rnn_architecture_test(
+        rnn_layers_array=[2, 4, 6, 10, 12], 
+        hidden_nodes_array=[64, 128, 256], 
+        iterations=5,
+        )
+    # model = "30-11-2022 19.38.38.pt"
+    # test_saved_network(path=f"/users/pvankatw/emulator/src/models/experiment_models/{model}", architecture={'num_rnn_layers': 3,'num_rnn_hidden': 128,})
 
 
 stop = ''
