@@ -119,8 +119,8 @@ def run_network():
 
     print('3/4: Training Model')
     time_series_architecture = {
-        'num_rnn_layers': 3,
-        'num_rnn_hidden': 128,
+        'num_rnn_layers': 6,
+        'num_rnn_hidden': 256,
     }
 
     trainer.train(
@@ -247,6 +247,7 @@ def faulty_rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iteration
     # whereas when they are tested using test_saved_model it does way better but only in later
     # model loops. I need to make sure that they are getting the same data. Maybe try using
     # loaded csv rather than computing every time. IDK.
+    # Note: Happened again even with correct loop.
     count = 0
     for iteration in range(1, iterations+1):
         for num_rnn_layers in rnn_layers_array:
@@ -366,14 +367,15 @@ if __name__ == '__main__':
     #     except:
     #         print('ERRORED OUT ... ')
     #     print('')
-    rnn_architecture_test(
-        rnn_layers_array=[2, 4, 6, 10, 12], 
-        hidden_nodes_array=[64, 128, 256], 
-        iterations=5,
-        )
-    # model = "30-11-2022 19.38.38.pt"
-    # test_saved_network(path=f"/users/pvankatw/emulator/src/models/experiment_models/{model}", architecture={'num_rnn_layers': 3,'num_rnn_hidden': 128,})
-
+    # rnn_architecture_test(
+    #     rnn_layers_array=[2, 4, 6, 10, 12], 
+    #     hidden_nodes_array=[64, 128, 256], 
+    #     iterations=5,
+    #     )
+    model = "01-12-2022 10.09.22.pt"
+    metrics, preds = test_saved_network(path=f"/users/pvankatw/emulator/src/models/experiment_models/{model}", architecture={'num_rnn_layers': 6,'num_rnn_hidden': 256,})
+    import pandas as pd
+    pd.DataFrame(preds).to_csv(r'preds_3.csv')
 
 stop = ''
 
