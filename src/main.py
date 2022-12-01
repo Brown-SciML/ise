@@ -110,7 +110,7 @@ def run_network():
         time_series=True,
         lag=5,
     )
-
+    
     data_dict = {'train_features': train_features,
                 'train_labels': train_labels,
                 'test_features': test_features,
@@ -242,6 +242,11 @@ def rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):
                 count += 1
 
 def faulty_rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):
+    # TODO: Find out the differences in testing procedure between faulty and during training.
+    # During the training evaluation (printout), the "correct" values are used to test,
+    # whereas when they are tested using test_saved_model it does way better but only in later
+    # model loops. I need to make sure that they are getting the same data. Maybe try using
+    # loaded csv rather than computing every time. IDK.
     count = 0
     for iteration in range(1, iterations+1):
         for num_rnn_layers in rnn_layers_array:
@@ -350,7 +355,7 @@ if __name__ == '__main__':
     #     iterations=5
     # )
     
-    # run_network()
+    run_network()
     # import os
     # models = os.listdir(r"/users/pvankatw/emulator/src/models/experiment_models/")
     # models = [m for m in models if m.startswith('29')]
@@ -361,13 +366,13 @@ if __name__ == '__main__':
     #     except:
     #         print('ERRORED OUT ... ')
     #     print('')
-    faulty_rnn_architecture_test(
-        rnn_layers_array=[2, 4, 6, 10, 12], 
-        hidden_nodes_array=[64, 128, 256], 
-        iterations=1,
-        )
-    # model = "30-11-2022 18.48.55.pt"
-    # test_saved_network(path=f"/users/pvankatw/emulator/src/models/experiment_models/{model}", architecture={'num_rnn_layers': 3,'num_rnn_hidden': 128,})
+    # faulty_rnn_architecture_test(
+    #     rnn_layers_array=[2, 4, 6, 10, 12], 
+    #     hidden_nodes_array=[64, 128, 256], 
+    #     iterations=1,
+    #     )
+    model = "30-11-2022 19.38.38.pt"
+    test_saved_network(path=f"/users/pvankatw/emulator/src/models/experiment_models/{model}", architecture={'num_rnn_layers': 3,'num_rnn_hidden': 128,})
 
 
 stop = ''

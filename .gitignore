@@ -6,7 +6,9 @@ __pycache__/
 results/
 logs/
 runs/
+old/
 experiment_models/
+*train_features.csv
 
 .vscode/
 .vscode

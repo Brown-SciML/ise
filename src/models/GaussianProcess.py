@@ -32,7 +32,7 @@ gaussian_process = GaussianProcessRegressor(
 
 
 
-n = 10000
+n = 25000
 print(f'training with {n} samples')
 
 tf_samples = train_features.sample(n)
@@ -68,10 +68,12 @@ Mean Absolute Error: {mean_absolute_error(test_labels, preds)}
 Mean Squared Error: {mean_squared_error(test_labels, preds)}
 R2 Score: {r2_score(test_labels, preds)}""")
 
+pd.Series(dict(preds=preds,)).to_csv(f'gp_preds_n{n}_temperature.csv')
+pd.Series(dict(std=std_prediction)).to_csv(f'gp_std_n{n}_temperature.csv')
 
 plt.plot(preds, test_labels, 'o')
 plt.plot([min(gp_test_labels), max(gp_test_labels)], [min(gp_test_labels), max(gp_test_labels)], '-')
-plt.savefig(f'results/GP_results.png')
+plt.savefig(f'GP_results.png')
 
 
 
@@ -115,6 +117,6 @@ for scen in data:
 )
         
     plt.legend()
-    plt.savefig(f'results/GP_{test_model}_{test_exp}_test_sector.png')
+    plt.savefig(f'GP_{test_model}_{test_exp}_test_sector.png')
 
     
