@@ -9,6 +9,7 @@ runs/
 old/
 experiment_models/
 *train_features.csv
+*startup.md
 
 .vscode/
 .vscode
