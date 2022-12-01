@@ -3,6 +3,7 @@ from torch import nn
 from training.PyTorchDataset import PyTorchDataset, TSDataset
 from torch.utils.data import DataLoader
 import numpy as np
+import pandas as pd
 
 
 class TimeSeriesEmulator(torch.nn.Module):
@@ -28,7 +29,6 @@ class TimeSeriesEmulator(torch.nn.Module):
             # dropout=0.3,
         )
         
-        self.dropout = nn.Dropout(p=0.3)
         self.relu = nn.ReLU()
 
         self.linear1 = nn.Linear(in_features=self.num_rnn_hidden, out_features=32)
@@ -61,6 +61,8 @@ class TimeSeriesEmulator(torch.nn.Module):
             dataset = TSDataset(X=torch.from_numpy(x).float(), y=None, sequence_length=5)
         elif isinstance(x, torch.FloatTensor) or isinstance(x, torch.Tensor):
             dataset = TSDataset(X=x.float(), y=None, sequence_length=5)
+        elif isinstance(x, pd.DataFrame):
+            dataset = TSDataset(X=torch.from_numpy(np.array(x, dtype=np.float64)).float(), y=None, sequence_length=5)
         else:
             raise ValueError(f'Input x must be of type [np.ndarray, torch.FloatTensor], received {type(x)}')
 

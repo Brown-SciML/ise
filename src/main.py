@@ -5,6 +5,7 @@ from data.classes.EmulatorData import EmulatorData
 from training.Trainer import Trainer
 from models import ExploratoryModel, TimeSeriesEmulator
 from utils import get_configs, output_test_series, plot_true_vs_predicted
+from sklearn.metrics import r2_score
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
@@ -13,7 +14,7 @@ import random
 from datetime import datetime
 
 cfg = get_configs()
-
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 np.random.seed(10)
 
 forcing_directory = cfg['data']['forcing']
@@ -43,11 +44,10 @@ if processing['combine_datasets']:
                                                export=export_dir)
 
 
-def run_network():
-    print('1/4: Loading in Data')
+def test_saved_network(path, architecture):
+    print('1/3: Loading in Data')
     emulator_data = EmulatorData(directory=export_dir)
-    print('2/4: Processing Data')
-    lag = 5
+    print('2/3: Processing Data')
     emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
         target_column='sle',
         drop_missing=True,
@@ -57,8 +57,58 @@ def run_network():
         split_type='batch_test',
         drop_outliers={'column': 'ivaf', 'operator': '<', 'value': -1e13},
         time_series=True,
-        lag=lag,
-        
+        lag=5,
+    )
+
+    data_dict = {'train_features': train_features,
+                'train_labels': train_labels,
+                'test_features': test_features,
+                'test_labels': test_labels, }
+    
+    # Load Model
+    trainer = Trainer(cfg)
+    trainer._initiate_model(TimeSeriesEmulator.TimeSeriesEmulator, data_dict=data_dict, architecture=architecture, sequence_length=5, batch_size=100)
+    
+    # Assigned pre-trained weights
+    trainer.model.load_state_dict(torch.load(path, map_location=device))
+    model = trainer.model
+    
+    # Evaluate on test_features
+    print('3/3: Evaluating')
+    model.eval()
+    X_test = torch.from_numpy(np.array(test_features, dtype=np.float64)).float()
+    preds = model.predict(X_test)
+    mse = sum((preds - test_labels)**2) / len(preds)
+    mae = sum((preds - test_labels)) / len(preds)
+    rmse = np.sqrt(mse)
+    r2 = r2_score(test_labels, preds)
+    
+    metrics = {'MSE': mse, 'MAE': mae, 'RMSE': rmse, 'R2': r2}
+
+    print(f"""Test Metrics
+MSE: {mse:0.6f}
+MAE: {mae:0.6f}
+RMSE: {rmse:0.6f}
+R2: {r2:0.6f}""")
+
+    return metrics, preds
+    
+
+
+def run_network():
+    print('1/4: Loading in Data')
+    emulator_data = EmulatorData(directory=export_dir)
+    print('2/4: Processing Data')
+    emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
+        target_column='sle',
+        drop_missing=True,
+        drop_columns=['groupname', 'experiment'],
+        boolean_indices=True,
+        scale=True,
+        split_type='batch_test',
+        drop_outliers={'column': 'ivaf', 'operator': '<', 'value': -1e13},
+        time_series=True,
+        lag=5,
     )
 
     data_dict = {'train_features': train_features,
@@ -68,10 +118,6 @@ def run_network():
     trainer = Trainer(cfg)
 
     print('3/4: Training Model')
-    exploratory_architecture = {
-        'num_linear_layers': 6,
-        'nodes': [256, 128, 64, 32, 16, 1],
-    }
     time_series_architecture = {
         'num_rnn_layers': 3,
         'num_rnn_hidden': 128,
@@ -89,6 +135,7 @@ def run_network():
         performance_optimized=True,
         sequence_length=5
     )
+
     print('4/4: Evaluating Model')
     model = trainer.model
     metrics, preds = trainer.evaluate()
@@ -171,8 +218,8 @@ def rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):
                             'test_labels': test_labels, }
                 trainer = Trainer(cfg)
                 time_series_architecture = {
-                    'num_rnn_layers': 3,
-                    'num_rnn_hidden': 128,
+                    'num_rnn_layers': num_rnn_layers,
+                    'num_rnn_hidden': num_rnn_hidden,
                 }
                 current_time = datetime.now().strftime(r"%d-%m-%Y %H.%M.%S")
                 trainer.train(
@@ -192,6 +239,54 @@ def rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):
                 # metrics, preds = trainer.evaluate()
                 # print('Metrics:', metrics)
                 
+                count += 1
+
+def faulty_rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):
+    count = 0
+    for iteration in range(1, iterations+1):
+        for num_rnn_layers in rnn_layers_array:
+            for num_rnn_hidden in hidden_nodes_array:
+                np.random.seed(10)
+                print(f"Training... RNN Layers: {num_rnn_layers}, Hidden: {num_rnn_hidden}, Iteration: {iteration}, Trained {count} models")
+                emulator_data = EmulatorData(directory=export_dir)
+                emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
+                    target_column='sle',
+                    drop_missing=True,
+                    drop_columns=['groupname', 'experiment'],
+                    boolean_indices=True,
+                    scale=True,
+                    split_type='batch_test',
+                    drop_outliers={'column': 'ivaf', 'operator': '<', 'value': -1e13},
+                    time_series=True,
+                    lag=5,  # TODO: update with results from lag_sequence_test
+                )
+                data_dict = {'train_features': train_features,
+                            'train_labels': train_labels,
+                            'test_features': test_features,
+                            'test_labels': test_labels, }
+                trainer = Trainer(cfg)
+                time_series_architecture = {
+                    'num_rnn_layers': 3,
+                    'num_rnn_hidden': 128,
+                }
+                current_time = datetime.now().strftime(r"%d-%m-%Y %H.%M.%S")
+                trainer.train(
+                    model=TimeSeriesEmulator.TimeSeriesEmulator,
+                    architecture=time_series_architecture,
+                    data_dict=data_dict,
+                    criterion=nn.MSELoss(),
+                    epochs=100,
+                    batch_size=100,
+                    tensorboard=True,
+                    save_model=True,
+                    performance_optimized=False,
+                    verbose=False,
+                    sequence_length=5, # TODO: update with results from lag_sequence_test
+                    tensorboard_comment=f" -- {current_time}, num_rnn={num_rnn_layers}, num_hidden={num_rnn_hidden}"
+                )
+                metrics, preds = trainer.evaluate()
+                print('Metrics:', metrics)
+
                 count += 1
 
 # TODO: make dense_architecture_test() that tests what dense layers should be at the end of the RNN
@@ -256,12 +351,25 @@ if __name__ == '__main__':
     # )
     
     # run_network()
-    
-    rnn_architecture_test(
+    # import os
+    # models = os.listdir(r"/users/pvankatw/emulator/src/models/experiment_models/")
+    # models = [m for m in models if m.startswith('29')]
+    # for model in models:
+    #     print(model)
+    #     try:
+    #         test_saved_network(path=f"/users/pvankatw/emulator/src/models/experiment_models/{model}", architecture={'num_rnn_layers': 3,'num_rnn_hidden': 128,})
+    #     except:
+    #         print('ERRORED OUT ... ')
+    #     print('')
+    faulty_rnn_architecture_test(
         rnn_layers_array=[2, 4, 6, 10, 12], 
         hidden_nodes_array=[64, 128, 256], 
-        iterations=5,
+        iterations=1,
         )
+    # model = "30-11-2022 18.48.55.pt"
+    # test_saved_network(path=f"/users/pvankatw/emulator/src/models/experiment_models/{model}", architecture={'num_rnn_layers': 3,'num_rnn_hidden': 128,})
 
 
 stop = ''
+
+
