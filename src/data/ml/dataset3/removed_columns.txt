@@ -1,1 +1,0 @@
-['mrro_anomaly', 'groupname', 'experiment']
