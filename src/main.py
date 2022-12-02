@@ -59,7 +59,6 @@ def test_saved_network(path, architecture):
         time_series=True,
         lag=5,
     )
-
     data_dict = {'train_features': train_features,
                 'train_labels': train_labels,
                 'test_features': test_features,
@@ -78,6 +77,7 @@ def test_saved_network(path, architecture):
     model.eval()
     X_test = torch.from_numpy(np.array(test_features, dtype=np.float64)).float()
     preds = model.predict(X_test)
+    
     mse = sum((preds - test_labels)**2) / len(preds)
     mae = sum((preds - test_labels)) / len(preds)
     rmse = np.sqrt(mse)
@@ -193,29 +193,33 @@ def lag_sequence_test(lag_array, sequence_array, iterations):
                 count += 1
                 
 
-def rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):
+def rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):  
+    emulator_data = EmulatorData(directory=export_dir)
+    emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
+        target_column='sle',
+        drop_missing=True,
+        drop_columns=['groupname', 'experiment'],
+        boolean_indices=True,
+        scale=True,
+        split_type='batch_test',
+        drop_outliers={'column': 'ivaf', 'operator': '<', 'value': -1e13},
+        time_series=True,
+        lag=5,  # TODO: update with results from lag_sequence_test
+    )
+    
+    data_dict = {
+        'train_features': train_features,
+        'train_labels': train_labels,
+        'test_features': test_features,
+        'test_labels': test_labels,
+    }
+                   
     count = 0
     for iteration in range(1, iterations+1):
         for num_rnn_layers in rnn_layers_array:
             for num_rnn_hidden in hidden_nodes_array:
                 print(f"Training... RNN Layers: {num_rnn_layers}, Hidden: {num_rnn_hidden}, Iteration: {iteration}, Trained {count} models")
-                emulator_data = EmulatorData(directory=export_dir)
-                emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
-                    target_column='sle',
-                    drop_missing=True,
-                    drop_columns=['groupname', 'experiment'],
-                    boolean_indices=True,
-                    scale=True,
-                    split_type='batch_test',
-                    drop_outliers={'column': 'ivaf', 'operator': '<', 'value': -1e13},
-                    time_series=True,
-                    lag=5,  # TODO: update with results from lag_sequence_test
-                )
-
-                data_dict = {'train_features': train_features,
-                            'train_labels': train_labels,
-                            'test_features': test_features,
-                            'test_labels': test_labels, }
+            
                 trainer = Trainer(cfg)
                 time_series_architecture = {
                     'num_rnn_layers': num_rnn_layers,
@@ -227,7 +231,7 @@ def rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):
                     architecture=time_series_architecture,
                     data_dict=data_dict,
                     criterion=nn.MSELoss(),
-                    epochs=100,
+                    epochs=10,
                     batch_size=100,
                     tensorboard=True,
                     save_model=True,
@@ -239,60 +243,6 @@ def rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):
                 # metrics, preds = trainer.evaluate()
                 # print('Metrics:', metrics)
                 
-                count += 1
-
-def faulty_rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):
-    # TODO: Find out the differences in testing procedure between faulty and during training.
-    # During the training evaluation (printout), the "correct" values are used to test,
-    # whereas when they are tested using test_saved_model it does way better but only in later
-    # model loops. I need to make sure that they are getting the same data. Maybe try using
-    # loaded csv rather than computing every time. IDK.
-    # Note: Happened again even with correct loop.
-    count = 0
-    for iteration in range(1, iterations+1):
-        for num_rnn_layers in rnn_layers_array:
-            for num_rnn_hidden in hidden_nodes_array:
-                np.random.seed(10)
-                print(f"Training... RNN Layers: {num_rnn_layers}, Hidden: {num_rnn_hidden}, Iteration: {iteration}, Trained {count} models")
-                emulator_data = EmulatorData(directory=export_dir)
-                emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
-                    target_column='sle',
-                    drop_missing=True,
-                    drop_columns=['groupname', 'experiment'],
-                    boolean_indices=True,
-                    scale=True,
-                    split_type='batch_test',
-                    drop_outliers={'column': 'ivaf', 'operator': '<', 'value': -1e13},
-                    time_series=True,
-                    lag=5,  # TODO: update with results from lag_sequence_test
-                )
-                data_dict = {'train_features': train_features,
-                            'train_labels': train_labels,
-                            'test_features': test_features,
-                            'test_labels': test_labels, }
-                trainer = Trainer(cfg)
-                time_series_architecture = {
-                    'num_rnn_layers': 3,
-                    'num_rnn_hidden': 128,
-                }
-                current_time = datetime.now().strftime(r"%d-%m-%Y %H.%M.%S")
-                trainer.train(
-                    model=TimeSeriesEmulator.TimeSeriesEmulator,
-                    architecture=time_series_architecture,
-                    data_dict=data_dict,
-                    criterion=nn.MSELoss(),
-                    epochs=100,
-                    batch_size=100,
-                    tensorboard=True,
-                    save_model=True,
-                    performance_optimized=False,
-                    verbose=False,
-                    sequence_length=5, # TODO: update with results from lag_sequence_test
-                    tensorboard_comment=f" -- {current_time}, num_rnn={num_rnn_layers}, num_hidden={num_rnn_hidden}"
-                )
-                metrics, preds = trainer.evaluate()
-                print('Metrics:', metrics)
-
                 count += 1
 
 # TODO: make dense_architecture_test() that tests what dense layers should be at the end of the RNN
@@ -357,25 +307,19 @@ if __name__ == '__main__':
     # )
     
     # run_network()
-    # import os
-    # models = os.listdir(r"/users/pvankatw/emulator/src/models/experiment_models/")
-    # models = [m for m in models if m.startswith('29')]
-    # for model in models:
-    #     print(model)
-    #     try:
-    #         test_saved_network(path=f"/users/pvankatw/emulator/src/models/experiment_models/{model}", architecture={'num_rnn_layers': 3,'num_rnn_hidden': 128,})
-    #     except:
-    #         print('ERRORED OUT ... ')
-    #     print('')
+
     # rnn_architecture_test(
     #     rnn_layers_array=[2, 4, 6, 10, 12], 
     #     hidden_nodes_array=[64, 128, 256], 
     #     iterations=5,
     #     )
-    model = "01-12-2022 10.09.22.pt"
-    metrics, preds = test_saved_network(path=f"/users/pvankatw/emulator/src/models/experiment_models/{model}", architecture={'num_rnn_layers': 6,'num_rnn_hidden': 256,})
-    import pandas as pd
-    pd.DataFrame(preds).to_csv(r'preds_3.csv')
+    model = "02-12-2022 16.18.16.pt"
+    metrics, preds = test_saved_network(
+        path=f"/users/pvankatw/emulator/src/models/experiment_models/{model}", 
+        architecture={'num_rnn_layers': 4,'num_rnn_hidden': 128,}
+    )
+    # import pandas as pd
+    # pd.DataFrame(preds).to_csv(r'preds_3.csv')
 
 stop = ''
 

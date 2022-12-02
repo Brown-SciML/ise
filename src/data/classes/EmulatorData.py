@@ -217,6 +217,7 @@ class EmulatorData:
             test_dataset = pd.DataFrame()
 
             # Keep this running until you have enough samples
+            np.random.seed(10)
             while len(test_scenarios) < num_test_batches:
                 # Get a random
                 random_model = np.random.choice(all_modelnames)
