@@ -1,4 +1,4 @@
-# Antarctic Ice Sheet Model Emulator  
+# Ice Sheet Model Emulator (ISE)
 
 **Peter Van Katwyk  $^{1}$, Karianne Bergen  $^{1,2}$**
 
