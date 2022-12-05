@@ -1,6 +1,7 @@
 import pandas as pd
 from sklearn import preprocessing as sp
 import numpy as np
+np.random.seed(10)
 import random
 
 

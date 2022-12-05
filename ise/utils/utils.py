@@ -4,6 +4,8 @@ import torch
 import random
 import matplotlib.pyplot as plt
 import numpy as np
+np.random.seed(10)
+
 
 file_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -22,11 +24,14 @@ def get_configs():
     return data
 
 
-def check_input(input, options):
+def check_input(input, options, argname=None):
     # simple assert that input is in the designated options (readability purposes only)
     if isinstance(input, str):
         input = input.lower()
-    assert input in options, f"input must be in {options}, received {input}"
+    if input not in options:
+        if argname is not None:
+            raise ValueError(f"{argname} must be in {options}, received {input}")
+        raise ValueError(f"input must be in {options}, received {input}")
 
 def get_all_filepaths(path, filetype=None, contains=None):
     all_files = list()

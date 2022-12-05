@@ -1,9 +1,10 @@
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import matplotlib.pyplot as plt
 import numpy as np
+np.random.seed(10)
 import torch
 from torch import optim, nn
-from training.PyTorchDataset import PyTorchDataset, TSDataset
+from ise.models.training.dataclasses import PyTorchDataset, TSDataset
 from torch.utils.data import DataLoader
 import time
 from torch.utils.tensorboard import SummaryWriter
@@ -13,16 +14,10 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
 class Trainer:
-    def __init__(self, cfg):
+    def __init__(self, ):
         self.model = None
         self.data = {}
-        self.cfg = cfg
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # Determine whether on GPU or not
-        # self.data_dir = self.cfg['data']['directory'] if self.cfg['data']['directory'] is not None else self.cfg['data']['export']
-        # self.model_name = cfg['training']['model']
-        # self.num_epochs = cfg['training']['epochs']
-        # self.verbose = cfg['training']['verbose']
-        # self.batch_size = cfg['training']['batch_size']
         self.num_input_features = None
         self.loss_logs = {'training_loss': [], 'vasqrtl_loss': [], }
         self.train_loader = None
@@ -245,7 +240,7 @@ class Trainer:
             plt.savefig(save)
         plt.show()
 
-    def evaluate(self):
+    def evaluate(self, verbose=True):
         # Test predictions
         self.model.eval()
         preds = torch.tensor([]).to(self.device)
@@ -259,14 +254,15 @@ class Trainer:
         else:
             preds = preds.squeeze().detach().numpy()
             
-        mse = sum((preds - self.y_test)**2) / len(preds)
-        mae = sum((preds - self.y_test)) / len(preds)
+        mse = sum((preds - self.y_test.squeeze())**2) / len(preds)
+        mae = sum(abs((preds - self.y_test.squeeze()))) / len(preds)
         rmse = np.sqrt(mse)
         r2 = r2_score(self.y_test, preds)
 
         metrics = {'MSE': mse, 'MAE': mae, 'RMSE': rmse, 'R2': r2}
 
-        print(f"""Test Metrics
+        if verbose:
+            print(f"""Test Metrics
 MSE: {mse:0.6f}
 MAE: {mae:0.6f}
 RMSE: {rmse:0.6f}

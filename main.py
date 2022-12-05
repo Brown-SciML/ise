@@ -1,52 +1,25 @@
-from data.processing.aggregate_by_sector import aggregate_atmosphere, aggregate_icecollapse, aggregate_ocean
-from data.processing.process_outputs import process_repository
-from data.processing.combine_datasets import combine_datasets
-from data.classes.EmulatorData import EmulatorData
-from training.Trainer import Trainer
-from models import ExploratoryModel, TimeSeriesEmulator
-from utils import get_configs, output_test_series, plot_true_vs_predicted
+from ise.data import EmulatorData
+from ise.models.training.Trainer import Trainer
+from ise.models.traditional import ExploratoryModel
+from ise.models.timeseries import TimeSeriesEmulator
+from ise.utils.utils import get_configs, output_test_series
 from sklearn.metrics import r2_score
-import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import numpy as np
-import random
 from datetime import datetime
 
-cfg = get_configs()
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 np.random.seed(10)
 
-forcing_directory = cfg['data']['forcing']
-zenodo_directory = cfg['data']['output']
-export_dir = cfg['data']['export']
-processing = cfg['processing']
-data_directory = cfg['data']['directory']
+    
 
-if processing['generate_atmospheric_forcing']:
-    af_directory = f"{forcing_directory}/Atmosphere_Forcing/"
-    aggregate_atmosphere(af_directory, export=export_dir, )
-
-if processing['generate_oceanic_forcing']:
-    of_directory = f"{forcing_directory}/Ocean_Forcing/"
-    aggregate_ocean(of_directory, export=export_dir, )
-
-if processing['generate_icecollapse_forcing']:
-    ice_directory = f"{forcing_directory}/Ice_Shelf_Fracture"
-    aggregate_icecollapse(ice_directory, export=export_dir, )
-
-if processing['generate_outputs']:
-    outputs = process_repository(zenodo_directory, export_filepath=f"{export_dir}/outputs.csv")
-
-if processing['combine_datasets']:
-    master, inputs, outputs = combine_datasets(processed_data_dir=export_dir,
-                                               include_icecollapse=processing['include_icecollapse'],
-                                               export=export_dir)
+processed_output_files = r"/users/pvankatw/emulator/ise/data/datasets/processed_output_files/"
 
 
-def test_saved_network(path, architecture):
+def test_saved_network(model_path, architecture, data_directory):
     print('1/3: Loading in Data')
-    emulator_data = EmulatorData(directory=export_dir)
+    emulator_data = EmulatorData(directory=data_directory)
     print('2/3: Processing Data')
     emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
         target_column='sle',
@@ -65,11 +38,11 @@ def test_saved_network(path, architecture):
                 'test_labels': test_labels, }
     
     # Load Model
-    trainer = Trainer(cfg)
-    trainer._initiate_model(TimeSeriesEmulator.TimeSeriesEmulator, data_dict=data_dict, architecture=architecture, sequence_length=5, batch_size=100)
+    trainer = Trainer()
+    trainer._initiate_model(TimeSeriesEmulator, data_dict=data_dict, architecture=architecture, sequence_length=5, batch_size=100)
     
     # Assigned pre-trained weights
-    trainer.model.load_state_dict(torch.load(path, map_location=device))
+    trainer.model.load_state_dict(torch.load(model_path, map_location=device))
     model = trainer.model
     
     # Evaluate on test_features
@@ -97,7 +70,7 @@ R2: {r2:0.6f}""")
 
 def run_network():
     print('1/4: Loading in Data')
-    emulator_data = EmulatorData(directory=export_dir)
+    emulator_data = EmulatorData(directory=processed_output_files)
     print('2/4: Processing Data')
     emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
         target_column='sle',
@@ -115,7 +88,7 @@ def run_network():
                 'train_labels': train_labels,
                 'test_features': test_features,
                 'test_labels': test_labels, }
-    trainer = Trainer(cfg)
+    trainer = Trainer()
 
     print('3/4: Training Model')
     time_series_architecture = {
@@ -149,7 +122,7 @@ def lag_sequence_test(lag_array, sequence_array, iterations):
         for lag in lag_array:
             for sequence_length in sequence_array:
                 print(f"Training... Lag: {lag}, Sequence Length: {sequence_length}, Iteration: {iteration}, Trained {count} models")
-                emulator_data = EmulatorData(directory=export_dir)
+                emulator_data = EmulatorData(directory=processed_output_files)
                 emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
                     target_column='sle',
                     drop_missing=True,
@@ -167,7 +140,7 @@ def lag_sequence_test(lag_array, sequence_array, iterations):
                             'train_labels': train_labels,
                             'test_features': test_features,
                             'test_labels': test_labels, }
-                trainer = Trainer(cfg)
+                trainer = Trainer()
                 time_series_architecture = {
                     'num_rnn_layers': 3,
                     'num_rnn_hidden': 128,
@@ -216,7 +189,7 @@ def get_data(export_dir):
     return data_dict
 
 def rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):  
-    data_dict = get_data(export_dir)
+    data_dict = get_data(processed_output_files)
                    
     count = 0
     for iteration in range(1, iterations+1):
@@ -224,7 +197,7 @@ def rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):
             for num_rnn_hidden in hidden_nodes_array:
                 print(f"Training... RNN Layers: {num_rnn_layers}, Hidden: {num_rnn_hidden}, Iteration: {iteration}, Trained {count} models")
             
-                trainer = Trainer(cfg)
+                trainer = Trainer()
                 time_series_architecture = {
                     'num_rnn_layers': num_rnn_layers,
                     'num_rnn_hidden': num_rnn_hidden,
@@ -279,7 +252,7 @@ def rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):
 #                     'test_labels': test_labels,  }
 #
 #         start = time.time()
-#         trainer = Trainer(cfg)
+#         trainer = Trainer()
 #         trainer.train(
 #             model=ExploratoryModel.ExploratoryModel,
 #             num_linear_layers=6,
@@ -318,18 +291,18 @@ if __name__ == '__main__':
     
     # run_network()
 
-    rnn_architecture_test(
-        rnn_layers_array=[12], 
-        hidden_nodes_array=[128, 256, 512], 
-        iterations=5,
-        )
-    # model = "02-12-2022 16.18.16.pt"
-    # metrics, preds = test_saved_network(
-    #     path=f"/users/pvankatw/emulator/src/models/experiment_models/{model}", 
-    #     architecture={'num_rnn_layers': 4,'num_rnn_hidden': 128,}
-    # )
-    # import pandas as pd
-    # pd.DataFrame(preds).to_csv(r'preds_3.csv')
+    # rnn_architecture_test(
+    #     rnn_layers_array=[12], 
+    #     hidden_nodes_array=[128, 256, 512], 
+    #     iterations=5,
+    #     )
+    model = "04-12-2022 12.41.39.pt"
+    metrics, preds = test_saved_network(
+        path=f"/users/pvankatw/emulator/ise/models/pretrained/{model}", 
+        architecture={'num_rnn_layers': 12,'num_rnn_hidden': 256,}
+    )
+    import pandas as pd
+    pd.DataFrame(preds).to_csv(r'preds.csv')
 
 stop = ''
 

@@ -1,8 +1,9 @@
 import torch
 from torch import nn
-from training.PyTorchDataset import PyTorchDataset, TSDataset
+from ise.models.training.dataclasses import PyTorchDataset, TSDataset
 from torch.utils.data import DataLoader
 import numpy as np
+np.random.seed(10)
 import pandas as pd
 
 

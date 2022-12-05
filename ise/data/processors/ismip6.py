@@ -1,15 +1,16 @@
 import xarray as xr
 import numpy as np
+np.random.seed(10)
 import pandas as pd
-from utils import get_all_filepaths, get_configs
+from ise.utils.utils import get_all_filepaths, get_configs
 import os
 from itertools import compress
 from tqdm import tqdm
-cfg = get_configs()
 
-data_directory = cfg['data']['forcing']
-output_directory = cfg['data']['output']
 variables = ['iareafl', 'iareagr', 'icearea', 'ivol', 'ivaf', 'smb', 'smbgr', 'bmbfl']
+
+def process_ismip6_outputs(zenodo_directory, export_directory):
+    process_repository(zenodo_directory, export_filepath=f"{export_directory}/ismip6_outputs.csv")
 
 def get_sector(x):
     x = x.split("_")
@@ -19,7 +20,7 @@ def get_sector(x):
 
 def process_repository(zenodo_directory, export_filepath=None):
     # files = get_all_filepaths(zenodo_directory, filetype='nc', contains='minus_ctrl_proj')
-    groups_dir = f"{output_directory}/ComputedScalarsPaper/"
+    groups_dir = f"{zenodo_directory}/ComputedScalarsPaper/"
     all_groups = os.listdir(groups_dir)
     all_data = pd.DataFrame()
     

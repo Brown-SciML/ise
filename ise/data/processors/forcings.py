@@ -1,11 +1,240 @@
-from data.classes.AtmosphereForcing import AtmosphereForcing
-from data.classes.GridSectors import GridSectors
-from data.classes.OceanForcing import OceanForcing
-from data.classes.IceCollapse import IceCollapse
-from utils import get_all_filepaths
-import pandas as pd
-import numpy as np
 import time
+import xarray as xr
+from ise.utils.utils import get_configs, get_all_filepaths, check_input
+import numpy as np
+np.random.seed(10)
+import pandas as pd
+import time
+
+def process_forcings(forcing_directory, export_directory, to_process='all', verbose=False):
+    # check inputs
+    to_process_options = ['all', 'atmosphere', 'ocean', 'ice_collapse']
+    if isinstance(to_process, str):
+        if to_process.lower() not in to_process_options:
+            raise ValueError(f'to_process arg must be in [{to_process_options}], received {to_process}')
+    elif isinstance(to_process, list):
+        to_process_valid = all([(s in to_process_options) for s in to_process])
+        if not to_process_valid:
+            raise  ValueError(f'to_process arg must be in [{to_process_options}], received {to_process}')
+        
+        
+    if to_process.lower() == 'all':
+        to_process = ['atmosphere', 'ocean', 'ice_collapse']
+    
+    if verbose:
+        print('Processing...')
+    
+    curr_time = time.time()
+    if 'atmosphere' in to_process:
+        af_directory = f"{forcing_directory}/Atmosphere_Forcing/"
+        aggregate_atmosphere(af_directory, export=export_directory, )
+        if verbose:
+            prev_time, curr_time = curr_time, time.time()
+            curr_time = time.time()
+            print(f'Finished processing atmosphere, Total Running Time: {(curr_time - prev_time) // 60} minutes')
+    
+    if 'ocean' in to_process:
+        of_directory = f"{forcing_directory}/Ocean_Forcing/"
+        aggregate_ocean(of_directory, export=export_directory, )
+        if verbose:
+            prev_time, curr_time = curr_time, time.time()
+            curr_time = time.time()
+            print(f'Finished processing ocean, Total Running Time: {(curr_time - prev_time) // 60} minutes')
+    
+    if 'ice_collapse' in to_process:
+        ice_directory = f"{forcing_directory}/Ice_Shelf_Fracture"
+        aggregate_icecollapse(ice_directory, export=export_directory, )
+        if verbose:
+            prev_time, curr_time = curr_time, time.time()
+            curr_time = time.time()
+            print(f'Finished processing ice_collapse, Total Running Time: {(curr_time - prev_time) // 60} minutes')
+    
+    if verbose:
+        print(f'Finished. Data exported to {export_directory}')
+    
+    
+
+class AtmosphereForcing:
+    def __init__(self, path):
+        self.forcing_type = 'atmosphere'
+        self.path = path
+        self.aogcm = path.split('/')[-3]  # 3rd to last folder in directory structure
+        
+        if path[-2:] == 'nc':
+            self.data = xr.open_dataset(self.path, decode_times=False)
+            self.datatype = 'NetCDF'
+
+        elif path[-3:] == 'csv':
+            self.data = pd.read_csv(self.path,)
+            self.datatype = 'CSV'
+
+
+    def aggregate_dims(self,):
+        dims = self.data.dims
+        if 'time' in dims:
+            self.data = self.data.mean(dim='time')
+        if 'nv4' in dims:
+            self.data = self.data.mean(dim='nv4')
+        return self
+
+    def save_as_csv(self):
+        if not isinstance(self.data, pd.DataFrame):
+            if self.datatype != "NetCDF":
+                raise AttributeError(f'Data type must be \"NetCDF\", received {self.datatype}.')
+                
+            csv_path = f"{self.path[:-3]}.csv"
+            self.data = self.data.to_dataframe()
+        self.data.to_csv(csv_path)
+        return self
+
+    def add_sectors(self, grids):
+        self.data = self.data.drop(labels=['lon_bnds', 'lat_bnds', 'lat2d', 'lon2d'])
+        self.data = self.data.to_dataframe().reset_index(level='time', drop=True)
+        self.data = pd.merge(self.data, grids.data, left_index=True, right_index=True, how='outer')
+        return self
+
+
+
+class OceanForcing:
+    def __init__(self, aogcm_dir):
+        self.forcing_type = 'ocean'
+        self.path = f"{aogcm_dir}/1995-2100/"
+        self.aogcm = aogcm_dir.split('/')[-2]  # 3rd to last folder in directory structure
+        
+        # Load all data: thermal forcing, salinity, and temperature
+        files = get_all_filepaths(path=self.path, filetype='nc')
+        for file in files:
+            if 'salinity' in file:
+                self.salinity_data = xr.open_dataset(file)
+            elif 'thermal_forcing' in file:
+                self.thermal_forcing_data = xr.open_dataset(file)
+            elif 'temperature' in file:
+                self.temperature_data = xr.open_dataset(file)
+            else:
+                pass
+
+
+    def aggregate_dims(self,):
+        dims = self.data.dims
+        if 'z' in dims:
+            self.data = self.data.mean(dim='time')
+        if 'nbounds' in dims:
+            self.data = self.data.mean(dim='nv4')
+        return self
+
+    def save_as_csv(self):
+        if not isinstance(self.data, pd.DataFrame):
+            if self.datatype != "NetCDF":
+                raise AttributeError(f'Data type must be \"NetCDF\", received {self.datatype}.')
+                
+            csv_path = f"{self.path[:-3]}.csv"
+            self.data = self.data.to_dataframe()
+        self.data.to_csv(csv_path)
+        return self
+
+    def add_sectors(self, grids):      
+        self.salinity_data = self.salinity_data.drop(labels=['z_bnds', 'lat', 'lon'])
+        self.salinity_data = self.salinity_data.mean(dim='z', skipna=True).to_dataframe()
+        self.salinity_data = self.salinity_data.reset_index(level='time',)
+        self.salinity_data = pd.merge(self.salinity_data, grids.data, left_index=True, right_index=True, how='outer')
+        self.salinity_data['year'] = self.salinity_data['time'].apply(lambda x: x.year)
+        self.salinity_data = self.salinity_data.drop(columns=['time', 'mapping'])
+        
+        self.thermal_forcing_data = self.thermal_forcing_data.drop(labels=['z_bnds'])
+        self.thermal_forcing_data = self.thermal_forcing_data.mean(dim='z', skipna=True).to_dataframe().reset_index(level='time',)
+        self.thermal_forcing_data = pd.merge(self.thermal_forcing_data, grids.data, left_index=True, right_index=True, how='outer')
+        self.thermal_forcing_data['year'] = self.thermal_forcing_data['time'].apply(lambda x: x.year)
+        self.thermal_forcing_data = self.thermal_forcing_data.drop(columns=['time', 'mapping'])
+        
+        self.temperature_data = self.temperature_data.drop(labels=['z_bnds'])
+        self.temperature_data = self.temperature_data.mean(dim='z', skipna=True).to_dataframe().reset_index(level='time',)
+        self.temperature_data = pd.merge(self.temperature_data, grids.data, left_index=True, right_index=True, how='outer')
+        self.temperature_data['year'] = self.temperature_data['time'].apply(lambda x: x.year)
+        self.temperature_data = self.temperature_data.drop(columns=['time', 'mapping'])
+        
+        return self
+
+
+class IceCollapse:
+    def __init__(self, aogcm_dir):
+        self.forcing_type = 'ice_collapse'
+        self.path = f"{aogcm_dir}"
+        self.aogcm = aogcm_dir.split('/')[-2]  # last folder in directory structure
+        
+        # Load all data: thermal forcing, salinity, and temperature
+        files = get_all_filepaths(path=self.path, filetype='nc')
+        
+        if len(files) > 1: # if there is a "v2" file in the directory, use that one
+            for file in files:
+                if 'v2' in file:
+                    self.data = xr.open_dataset(file)
+                else:
+                    pass
+        else:
+            self.data = xr.open_dataset(files[0])
+
+
+    def save_as_csv(self):
+        if not isinstance(self.data, pd.DataFrame):
+            if self.datatype != "NetCDF":
+                raise AttributeError(f'Data type must be \"NetCDF\", received {self.datatype}.')
+                
+            csv_path = f"{self.path[:-3]}.csv"
+            self.data = self.data.to_dataframe()
+        self.data.to_csv(csv_path)
+        return self
+
+    def add_sectors(self, grids):    
+        self.data = self.data.drop(labels=['lon', 'lon_bnds', 'lat', 'lat_bnds'])
+        self.data = self.data.to_dataframe().reset_index(level='time', drop=False)
+        self.data = pd.merge(self.data, grids.data, left_index=True, right_index=True, how='outer')
+        self.data['year'] = self.data['time'].apply(lambda x: x.year)
+        self.data = self.data.drop(columns=['time', 'mapping', 'lat', 'lon',])
+        return self
+        
+
+
+
+
+class GridSectors:
+    def __init__(self, grid_size=8, filetype='nc', format_index=True):
+        check_input(grid_size, [4, 8, 16, 32])
+        check_input(filetype.lower(), ['nc', 'csv'])
+        self.grids_dir = r"/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/ISMIP6_sectors/"
+        
+        if filetype.lower() == 'nc':
+            self.path = self.grids_dir + f"sectors_{grid_size}km.nc"
+            self.data = xr.open_dataset(self.path, decode_times=False)
+            self = self._to_dataframe()
+            if format_index:
+                self = self._format_index()
+        elif filetype.lower() == 'csv':
+            self.path = self.grids_dir + f"sector_{grid_size}.csv"
+            self.data = pd.read_csv(self.path)
+        else:
+            raise NotImplementedError('Only \"NetCDF\" and \"CSV\" are currently supported')
+    
+    def _netcdf_to_csv(self):
+        if self.filetype != "NetCDF":
+            raise AttributeError(f'Data type must be \"NetCDF\", received {self.datatype}.')
+            
+        csv_path = f"{self.path[:-3]}.csv"
+        df = self.data.to_dataframe()
+        df.to_csv(csv_path)
+
+    def _to_dataframe(self):
+        if not isinstance(self, pd.DataFrame):
+            self.data = self.data.to_dataframe()
+        return self
+
+    def _format_index(self):
+        index_array = list(np.arange(0,761))
+        self.data.index = pd.MultiIndex.from_product([index_array, index_array], names=['x', 'y'])
+        return self
+
+    
+    
+
 
 def aggregate_by_sector(path):
     """Takes a atmospheric forcing dataset, adds sector numbers to it,

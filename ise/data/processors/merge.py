@@ -1,22 +1,30 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import re
-from utils import get_configs
+from ise.utils.utils import get_configs
+import requests
 import json
-cfg = get_configs()
 
-
-export_dir = cfg['data']['export']
-with_ice = cfg['processing']['include_icecollapse']
 
 # Open up the JSON with Table 1 from H. Seroussi et al.: ISMIP6 Antarctica projections
 # Link: https://tc.copernicus.org/articles/14/3033/2020/tc-14-3033-2020.pdf
-with open(cfg['data']['ismip6_experiments_json']) as experiments:
-    ismip6_experiments = json.load(experiments)
+resp = requests.get(r'https://raw.githubusercontent.com/pvankatwyk/emulator/master/src/data/processed_output_files/ismip6_experiments.json')
+ismip6_experiments = json.loads(resp.text)
 
 
+# ismip6_experiments_filepath = r'https://github.com/pvankatwyk/emulator/blob/master/src/data/processed_output_files/ismip6_experiments.json'
+# with open(ismip6_experiments_filepath) as experiments:
+#     ismip6_experiments = json.load(experiments)
 
-def combine_datasets(processed_data_dir=export_dir, include_icecollapse=with_ice, export=export_dir):
+
+def merge_datasets(processed_forcing_directory, processed_ismip6_directory, export_directory, include_icecollapse=False):
+    master, inputs, outputs = combine_datasets(processed_forcing_directory=processed_forcing_directory,
+                                               processed_ismip6_directory=processed_ismip6_directory,
+                                               include_icecollapse=include_icecollapse,
+                                               export=export_directory)
+    return master, inputs, outputs
+
+def combine_datasets(processed_forcing_directory, processed_ismip6_directory, include_icecollapse, export=True):
     """Combines the input datasets -- atmospheric forcing, three oceanic forcing (salinity, temperature
     and thermal forcing), and ice sheet collapse forcing with the output dataset generated in 
     H. Seroussi et al.: ISMIP6 Antarctica projections.
@@ -37,12 +45,12 @@ def combine_datasets(processed_data_dir=export_dir, include_icecollapse=with_ice
     
     # Get the files and if that doesn't work, return a FIleNotFoundError
     try:
-        af = pd.read_csv(f"{processed_data_dir}/atmospheric_forcing.csv")
-        ice = pd.read_csv(f"{processed_data_dir}/ice_collapse.csv")
-        salinity = pd.read_csv(f"{processed_data_dir}/salinity.csv")
-        temp = pd.read_csv(f"{processed_data_dir}/temperature.csv")
-        tf = pd.read_csv(f"{processed_data_dir}/thermal_forcing.csv")
-        outputs = pd.read_csv(f"{processed_data_dir}/outputs.csv")
+        af = pd.read_csv(f"{processed_forcing_directory}/atmospheric_forcing.csv")
+        ice = pd.read_csv(f"{processed_forcing_directory}/ice_collapse.csv")
+        salinity = pd.read_csv(f"{processed_forcing_directory}/salinity.csv")
+        temp = pd.read_csv(f"{processed_forcing_directory}/temperature.csv")
+        tf = pd.read_csv(f"{processed_forcing_directory}/thermal_forcing.csv")
+        outputs = pd.read_csv(f"{processed_ismip6_directory}/outputs.csv")
     except FileNotFoundError:
         raise FileNotFoundError('Files not found, make sure to run all processing functions.')
     
@@ -86,7 +94,7 @@ def combine_datasets(processed_data_dir=export_dir, include_icecollapse=with_ice
     
     
 
-def exp_to_attributes(x, ):
+def exp_to_attributes(x,):
     """Combines Table 1 in H. Seroussi et al.: ISMIP6 Antarctica projections and associates the attributes
     listed in Table 1 with each experiment in the output dataset.
 

@@ -2,9 +2,8 @@
 
 import pandas as pd
 import numpy as np
+np.random.seed(10)
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 from sklearn.gaussian_process import GaussianProcessRegressor
