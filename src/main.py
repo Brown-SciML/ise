@@ -192,8 +192,7 @@ def lag_sequence_test(lag_array, sequence_array, iterations):
                 
                 count += 1
                 
-
-def rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):  
+def get_data(export_dir):
     emulator_data = EmulatorData(directory=export_dir)
     emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
         target_column='sle',
@@ -213,6 +212,11 @@ def rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):
         'test_features': test_features,
         'test_labels': test_labels,
     }
+    
+    return data_dict
+
+def rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):  
+    data_dict = get_data(export_dir)
                    
     count = 0
     for iteration in range(1, iterations+1):
@@ -231,7 +235,7 @@ def rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):
                     architecture=time_series_architecture,
                     data_dict=data_dict,
                     criterion=nn.MSELoss(),
-                    epochs=10,
+                    epochs=100,
                     batch_size=100,
                     tensorboard=True,
                     save_model=True,
@@ -299,6 +303,12 @@ def rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):
 #
 #         count += 1
 
+
+# TODO: Make into a package. Use nflows as an example as it is not too heavily abstracted. Maybe after finalizing my own stuff?
+# nflows -> https://github.com/bayesiains/nflows
+# packaging -> https://docs.python-guide.org/writing/structure/
+
+
 if __name__ == '__main__':
     # lag_sequence_test(
     #     lag_array=[1, 3, 5, 10],
@@ -308,16 +318,16 @@ if __name__ == '__main__':
     
     # run_network()
 
-    # rnn_architecture_test(
-    #     rnn_layers_array=[2, 4, 6, 10, 12], 
-    #     hidden_nodes_array=[64, 128, 256], 
-    #     iterations=5,
-    #     )
-    model = "02-12-2022 16.18.16.pt"
-    metrics, preds = test_saved_network(
-        path=f"/users/pvankatw/emulator/src/models/experiment_models/{model}", 
-        architecture={'num_rnn_layers': 4,'num_rnn_hidden': 128,}
-    )
+    rnn_architecture_test(
+        rnn_layers_array=[12], 
+        hidden_nodes_array=[128, 256, 512], 
+        iterations=5,
+        )
+    # model = "02-12-2022 16.18.16.pt"
+    # metrics, preds = test_saved_network(
+    #     path=f"/users/pvankatw/emulator/src/models/experiment_models/{model}", 
+    #     architecture={'num_rnn_layers': 4,'num_rnn_hidden': 128,}
+    # )
     # import pandas as pd
     # pd.DataFrame(preds).to_csv(r'preds_3.csv')
 
