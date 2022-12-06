@@ -7,10 +7,8 @@ from sklearn.metrics import r2_score
 import torch
 import torch.nn as nn
 import numpy as np
-from datetime import datetime
-
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 np.random.seed(10)
+
 
     
 
@@ -18,6 +16,7 @@ processed_output_files = r"/users/pvankatw/emulator/ise/data/datasets/processed_
 
 
 def test_saved_network(model_path, architecture, data_directory):
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print('1/3: Loading in Data')
     emulator_data = EmulatorData(directory=data_directory)
     print('2/3: Processing Data')
@@ -116,54 +115,7 @@ def run_network():
     output_test_series(model, emulator_data, draws='random', k=10, save=True)
 
 
-def lag_sequence_test(lag_array, sequence_array, iterations):
-    count = 0
-    for iteration in range(1, iterations+1):
-        for lag in lag_array:
-            for sequence_length in sequence_array:
-                print(f"Training... Lag: {lag}, Sequence Length: {sequence_length}, Iteration: {iteration}, Trained {count} models")
-                emulator_data = EmulatorData(directory=processed_output_files)
-                emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
-                    target_column='sle',
-                    drop_missing=True,
-                    drop_columns=['groupname', 'experiment'],
-                    boolean_indices=True,
-                    scale=True,
-                    split_type='batch_test',
-                    drop_outliers={'column': 'ivaf', 'operator': '<', 'value': -1e13},
-                    time_series=True,
-                    lag=lag,
-                )
 
-                # TODO: I should be able to use emulator_data.train_features but I get error "AttributeError: 'tuple' object has no attribute 'train_features'"
-                data_dict = {'train_features': train_features,
-                            'train_labels': train_labels,
-                            'test_features': test_features,
-                            'test_labels': test_labels, }
-                trainer = Trainer()
-                time_series_architecture = {
-                    'num_rnn_layers': 3,
-                    'num_rnn_hidden': 128,
-                }
-                current_time = datetime.now().strftime(r"%d-%m-%Y %H.%M.%S")
-                trainer.train(
-                    model=TimeSeriesEmulator.TimeSeriesEmulator,
-                    architecture=time_series_architecture,
-                    data_dict=data_dict,
-                    criterion=nn.MSELoss(),
-                    epochs=100,
-                    batch_size=100,
-                    tensorboard=True,
-                    save_model=False,
-                    performance_optimized=False,
-                    verbose=False,
-                    sequence_length=sequence_length,
-                    tensorboard_comment=f" -- {current_time}, lag={lag}, sequence_length={sequence_length}"
-                )
-                metrics, preds = trainer.evaluate()
-                print('Metrics:', metrics)
-                
-                count += 1
                 
 def get_data(export_dir):
     emulator_data = EmulatorData(directory=export_dir)
@@ -204,7 +156,7 @@ def rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):
                 }
                 current_time = datetime.now().strftime(r"%d-%m-%Y %H.%M.%S")
                 trainer.train(
-                    model=TimeSeriesEmulator.TimeSeriesEmulator,
+                    model=TimeSeriesEmulator,
                     architecture=time_series_architecture,
                     data_dict=data_dict,
                     criterion=nn.MSELoss(),
@@ -212,7 +164,7 @@ def rnn_architecture_test(rnn_layers_array, hidden_nodes_array, iterations):
                     batch_size=100,
                     tensorboard=True,
                     save_model=True,
-                    performance_optimized=False,
+                    performance_optimized=True,
                     verbose=False,
                     sequence_length=5, # TODO: update with results from lag_sequence_test
                     tensorboard_comment=f" -- {current_time}, num_rnn={num_rnn_layers}, num_hidden={num_rnn_hidden}"
@@ -291,18 +243,18 @@ if __name__ == '__main__':
     
     # run_network()
 
-    # rnn_architecture_test(
-    #     rnn_layers_array=[12], 
-    #     hidden_nodes_array=[128, 256, 512], 
-    #     iterations=5,
-    #     )
-    model = "04-12-2022 12.41.39.pt"
-    metrics, preds = test_saved_network(
-        path=f"/users/pvankatw/emulator/ise/models/pretrained/{model}", 
-        architecture={'num_rnn_layers': 12,'num_rnn_hidden': 256,}
-    )
-    import pandas as pd
-    pd.DataFrame(preds).to_csv(r'preds.csv')
+    rnn_architecture_test(
+        rnn_layers_array=[12], 
+        hidden_nodes_array=[128, 256, 512], 
+        iterations=5,
+        )
+    # model = "04-12-2022 12.41.39.pt"
+    # metrics, preds = test_saved_network(
+    #     path=f"/users/pvankatw/emulator/ise/models/pretrained/{model}", 
+    #     architecture={'num_rnn_layers': 12,'num_rnn_hidden': 256,}
+    # )
+    # import pandas as pd
+    # pd.DataFrame(preds).to_csv(r'preds.csv')
 
 stop = ''
 

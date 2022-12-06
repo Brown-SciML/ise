@@ -222,9 +222,11 @@ class Trainer:
 
             tb.close()
 
-        # TODO: Change to relative path
         if save_model:
-            torch.save(self.model.state_dict(), f"/users/pvankatw/emulator/src/models/experiment_models/{self.time}.pt")
+            import os
+            dirname = os.path.dirname(__file__)
+            model_path = os.path.join(dirname, f"../saved_models/{self.time}.pt")
+            torch.save(self.model.state_dict(), model_path)
 
         return self
 
