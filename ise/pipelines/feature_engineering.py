@@ -1,20 +1,16 @@
 from ise.data.EmulatorData import EmulatorData
+from ise.utils.utils import _structure_emulatordata_args
 import pandas as pd
 
 
-def feature_engineer(data_dir, time_series, export_directory=None, target_column='sle', drop_missing=True, drop_columns=['groupname', 'experiment'], boolean_indices=True, scale=True, drop_outliers={'column': 'ivaf', 'operator': '<', 'value': -1e13}, lag=5):
+def feature_engineer(data_dir, time_series, export_directory=None, emulator_data_args=None):
    
+   
+    emulator_data_args = _structure_emulatordata_args(input_args=emulator_data_args, time_series=time_series)
+    
     emulator_data = EmulatorData(directory=data_dir)
     emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
-        target_column=target_column,
-        drop_missing=drop_missing,
-        drop_columns=drop_columns,
-        boolean_indices=boolean_indices,
-        scale=scale,
-        split_type='batch_test',
-        drop_outliers=drop_outliers,
-        time_series=time_series,
-        lag=lag,  # TODO: update with results from lag_sequence_test
+        **emulator_data_args,
     )
     
     if export_directory:

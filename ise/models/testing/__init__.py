@@ -1,0 +1,1 @@
+from ise.models.testing.pretrained import test_pretrained_model

@@ -2,56 +2,13 @@ from ise.data.EmulatorData import EmulatorData
 from ise.models.training.Trainer import Trainer
 from ise.models.timeseries.TimeSeriesEmulator import TimeSeriesEmulator
 from ise.models.traditional.ExploratoryModel import ExploratoryModel
+from ise.utils.utils import _structure_emulatordata_args, _structure_architecture_args
 from datetime import datetime
 from torch import nn
 
-def _structure_emulatordata_args(input_args, time_series):
-    emulator_data_defaults = dict(
-                    target_column='sle',
-                    drop_missing=True,
-                    drop_columns=['groupname', 'experiment'],
-                    boolean_indices=True,
-                    scale=True,
-                    split_type='batch_test',
-                    drop_outliers={'column': 'ivaf', 'operator': '<', 'value': -1e13},
-                    time_series=time_series,
-                    lag=None
-                    )
-    
-    if time_series:
-        emulator_data_defaults['lag'] = 5
-    
-    # If no other args are supplied, use defaults
-    if input_args is None:
-        return emulator_data_defaults
-    # else, replace provided key value pairs in the default dict and reassign
-    else:
-        for key in input_args.keys():
-            emulator_data_defaults[key] = input_args[key]
-        output_args = emulator_data_defaults
-        
 
-    
-    return output_args
 
-def _structure_architecture_args(architecture, time_series):
-    if architecture is None and time_series:
-        if 'nodes' in architecture.keys() or 'num_linear_layers' in architecture.keys():
-            raise AttributeError(f'Time series architecture args must be in [num_rnn_layers, num_rnn_hidden], received {architecture}')
-        architecture = {
-            'num_rnn_layers': 3,
-            'num_rnn_hidden': 128,
-        }
-    elif architecture is None and not time_series:
-        if 'num_rnn_layers' in architecture.keys() or 'num_rnn_hidden' in architecture.keys():
-            raise AttributeError(f'Time series architecture args must be in [num_linear_layers, nodes], received {architecture}')
-        architecture = {
-            'num_linear_layers': 4,
-            'nodes': [128, 64, 32, 1],
-        }
-    else:
-        return architecture
-    return architecture
+
 
 def lag_sequence_test(data_directory, lag_array, sequence_array, iterations, model=TimeSeriesEmulator,
                       emulator_data_args=None, architecture=None, verbose=True, epochs=100,
