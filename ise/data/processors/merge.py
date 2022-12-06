@@ -8,7 +8,7 @@ import json
 
 # Open up the JSON with Table 1 from H. Seroussi et al.: ISMIP6 Antarctica projections
 # Link: https://tc.copernicus.org/articles/14/3033/2020/tc-14-3033-2020.pdf
-resp = requests.get(r'https://raw.githubusercontent.com/pvankatwyk/emulator/master/src/data/processed_output_files/ismip6_experiments.json')
+resp = requests.get(r'https://raw.githubusercontent.com/pvankatwyk/ise/master/ise/data/datasets/processed_output_files/ismip6_experiments.json')
 ismip6_experiments = json.loads(resp.text)
 
 

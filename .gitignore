@@ -9,7 +9,7 @@ runs/
 old/
 experiment_models/
 untracked_folder/
-*/main.py
+main.py
 
 
 .vscode/

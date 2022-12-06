@@ -4,28 +4,14 @@ from ise.models.training.Trainer import Trainer
 import numpy as np
 np.random.seed(10)
 from sklearn.metrics import r2_score
+from ise.utils.utils import load_ml_data
 
 def test_pretrained_model(model_path, model_class, architecture, data_directory, time_series, verbose=True):
     
     if verbose:
         print('1/3: Loading processed data...')
     
-    if time_series:
-        try:
-            test_features = pd.read_csv(f'{data_directory}/ts_test_features.csv')
-            train_features = pd.read_csv(f'{data_directory}/ts_train_features.csv')
-            test_labels = pd.read_csv(f'{data_directory}/ts_test_labels.csv')
-            train_labels = pd.read_csv(f'{data_directory}/ts_train_labels.csv')
-        except FileNotFoundError:
-                raise FileNotFoundError(f'Files not found at {data_directory}. Format must be in format \"ts_train_features.csv\"')
-    else:
-        try:
-            test_features = pd.read_csv(f'{data_directory}/traditional_test_features.csv')
-            train_features = pd.read_csv(f'{data_directory}/traditional_train_features.csv')
-            test_labels = pd.read_csv(f'{data_directory}/traditional_test_labels.csv')
-            train_labels = pd.read_csv(f'{data_directory}/traditional_train_labels.csv')
-        except FileNotFoundError:
-                raise FileNotFoundError(f'Files not found at {data_directory}. Format must be in format \"traditional_train_features.csv\"')
+    train_features, train_labels, test_features, test_labels = load_ml_data(data_directory=data_directory, time_series=time_series)
             
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     

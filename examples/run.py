@@ -22,6 +22,6 @@ model, metrics, test_preds = training.train_timeseries_network(
     data_directory=ml_data_directory, 
     save_model=saved_model_path,
     verbose=True, 
-    epochs=10
+    epochs=10, 
 )
 

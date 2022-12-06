@@ -3,6 +3,7 @@ import os
 import torch
 import random
 import matplotlib.pyplot as plt
+import pandas as pd
 import numpy as np
 np.random.seed(10)
 
@@ -145,4 +146,24 @@ def _structure_architecture_args(architecture, time_series):
     else:
         return architecture
     return architecture
+
+def load_ml_data(data_directory, time_series):
+    if time_series:
+        try:
+            test_features = pd.read_csv(f'{data_directory}/ts_test_features.csv')
+            train_features = pd.read_csv(f'{data_directory}/ts_train_features.csv')
+            test_labels = pd.read_csv(f'{data_directory}/ts_test_labels.csv')
+            train_labels = pd.read_csv(f'{data_directory}/ts_train_labels.csv')
+        except FileNotFoundError:
+                raise FileNotFoundError(f'Files not found at {data_directory}. Format must be in format \"ts_train_features.csv\"')
+    else:
+        try:
+            test_features = pd.read_csv(f'{data_directory}/traditional_test_features.csv')
+            train_features = pd.read_csv(f'{data_directory}/traditional_train_features.csv')
+            test_labels = pd.read_csv(f'{data_directory}/traditional_test_labels.csv')
+            train_labels = pd.read_csv(f'{data_directory}/traditional_train_labels.csv')
+        except FileNotFoundError:
+                raise FileNotFoundError(f'Files not found at {data_directory}. Format must be in format \"traditional_train_features.csv\"')
+    
+    return train_features, train_labels, test_features, test_labels
 

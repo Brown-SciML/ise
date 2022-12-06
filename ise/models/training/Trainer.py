@@ -224,14 +224,17 @@ class Trainer:
 
         if save_model:
             if isinstance(save_model, str):
-                torch.save(self.model.state_dict(), save_model)
-                print(f'Model saved to {save_model}')
+                model_path = f"{save_model}/{self.time}.pt"
+                
             elif isinstance(save_model, bool):
                 import os
                 dirname = os.path.dirname(__file__)
                 model_path = os.path.join(dirname, f"../saved_models/{self.time}.pt")
-                torch.save(self.model.state_dict(), model_path)
-                print(f'Model saved to {model_path}')
+            
+            torch.save(self.model.state_dict(), model_path)
+            print('')
+            print(f'Model saved to {model_path}')
+            print('')
 
         return self
 

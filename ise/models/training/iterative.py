@@ -5,6 +5,7 @@ from ise.models.traditional.ExploratoryModel import ExploratoryModel
 from ise.utils.utils import _structure_emulatordata_args, _structure_architecture_args
 from datetime import datetime
 from torch import nn
+from ise.utils.utils import load_ml_data
 
 
 
@@ -66,16 +67,11 @@ def lag_sequence_test(data_directory, lag_array, sequence_array, iterations, mod
     
     
 def rnn_architecture_test(data_directory, rnn_layers_array, hidden_nodes_array, iterations,
-                          model=TimeSeriesEmulator, emulator_data_args=None, architecture=None, verbose=True, 
-                          epochs=100, batch_size=100, loss=nn.MSELoss(), ):
+                          model=TimeSeriesEmulator, architecture=None, verbose=True, 
+                          epochs=100, batch_size=100, loss=nn.MSELoss(), performance_optimized=False, save_model=True, tensorboard=True,):
     
     
-    emulator_data_args = _structure_emulatordata_args(input_args=emulator_data_args, time_series=True)
-    
-    emulator_data = EmulatorData(directory=data_directory)
-    emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
-        **emulator_data_args
-    )
+    train_features, train_labels, test_features, test_labels = load_ml_data(data_directory=data_directory, time_series=True)
     
     data_dict = {'train_features': train_features,
                 'train_labels': train_labels,
@@ -98,12 +94,12 @@ def rnn_architecture_test(data_directory, rnn_layers_array, hidden_nodes_array, 
                     model=model,
                     architecture=architecture,
                     data_dict=data_dict,
-                    criterion=nn.MSELoss(),
+                    criterion=loss,
                     epochs=epochs,
                     batch_size=batch_size,
-                    tensorboard=True,
-                    save_model=True,
-                    performance_optimized=False,
+                    tensorboard=tensorboard,
+                    save_model=save_model,
+                    performance_optimized=performance_optimized,
                     verbose=verbose,
                     sequence_length=5,
                     tensorboard_comment=f" -- {current_time}, num_rnn={num_rnn_layers}, num_hidden={num_rnn_hidden}"
@@ -114,20 +110,16 @@ def rnn_architecture_test(data_directory, rnn_layers_array, hidden_nodes_array, 
                 
                 count += 1
     
-    print(f'Finished trainin {count} models.')
+    print('')
+    print(f'Finished training {count} models.')
     
     
 def traditional_architecture_test(data_directory, architectures: list[dict], iterations,
-                          model=ExploratoryModel, emulator_data_args=None,  verbose=True, 
+                          model=ExploratoryModel, verbose=True, 
                           epochs=100, batch_size=100, loss=nn.MSELoss(), ):
     
     
-    emulator_data_args = _structure_emulatordata_args(input_args=emulator_data_args, time_series=False)
-    
-    emulator_data = EmulatorData(directory=data_directory)
-    emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
-        **emulator_data_args
-    )
+    train_features, train_labels, test_features, test_labels = load_ml_data(data_directory=data_directory, time_series=False)
     
     data_dict = {'train_features': train_features,
                 'train_labels': train_labels,
@@ -147,7 +139,7 @@ def traditional_architecture_test(data_directory, architectures: list[dict], ite
                 model=model,
                 architecture=architecture,
                 data_dict=data_dict,
-                criterion=nn.MSELoss(),
+                criterion=loss,
                 epochs=epochs,
                 batch_size=batch_size,
                 tensorboard=True,
