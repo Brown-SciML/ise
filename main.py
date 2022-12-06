@@ -1,5 +1,6 @@
 from ise.models.training.iterative import rnn_architecture_test, lag_sequence_test
 from ise.models.testing.pretrained import test_pretrained_model
+from ise.pipelines import training
 from ise.pipelines import feature_engineering
 from ise.models import timeseries
 
@@ -35,5 +36,8 @@ if __name__ == '__main__':
     # pd.DataFrame(preds).to_csv(r'preds.csv')
 
 stop = ''
+
+
+# TODO: Make visualization package, module, and pipeline
 
 

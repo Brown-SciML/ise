@@ -3,12 +3,12 @@ from ise.utils.utils import _structure_emulatordata_args
 import pandas as pd
 
 
-def feature_engineer(data_dir, time_series, export_directory=None, emulator_data_args=None):
+def feature_engineer(data_directory, time_series, export_directory=None, emulator_data_args=None):
    
    
     emulator_data_args = _structure_emulatordata_args(input_args=emulator_data_args, time_series=time_series)
     
-    emulator_data = EmulatorData(directory=data_dir)
+    emulator_data = EmulatorData(directory=data_directory)
     emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
         **emulator_data_args,
     )
