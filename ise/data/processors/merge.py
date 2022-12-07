@@ -50,7 +50,7 @@ def combine_datasets(processed_forcing_directory, processed_ismip6_directory, in
         salinity = pd.read_csv(f"{processed_forcing_directory}/salinity.csv")
         temp = pd.read_csv(f"{processed_forcing_directory}/temperature.csv")
         tf = pd.read_csv(f"{processed_forcing_directory}/thermal_forcing.csv")
-        outputs = pd.read_csv(f"{processed_ismip6_directory}/outputs.csv")
+        outputs = pd.read_csv(f"{processed_ismip6_directory}/ismip6_outputs.csv")
     except FileNotFoundError:
         raise FileNotFoundError('Files not found, make sure to run all processing functions.')
     
@@ -140,7 +140,7 @@ def format_aogcms(x):
         # if none of the above worked, just skip it
         pass
     
-    # Get rid of _1 and include case fo ukesm1_0_ll to match other formats
+    # Get rid of _1 and include case for ukesm1_0_ll to match other formats
     x = x.replace("_1", "")
     if x == "ukesm1_0_ll":
         x += "_ssp585"

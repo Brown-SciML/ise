@@ -62,7 +62,7 @@ def process_single_file(path):
     
     var = list(compress(variables, [v in path for v in variables]))
     
-    # ! Fix this: getting confused with "smb" vs "smb" using "in" operator -- come up with better way
+    # ! Fix this: getting confused with "smb" vs "smbgr" using "in" operator -- come up with better way
     if len(var) > 1:
         var = var[1]
     else:

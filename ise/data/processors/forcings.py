@@ -322,8 +322,6 @@ def aggregate_atmosphere(directory, export, model_in_columns=False,):
 
         # Keep selected columns and output each file individually
         forcing.data = forcing.data[['pr_anomaly', 'evspsbl_anomaly', 'mrro_anomaly', 'smb_anomaly', 'ts_anomaly', 'regions', 'aogcm',]]
-    
-        # forcing.data.to_csv(f"{fp[:-3]}_sectoryeargrouped.csv")
 
         # meanwhile, create a concatenated dataset
         all_data = pd.concat([all_data, forcing.data])
@@ -389,10 +387,6 @@ def aggregate_ocean(directory, export, model_in_columns=False, ):
         salinity_data = pd.concat([salinity_data, forcing.salinity_data])
         temperature_data = pd.concat([temperature_data, forcing.temperature_data])
         thermal_forcing_data = pd.concat([thermal_forcing_data, forcing.thermal_forcing_data])
-        
-        # salinity_data.to_csv(export+'/_salinity.csv')
-        # temperature_data.to_csv(export+'/_temperature.csv')
-        # thermal_forcing_data.to_csv(export+'/_thermal_forcing.csv')
         
     print(' -- ')
     
