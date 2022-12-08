@@ -11,8 +11,6 @@ from sklearn.gaussian_process.kernels import RBF
 import numpy as np
 np.random.seed(10)
 from sklearn.metrics import r2_score
-from sklearn.decomposition import PCA
-
 
 
 def train_timeseries_network(data_directory, 
@@ -164,29 +162,17 @@ def train_gaussian_process(data_directory, n, features=['temperature'], sampling
     if not isinstance(features, list):
         raise ValueError(f'features argument must be a list, received {type(features)}')
     
-    
-    
-    # if all the provided features are in the column list
-    if all([f in train_features.columns for f in features]):    
-        train_labels = np.array(train_labels.loc[train_features.index]).reshape(-1, 1)
-        test_features = test_features[features]
-        if isinstance(test_features, pd.Series) or test_features.shape[1] == 1:
-            test_features = np.array(test_features).reshape(-1, 1)
-    elif 'pc1' in features:
-        train_features['set'] = 'train'
-        test_features['set'] = 'test'
-        features = pd.concat([train_features, test_features])
-        pca = PCA(n_components=1)
-        principalComponents = pca.fit_transform(features.drop(columns=['set']))
-        train_features = principalComponents[features['set'] == 'train'].squeeze()
-        test_features = principalComponents[features['set'] == 'test'].squeeze()
-        
     if sampling_method.lower() == 'random':
         gp_train_features = train_features[features].sample(n)
     elif sampling_method.lower() == 'first_n':
         gp_train_features = train_features[features][:n]
     else:
         raise ValueError(f'sampling method must be in [random, first_n], received {sampling_method}')
+    
+    gp_train_labels = np.array(train_labels.loc[gp_train_features.index]).reshape(-1, 1)
+    gp_test_features = test_features[features]
+    if isinstance(gp_test_features, pd.Series) or gp_test_features.shape[1] == 1:
+        gp_test_features = np.array(gp_test_features).reshape(-1, 1)
         
     if kernel is None:
         kernel = RBF(length_scale=1.0, length_scale_bounds=(1e-6, 1e2))
