@@ -1,1 +1,1 @@
-from ise.models.gp.GaussianProcess import GaussianProcess
+from ise.models.gp.GaussianProcess import GP

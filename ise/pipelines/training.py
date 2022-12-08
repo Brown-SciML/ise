@@ -2,6 +2,7 @@ from ise.models.training.Trainer import Trainer
 from ise.models.traditional import ExploratoryModel
 from ise.models.timeseries.TimeSeriesEmulator import TimeSeriesEmulator
 from ise.models.traditional.ExploratoryModel import ExploratoryModel
+from ise.models.gp.GaussianProcess import GP
 from torch import nn
 import pandas as pd
 import os
@@ -10,6 +11,8 @@ from sklearn.gaussian_process.kernels import RBF
 import numpy as np
 np.random.seed(10)
 from sklearn.metrics import r2_score
+from sklearn.decomposition import PCA
+
 
 
 def train_timeseries_network(data_directory, 
@@ -157,50 +160,46 @@ def train_gaussian_process(data_directory, n, features=['temperature'], sampling
         test_labels = pd.read_csv(f'{data_directory}/ts_test_labels.csv')
         train_labels = pd.read_csv(f'{data_directory}/ts_train_labels.csv')
         scenarios = pd.read_csv(f'{data_directory}/ts_test_scenarios.csv').values.tolist()
-        
-    if kernel is None:
-        kernel = RBF(length_scale=1.0, length_scale_bounds=(1e-6, 1e2))
-    
-    gaussian_process = GaussianProcessRegressor(
-    kernel=kernel, n_restarts_optimizer=9
-    )
     
     if not isinstance(features, list):
         raise ValueError(f'features argument must be a list, received {type(features)}')
     
+    
+    
+    # if all the provided features are in the column list
+    if all([f in train_features.columns for f in features]):    
+        train_labels = np.array(train_labels.loc[train_features.index]).reshape(-1, 1)
+        test_features = test_features[features]
+        if isinstance(test_features, pd.Series) or test_features.shape[1] == 1:
+            test_features = np.array(test_features).reshape(-1, 1)
+    elif 'pc1' in features:
+        train_features['set'] = 'train'
+        test_features['set'] = 'test'
+        features = pd.concat([train_features, test_features])
+        pca = PCA(n_components=1)
+        principalComponents = pca.fit_transform(features.drop(columns=['set']))
+        train_features = principalComponents[features['set'] == 'train'].squeeze()
+        test_features = principalComponents[features['set'] == 'test'].squeeze()
+        
     if sampling_method.lower() == 'random':
         gp_train_features = train_features[features].sample(n)
     elif sampling_method.lower() == 'first_n':
         gp_train_features = train_features[features][:n]
     else:
         raise ValueError(f'sampling method must be in [random, first_n], received {sampling_method}')
+        
+    if kernel is None:
+        kernel = RBF(length_scale=1.0, length_scale_bounds=(1e-6, 1e2))
     
-    gp_train_labels = np.array(train_labels.loc[gp_train_features.index]).reshape(-1, 1)
-    gp_test_features = test_features[features]
-    if isinstance(gp_test_features, pd.Series) or gp_test_features.shape[1] == 1:
-        gp_test_features = np.array(gp_test_features).reshape(-1, 1)
+    gaussian_process = GP(kernel=kernel)
     
     if verbose:
         print('2/3: Training Model...')
-    gaussian_process.fit(gp_train_features, gp_train_labels,)
-    preds, std_prediction = gaussian_process.predict(gp_test_features, return_std=True)
+    gaussian_process.train(gp_train_features, gp_train_labels,)
     
     if verbose:
         print('3/3: Evaluating Model')
-    test_labels = np.array(test_labels.squeeze())
-    mse = sum((preds - test_labels)**2) / len(preds)
-    mae = sum(abs((preds - test_labels))) / len(preds)
-    rmse = np.sqrt(mse)
-    r2 = r2_score(test_labels, preds)
-    
-    metrics = {'MSE': mse, 'MAE': mae, 'RMSE': rmse, 'R2': r2}
-
-    if verbose:
-        print(f"""Test Metrics
-MSE: {mse:0.6f}
-MAE: {mae:0.6f}
-RMSE: {rmse:0.6f}
-R2: {r2:0.6f}""")
+    preds, std_prediction, metrics = gaussian_process.test(gp_test_features, test_labels)
         
     if save_directory:
         if isinstance(save_directory, str):
