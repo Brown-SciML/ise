@@ -1,4 +1,4 @@
-# Ice Sheet Emulator (ISE)
+# Ice Sheet Emulator (ISE) for ISMIP6 Emulation of Sea Level Rise
 
 **Peter Van Katwyk  $^{1}$, Karianne Bergen  $^{1,2}$**
 
