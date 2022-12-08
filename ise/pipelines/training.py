@@ -90,7 +90,7 @@ def train_traditional_network(data_directory,
                              ):
     
     if verbose:
-        print('1/3: Loading processed data...')
+        print('1/3: Loading processed data')
     
     try:
         test_features = pd.read_csv(f'{data_directory}/traditional_test_features.csv')
@@ -111,7 +111,7 @@ def train_traditional_network(data_directory,
     
     trainer = Trainer()
     if verbose:
-        print('2/3: Training Model...')
+        print('2/3: Training Model')
         
     if architecture is None:
         architecture = {
@@ -140,7 +140,7 @@ def train_traditional_network(data_directory,
     metrics, test_preds = trainer.evaluate(verbose=verbose)
     return metrics, test_preds
 
-def train_gaussian_process(data_directory, n, features=['temperature'], sampling_method='random', kernel=None, verbose=False):
+def train_gaussian_process(data_directory, n, features=['temperature'], sampling_method='random', kernel=None, verbose=False, save_directory=None):
     
     if verbose:
         print('1/3: Loading processed data...')
@@ -159,7 +159,7 @@ def train_gaussian_process(data_directory, n, features=['temperature'], sampling
         scenarios = pd.read_csv(f'{data_directory}/ts_test_scenarios.csv').values.tolist()
         
     if kernel is None:
-        kernel = RBF(length_scale=1.0, length_scale_bounds=(1e-2, 1e2))
+        kernel = RBF(length_scale=1.0, length_scale_bounds=(1e-6, 1e2))
     
     gaussian_process = GaussianProcessRegressor(
     kernel=kernel, n_restarts_optimizer=9
@@ -180,9 +180,14 @@ def train_gaussian_process(data_directory, n, features=['temperature'], sampling
     if isinstance(gp_test_features, pd.Series) or gp_test_features.shape[1] == 1:
         gp_test_features = np.array(gp_test_features).reshape(-1, 1)
     
+    if verbose:
+        print('2/3: Training Model...')
     gaussian_process.fit(gp_train_features, gp_train_labels,)
     preds, std_prediction = gaussian_process.predict(gp_test_features, return_std=True)
     
+    if verbose:
+        print('3/3: Evaluating Model')
+    test_labels = np.array(test_labels.squeeze())
     mse = sum((preds - test_labels)**2) / len(preds)
     mae = sum(abs((preds - test_labels))) / len(preds)
     rmse = np.sqrt(mse)
@@ -196,5 +201,18 @@ MSE: {mse:0.6f}
 MAE: {mae:0.6f}
 RMSE: {rmse:0.6f}
 R2: {r2:0.6f}""")
+        
+    if save_directory:
+        if isinstance(save_directory, str):
+            preds_path = f"{save_directory}/preds.csv"
+            uq_path = f"{save_directory}/std.csv"
+            
+        elif isinstance(save_directory, bool):
+            preds_path = f"preds.csv"
+            uq_path = f"std.csv"
+        
+        pd.Series(preds, name='preds').to_csv(preds_path, index=False)
+        pd.Series(std_prediction, name='std_prediction').to_csv(uq_path, index=False)
+
     
     return preds, std_prediction, metrics

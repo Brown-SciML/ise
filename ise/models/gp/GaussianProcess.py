@@ -10,7 +10,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 import random
 
-
+# TODO: Make this a model class
 
 train_features = pd.read_csv(r"/users/pvankatw/emulator/src/data/ml/dataset4/test_features.csv")
 train_labels = pd.read_csv(r"/users/pvankatw/emulator/src/data/ml/dataset4/train_labels.csv")
