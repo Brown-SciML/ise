@@ -1,6 +1,6 @@
 import time
 import xarray as xr
-from ise.utils.utils import get_configs, get_all_filepaths, check_input
+from ise.utils.utils import get_all_filepaths, check_input
 import numpy as np
 np.random.seed(10)
 import pandas as pd
@@ -482,7 +482,7 @@ def aogcm_to_features(data: dict, export_dir: str):
         non_region_cols = [c for c in all_data.columns if 'region' not in c]
         all_data = all_data[non_region_cols]
         
-        # region assignment produces NA's, low priority -- do later
+        # - region assignment produces NA's, low priority -- do later
         # all_data['region'] = separate_aogcm_dataframes[0][region_cols[0]].reset_index(drop=True)
         all_data = all_data.drop_duplicates() # See why there are duplicates -- until then, this works
         

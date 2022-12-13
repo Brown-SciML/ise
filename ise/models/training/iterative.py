@@ -68,10 +68,11 @@ def lag_sequence_test(data_directory, lag_array, sequence_array, iterations, mod
     
 def rnn_architecture_test(data_directory, rnn_layers_array, hidden_nodes_array, iterations,
                           model=TimeSeriesEmulator, architecture=None, verbose=True, 
-                          epochs=100, batch_size=100, loss=nn.MSELoss(), performance_optimized=False, save_model=True, tensorboard=True,):
+                          epochs=100, batch_size=100, loss=nn.MSELoss(), mc_dropout=False, dropout_prob=None, 
+                          performance_optimized=False, save_model=True, tensorboard=True,):
     
     
-    train_features, train_labels, test_features, test_labels = load_ml_data(data_directory=data_directory, time_series=True)
+    train_features, train_labels, test_features, test_labels, _ = load_ml_data(data_directory=data_directory, time_series=True)
     
     data_dict = {'train_features': train_features,
                 'train_labels': train_labels,
@@ -97,6 +98,8 @@ def rnn_architecture_test(data_directory, rnn_layers_array, hidden_nodes_array, 
                     criterion=loss,
                     epochs=epochs,
                     batch_size=batch_size,
+                    mc_dropout=mc_dropout,
+                    dropout_prob=dropout_prob,
                     tensorboard=tensorboard,
                     save_model=save_model,
                     performance_optimized=performance_optimized,

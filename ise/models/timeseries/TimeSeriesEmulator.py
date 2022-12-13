@@ -72,9 +72,10 @@ class TimeSeriesEmulator(torch.nn.Module):
         #         x = self.relu(nn.Linear(self.nodes[i - 1], self.nodes[i]))(x))
         return x
     
-    def predict(self, x, mc_iterations=None):
+    def predict(self, x, approx_dist=None, mc_iterations=None, confidence='95'):
         
-        if self.mc_dropout and mc_iterations is None:
+        approx_dist = self.mc_dropout if approx_dist is None else approx_dist
+        if approx_dist and mc_iterations is None:
             raise ValueError('If the model was trained with MC Dropout, mc_iterations cannot be None.')
         
         self.eval()
@@ -88,14 +89,14 @@ class TimeSeriesEmulator(torch.nn.Module):
             raise ValueError(f'Input x must be of type [np.ndarray, torch.FloatTensor], received {type(x)}')
 
         loader = DataLoader(dataset, batch_size=10, shuffle=False)
-        iterations = 1 if not self.mc_dropout else mc_iterations
+        iterations = 1 if not approx_dist else mc_iterations
         out_preds = np.zeros([iterations, len(dataset)])
         
         for i in range(iterations):
             preds = torch.tensor([]).to(self.device)
             for X_test_batch in loader:
                 self.eval()
-                if self.mc_dropout:
+                if approx_dist:
                     self.enable_dropout()
                 
                 X_test_batch = X_test_batch.to(self.device)
@@ -110,7 +111,21 @@ class TimeSeriesEmulator(torch.nn.Module):
         
         if 1 in out_preds.shape:
             out_preds = out_preds.squeeze()
-        return out_preds
+        
+        # If you chose to approximate output distribution (MC Dropout)
+        if approx_dist:
+            z = {'95': 1.96, '99': 2.58}
+            if confidence not in z.keys():
+                raise ValueError(f'confidence must be in {z.keys()}, received {confidence}')
+            means = out_preds.mean(axis=0)
+            quantiles = np.quantile(out_preds, [0.05, 0.95], axis=0)
+            sd = np.sqrt(np.var(out_preds, axis=0))
+            upper_ci = means + (z[confidence] * (sd/np.sqrt(preds.shape[0])))
+            lower_ci = means - (z[confidence] * (sd/np.sqrt(preds.shape[0])))
+        else:
+            means, upper_ci, lower_ci, quantiles = None, None, None, None
+        
+        return out_preds, means, upper_ci, lower_ci, quantiles
     
     def enable_dropout(self, ):
         # For each layer, if it starts with Dropout, turn it from eval mode to train mode

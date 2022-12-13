@@ -2,7 +2,7 @@ import xarray as xr
 import numpy as np
 np.random.seed(10)
 import pandas as pd
-from ise.utils.utils import get_all_filepaths, get_configs
+from ise.utils.utils import get_all_filepaths
 import os
 from itertools import compress
 from tqdm import tqdm

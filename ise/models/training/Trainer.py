@@ -180,7 +180,7 @@ class Trainer:
                 self.logs['testing'].append(test_mse)
                 testing_end = time.time()
 
-                preds = self.model.predict(self.X_test, mc_iterations=1)
+                preds, _, _, _, _ = self.model.predict(self.X_test, mc_iterations=1)
                 if self.device.type != 'cuda':
                     r2 = r2_score(self.y_test, preds)
                 else:
