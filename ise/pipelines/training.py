@@ -11,6 +11,8 @@ from sklearn.gaussian_process.kernels import RBF
 import numpy as np
 np.random.seed(10)
 from sklearn.metrics import r2_score
+from sklearn.decomposition import PCA
+
 
 
 def train_timeseries_network(data_directory, 
@@ -162,29 +164,63 @@ def train_gaussian_process(data_directory, n, features=['temperature'], sampling
     if not isinstance(features, list):
         raise ValueError(f'features argument must be a list, received {type(features)}')
     
+    # type check features
+    if not isinstance(features, list):
+        raise AttributeError(f'features argument must be of type list, received {type(features)}')
+    
+    # See if features argument contain columns or principal components
+    features_are_pcs = all([f.lower().startswith('pc') for f in features])
+    features_are_columns = all([f in train_features.columns for f in features])
+    
+    if features_are_columns:
+        # subset dataframe based on columns
+        gp_train_features = train_features[features]
+        gp_test_features = test_features[features]
+    
+    elif features_are_pcs:
+        # run PCA with the len(features) be the number of PCs
+        train_features['set'] = 'train'
+        test_features['set'] = 'test'
+        pca_features = pd.concat([train_features, test_features])
+        pca = PCA(n_components=len(features))
+        principalComponents = pca.fit_transform(pca_features.drop(columns=['set']))
+        gp_train_features = pd.DataFrame(principalComponents[pca_features['set'] == 'train'].squeeze())
+        gp_test_features = pd.DataFrame(principalComponents[pca_features['set'] == 'test'].squeeze())
+    
+    else:
+        raise ValueError('Features must all be in train_features.columns or must all be PCs, e.g. [pc1, pc2, pc3]')
+    
+    # Handle subsetting data -- randomly drawn or first N
     if sampling_method.lower() == 'random':
-        gp_train_features = train_features[features].sample(n)
+        gp_train_features = gp_train_features.sample(n)
     elif sampling_method.lower() == 'first_n':
-        gp_train_features = train_features[features][:n]
+        gp_train_features = gp_train_features[:n]
     else:
         raise ValueError(f'sampling method must be in [random, first_n], received {sampling_method}')
     
-    gp_train_labels = np.array(train_labels.loc[gp_train_features.index]).reshape(-1, 1)
-    gp_test_features = test_features[features]
-    if isinstance(gp_test_features, pd.Series) or gp_test_features.shape[1] == 1:
+    
+    # Format datasets
+    gp_train_labels = np.array(train_labels.loc[gp_train_features.index])
+    if isinstance(gp_train_features, pd.Series) or gp_train_features.shape[1] == 1:
+        gp_train_features = np.array(gp_train_features).reshape(-1, 1)
+    if isinstance(gp_test_features, pd.Series) or gp_test_features.ndim == 1:
         gp_test_features = np.array(gp_test_features).reshape(-1, 1)
-        
+     
+    # Initiate model classes
     if kernel is None:
         kernel = RBF(length_scale=1.0, length_scale_bounds=(1e-6, 1e2))
-    
     gaussian_process = GP(kernel=kernel)
     
     if verbose:
         print('2/3: Training Model...')
+        
+    # fit data (same as gaussian_process.fit())
     gaussian_process.train(gp_train_features, gp_train_labels,)
     
     if verbose:
         print('3/3: Evaluating Model')
+        
+    # evaluate on test
     preds, std_prediction, metrics = gaussian_process.test(gp_test_features, test_labels)
         
     if save_directory:
