@@ -8,7 +8,7 @@ import pandas as pd
 
 
 class TimeSeriesEmulator(torch.nn.Module):
-    def __init__(self, architecture,):
+    def __init__(self, architecture, mc_dropout=False, dropout_prob=None):
         super().__init__()
         self.model_name = 'TimeSeriesEmulator'
         self.input_layer_size = architecture['input_layer_size']
@@ -18,20 +18,34 @@ class TimeSeriesEmulator(torch.nn.Module):
         self.num_rnn_hidden = architecture['num_rnn_hidden']
         self.time_series = True
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # Determine whether on GPU or not
+        self.mc_dropout = mc_dropout
 
         if not all([self.num_rnn_layers, self.num_rnn_hidden, ]):
             raise AttributeError('Model architecture argument missing. Requires: [num_rnn_layers, num_rnn_hidden, ].')
 
-        self.rnn = nn.LSTM(
-            input_size=self.input_layer_size,
-            hidden_size=self.num_rnn_hidden,
-            batch_first=True,
-            num_layers=self.num_rnn_layers,
-            # dropout=0.3,
-        )
+        if mc_dropout and dropout_prob is None:
+            raise ValueError('If mc_dropout, dropout_prob cannot be None.')
+    
+        if self.mc_dropout:
+            self.rnn = nn.LSTM(
+                input_size=self.input_layer_size,
+                hidden_size=self.num_rnn_hidden,
+                batch_first=True,
+                num_layers=self.num_rnn_layers,
+                dropout=dropout_prob,
+            )
+        else:
+            self.rnn = nn.LSTM(
+                input_size=self.input_layer_size,
+                hidden_size=self.num_rnn_hidden,
+                batch_first=True,
+                num_layers=self.num_rnn_layers,
+            )
         
         self.relu = nn.ReLU()
-
+        
+        if self.mc_dropout:
+            self.dropout = nn.Dropout(p=dropout_prob)
         self.linear1 = nn.Linear(in_features=self.num_rnn_hidden, out_features=32)
         self.linear_out = nn.Linear(in_features=32, out_features=1)
 
@@ -44,6 +58,8 @@ class TimeSeriesEmulator(torch.nn.Module):
         _, (hn, _) = self.rnn(x, (h0, c0))
         x = self.linear1(hn[0])
         x = self.relu(x)
+        if self.mc_dropout:
+            x = self.dropout(x)
         x = self.linear_out(x)
         
         # TODO: Make adjustable number of linear layers and nodes
@@ -56,7 +72,11 @@ class TimeSeriesEmulator(torch.nn.Module):
         #         x = self.relu(nn.Linear(self.nodes[i - 1], self.nodes[i]))(x))
         return x
     
-    def predict(self, x):
+    def predict(self, x, mc_iterations=None):
+        
+        if self.mc_dropout and mc_iterations is None:
+            raise ValueError('If the model was trained with MC Dropout, mc_iterations cannot be None.')
+        
         self.eval()
         if isinstance(x, np.ndarray):
             dataset = TSDataset(X=torch.from_numpy(x).float(), y=None, sequence_length=5)
@@ -68,15 +88,32 @@ class TimeSeriesEmulator(torch.nn.Module):
             raise ValueError(f'Input x must be of type [np.ndarray, torch.FloatTensor], received {type(x)}')
 
         loader = DataLoader(dataset, batch_size=10, shuffle=False)
-        preds = torch.tensor([]).to(self.device)
-        for X_test_batch in loader:
-            X_test_batch = X_test_batch.to(self.device)
-            test_pred = self(X_test_batch)
-            preds = torch.cat((preds, test_pred), 0)
+        iterations = 1 if not self.mc_dropout else mc_iterations
+        out_preds = np.zeros([iterations, len(dataset)])
         
-        if self.device.type == 'cuda':
-            preds = preds.squeeze().cpu().detach().numpy()
-        else:
-            preds = preds.squeeze().detach().numpy()
+        for i in range(iterations):
+            preds = torch.tensor([]).to(self.device)
+            for X_test_batch in loader:
+                self.eval()
+                if self.mc_dropout:
+                    self.enable_dropout()
+                
+                X_test_batch = X_test_batch.to(self.device)
+                test_pred = self(X_test_batch)
+                preds = torch.cat((preds, test_pred), 0)
+            
+            if self.device.type == 'cuda':
+                preds = preds.squeeze().cpu().detach().numpy()
+            else:
+                preds = preds.squeeze().detach().numpy()
+            out_preds[i, :] = preds
         
-        return preds
+        if 1 in out_preds.shape:
+            out_preds = out_preds.squeeze()
+        return out_preds
+    
+    def enable_dropout(self, ):
+        # For each layer, if it starts with Dropout, turn it from eval mode to train mode
+        for layer in self.modules():
+            if layer.__class__.__name__.startswith('Dropout'):
+                layer.train()

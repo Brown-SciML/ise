@@ -70,7 +70,7 @@ class Trainer:
 
         return self
 
-    def _initiate_model(self, model_class, data_dict, architecture, sequence_length, batch_size):
+    def _initiate_model(self, model_class, data_dict, architecture, sequence_length, batch_size, mc_dropout, dropout_prob):
         # save attributes
         self.data_dict = data_dict
         self.num_input_features = self.data_dict['train_features'].shape[1]
@@ -85,7 +85,7 @@ class Trainer:
         architecture['input_layer_size'] = self.num_input_features
 
         # establish model - if using exploratory model, use num_linear_layers and nodes arg
-        self.model = model_class(architecture=architecture).to(self.device)
+        self.model = model_class(architecture=architecture, mc_dropout=mc_dropout, dropout_prob=dropout_prob).to(self.device)
         self.time_series = True if hasattr(self.model, 'time_series') else False
 
         # If the data loader hasn't been created, run _format_data function
@@ -96,7 +96,7 @@ class Trainer:
                               sequence_length=sequence_length,
                               )
 
-    def train(self, model, data_dict, criterion, epochs, batch_size, tensorboard=False, architecture=None,
+    def train(self, model, data_dict, criterion, epochs, batch_size, mc_dropout=False, dropout_prob=None, tensorboard=False, architecture=None,
               save_model=False, performance_optimized=False, verbose=True, sequence_length=5, tensorboard_comment=None):
         """Training loop for training a PyTorch model. Include validation, GPU compatibility, and tensorboard integration.
 
@@ -116,7 +116,7 @@ class Trainer:
         """
         
         # Initiates model with inputted architecture and formats data
-        self._initiate_model(model, data_dict, architecture, sequence_length, batch_size)
+        self._initiate_model(model, data_dict, architecture, sequence_length, batch_size, mc_dropout, dropout_prob)
 
         # Use multiple GPU parallelization if available
         # if torch.cuda.device_count() > 1:
@@ -180,7 +180,7 @@ class Trainer:
                 self.logs['testing'].append(test_mse)
                 testing_end = time.time()
 
-                preds = self.model.predict(self.X_test)
+                preds = self.model.predict(self.X_test, mc_iterations=1)
                 if self.device.type != 'cuda':
                     r2 = r2_score(self.y_test, preds)
                 else:
