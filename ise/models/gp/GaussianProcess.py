@@ -5,7 +5,7 @@ np.random.seed(10)
 
 class GP(GaussianProcessRegressor):
     def __init__(self, kernel, verbose=True):
-        super().__init__(n_restarts_optimizer=9)
+        super().__init__(n_restarts_optimizer=9, )
         self.kernel = kernel
         self.verbose = verbose
         

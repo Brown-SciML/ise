@@ -1,10 +1,10 @@
-from sklearn.gaussian_process.kernels import RBF, _check_length_scale
+from sklearn.gaussian_process.kernels import RBF, _check_length_scale, WhiteKernel
 from scipy.spatial.distance import pdist, cdist, squareform
 import numpy as np
 
 class PowerExponentialKernel(RBF):
-    def __init__(self, exponential=2.0):
-        super().__init__()
+    def __init__(self, exponential=2.0, length_scale=1.0, length_scale_bounds=(1e-5, 1e5),):
+        super().__init__(length_scale_bounds=length_scale_bounds, length_scale=length_scale, )
         self.exponential = exponential
         
     
@@ -67,3 +67,8 @@ class PowerExponentialKernel(RBF):
                 return K, K_gradient
         else:
             return K
+
+
+class NuggetKernel(WhiteKernel):
+    def __init__(self, noise_level=1.0, noise_level_bounds=(1e-5, 1e5)):
+        super().__init__(noise_level=noise_level, noise_level_bounds=noise_level_bounds)

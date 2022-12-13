@@ -1,6 +1,7 @@
 import sys
 sys.path.append("..")
 from ise.pipelines import processing, feature_engineering, training
+from ise.models.gp import kernels
 
 forcing_directory = r"/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/"
 ismip6_output_directory = r"/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/Zenodo_Outputs/"
@@ -8,25 +9,35 @@ processed_forcing_outputs = r"/users/pvankatw/emulator/untracked_folder/processe
 ml_data_directory = r"/users/pvankatw/emulator/untracked_folder/ml_data_directory/"
 saved_model_path = r"/users/pvankatw/emulator/untracked_folder/saved_models/"
 
-print('1/3: Processing Data')
+print('1/4: Processing Data')
 master, inputs, outputs = processing.process_data(
     forcing_directory=forcing_directory, 
     ismip6_output_directory=ismip6_output_directory,
     export_directory=processed_forcing_outputs,
 )
 
-print('2/3: Feature Engineering')
+print('2/4: Feature Engineering')
 feature_engineering.feature_engineer(
     data_directory=processed_forcing_outputs, 
     time_series=True, 
     export_directory=ml_data_directory,
 )
 
-print('3/3: Training Model')
+print('3/4: Training Neural Network Model')
 model, metrics, test_preds = training.train_timeseries_network(
     data_directory=ml_data_directory, 
     save_model=saved_model_path,
     verbose=True, 
     epochs=10, 
+)
+
+print('4/4: Training Gaussian Process Model')
+kernel = kernels.PowerExponentialKernel(exponential=1.9, ) + kernels.NuggetKernel()
+preds, std_prediction, metrics = training.train_gaussian_process(
+    data_directory=ml_data_directory, 
+    n=1000, 
+    kernel=kernel,
+    features=['temperature', 'salinity'], 
+    sampling_method='first_n',
 )
 
