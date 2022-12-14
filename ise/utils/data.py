@@ -7,7 +7,7 @@ from scipy.stats import gaussian_kde
 from scipy.spatial.distance import jensenshannon
 
 
-def load_ml_data(data_directory, time_series):
+def load_ml_data(data_directory, time_series=True):
     """Loads training and testing data for machine learning models. These files are generated using 
     functions in the ise.data.processing modules or process_data in the ise.pipelines.processing module.
 
@@ -65,15 +65,10 @@ def undummify(df, prefix_sep="-"):
     return undummified_df
 
 def combine_testing_results(data_directory, preds, time_series=True, save_directory=None):
-    emulator_data_args = _structure_emulatordata_args(input_args=None, time_series=time_series)
+    train_features, train_labels, test_features, test_labels, test_scenarios = load_ml_data(data_directory)
     
-    emulator_data = EmulatorData(directory=data_directory)
-    emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
-        **emulator_data_args,
-    )
-    
-    X_test = pd.DataFrame(emulator_data.unscale(values=test_features, values_type='inputs'))
-    y_test = pd.Series(test_labels)
+    X_test = pd.DataFrame(test_features)
+    y_test = test_labels
     
     test = X_test.drop(columns=[col for col in X_test.columns if 'lag' in col])
     test['true'] = y_test

@@ -1,5 +1,6 @@
 from ise.utils.data import group_by_run, get_uncertainty_bands, create_distribution, kl_divergence
 from ise.visualization import ensemble, testing
+from ise.utils.data import kl_divergence, js_divergence
 import ise
 
 
@@ -18,6 +19,8 @@ class Plotter:
             'true_bounds': self.true_bounds,
             'pred_bounds': self.pred_bounds
         }
+        
+        # TODO: Run create_distribution, KL Divergence and JS Divergence here and store
     
     def plot_ensemble(self, uncertainty='quantiles', column=None, condition=None, save=None,):
         return ensemble.plot_ensemble(
@@ -30,12 +33,12 @@ class Plotter:
         )
         
     def plot_distributions(self, year, column=None, condition=None, save=None,):
-        return ensemble.plot_ensemble_mean(
+        return ensemble.plot_distributions(
             dataset=self.dataset, year=year, column=column, condition=condition, save=save, cache=self.cache,
         )
         
     def plot_histograms(self, year, column=None, condition=None, save=None,):
-        return ensemble.plot_ensemble_mean(
+        return ensemble.plot_histograms(
             dataset=self.dataset, year=year, column=column, condition=condition, save=save, cache=self.cache,
         )
     
