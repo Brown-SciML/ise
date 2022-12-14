@@ -1,1 +1,1 @@
-from ise.visualization.testing import test_series
+from ise.visualization.testing import plot_test_series

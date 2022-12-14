@@ -1,1 +1,1 @@
-from ise.models.testing.pretrained import test_pretrained_model
+from ise.models.testing.pretrained import test_pretrained_model, mc_accuracy

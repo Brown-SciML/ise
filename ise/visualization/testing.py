@@ -6,7 +6,7 @@ np.random.seed(10)
 from ise.utils.utils import load_ml_data
 import pandas as pd
 
-def test_series(model, data_directory, time_series, approx_dist=True, mc_iterations=100, confidence='95', draws='random', k=10, save_directory=None):
+def plot_test_series(model, data_directory, time_series, approx_dist=True, mc_iterations=100, confidence='95', draws='random', k=10, save_directory=None):
     _, _, test_features, test_labels, test_scenarios = load_ml_data(
         data_directory, time_series=time_series
     )

@@ -248,12 +248,12 @@ class EmulatorData:
 
     def create_boolean_indices(self, columns='all'):
         if columns == 'all':
-            self.data = pd.get_dummies(self.data)
+            self.data = pd.get_dummies(self.data, prefix_sep="-")
         else:
             if not isinstance(columns, list):
                 raise ValueError(f'Columns argument must be of type: list, received {type(columns)}.')
 
-            self.data = pd.get_dummies(self.data, columns=columns)
+            self.data = pd.get_dummies(self.data, columns=columns, prefix_sep="-")
 
             for col in self.data.columns:
                 self.data[col] = self.data[col].astype(float)
