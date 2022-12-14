@@ -3,6 +3,8 @@ from ise.utils.utils import _structure_emulatordata_args
 from ise.data import EmulatorData
 from itertools import product
 import numpy as np
+from scipy.stats import gaussian_kde
+from scipy.spatial.distance import jensenshannon
 
 
 def load_ml_data(data_directory, time_series):
@@ -104,6 +106,7 @@ def group_by_run(dataset, column=None, condition=None,):
 
     all_trues = []
     all_preds = []
+    scenarios = []
     for i, run in enumerate(all_runs):
         modelname = run[0]
         exp = run[1]
@@ -115,20 +118,34 @@ def group_by_run(dataset, column=None, condition=None,):
         else:
             raise ValueError('Column and condition type must be the same (None & None, not None & not None).')
         if not subset.empty:
+            scenarios.append([])
             all_trues.append(subset.true.to_numpy())
             all_preds.append(subset.pred.to_numpy())
             
-    return np.array(all_trues), np.array(all_preds)
+    return np.array(all_trues), np.array(all_preds), scenarios
 
 
-def get_uncertainty_bands(data, confidence='95'):
+def get_uncertainty_bands(data, confidence='95', quantiles=[0.05, 0.95]):
     z = {'95': 1.96, '99': 2.58}
     data = np.array(data)
     mean = data.mean(axis=0)
     sd = np.sqrt(data.var(axis=0))
-    upper_ci = mean + (z['95'] * (sd/np.sqrt(data.shape[0])))
-    lower_ci = mean - (z['95'] * (sd/np.sqrt(data.shape[0])))
-    quantiles = np.quantile(data, [0.05, 0.95], axis=0)
+    upper_ci = mean + (z[confidence] * (sd/np.sqrt(data.shape[0])))
+    lower_ci = mean - (z[confidence] * (sd/np.sqrt(data.shape[0])))
+    quantiles = np.quantile(data, quantiles, axis=0)
     upper_q = quantiles[1,:]
     lower_q = quantiles[0,:]
     return mean, sd, upper_ci, lower_ci, upper_q, lower_q
+
+def create_distribution(year, dataset):
+    data = dataset[:, year-2101] # -1 will be year 2100
+    kde = gaussian_kde(data, bw_method='silverman')
+    support = np.arange(-30, 20, 0.001)
+    density = kde(support)
+    return density, support
+
+def kl_divergence(p, q):
+    return np.sum(np.where(p != 0, p * np.log(p / q), 0))
+
+def js_divergence(p, q):
+    return jensenshannon(p, q)

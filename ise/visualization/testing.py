@@ -5,6 +5,7 @@ import numpy as np
 np.random.seed(10)
 from ise.utils.data import load_ml_data
 import pandas as pd
+import seaborn as sns
 
 def plot_test_series(model, data_directory, time_series, approx_dist=True, mc_iterations=100, confidence='95', draws='random', k=10, save_directory=None):
     _, _, test_features, test_labels, test_scenarios = load_ml_data(
@@ -64,3 +65,35 @@ def plot_test_series(model, data_directory, time_series, approx_dist=True, mc_it
             plt.legend()
             if save_directory:
                 plt.savefig(f'{save_directory}/{test_model}_{test_exp}_test_sector.png')
+                
+                
+def plot_callibration(dataset, column=None, condition=None, color_by=None, alpha=0.2, save=None):
+    
+    # TODO: Add ability to subset multiple columns and conditions. Not needed now so saving for later...
+    if column is None and condition is None:
+        subset = dataset
+    elif column is not None and condition is not None:
+        subset = dataset[(dataset[column] == condition)]
+    else:
+        raise ValueError('Column and condition type must be the same (None & None, not None & not None).')
+    
+    plt.figure(figsize=(15,8))
+    sns.scatterplot(data=subset, x='true', y='pred', hue=color_by, alpha=alpha)
+    plt.plot([min(subset.true),max(subset.true)], [min(subset.true),max(subset.true)], 'r-',)
+    
+    # TODO: Add density plots (below)
+    # sns.kdeplot(data=subset, x='true', y='pred', hue=color_by, fill=True)
+    # plt.plot([min(subset.true),max(subset.true)], [min(subset.true),max(subset.true)], 'r-',)
+    
+    # TODO: add plotly export
+    plt.xlabel('True Value')
+    plt.ylabel('Predicted Value')
+    plt.title('Callibration Plot')
+
+    if color_by is not None:
+        plt.legend()
+    
+    if save:
+        plt.savefig(save)
+    
+    
