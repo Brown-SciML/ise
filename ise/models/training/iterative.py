@@ -5,7 +5,7 @@ from ise.models.traditional.ExploratoryModel import ExploratoryModel
 from ise.utils.utils import _structure_emulatordata_args, _structure_architecture_args
 from datetime import datetime
 from torch import nn
-from ise.utils.utils import load_ml_data
+from ise.utils.data import load_ml_data
 
 
 

@@ -108,39 +108,5 @@ def _structure_architecture_args(architecture, time_series):
         return architecture
     return architecture
 
-def load_ml_data(data_directory, time_series):
-    """Loads training and testing data for machine learning models. These files are generated using 
-    functions in the ise.data.processing modules or process_data in the ise.pipelines.processing module.
 
-    Args:
-        data_directory (str): Directory containing processed files.
-        time_series (bool): Flag denoting whether to load the time-series version of the data.
-
-    Returns:
-        train_features (pd.DataFrame): Training data features.
-        train_labels (pd.DataFrame): Training data labels.
-        test_features (pd.DataFrame): Testing data features.
-        test_labels (pd.DataFrame): Testing data labels.
-        test_scenarios (List[List[str]]): Scenarios included in the test dataset.
-    """
-    if time_series:
-        try:
-            test_features = pd.read_csv(f'{data_directory}/ts_test_features.csv')
-            train_features = pd.read_csv(f'{data_directory}/ts_train_features.csv')
-            test_labels = pd.read_csv(f'{data_directory}/ts_test_labels.csv')
-            train_labels = pd.read_csv(f'{data_directory}/ts_train_labels.csv')
-            test_scenarios = pd.read_csv(f'{data_directory}/ts_test_scenarios.csv').values.tolist()
-        except FileNotFoundError:
-                raise FileNotFoundError(f'Files not found at {data_directory}. Format must be in format \"ts_train_features.csv\"')
-    else:
-        try:
-            test_features = pd.read_csv(f'{data_directory}/traditional_test_features.csv')
-            train_features = pd.read_csv(f'{data_directory}/traditional_train_features.csv')
-            test_labels = pd.read_csv(f'{data_directory}/traditional_test_labels.csv')
-            train_labels = pd.read_csv(f'{data_directory}/traditional_train_labels.csv')
-            test_scenarios = pd.read_csv(f'{data_directory}/traditional_test_scenarios.csv').values.tolist()
-        except FileNotFoundError:
-                raise FileNotFoundError(f'Files not found at {data_directory}. Format must be in format \"traditional_train_features.csv\"')
-    
-    return train_features, train_labels, test_features, test_labels, test_scenarios
 

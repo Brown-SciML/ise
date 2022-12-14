@@ -4,7 +4,7 @@ from ise.models.training.Trainer import Trainer
 import numpy as np
 np.random.seed(10)
 from sklearn.metrics import r2_score
-from ise.utils.utils import load_ml_data
+from ise.utils.data import load_ml_data
 
 def test_pretrained_model(model_path, model_class, architecture, data_directory, time_series, mc_dropout=False, dropout_prob=0.1, mc_iterations=100, verbose=True):
     

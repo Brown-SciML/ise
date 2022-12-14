@@ -120,8 +120,8 @@ class TimeSeriesEmulator(torch.nn.Module):
             means = out_preds.mean(axis=0)
             quantiles = np.quantile(out_preds, [0.05, 0.95], axis=0)
             sd = np.sqrt(np.var(out_preds, axis=0))
-            upper_ci = means + (z[confidence] * (sd/np.sqrt(preds.shape[0])))
-            lower_ci = means - (z[confidence] * (sd/np.sqrt(preds.shape[0])))
+            upper_ci = means + (z[confidence] * (sd/np.sqrt(out_preds.shape[0])))
+            lower_ci = means - (z[confidence] * (sd/np.sqrt(out_preds.shape[0])))
         else:
             means, upper_ci, lower_ci, quantiles = None, None, None, None
         

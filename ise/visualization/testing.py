@@ -3,7 +3,7 @@ import torch
 import matplotlib.pyplot as plt
 import numpy as np
 np.random.seed(10)
-from ise.utils.utils import load_ml_data
+from ise.utils.data import load_ml_data
 import pandas as pd
 
 def plot_test_series(model, data_directory, time_series, approx_dist=True, mc_iterations=100, confidence='95', draws='random', k=10, save_directory=None):
