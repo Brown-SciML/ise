@@ -1,15 +1,15 @@
 """forcings.py Module - Processing functions for ISMIP6 atmospheric, oceanic, and ice-collapse
 forcings.
 """
-import pandas as pd
 import time
+import numpy as np
+import pandas as pd
 import xarray as xr
 from ise.utils.utils import get_all_filepaths, check_input
-import numpy as np
 np.random.seed(10)
 
 
-def process_forcings(forcing_directory: str, export_directory: str, 
+def process_forcings(forcing_directory: str, grids_directory: str, export_directory: str,
                      to_process: str='all', verbose: bool=False) -> None:
     """Perform preprocessing of atmospheric, oceanic, and ice-collapse forcing from [Globus ISMIP6
     Directory](https://app.globus.org/file-manager?origin_id=ad1a6ed8-4de0-4490-93a9-8258931766c7
@@ -18,9 +18,11 @@ def process_forcings(forcing_directory: str, export_directory: str,
 
     :param forcing_directory: Directory containing forcing files
     :type forcing_directory: str
+    :param forcing_directory: Directory containing grid data files
+    :type forcing_directory: str
     :param export_directory: Directory to export processed files.
     :type export_directory: str
-    :param to_process: Forcings to process, options=[all, atmosphere, ocean, ice_collapse], 
+    :param to_process: Forcings to process, options=[all, atmosphere, ocean, ice_collapse],
     defaults to 'all'
     :type to_process: str, optional
     :param verbose: Flag denoting whether to output logs in terminal, defaults to False
@@ -38,7 +40,6 @@ def process_forcings(forcing_directory: str, export_directory: str,
             raise  ValueError(f'to_process arg must be in [{to_process_options}], \
                 received {to_process}')
 
-
     if to_process.lower() == 'all':
         to_process = ['atmosphere', 'ocean', 'ice_collapse']
 
@@ -49,7 +50,7 @@ def process_forcings(forcing_directory: str, export_directory: str,
     curr_time = time.time()
     if 'atmosphere' in to_process:
         af_directory = f"{forcing_directory}/Atmosphere_Forcing/"
-        aggregate_atmosphere(af_directory, export=export_directory, )
+        aggregate_atmosphere(af_directory, grids_directory, export=export_directory,)
         if verbose:
             prev_time, curr_time = curr_time, time.time()
             curr_time = time.time()
@@ -58,7 +59,7 @@ def process_forcings(forcing_directory: str, export_directory: str,
 
     if 'ocean' in to_process:
         of_directory = f"{forcing_directory}/Ocean_Forcing/"
-        aggregate_ocean(of_directory, export=export_directory, )
+        aggregate_ocean(of_directory, grids_directory, export=export_directory, )
         if verbose:
             prev_time, curr_time = curr_time, time.time()
             curr_time = time.time()
@@ -67,7 +68,7 @@ def process_forcings(forcing_directory: str, export_directory: str,
 
     if 'ice_collapse' in to_process:
         ice_directory = f"{forcing_directory}/Ice_Shelf_Fracture"
-        aggregate_icecollapse(ice_directory, export=export_directory, )
+        aggregate_icecollapse(ice_directory, grids_directory, export=export_directory, )
         if verbose:
             prev_time, curr_time = curr_time, time.time()
             curr_time = time.time()
@@ -75,13 +76,26 @@ def process_forcings(forcing_directory: str, export_directory: str,
                 {(curr_time - prev_time) // 60} minutes')
     if verbose:
         print(f'Finished. Data exported to {export_directory}')
+
         
 class GridSectors:
-    def __init__(self, grid_size=8, filetype='nc', format_index=True):
+    """Class for grid sector data and attributes."""
+    def __init__(self, grids_dir: str, grid_size: int=8, 
+                 filetype: str='nc', format_index: bool=True):
+        """Initializes class and opens/stores data.
+
+        :param grids_dir: Directory containing grid data.
+        :type grids_dir: str
+        :param grid_size: KM grid size to be used, must be [4, 8, 16, 32] defaults to 8
+        :type grid_size: int, optional
+        :param filetype: Filetype of data, must be in [nc, csv], defaults to 'nc'
+        :type filetype: str, optional
+        :param format_index: Flag denoting whether to fix index so that join works appropriately, defaults to True
+        :type format_index: bool, optional
+        """
         check_input(grid_size, [4, 8, 16, 32])
         check_input(filetype.lower(), ['nc', 'csv'])
-        self.grids_dir = r"/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/ISMIP6_sectors/"
-        self.filetype = filetype
+        self.grids_dir = grids_dir
 
         if filetype.lower() == 'nc':
             self.path = self.grids_dir + f"sectors_{grid_size}km.nc"
@@ -94,21 +108,23 @@ class GridSectors:
             self.data = pd.read_csv(self.path)
         else:
             raise NotImplementedError('Only \"NetCDF\" and \"CSV\" are currently supported')
-    
-    def _netcdf_to_csv(self):
-        if self.filetype != "NetCDF":
-            raise AttributeError(f'Data type must be \"NetCDF\", received {self.filetype}.')
-            
-        csv_path = f"{self.path[:-3]}.csv"
-        df = self.data.to_dataframe()
-        df.to_csv(csv_path)
 
     def _to_dataframe(self):
+        """Converts self.data to dataframe.
+
+        :return: GridSectors object with data as dataframe.
+        :rtype: self: GridSectors
+        """
         if not isinstance(self, pd.DataFrame):
             self.data = self.data.to_dataframe()
         return self
 
     def _format_index(self):
+        """Formats indices from 0 to 761 so merge with forcing data is possible.
+
+        :return: GridSectors object with indices formatted.
+        :rtype: self: GridSectors
+        """
         index_array = list(np.arange(0,761))
         self.data.index = pd.MultiIndex.from_product([index_array, index_array], names=['x', 'y'])
         return self
@@ -119,7 +135,7 @@ class AtmosphereForcing:
     def __init__(self, path: str):
         """Initializes class and opens/stores data.
 
-        :param path: Filepath to atmospheric forcing file. Can be NC or CSV.
+        :param path: Filepath to atmospheric forcing file.
         :type path: str
         """
         self.forcing_type = 'atmosphere'
@@ -148,29 +164,15 @@ class AtmosphereForcing:
             self.data = self.data.mean(dim='nv4')
         return self
 
-    def save_as_csv(self):
-        """Saves NC file as CSV in the same directory.
-
-        :return: AtmosphereForcing object with CSV exported.
-        :rtype: self: AtmosphereForcing
-        """
-        if not isinstance(self.data, pd.DataFrame):
-            if self.datatype != "NetCDF":
-                raise AttributeError(f'Data type must be \"NetCDF\", received {self.datatype}.')
-
-            csv_path = f"{self.path[:-3]}.csv"
-            self.data = self.data.to_dataframe()
-        self.data.to_csv(csv_path)
-        return self
 
     def add_sectors(self, grids: GridSectors):
         """Adds information on which sector each grid cell belongs to. This is done through a merge
         of grid cell data with a sectors NC file.
 
-        :param grids: GridSectors
-        :type grids: _type_
-        :return: _description_
-        :rtype: _type_
+        :param grids: GridSectors class containing grid cell information and attributes
+        :type grids: GridSectors
+        :return: AtmosphereForcing class with sectors added.
+        :rtype: self: AtmosphereForcing
         """
         self.data = self.data.drop(labels=['lon_bnds', 'lat_bnds', 'lat2d', 'lon2d'])
         self.data = self.data.to_dataframe().reset_index(level='time', drop=True)
@@ -180,11 +182,16 @@ class AtmosphereForcing:
 
 class OceanForcing:
     """Class for oceanic forcing data and attributes."""
-    def __init__(self, aogcm_dir):
+    def __init__(self, aogcm_dir: str):
+        """Initializes class and opens/stores data.
+
+        :param aogcm_dir: Directory path to oceanic forcings.
+        :type aogcm_dir: str
+        """
         self.forcing_type = 'ocean'
         self.path = f"{aogcm_dir}/1995-2100/"
         self.aogcm = aogcm_dir.split('/')[-2]  # 3rd to last folder in directory structure
-        
+
         # Load all data: thermal forcing, salinity, and temperature
         files = get_all_filepaths(path=self.path, filetype='nc')
         for file in files:
@@ -197,8 +204,12 @@ class OceanForcing:
             else:
                 pass
 
-
     def aggregate_dims(self,):
+        """Aggregates over excess dimesions, particularly over time or grid cells.
+
+        :return: AtmosphereForcing object with dimensions reduced.
+        :rtype: self: AtmosphereForcing
+        """
         dims = self.data.dims
         if 'z' in dims:
             self.data = self.data.mean(dim='time')
@@ -206,49 +217,55 @@ class OceanForcing:
             self.data = self.data.mean(dim='nv4')
         return self
 
-    def save_as_csv(self):
-        if not isinstance(self.data, pd.DataFrame):
-            if self.datatype != "NetCDF":
-                raise AttributeError(f'Data type must be \"NetCDF\", received {self.datatype}.')
-                
-            csv_path = f"{self.path[:-3]}.csv"
-            self.data = self.data.to_dataframe()
-        self.data.to_csv(csv_path)
-        return self
 
-    def add_sectors(self, grids):      
+    def add_sectors(self, grids: GridSectors):
+        """Adds information on which sector each grid cell belongs to. This is done through a merge
+        of grid cell data with a sectors NC file.
+
+        :param grids: GridSectors class containing grid cell information and attributes
+        :type grids: GridSectors
+        :return: OceanForcing class with sectors added.
+        :rtype: self: OceanForcing
+        """
         self.salinity_data = self.salinity_data.drop(labels=['z_bnds', 'lat', 'lon'])
+        # Take mean over all z values (only found in oceanic forcings)
         self.salinity_data = self.salinity_data.mean(dim='z', skipna=True).to_dataframe()
         self.salinity_data = self.salinity_data.reset_index(level='time',)
+        # merge with grid data
         self.salinity_data = pd.merge(self.salinity_data, grids.data, left_index=True, right_index=True, how='outer')
         self.salinity_data['year'] = self.salinity_data['time'].apply(lambda x: x.year)
         self.salinity_data = self.salinity_data.drop(columns=['time', 'mapping'])
-        
+
         self.thermal_forcing_data = self.thermal_forcing_data.drop(labels=['z_bnds'])
         self.thermal_forcing_data = self.thermal_forcing_data.mean(dim='z', skipna=True).to_dataframe().reset_index(level='time',)
         self.thermal_forcing_data = pd.merge(self.thermal_forcing_data, grids.data, left_index=True, right_index=True, how='outer')
         self.thermal_forcing_data['year'] = self.thermal_forcing_data['time'].apply(lambda x: x.year)
         self.thermal_forcing_data = self.thermal_forcing_data.drop(columns=['time', 'mapping'])
-        
+
         self.temperature_data = self.temperature_data.drop(labels=['z_bnds'])
         self.temperature_data = self.temperature_data.mean(dim='z', skipna=True).to_dataframe().reset_index(level='time',)
         self.temperature_data = pd.merge(self.temperature_data, grids.data, left_index=True, right_index=True, how='outer')
         self.temperature_data['year'] = self.temperature_data['time'].apply(lambda x: x.year)
         self.temperature_data = self.temperature_data.drop(columns=['time', 'mapping'])
-        
+
         return self
 
 
 class IceCollapse:
     """Class for ice collapse forcing data and attributes."""
-    def __init__(self, aogcm_dir):
+    def __init__(self, aogcm_dir: str):
+        """Initializes class and opens/stores data.
+
+        :param aogcm_dir: Directory path to ice collapse forcings forcings.
+        :type aogcm_dir: str
+        """
         self.forcing_type = 'ice_collapse'
         self.path = f"{aogcm_dir}"
         self.aogcm = aogcm_dir.split('/')[-2]  # last folder in directory structure
-        
+
         # Load all data: thermal forcing, salinity, and temperature
         files = get_all_filepaths(path=self.path, filetype='nc')
-        
+
         if len(files) > 1: # if there is a "v2" file in the directory, use that one
             for file in files:
                 if 'v2' in file:
@@ -258,66 +275,53 @@ class IceCollapse:
         else:
             self.data = xr.open_dataset(files[0])
 
+    def add_sectors(self, grids: GridSectors):
+        """Adds information on which sector each grid cell belongs to. This is done through a merge
+        of grid cell data with a sectors NC file.
 
-    def save_as_csv(self):
-        if not isinstance(self.data, pd.DataFrame):
-            if self.datatype != "NetCDF":
-                raise AttributeError(f'Data type must be \"NetCDF\", received {self.datatype}.')
-                
-            csv_path = f"{self.path[:-3]}.csv"
-            self.data = self.data.to_dataframe()
-        self.data.to_csv(csv_path)
-        return self
-
-    def add_sectors(self, grids):    
+        :param grids: GridSectors class containing grid cell information and attributes
+        :type grids: GridSectors
+        :return: IceCollapse class with sectors added.
+        :rtype: self: IceCollapse
+        """
         self.data = self.data.drop(labels=['lon', 'lon_bnds', 'lat', 'lat_bnds'])
         self.data = self.data.to_dataframe().reset_index(level='time', drop=False)
         self.data = pd.merge(self.data, grids.data, left_index=True, right_index=True, how='outer')
         self.data['year'] = self.data['time'].apply(lambda x: x.year)
         self.data = self.data.drop(columns=['time', 'mapping', 'lat', 'lon',])
         return self
-        
 
 
-
-
-
-
-    
-    
-
-
-def aggregate_by_sector(path):
+def aggregate_by_sector(path: str, grids_dir: str):
     """Takes a atmospheric forcing dataset, adds sector numbers to it,
     and gets aggregate data based on sector and year. Returns atmospheric
     forcing data object.
 
-    Args:
-        path (str): path to atmospheric forcing nc file
-
-    Returns:
-        Obj: AtmosphereForcing instance with aggregated data
+    :param path: Filepath to atmospheric forcing nc file.
+    :type path: str
+    :param grids_dir: Directory containing grid data.
+    :type grids_dir: str
+    :return: AtmosphereForcing instance with aggregated data
+    :rtype: forcing: AtmosphereForcing
     """
     # Load grid data with 8km grid size
-    
     print('')
 
     # Load in Atmospheric forcing data and add the sector numbers to it
     if 'Atmosphere' in path:
-        grids = GridSectors(grid_size=8,)
+        grids = GridSectors(grids_dir, grid_size=8,)
         forcing = AtmosphereForcing(path=path)
-        
+
     elif 'Ocean' in path:
-        grids = GridSectors(grid_size=8, format_index=False)
+        grids = GridSectors(grids_dir, grid_size=8, format_index=False)
         forcing = OceanForcing(aogcm_dir=path)
-        
+
     elif 'Ice' in path:
-        grids = GridSectors(grid_size=8,)
+        grids = GridSectors(grids_dir, grid_size=8,)
         forcing = IceCollapse(path)
 
     forcing = forcing.add_sectors(grids)
 
-    
     # Group the dataset and assign aogcm column to the aogcm simulation
     if forcing.forcing_type in ('atmosphere', 'ice_collapse'):
         forcing.data = forcing.data.groupby(['sectors', 'year']).mean()
@@ -329,29 +333,31 @@ def aggregate_by_sector(path):
         forcing.temperature_data['aogcm'] = forcing.aogcm.lower()
         forcing.thermal_forcing_data = forcing.thermal_forcing_data.groupby(['sectors', 'year']).mean()
         forcing.thermal_forcing_data['aogcm'] = forcing.aogcm.lower()
-    
+
     return forcing
 
-
-
-# TODO: Maybe make each of these aggregate functions a method?
-def aggregate_atmosphere(directory, export, model_in_columns=False,):
+def aggregate_atmosphere(directory: str, grids_directory: str, export: str, ):
     """Loops through every NC file in the provided forcing directory
     from 1995-2100 and applies the aggregate_by_sector function. It then outputs
-    the concatenation of all processed data to all_data.csv 
+    the concatenation of all processed data to all_data.csv
 
-    Args:
-        directory (str): Directory containing forcing files
+    :param directory: Directory containing forcing files
+    :type directory: str
+    :param grids_directory: Directory containing grid data.
+    :type grids_directory: str
+    :param export: Directory to export output files.
+    :type export: str
     """
+
     start_time = time.time()
 
     # Get all NC files that contain data from 1995-2100
     filepaths = get_all_filepaths(path=directory, filetype='nc')
     filepaths = [f for f in filepaths if "1995-2100" in f]
-    
+
 
     # Useful progress prints
-    print(f"Files to be processed...")
+    print("Files to be processed...")
     print([f.split("/")[-1] for f in filepaths])
 
     # Loop over each file specified above
@@ -363,7 +369,7 @@ def aggregate_atmosphere(directory, export, model_in_columns=False,):
         print(f'Time since start: {(time.time()-start_time) // 60} minutes')
 
         # attach the sector to the data and groupby sectors & year
-        forcing = aggregate_by_sector(fp)
+        forcing = aggregate_by_sector(fp, grids_dir=grids_directory)
 
         # Handle files that don't have mrro_anomaly input (ISPL RCP 85?)
         try:
@@ -376,36 +382,30 @@ def aggregate_atmosphere(directory, export, model_in_columns=False,):
 
         # meanwhile, create a concatenated dataset
         all_data = pd.concat([all_data, forcing.data])
-            
+
         print(' -- ')
-    
-    
-    if model_in_columns:
-        data = {'atmospheric_forcing': all_data}
-        all_data = aogcm_to_features(data=data, export_dir=export)
-    
-    else:
-        if export:
-            all_data.to_csv(f"{export}/atmospheric_forcing.csv")
-        
-        
-def aggregate_ocean(directory, export, model_in_columns=False, ):
+
+    if export:
+        all_data.to_csv(f"{export}/atmospheric_forcing.csv")
+
+def aggregate_ocean(directory, grids_directory, export, ):
     """Loops through every NC file in the provided forcing directory
     from 1995-2100 and applies the aggregate_by_sector function. It then outputs
-    the concatenation of all processed data to all_data.csv 
+    the concatenation of all processed data to all_data.csv.
 
-
-    Args:
-        directory (str): Import directory for oceanic forcing files (".../Ocean_Forcing/")
-        export (str): Export directory to store output files
-        model_in_columns (bool, optional): Wither to format AOGCM model as columns. Defaults to False.
+    :param directory: Directory containing forcing files
+    :type directory: str
+    :param grids_directory: Directory containing grid data.
+    :type grids_directory: str
+    :param export: Directory to export output files.
+    :type export: str
     """
     start_time = time.time()
 
     # Get all NC files that contain data from 1995-2100
     filepaths = get_all_filepaths(path=directory, filetype='nc')
     filepaths = [f for f in filepaths if "1995-2100" in f]
-    
+
     # In the case of ocean forcings, use the filepaths of the files to determine
     # which directories need to be used for OceanForcing processing. Change to
     # those directories rather than individual files.
@@ -413,7 +413,7 @@ def aggregate_ocean(directory, export, model_in_columns=False, ):
     filepaths = [f"{directory}/{aogcm}/" for aogcm in aogcms]
 
     # Useful progress prints
-    print(f"Files to be processed...")
+    print("Files to be processed...")
     print([f.split("/")[-2] for f in filepaths])
 
     # Loop over each directory specified above
@@ -427,47 +427,42 @@ def aggregate_ocean(directory, export, model_in_columns=False, ):
         print(f'Time since start: {(time.time()-start_time) // 60} minutes')
 
         # attach the sector to the data and groupby sectors & year
-        forcing = aggregate_by_sector(fp)
+        forcing = aggregate_by_sector(fp, grids_dir=grids_directory)
 
         forcing.salinity_data = forcing.salinity_data[['salinity', 'regions', 'aogcm']]
         forcing.temperature_data = forcing.temperature_data[['temperature', 'regions', 'aogcm']]
         forcing.thermal_forcing_data = forcing.thermal_forcing_data[['thermal_forcing', 'regions', 'aogcm']]
-        
-        
+
+
         # meanwhile, create a concatenated dataset
         salinity_data = pd.concat([salinity_data, forcing.salinity_data])
         temperature_data = pd.concat([temperature_data, forcing.temperature_data])
         thermal_forcing_data = pd.concat([thermal_forcing_data, forcing.thermal_forcing_data])
-        
+
     print(' -- ')
-    
-    if model_in_columns:
-        # For each concatenated dataset
-        data = {'salinity': salinity_data, 'temperature': temperature_data, 'thermal_forcing': thermal_forcing_data}
-        all_data = aogcm_to_features(data, export_dir=export)
-    
-    else:
-        if export:
-            salinity_data.to_csv(export+'/salinity.csv')
-            temperature_data.to_csv(export+'/temperature.csv')
-            thermal_forcing_data.to_csv(export+'/thermal_forcing.csv')
-            
-def aggregate_icecollapse(directory, export, model_in_columns=False, ):
+
+    if export:
+        salinity_data.to_csv(export+'/salinity.csv')
+        temperature_data.to_csv(export+'/temperature.csv')
+        thermal_forcing_data.to_csv(export+'/thermal_forcing.csv')
+
+def aggregate_icecollapse(directory, grids_directory, export, ):
     """Loops through every NC file in the provided forcing directory
     from 1995-2100 and applies the aggregate_by_sector function. It then outputs
-    the concatenation of all processed data to all_data.csv 
+    the concatenation of all processed data to all_data.csv.
 
-
-    Args:
-        directory (str): Import directory for oceanic forcing files (".../Ocean_Forcing/")
-        export (str): Export directory to store output files
-        model_in_columns (bool, optional): Wither to format AOGCM model as columns. Defaults to False.
+    :param directory: Directory containing forcing files
+    :type directory: str
+    :param grids_directory: Directory containing grid data.
+    :type grids_directory: str
+    :param export: Directory to export output files.
+    :type export: str
     """
     start_time = time.time()
 
     # Get all NC files that contain data from 1995-2100
     filepaths = get_all_filepaths(path=directory, filetype='nc')
-    
+
     # In the case of ocean forcings, use the filepaths of the files to determine
     # which directories need to be used for OceanForcing processing. Change to
     # those directories rather than individual files.
@@ -475,7 +470,7 @@ def aggregate_icecollapse(directory, export, model_in_columns=False, ):
     filepaths = [f"{directory}/{aogcm}/" for aogcm in aogcms]
 
     # Useful progress prints
-    print(f"Files to be processed...")
+    print("Files to be processed...")
     print([f.split("/")[-2] for f in filepaths])
 
     # Loop over each directory specified above
@@ -487,57 +482,16 @@ def aggregate_icecollapse(directory, export, model_in_columns=False, ):
         print(f'Time since start: {(time.time()-start_time) // 60} minutes')
 
         # attach the sector to the data and groupby sectors & year
-        forcing = aggregate_by_sector(fp)
+        forcing = aggregate_by_sector(fp, grids_dir=grids_directory)
 
         forcing.data = forcing.data[['mask', 'regions', 'aogcm']]
-        
-        
+
+
         # meanwhile, create a concatenated dataset
         ice_collapse = pd.concat([ice_collapse, forcing.data])
 
-        
-    print(' -- ')
-    
-    if model_in_columns:
-        # For each concatenated dataset
-        data = {'ice_collapse': ice_collapse,}
-        all_data = aogcm_to_features(data, export_dir=export)
-    
-    else:
-        if export:
-            ice_collapse.to_csv(export+'/ice_collapse.csv')
 
-            
-            
-# ! Deprecated -- not useful
-def aogcm_to_features(data: dict, export_dir: str):
-        
-    for key, all_data in data.items():
-        separate_aogcm_dataframes = [y for x, y in all_data.groupby('aogcm')]
-        
-        # Change columns names in each dataframe
-        for df in separate_aogcm_dataframes:
-            aogcm = df.aogcm.iloc[0]
-            df.columns = [f"{x}_{aogcm}" if x not in ['sectors', 'year', 'region', 'aogcm'] else x for x in df.columns ]
-            
-        # Merge dataframes together on common columns [sectors, year], resulting in 
-        # one dataframe with sector, year, region, and columns for each aogcm variables
-        all_data = separate_aogcm_dataframes[0]
-        all_data = all_data.drop(columns=['aogcm'])
-    
-        for df in separate_aogcm_dataframes[1:]:
-            df = df.drop(columns=['aogcm'])
-            all_data = pd.merge(all_data, df, on=['sectors', 'year',], how='outer')
-            
-        region_cols = [c for c in all_data.columns if 'region' in c]
-        non_region_cols = [c for c in all_data.columns if 'region' not in c]
-        all_data = all_data[non_region_cols]
-        
-        # - region assignment produces NA's, low priority -- do later
-        # all_data['region'] = separate_aogcm_dataframes[0][region_cols[0]].reset_index(drop=True)
-        all_data = all_data.drop_duplicates() # See why there are duplicates -- until then, this works
-        
-        if export_dir:
-                all_data.to_csv(f"{export_dir}/{key}.csv")
-            
-    return all_data
+    print(' -- ')
+
+    if export:
+        ice_collapse.to_csv(export+'/ice_collapse.csv')
