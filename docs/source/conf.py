@@ -16,7 +16,11 @@
 
 
 # -- Project information -----------------------------------------------------
-
+import os
+import sys
+# basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+# sys.path.insert(0, basedir)
+sys.path.insert(0, os.path.abspath('../../'))
 project = 'ise'
 copyright = '2022, Peter Van Katwyk'
 author = 'Peter Van Katwyk'
@@ -30,9 +34,7 @@ release = '0.0.1'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = [
-    'sphinx.ext.autodoc',
-]
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

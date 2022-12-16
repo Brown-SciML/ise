@@ -10,6 +10,10 @@ Welcome to ise's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   modules
+
+Check out the :doc:`usage` section for further information.
+
 
 
 Indices and tables
@@ -18,3 +22,22 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
+Contents
+--------
+
+.. toctree::
+
+   ise.data.processors
+   ise.data
+   ise.models.gp
+   ise.models
+   ise.models.testing
+   ise.models.timeseries
+   ise.models.traditional
+   ise.models.training
+   ise.pipelines
+   ise
+   ise.utils
+   ise.visualization

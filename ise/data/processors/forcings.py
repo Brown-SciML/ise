@@ -495,3 +495,4 @@ def aggregate_icecollapse(directory, grids_directory, export, ):
 
     if export:
         ice_collapse.to_csv(export+'/ice_collapse.csv')
+
