@@ -1,29 +1,51 @@
+"""forcings.py Module - Processing functions for ISMIP6 atmospheric, oceanic, and ice-collapse
+forcings.
+"""
+import pandas as pd
 import time
 import xarray as xr
 from ise.utils.utils import get_all_filepaths, check_input
 import numpy as np
 np.random.seed(10)
-import pandas as pd
-import time
 
-def process_forcings(forcing_directory, export_directory, to_process='all', verbose=False):
+
+def process_forcings(forcing_directory: str, export_directory: str, 
+                     to_process: str='all', verbose: bool=False) -> None:
+    """Perform preprocessing of atmospheric, oceanic, and ice-collapse forcing from [Globus ISMIP6
+    Directory](https://app.globus.org/file-manager?origin_id=ad1a6ed8-4de0-4490-93a9-8258931766c7
+    &origin_path=%2F).
+
+
+    :param forcing_directory: Directory containing forcing files
+    :type forcing_directory: str
+    :param export_directory: Directory to export processed files.
+    :type export_directory: str
+    :param to_process: Forcings to process, options=[all, atmosphere, ocean, ice_collapse], 
+    defaults to 'all'
+    :type to_process: str, optional
+    :param verbose: Flag denoting whether to output logs in terminal, defaults to False
+    :type verbose: bool, optional
+    """
     # check inputs
     to_process_options = ['all', 'atmosphere', 'ocean', 'ice_collapse']
     if isinstance(to_process, str):
         if to_process.lower() not in to_process_options:
-            raise ValueError(f'to_process arg must be in [{to_process_options}], received {to_process}')
+            raise ValueError(f'to_process arg must be in [{to_process_options}], \
+                received {to_process}')
     elif isinstance(to_process, list):
-        to_process_valid = all([(s in to_process_options) for s in to_process])
+        to_process_valid = all(s in to_process_options for s in to_process)
         if not to_process_valid:
-            raise  ValueError(f'to_process arg must be in [{to_process_options}], received {to_process}')
-        
-        
+            raise  ValueError(f'to_process arg must be in [{to_process_options}], \
+                received {to_process}')
+
+
     if to_process.lower() == 'all':
         to_process = ['atmosphere', 'ocean', 'ice_collapse']
-    
+
     if verbose:
         print('Processing...')
-    
+
+    # Process each using respective functions
     curr_time = time.time()
     if 'atmosphere' in to_process:
         af_directory = f"{forcing_directory}/Atmosphere_Forcing/"
@@ -31,35 +53,79 @@ def process_forcings(forcing_directory, export_directory, to_process='all', verb
         if verbose:
             prev_time, curr_time = curr_time, time.time()
             curr_time = time.time()
-            print(f'Finished processing atmosphere, Total Running Time: {(curr_time - prev_time) // 60} minutes')
-    
+            print(f'Finished processing atmosphere, Total Running Time: \
+                {(curr_time - prev_time) // 60} minutes')
+
     if 'ocean' in to_process:
         of_directory = f"{forcing_directory}/Ocean_Forcing/"
         aggregate_ocean(of_directory, export=export_directory, )
         if verbose:
             prev_time, curr_time = curr_time, time.time()
             curr_time = time.time()
-            print(f'Finished processing ocean, Total Running Time: {(curr_time - prev_time) // 60} minutes')
-    
+            print(f'Finished processing ocean, Total Running Time: \
+                {(curr_time - prev_time) // 60} minutes')
+
     if 'ice_collapse' in to_process:
         ice_directory = f"{forcing_directory}/Ice_Shelf_Fracture"
         aggregate_icecollapse(ice_directory, export=export_directory, )
         if verbose:
             prev_time, curr_time = curr_time, time.time()
             curr_time = time.time()
-            print(f'Finished processing ice_collapse, Total Running Time: {(curr_time - prev_time) // 60} minutes')
-    
+            print(f'Finished processing ice_collapse, Total Running Time: \
+                {(curr_time - prev_time) // 60} minutes')
     if verbose:
         print(f'Finished. Data exported to {export_directory}')
+        
+class GridSectors:
+    def __init__(self, grid_size=8, filetype='nc', format_index=True):
+        check_input(grid_size, [4, 8, 16, 32])
+        check_input(filetype.lower(), ['nc', 'csv'])
+        self.grids_dir = r"/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/ISMIP6_sectors/"
+        self.filetype = filetype
+
+        if filetype.lower() == 'nc':
+            self.path = self.grids_dir + f"sectors_{grid_size}km.nc"
+            self.data = xr.open_dataset(self.path, decode_times=False)
+            self._to_dataframe()
+            if format_index:
+                self._format_index()
+        elif filetype.lower() == 'csv':
+            self.path = self.grids_dir + f"sector_{grid_size}.csv"
+            self.data = pd.read_csv(self.path)
+        else:
+            raise NotImplementedError('Only \"NetCDF\" and \"CSV\" are currently supported')
     
-    
+    def _netcdf_to_csv(self):
+        if self.filetype != "NetCDF":
+            raise AttributeError(f'Data type must be \"NetCDF\", received {self.filetype}.')
+            
+        csv_path = f"{self.path[:-3]}.csv"
+        df = self.data.to_dataframe()
+        df.to_csv(csv_path)
+
+    def _to_dataframe(self):
+        if not isinstance(self, pd.DataFrame):
+            self.data = self.data.to_dataframe()
+        return self
+
+    def _format_index(self):
+        index_array = list(np.arange(0,761))
+        self.data.index = pd.MultiIndex.from_product([index_array, index_array], names=['x', 'y'])
+        return self
+
 
 class AtmosphereForcing:
-    def __init__(self, path):
+    """Class for atmospheric forcing data and attributes."""
+    def __init__(self, path: str):
+        """Initializes class and opens/stores data.
+
+        :param path: Filepath to atmospheric forcing file. Can be NC or CSV.
+        :type path: str
+        """
         self.forcing_type = 'atmosphere'
         self.path = path
         self.aogcm = path.split('/')[-3]  # 3rd to last folder in directory structure
-        
+
         if path[-2:] == 'nc':
             self.data = xr.open_dataset(self.path, decode_times=False)
             self.datatype = 'NetCDF'
@@ -70,6 +136,11 @@ class AtmosphereForcing:
 
 
     def aggregate_dims(self,):
+        """Aggregates over excess dimesions, particularly over time or grid cells.
+
+        :return: AtmosphereForcing object with dimensions reduced.
+        :rtype: self: AtmosphereForcing
+        """
         dims = self.data.dims
         if 'time' in dims:
             self.data = self.data.mean(dim='time')
@@ -78,24 +149,37 @@ class AtmosphereForcing:
         return self
 
     def save_as_csv(self):
+        """Saves NC file as CSV in the same directory.
+
+        :return: AtmosphereForcing object with CSV exported.
+        :rtype: self: AtmosphereForcing
+        """
         if not isinstance(self.data, pd.DataFrame):
             if self.datatype != "NetCDF":
                 raise AttributeError(f'Data type must be \"NetCDF\", received {self.datatype}.')
-                
+
             csv_path = f"{self.path[:-3]}.csv"
             self.data = self.data.to_dataframe()
         self.data.to_csv(csv_path)
         return self
 
-    def add_sectors(self, grids):
+    def add_sectors(self, grids: GridSectors):
+        """Adds information on which sector each grid cell belongs to. This is done through a merge
+        of grid cell data with a sectors NC file.
+
+        :param grids: GridSectors
+        :type grids: _type_
+        :return: _description_
+        :rtype: _type_
+        """
         self.data = self.data.drop(labels=['lon_bnds', 'lat_bnds', 'lat2d', 'lon2d'])
         self.data = self.data.to_dataframe().reset_index(level='time', drop=True)
         self.data = pd.merge(self.data, grids.data, left_index=True, right_index=True, how='outer')
         return self
 
 
-
 class OceanForcing:
+    """Class for oceanic forcing data and attributes."""
     def __init__(self, aogcm_dir):
         self.forcing_type = 'ocean'
         self.path = f"{aogcm_dir}/1995-2100/"
@@ -156,6 +240,7 @@ class OceanForcing:
 
 
 class IceCollapse:
+    """Class for ice collapse forcing data and attributes."""
     def __init__(self, aogcm_dir):
         self.forcing_type = 'ice_collapse'
         self.path = f"{aogcm_dir}"
@@ -196,41 +281,7 @@ class IceCollapse:
 
 
 
-class GridSectors:
-    def __init__(self, grid_size=8, filetype='nc', format_index=True):
-        check_input(grid_size, [4, 8, 16, 32])
-        check_input(filetype.lower(), ['nc', 'csv'])
-        self.grids_dir = r"/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/ISMIP6_sectors/"
-        
-        if filetype.lower() == 'nc':
-            self.path = self.grids_dir + f"sectors_{grid_size}km.nc"
-            self.data = xr.open_dataset(self.path, decode_times=False)
-            self = self._to_dataframe()
-            if format_index:
-                self = self._format_index()
-        elif filetype.lower() == 'csv':
-            self.path = self.grids_dir + f"sector_{grid_size}.csv"
-            self.data = pd.read_csv(self.path)
-        else:
-            raise NotImplementedError('Only \"NetCDF\" and \"CSV\" are currently supported')
-    
-    def _netcdf_to_csv(self):
-        if self.filetype != "NetCDF":
-            raise AttributeError(f'Data type must be \"NetCDF\", received {self.datatype}.')
-            
-        csv_path = f"{self.path[:-3]}.csv"
-        df = self.data.to_dataframe()
-        df.to_csv(csv_path)
 
-    def _to_dataframe(self):
-        if not isinstance(self, pd.DataFrame):
-            self.data = self.data.to_dataframe()
-        return self
-
-    def _format_index(self):
-        index_array = list(np.arange(0,761))
-        self.data.index = pd.MultiIndex.from_product([index_array, index_array], names=['x', 'y'])
-        return self
 
     
     

@@ -1,6 +1,6 @@
 from ise.data.EmulatorData import EmulatorData
 from ise.models.training.Trainer import Trainer
-from ise.models.timeseries.TimeSeriesEmulator import TimeSeriesEmulator
+from ise.models.timeseries import TimeSeriesEmulator
 from ise.models.traditional.ExploratoryModel import ExploratoryModel
 from ise.utils.utils import _structure_emulatordata_args, _structure_architecture_args
 from datetime import datetime

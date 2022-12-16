@@ -1,6 +1,6 @@
 from ise.models.training.Trainer import Trainer
 from ise.models.traditional import ExploratoryModel
-from ise.models.timeseries.TimeSeriesEmulator import TimeSeriesEmulator
+from ise.models.timeseries import TimeSeriesEmulator
 from ise.models.traditional.ExploratoryModel import ExploratoryModel
 from ise.models.gp.GaussianProcess import GP
 from torch import nn

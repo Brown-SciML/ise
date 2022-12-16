@@ -41,7 +41,7 @@ def load_ml_data(data_directory, time_series=True):
         except FileNotFoundError:
                 raise FileNotFoundError(f'Files not found at {data_directory}. Format must be in format \"traditional_train_features.csv\"')
     
-    return train_features, train_labels, test_features, test_labels, test_scenarios
+    return train_features, pd.Series(train_labels['sle'], name='sle'), test_features, pd.Series(test_labels['sle'], name='sle'), test_scenarios
 
 
 def undummify(df, prefix_sep="-"):
@@ -68,7 +68,12 @@ def combine_testing_results(data_directory, preds, time_series=True, save_direct
     train_features, train_labels, test_features, test_labels, test_scenarios = load_ml_data(data_directory)
     
     X_test = pd.DataFrame(test_features)
-    y_test = test_labels
+    if isinstance(test_labels, pd.Series):
+        y_test = test_labels
+    if isinstance(test_labels, pd.DataFrame):
+        y_test = pd.Series(test_labels['sle'])
+    else:
+        y_test = pd.Series(test_labels)
     
     test = X_test.drop(columns=[col for col in X_test.columns if 'lag' in col])
     test['true'] = y_test
@@ -76,7 +81,7 @@ def combine_testing_results(data_directory, preds, time_series=True, save_direct
     test['mse'] = (test.true - test.pred)**2
     test['mae'] = abs(test.true - test.pred)
     
-    test['sectors'] = round(test.sectors).astype(int)
+    # test['sectors'] = round(test.sectors).astype(int)
     test['year'] = round(test.year).astype(int)
     
     test = undummify(test)
@@ -113,7 +118,7 @@ def group_by_run(dataset, column=None, condition=None,):
         else:
             raise ValueError('Column and condition type must be the same (None & None, not None & not None).')
         if not subset.empty:
-            scenarios.append([])
+            scenarios.append([modelname, exp, sector])
             all_trues.append(subset.true.to_numpy())
             all_preds.append(subset.pred.to_numpy())
             
@@ -144,3 +149,13 @@ def kl_divergence(p, q):
 
 def js_divergence(p, q):
     return jensenshannon(p, q)
+
+def calculate_distribution_metrics(dataset, column=None, condition=None):
+    trues, preds, _ = group_by_run(dataset, column=column, condition=condition)
+    true_distribution, _ = create_distribution(year=2100, dataset=trues)
+    pred_distribution, _ = create_distribution(year=2100, dataset=preds)
+    distribution_metrics = {
+        'kl': kl_divergence(pred_distribution, true_distribution),
+        'js': js_divergence(pred_distribution, true_distribution)
+    }
+    return distribution_metrics

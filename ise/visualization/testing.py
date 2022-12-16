@@ -1,11 +1,11 @@
+from ise.utils.data import load_ml_data
+import pandas as pd
+import seaborn as sns
 import random
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
 np.random.seed(10)
-from ise.utils.data import load_ml_data
-import pandas as pd
-import seaborn as sns
 
 def plot_test_series(model, data_directory, time_series, approx_dist=True, mc_iterations=100, confidence='95', draws='random', k=10, save_directory=None):
     _, _, test_features, test_labels, test_scenarios = load_ml_data(
@@ -57,16 +57,14 @@ def plot_test_series(model, data_directory, time_series, approx_dist=True, mc_it
             plt.plot(quantiles[1,:], 'k--')
             plt.plot(lower_ci, 'k-',)
             plt.plot(single_test_labels, 'r-', label='True')
-            
-            
+
             plt.xlabel('Time (years since 2015)')
             plt.ylabel('SLE (mm)')
             plt.title(f'Model={test_model}, Exp={test_exp}, sector={sectors.index(test_sector)+1}')
             plt.legend()
             if save_directory:
-                plt.savefig(f'{save_directory}/{test_model}_{test_exp}_test_sector.png')
-                
-                
+                plt.savefig(f'{save_directory}/{test_model.replace("-", "_")}_{test_exp}_test_sector.png')
+
 def plot_callibration(dataset, column=None, condition=None, color_by=None, alpha=0.2, save=None):
     
     # TODO: Add ability to subset multiple columns and conditions. Not needed now so saving for later...

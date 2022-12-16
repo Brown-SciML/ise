@@ -1,10 +1,11 @@
 import torch
 from torch import nn
-from ise.models.training.dataclasses import PyTorchDataset, TSDataset
+from ise.models.training.dataclasses import TSDataset
 from torch.utils.data import DataLoader
 import numpy as np
 np.random.seed(10)
 import pandas as pd
+import torch
 
 
 class TimeSeriesEmulator(torch.nn.Module):
