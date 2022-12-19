@@ -1,5 +1,6 @@
 """merge.py module for joining the processed inputs from the forcing directory and the outputs
-from the ismip6 ice sheet models to create a master dataset"""
+from the ismip6 ice sheet models to create a master dataset
+"""
 import pandas as pd
 import re
 import requests
@@ -16,16 +17,16 @@ def merge_datasets(processed_forcing_directory: str, processed_ismip6_directory:
     """Wrapper function that runs all merging functions. Includes combining the input data
     from the forcing data with the output data from the Zenodo directory.
 
-    :param processed_forcing_directory: Directory with processed forcing files.
-    :type processed_forcing_directory: str
-    :param processed_ismip6_directory: Directory with processed output files.
-    :type processed_ismip6_directory: str
-    :param export_directory: Directory to export combined files.
-    :type export_directory: str
-    :param include_icecollapse: Flag denoting whether to include ice collapse, defaults to False
-    :type include_icecollapse: bool, optional
-    :return: master, inputs, outputs, Combined datasets
-    :rtype: pd.DataFrame
+    Args:
+        processed_forcing_directory (str): Directory with processed
+            forcing files.
+        processed_ismip6_directory (str): Directory with processed
+            output files.
+        export_directory (str): Directory to export combined files.
+        include_icecollapse (bool, optional): Flag denoting whether to include ice collapse, defaults to False
+
+    Returns:
+        pd.DataFrame: master, inputs, outputs, Combined datasets
     """
     master, inputs, outputs = combine_datasets(
         processed_forcing_directory=processed_forcing_directory,
@@ -37,22 +38,20 @@ def merge_datasets(processed_forcing_directory: str, processed_ismip6_directory:
 
 
 def combine_datasets(processed_forcing_directory: str, processed_ismip6_directory: str,
-                     include_icecollapse: bool, export=True):
-    """Combines the input datasets -- atmospheric forcing, three oceanic forcing (salinity, 
-    temperature and thermal forcing), and ice sheet collapse forcing with the output dataset 
+                     include_icecollapse: bool=False, export=True):
+    """Combines the input datasets -- atmospheric forcing, three oceanic forcing (salinity,
+    temperature and thermal forcing), and ice sheet collapse forcing with the output dataset
     generated in H. Seroussi et al.: ISMIP6 Antarctica projections.
 
-    :param processed_forcing_directory: Directory of the processed files. Should contain
-    atmospheric_forcing, ice_collapse, and three oceanic forcing CSV's.
-    :type processed_forcing_directory: str
-    :param processed_ismip6_directory: Directory of the processed output files.
-    :type processed_ismip6_directory: str
-    :param include_icecollapse: Include the ice collapse parameter in generating the dataset
-    :type include_icecollapse: bool
-    :param export: Directory of exported files, defaults to True
-    :type export: str|bool, optional
-    :return: master, inputs, outputs, Combined datasets
-    :rtype: pd.DataFrame
+    Args:
+        processed_forcing_directory (str): Directory of the processed files. Should contain atmospheric_forcing, ice_collapse, and three oceanic forcing CSV's.
+        processed_ismip6_directory (str): Directory of the processed output files.
+        include_icecollapse (bool): Flag denoting whether to include ice collapse, defaults to False
+        export (str, optional): Directory of exported files, defaults to True
+    
+
+    Returns:
+        pd.DataFrame: master, inputs, outputs, Combined datasets
     """
 
     # Get the files and if that doesn't work, return a FIleNotFoundError
@@ -108,10 +107,11 @@ def exp_to_attributes(x: str,):
     """Combines Table 1 in H. Seroussi et al.: ISMIP6 Antarctica projections and associates
     the attributes listed in Table 1 with each experiment in the output dataset.
 
-    :param x: AOGCM string as it is stored in the 'aogcm' column
-    :type x: str
-    :return: attributes, Returns all new attributes associated with each experiment
-    :rtype: tuple(str)
+    Args:
+        x (str): AOGCM string as it is stored in the 'aogcm' column
+
+    Returns:
+        tuple(str): attributes, Returns all new attributes associated with each experiment
     """
 
     try:
@@ -124,10 +124,11 @@ def format_aogcms(x: str) -> str:
     """Formats AOGCM strings so that joins between datasets work properly. This is necessary due to
     differing file directory names in the original AIS Globus dataset.
 
-    :param x: AOGCM string as it is stored in the 'aogcm' column
-    :type x: str
-    :return: x, Formatted AOGCM string
-    :rtype: str
+    Args:
+        x (str): AOGCM string as it is stored in the 'aogcm' column
+
+    Returns:
+        str: x, Formatted AOGCM string
     """
 
     # To homogeonize, get rid of periods (rcp85 vs rcp8.5) and make all dashes underscores

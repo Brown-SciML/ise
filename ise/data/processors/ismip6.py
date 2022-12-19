@@ -14,18 +14,18 @@ np.random.seed(10)
 variables = ['iareafl', 'iareagr', 'icearea', 'ivol', 'ivaf', 'smb', 'smbgr', 'bmbfl']
 
 def process_ismip6_outputs(zenodo_directory: str, export_directory: str):
-    """Wrapper function to run all output processing functions.
+    """Wrapper function to run all output processing functions. See process_repository documentation
+    for more details.
 
-    :param zenodo_directory: Directory containing Zenodo output files.
-    :type zenodo_directory: str
-    :param export_directory: Directory to export processed outputs.
-    :type export_directory: str
+    Args:
+        zenodo_directory (str): Directory containing Zenodo output files.
+        export_directory (str): Directory to export processed outputs.
     """
+
     process_repository(zenodo_directory, export_filepath=f"{export_directory}/ismip6_outputs.csv")
 
 def _get_sector(x):
-    """Helper for lambda function.
-    """
+    """Helper for lambda function."""
     x = x.split("_")
     if len(x) == 1 or 'region' in x:
         return np.nan
@@ -34,12 +34,12 @@ def _get_sector(x):
 def process_repository(zenodo_directory: str, export_filepath=None) -> pd.DataFrame:
     """Processes zenodo output repository.
 
-    :param zenodo_directory: Directory containing Zenodo output files.
-    :type zenodo_directory: str
-    :param export_filepath: Directory to export processed outputs., defaults to None
-    :type export_filepath: _type_, optional
-    :return: all_data, Processed outputs
-    :rtype: pd.DataFrame
+    Args:
+        zenodo_directory (str): Directory containing Zenodo output files.
+        export_filepath (_type_, optional): Directory to export processed outputs., defaults to None
+
+    Returns:
+        pd.DataFrame: all_data, Processed outputs
     """
     # files = get_all_filepaths(zenodo_directory, filetype='nc', contains='minus_ctrl_proj')
     groups_dir = f"{zenodo_directory}/ComputedScalarsPaper/"
@@ -72,10 +72,12 @@ def process_repository(zenodo_directory: str, export_filepath=None) -> pd.DataFr
 def process_experiment(experiment_directory: str) -> pd.DataFrame:
     """Process all files within a particular experiment folder.
 
-    :param experiment_directory: Directory containing experiments.
-    :type experiment_directory: str
-    :return: all_data, Data from a particular experiment directory.
-    :rtype: pd.DataFrame
+    Args:
+        experiment_directory (str): Directory containing experiments.
+
+    Returns:
+        pd.DataFrame: all_data, Data from a particular experiment
+        directory.
     """
     files = get_all_filepaths(experiment_directory, filetype='nc', contains='minus_ctrl_proj')
 
@@ -93,10 +95,11 @@ def process_experiment(experiment_directory: str) -> pd.DataFrame:
 def process_single_file(path: str) -> pd.DataFrame:
     """Processes single file within experiment folder
 
-    :param path: Filepath to file
-    :type path: str
-    :return: data, Data from that file.
-    :rtype: pd.DataFrame
+    Args:
+        path (str): Filepath to file
+
+    Returns:
+        pd.DataFrame: data, Data from that file.
     """
 
     var = list(compress(variables, [v in path for v in variables]))

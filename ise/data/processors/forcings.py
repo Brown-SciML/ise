@@ -1,5 +1,5 @@
-"""forcings.py Module - Processing functions for ISMIP6 atmospheric, oceanic, and ice-collapse
-forcings.
+"""Processing functions for ISMIP6 atmospheric, oceanic, and ice-collapse forcings found in 
+the [Globus ISMIP6 Archive](https://app.globus.org/file-manager?origin_id=ad1a6ed8-4de0-4490-93a9-8258931766c7&origin_path=%2F)
 """
 import time
 import numpy as np
@@ -15,18 +15,14 @@ def process_forcings(forcing_directory: str, grids_directory: str, export_direct
     Directory](https://app.globus.org/file-manager?origin_id=ad1a6ed8-4de0-4490-93a9-8258931766c7
     &origin_path=%2F).
 
-
-    :param forcing_directory: Directory containing forcing files
-    :type forcing_directory: str
-    :param forcing_directory: Directory containing grid data files
-    :type forcing_directory: str
-    :param export_directory: Directory to export processed files.
-    :type export_directory: str
-    :param to_process: Forcings to process, options=[all, atmosphere, ocean, ice_collapse],
+    Args:
+        forcing_directory (str): Directory containing grid data files
+        export_directory (str): Directory to export processed files.
+        to_process (str, optional): Forcings to process, options=[all,
+            atmosphere, ocean, ice_collapse],
+        verbose (bool, optional): Flag denoting whether to output logs
+            in terminal, defaults to False
     defaults to 'all'
-    :type to_process: str, optional
-    :param verbose: Flag denoting whether to output logs in terminal, defaults to False
-    :type verbose: bool, optional
     """
     # check inputs
     to_process_options = ['all', 'atmosphere', 'ocean', 'ice_collapse']
@@ -84,14 +80,14 @@ class GridSectors:
                  filetype: str='nc', format_index: bool=True):
         """Initializes class and opens/stores data.
 
-        :param grids_dir: Directory containing grid data.
-        :type grids_dir: str
-        :param grid_size: KM grid size to be used, must be [4, 8, 16, 32] defaults to 8
-        :type grid_size: int, optional
-        :param filetype: Filetype of data, must be in [nc, csv], defaults to 'nc'
-        :type filetype: str, optional
-        :param format_index: Flag denoting whether to fix index so that join works appropriately, defaults to True
-        :type format_index: bool, optional
+        Args:
+            grids_dir (str): Directory containing grid data.
+            grid_size (int, optional): KM grid size to be used, must be
+                [4, 8, 16, 32] defaults to 8
+            filetype (str, optional): Filetype of data, must be in [nc,
+                csv], defaults to 'nc'
+            format_index (bool, optional): Flag denoting whether to fix
+                index so that join works appropriately, defaults to True
         """
         check_input(grid_size, [4, 8, 16, 32])
         check_input(filetype.lower(), ['nc', 'csv'])
@@ -112,8 +108,9 @@ class GridSectors:
     def _to_dataframe(self):
         """Converts self.data to dataframe.
 
-        :return: GridSectors object with data as dataframe.
-        :rtype: self: GridSectors
+        Returns:
+            self: GridSectors: GridSectors object with data as
+            dataframe.
         """
         if not isinstance(self, pd.DataFrame):
             self.data = self.data.to_dataframe()
@@ -122,8 +119,9 @@ class GridSectors:
     def _format_index(self):
         """Formats indices from 0 to 761 so merge with forcing data is possible.
 
-        :return: GridSectors object with indices formatted.
-        :rtype: self: GridSectors
+        Returns:
+            self: GridSectors: GridSectors object with indices
+            formatted.
         """
         index_array = list(np.arange(0,761))
         self.data.index = pd.MultiIndex.from_product([index_array, index_array], names=['x', 'y'])
@@ -135,8 +133,8 @@ class AtmosphereForcing:
     def __init__(self, path: str):
         """Initializes class and opens/stores data.
 
-        :param path: Filepath to atmospheric forcing file.
-        :type path: str
+        Args:
+            path (str): Filepath to atmospheric forcing file.
         """
         self.forcing_type = 'atmosphere'
         self.path = path
@@ -154,8 +152,9 @@ class AtmosphereForcing:
     def aggregate_dims(self,):
         """Aggregates over excess dimesions, particularly over time or grid cells.
 
-        :return: AtmosphereForcing object with dimensions reduced.
-        :rtype: self: AtmosphereForcing
+        Returns:
+            self: AtmosphereForcing: AtmosphereForcing object with
+            dimensions reduced.
         """
         dims = self.data.dims
         if 'time' in dims:
@@ -169,10 +168,13 @@ class AtmosphereForcing:
         """Adds information on which sector each grid cell belongs to. This is done through a merge
         of grid cell data with a sectors NC file.
 
-        :param grids: GridSectors class containing grid cell information and attributes
-        :type grids: GridSectors
-        :return: AtmosphereForcing class with sectors added.
-        :rtype: self: AtmosphereForcing
+        Args:
+            grids (GridSectors): GridSectors class containing grid cell
+                information and attributes
+
+        Returns:
+            self: AtmosphereForcing: AtmosphereForcing class with
+            sectors added.
         """
         self.data = self.data.drop(labels=['lon_bnds', 'lat_bnds', 'lat2d', 'lon2d'])
         self.data = self.data.to_dataframe().reset_index(level='time', drop=True)
@@ -185,8 +187,8 @@ class OceanForcing:
     def __init__(self, aogcm_dir: str):
         """Initializes class and opens/stores data.
 
-        :param aogcm_dir: Directory path to oceanic forcings.
-        :type aogcm_dir: str
+        Args:
+            aogcm_dir (str): Directory path to oceanic forcings.
         """
         self.forcing_type = 'ocean'
         self.path = f"{aogcm_dir}/1995-2100/"
@@ -207,8 +209,9 @@ class OceanForcing:
     def aggregate_dims(self,):
         """Aggregates over excess dimesions, particularly over time or grid cells.
 
-        :return: AtmosphereForcing object with dimensions reduced.
-        :rtype: self: AtmosphereForcing
+        Returns:
+            self: AtmosphereForcing: AtmosphereForcing object with
+            dimensions reduced.
         """
         dims = self.data.dims
         if 'z' in dims:
@@ -222,10 +225,12 @@ class OceanForcing:
         """Adds information on which sector each grid cell belongs to. This is done through a merge
         of grid cell data with a sectors NC file.
 
-        :param grids: GridSectors class containing grid cell information and attributes
-        :type grids: GridSectors
-        :return: OceanForcing class with sectors added.
-        :rtype: self: OceanForcing
+        Args:
+            grids (GridSectors): GridSectors class containing grid cell
+                information and attributes
+
+        Returns:
+            self: OceanForcing: OceanForcing class with sectors added.
         """
         self.salinity_data = self.salinity_data.drop(labels=['z_bnds', 'lat', 'lon'])
         # Take mean over all z values (only found in oceanic forcings)
@@ -256,8 +261,9 @@ class IceCollapse:
     def __init__(self, aogcm_dir: str):
         """Initializes class and opens/stores data.
 
-        :param aogcm_dir: Directory path to ice collapse forcings forcings.
-        :type aogcm_dir: str
+        Args:
+            aogcm_dir (str): Directory path to ice collapse forcings
+                forcings.
         """
         self.forcing_type = 'ice_collapse'
         self.path = f"{aogcm_dir}"
@@ -279,10 +285,12 @@ class IceCollapse:
         """Adds information on which sector each grid cell belongs to. This is done through a merge
         of grid cell data with a sectors NC file.
 
-        :param grids: GridSectors class containing grid cell information and attributes
-        :type grids: GridSectors
-        :return: IceCollapse class with sectors added.
-        :rtype: self: IceCollapse
+        Args:
+            grids (GridSectors): GridSectors class containing grid cell
+                information and attributes
+
+        Returns:
+            self: IceCollapse: IceCollapse class with sectors added.
         """
         self.data = self.data.drop(labels=['lon', 'lon_bnds', 'lat', 'lat_bnds'])
         self.data = self.data.to_dataframe().reset_index(level='time', drop=False)
@@ -297,12 +305,12 @@ def aggregate_by_sector(path: str, grids_dir: str):
     and gets aggregate data based on sector and year. Returns atmospheric
     forcing data object.
 
-    :param path: Filepath to atmospheric forcing nc file.
-    :type path: str
-    :param grids_dir: Directory containing grid data.
-    :type grids_dir: str
-    :return: AtmosphereForcing instance with aggregated data
-    :rtype: forcing: AtmosphereForcing
+    Args:
+        path (str): Filepath to atmospheric forcing nc file.
+        grids_dir (str): Directory containing grid data.
+
+    Returns:
+        forcing: AtmosphereForcing: AtmosphereForcing instance with aggregated data
     """
     # Load grid data with 8km grid size
     print('')
@@ -341,12 +349,10 @@ def aggregate_atmosphere(directory: str, grids_directory: str, export: str, ):
     from 1995-2100 and applies the aggregate_by_sector function. It then outputs
     the concatenation of all processed data to all_data.csv
 
-    :param directory: Directory containing forcing files
-    :type directory: str
-    :param grids_directory: Directory containing grid data.
-    :type grids_directory: str
-    :param export: Directory to export output files.
-    :type export: str
+    Args:
+        directory (str): Directory containing forcing files
+        grids_directory (str): Directory containing grid data.
+        export (str): Directory to export output files.
     """
 
     start_time = time.time()
@@ -393,12 +399,10 @@ def aggregate_ocean(directory, grids_directory, export, ):
     from 1995-2100 and applies the aggregate_by_sector function. It then outputs
     the concatenation of all processed data to all_data.csv.
 
-    :param directory: Directory containing forcing files
-    :type directory: str
-    :param grids_directory: Directory containing grid data.
-    :type grids_directory: str
-    :param export: Directory to export output files.
-    :type export: str
+    Args:
+        directory (str): Directory containing forcing files
+        grids_directory (str): Directory containing grid data.
+        export (str): Directory to export output files.
     """
     start_time = time.time()
 
@@ -451,12 +455,10 @@ def aggregate_icecollapse(directory, grids_directory, export, ):
     from 1995-2100 and applies the aggregate_by_sector function. It then outputs
     the concatenation of all processed data to all_data.csv.
 
-    :param directory: Directory containing forcing files
-    :type directory: str
-    :param grids_directory: Directory containing grid data.
-    :type grids_directory: str
-    :param export: Directory to export output files.
-    :type export: str
+    Args:
+        directory (str): Directory containing forcing files
+        grids_directory (str): Directory containing grid data.
+        export (str): Directory to export output files.
     """
     start_time = time.time()
 

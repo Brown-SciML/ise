@@ -7,7 +7,14 @@ np.random.seed(10)
 
 file_dir = os.path.dirname(os.path.realpath(__file__))
 
-def check_input(input, options, argname=None):
+def check_input(input: str, options: list[str], argname: str=None):
+    """Checks validity of input argument. Not used frequently due to error raising being better practice.
+
+    Args:
+        input (str): Input value.
+        options (list[str]): Valid options for the input value.
+        argname (str, optional): Name of the argument being tested. Defaults to None.
+    """
     # simple assert that input is in the designated options (readability purposes only)
     if isinstance(input, str):
         input = input.lower()
@@ -16,7 +23,18 @@ def check_input(input, options, argname=None):
             raise ValueError(f"{argname} must be in {options}, received {input}")
         raise ValueError(f"input must be in {options}, received {input}")
 
-def get_all_filepaths(path, filetype=None, contains=None):
+def get_all_filepaths(path: str, filetype: str=None, contains: str=None):
+    """Retrieves all filepaths for files within a directory. Supports subsetting based on filetype
+    and substring search.
+
+    Args:
+        path (str): Path to directory to be searched.
+        filetype (str, optional): File type to be returned (e.g. csv, nc). Defaults to None.
+        contains (str, optional): Substring that files found must contain. Defaults to None.
+
+    Returns:
+        list[str]: list of files within the directory matching the input criteria.
+    """
     all_files = list()
     for (dirpath, dirnames, filenames) in os.walk(path):
         all_files += [os.path.join(dirpath, file) for file in filenames]
@@ -29,25 +47,19 @@ def get_all_filepaths(path, filetype=None, contains=None):
         all_files = [file for file in all_files if contains in file]
         
     return all_files
-            
-
-def plot_true_vs_predicted(preds, y_test, save=None):
-    try:
-        preds = preds.detach().numpy()
-    except AttributeError:
-        pass
-    plt.figure()
-    plt.scatter(y_test, preds, s=3, alpha=0.2)
-    plt.plot([min(y_test),max(y_test)], [min(y_test),max(y_test)], 'r-')
-    plt.title('Neural Network True vs Predicted')
-    plt.xlabel('True')
-    plt.ylabel('Predicted')
-    if save:
-        plt.savefig("results/nn.png")
-    plt.show()
     
 
-def _structure_emulatordata_args(input_args, time_series):
+def _structure_emulatordata_args(input_args: dict, time_series: bool):
+    """Formats kwargs for EmulatorData processing. Includes establishing defaults if values are not
+    supplied.
+
+    Args:
+        input_args (dict): Dictionary containin kwargs for EmulatorData.process()
+        time_series (bool): Flag denoting whether the processing is time-series.
+
+    Returns:
+        dict: EmulatorData.process() kwargs formatted with defaults.
+    """
     emulator_data_defaults = dict(
                     target_column='sle',
                     drop_missing=True,

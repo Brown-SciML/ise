@@ -8,7 +8,7 @@ from scipy.spatial.distance import jensenshannon
 
 
 def load_ml_data(data_directory, time_series=True):
-    """Loads training and testing data for machine learning models. These files are generated using 
+    """Loads training and testing data for machine learning models. These files are generated using
     functions in the ise.data.processing modules or process_data in the ise.pipelines.processing module.
 
     Args:

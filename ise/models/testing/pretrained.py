@@ -1,3 +1,4 @@
+"""Testing functions for analyzing performance of pretrained models."""
 import torch
 import pandas as pd
 from ise.models.training.Trainer import Trainer
@@ -6,7 +7,26 @@ np.random.seed(10)
 from sklearn.metrics import r2_score
 from ise.utils.data import load_ml_data
 
-def test_pretrained_model(model_path, model_class, architecture, data_directory, time_series, mc_dropout=False, dropout_prob=0.1, mc_iterations=100, verbose=True):
+def test_pretrained_model(model_path: str, model_class, architecture: dict, data_directory: str, 
+                          time_series: bool, mc_dropout: bool=False, dropout_prob: float=0.1, 
+                          mc_iterations: int=100, verbose: bool=True):
+    """Runs testing procedure on a pretrained and saved model. Makes model predictions and tests
+    them based on standard metrics. Outputs the metrics in a dictionary as well as the predictions.
+
+    Args:
+        model_path (str): Path to the pretrained model. Must be a '.pt' model.
+        model_class (ModelClass): Model class used to train the model.
+        architecture (dict): Architecture arguments used to train the model. 
+        data_directory (str): Directory containing training and testing data.
+        time_series (bool): Flag denoting wether model was trained with time-series data.
+        mc_dropout (bool, optional): Flag denoting whether the model was trained with MC dropout protocol. Defaults to False.
+        dropout_prob (float, optional): Dropout probability in MC dropout protocol. Unused if mc_dropout=False. Defaults to 0.1.
+        mc_iterations (int, optional): MC iterations to be used in testing. Unused if mc_dropout=False. Defaults to 100.
+        verbose (bool, optional): Flag denoting whether to output logs to terminal. Defaults to True.
+    
+    Returns:
+        tuple: Tuple containing [metrics, preds], or test metrics and predictions on test_features.
+    """    
     
     if verbose:
         print('1/3: Loading processed data...')
@@ -59,7 +79,24 @@ R2: {r2:0.6f}""")
 
     return metrics, preds
 
-def mc_accuracy(model_path, model_class, architecture, data_directory, time_series, dropout_prob=0.1, mc_iterations=30, verbose=True):
+def mc_accuracy(model_path: str, model_class, architecture: dict, data_directory: str, 
+                time_series: bool, dropout_prob: float=0.1, mc_iterations: int=30, verbose: bool=True):
+    """Tests the accuracy of the MC dropout uncertainty bands. Shows the proportion of true 
+    values that fall within the uncertainty range.
+
+    Args:
+        model_path (str): Path to the pretrained model. Must be a '.pt' model.
+        model_class (ModelClass): Model class used to train the model.
+        architecture (dict): Architecture arguments used to train the model. 
+        data_directory (str): Directory containing training and testing data.
+        time_series (bool): Flag denoting wether model was trained with time-series data.
+        dropout_prob (float, optional): Dropout probability in MC dropout protocol. Unused if mc_dropout=False. Defaults to 0.1.
+        mc_iterations (int, optional): MC iterations to be used in testing. Unused if mc_dropout=False. Defaults to 30.
+        verbose (bool, optional): Flag denoting whether to output logs to terminal. Defaults to True.
+
+    Returns:
+        tuple: Tuple containing [ci_accuracy, q_accuracy], or confidence interval accuracy and quantile accuracy
+    """
     if verbose:
         print('1/3: Loading processed data...')
     
@@ -89,11 +126,13 @@ def mc_accuracy(model_path, model_class, architecture, data_directory, time_seri
     model.eval()
     X_test = torch.from_numpy(np.array(test_features, dtype=np.float64)).float()
     
+    # Predict on test set and return confidence intervals and quantiles
     all_preds, means, upper_ci, lower_ci, quantiles = model.predict(X_test, mc_iterations=mc_iterations)
     upper_q = quantiles[1,:]
     lower_q = quantiles[0,:]
     preds = means
     
+    # Get accuracy based on how many true values fall between CI and Q.
     test_labels = np.array(test_labels).squeeze()
     q_acc = ((test_labels >= lower_q) & (test_labels <= upper_q)).mean()
     ci_acc = ((test_labels >= lower_ci) & (test_labels <= upper_ci)).mean()
