@@ -64,8 +64,22 @@ def undummify(df, prefix_sep="-"):
     undummified_df = pd.concat(series_list, axis=1)
     return undummified_df
 
-def combine_testing_results(data_directory, preds, time_series=True, save_directory=None):
-    train_features, train_labels, test_features, test_labels, test_scenarios = load_ml_data(data_directory)
+def combine_testing_results(data_directory: str, preds: np.ndarray, bounds: dict=None, time_series: bool=True, save_directory: str=None):
+    """Creates testing results dataframe that reverts input data to original formatting and adds on
+    predictions, losses, and uncertainty bounds. Useful for plotting purposes and overall analysis.
+
+    Args:
+        data_directory (str): Directory containing training and testing data.
+        preds (np.ndarray): Array of predictions, can be np.ndarray or pd.Series.
+        bounds (dict): Dictionary or pd.DataFrame of uncertainty bounds to be added to the dataframe, defaults to None.
+        time_series (bool, optional): Flag denoting whether to process the data as a time-series dataset or traditional non-time dataset. Defaults to True.
+        save_directory (str, optional): Directory where output files will be saved. Defaults to None.
+
+    Returns:
+        pd.DataFrame: test results dataframe.
+    """
+
+    train_features, train_labels, test_features, test_labels, test_scenarios = load_ml_data(data_directory, time_series=time_series)
     
     X_test = pd.DataFrame(test_features)
     if isinstance(test_labels, pd.Series):
@@ -81,10 +95,25 @@ def combine_testing_results(data_directory, preds, time_series=True, save_direct
     test['mse'] = (test.true - test.pred)**2
     test['mae'] = abs(test.true - test.pred)
     
-    # test['sectors'] = round(test.sectors).astype(int)
-    test['year'] = round(test.year).astype(int)
+
     
     test = undummify(test)
+    
+    # unscale sectors and year
+    from sklearn.preprocessing import MinMaxScaler
+    sectors_scaler = MinMaxScaler().fit(np.arange(1,19).reshape(-1,1))
+    test['sectors'] = sectors_scaler.inverse_transform(np.array(test.sectors).reshape(-1,1))
+    test['sectors'] = round(test.sectors).astype(int)
+    
+    year_scaler = MinMaxScaler().fit(np.arange(2016, 2101).reshape(-1,1))
+    test['year'] = year_scaler.inverse_transform(np.array(test.year).reshape(-1,1))
+    test['year'] = round(test.year).astype(int)
+    
+
+    if bounds is not None:
+        if not isinstance(bounds, pd.DataFrame):
+            bounds = pd.DataFrame(bounds)
+        test = test.merge(bounds, left_index=True, right_index=True)
     
     if save_directory:
         if isinstance(save_directory, str):

@@ -4,13 +4,14 @@ from ise.utils.data import combine_testing_results, load_ml_data, calculate_dist
 from ise.models.testing import test_pretrained_model
 from ise.utils.models import load_model
 from ise.visualization import Plotter
+import pandas as pd
 
 def analyze_model(data_directory, model_path, architecture, model_class, time_series=True, mc_dropout=True,
                        dropout_prob=0.1, mc_iterations=100, verbose=True, save_directory=None):
 
     if verbose:
         print('1/4: Calculating test metrics')
-    metrics, preds = test_pretrained_model(
+    metrics, preds, bounds = test_pretrained_model(
         model_path=model_path,
         model_class=model_class,
         architecture=architecture,
@@ -21,12 +22,14 @@ def analyze_model(data_directory, model_path, architecture, model_class, time_se
         mc_iterations=mc_iterations,
         verbose=False
     )
-
+    
+    
     if verbose:
         print('2/4: Creating results dataframe')
     dataset = combine_testing_results(
         data_directory=data_directory,
         preds=preds,
+        bounds=bounds,
         save_directory=save_directory
     )
     _, _, test_features, _, _ = load_ml_data(data_directory)

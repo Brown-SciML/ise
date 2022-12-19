@@ -25,7 +25,7 @@ def test_pretrained_model(model_path: str, model_class, architecture: dict, data
         verbose (bool, optional): Flag denoting whether to output logs to terminal. Defaults to True.
     
     Returns:
-        tuple: Tuple containing [metrics, preds], or test metrics and predictions on test_features.
+        tuple: Tuple containing [metrics, preds, bounds], or test metrics, predictions, and uncertainty bounds on test_features.
     """    
     
     if verbose:
@@ -62,6 +62,11 @@ def test_pretrained_model(model_path: str, model_class, architecture: dict, data
         preds = means
     else:
         preds, means, upper_ci, lower_ci, quantiles = model.predict(X_test, mc_iterations=1)
+    
+    upper_q = quantiles[1,:]
+    lower_q = quantiles[0,:]
+    bounds = {'upper_ci': upper_ci, 'lower_ci': lower_ci,
+              'upper_q': upper_q, 'lower_q': lower_q}
         
     test_labels = np.array(test_labels).squeeze()
     mse = sum((preds - test_labels)**2) / len(preds)
@@ -77,7 +82,7 @@ MAE: {mae:0.6f}
 RMSE: {rmse:0.6f}
 R2: {r2:0.6f}""")
 
-    return metrics, preds
+    return metrics, preds, bounds
 
 def mc_accuracy(model_path: str, model_class, architecture: dict, data_directory: str, 
                 time_series: bool, dropout_prob: float=0.1, mc_iterations: int=30, verbose: bool=True):
