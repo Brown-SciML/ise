@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.9.2" />
 <title>ise.data.EmulatorData API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="Module containing EmulatorData class with all associated methods and attributes. Primarily carries out data loading, feature engineering &amp; processing …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,11 +22,13 @@
 <h1 class="title">Module <code>ise.data.EmulatorData</code></h1>
 </header>
 <section id="section-intro">
+<p>Module containing EmulatorData class with all associated methods and attributes. Primarily carries out data loading, feature engineering &amp; processing of formatted data.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import random
+<pre><code class="python">&#34;&#34;&#34;Module containing EmulatorData class with all associated methods and attributes. Primarily carries out data loading, feature engineering &amp; processing of formatted data.&#34;&#34;&#34;
+import random
 import pandas as pd
 import numpy as np
 from sklearn import preprocessing as sp
@@ -34,7 +36,15 @@ np.random.seed(10)
 
 
 class EmulatorData:
+    &#34;&#34;&#34;Class containing attributes and methods for storing and handling ISMIP6 ice sheet data.&#34;&#34;&#34;
     def __init__(self, directory: str):
+        &#34;&#34;&#34;Initializes class and opens/stores data. Includes loading processed files from 
+        ise.data.processors functions, converting IVAF to SLE, and saving initial condition data
+        for later use.
+
+        Args:
+            directory (str): Directory containing processed files from ise.data.processors functions. Should contain master.csv
+        &#34;&#34;&#34;
 
         self.directory = directory
 
@@ -47,10 +57,12 @@ class EmulatorData:
             except FileNotFoundError:
                 raise FileNotFoundError(&#39;Files not found, make sure to run all processing functions.&#39;)
 
+        # convert to SLE
         self.data[&#39;sle&#39;] = self.data.ivaf / 1e9 / 362.5  # m^3 / 1e9 / 362.5 = Gt / 1 mm --&gt; mm SLE
         self.data[&#39;modelname&#39;] = self.data.groupname + &#39;_&#39; + self.data.modelname
-        # self.data.smb = self.data.smb.fillna(method=&#34;ffill&#34;)
 
+
+        # Save data on initial conditions for use in data splitting
         unique_batches = self.data.groupby([&#39;modelname&#39;, &#39;sectors&#39;, &#39;exp_id&#39;]).size().reset_index().rename(
             columns={0: &#39;count&#39;}).drop(columns=&#39;count&#39;)
         self.batches = unique_batches.values.tolist()
@@ -76,20 +88,12 @@ class EmulatorData:
         Args:
             target_column (str, optional): Column to be predicted. Defaults to &#39;sle&#39;.
             drop_missing (bool, optional): Flag denoting whether to drop missing values. Defaults to True.
-            drop_columns (list[str], optional): List containing which columns (variables) to be dropped. 
-            Should be List[str] or boolean. If True is chosen, columns are dropped that will result 
-            in optimal performance. Defaults to True.
-            boolean_indices (bool, optional): Flag denoting whether to create boolean indices for all
-            categorical variables left after dropping columns. Defaults to True.
-            scale (bool, optional): Flag denoting whether to scale data between zero and 1. 
-            Sklearn&#39;s MinMaxScaler is used. Defaults to True.
-            split_type (str, optional): Method to split data into training and testing set, must be
-            in [random, batch]. Random is not reccommended but is included for completeness. Defaults to &#39;batch&#39;.
-            drop_outliers (dict, optional): Dictionary denoting whether to drop outliers in a column 
-            based on a condition. Dictionary should be in the following format: 
-            {&#39;column&#39;: &#39;ivaf&#39;, &#39;operator&#39;: &#39;&lt;&#39;, &#39;value&#39;: -1e13}. Defaults to False.
-            time_series (bool, optional): Flag denoting whether to process the data as a time-series
-            dataset or traditional non-time dataset. Defaults to False.
+            drop_columns (list[str], optional): List containing which columns (variables) to be dropped. Should be List[str] or boolean. If True is chosen, columns are dropped that will result in optimal performance. Defaults to True.
+            boolean_indices (bool, optional): Flag denoting whether to create boolean indices for all categorical variables left after dropping columns. Defaults to True.
+            scale (bool, optional): Flag denoting whether to scale data between zero and 1.  Sklearn&#39;s MinMaxScaler is used. Defaults to True.
+            split_type (str, optional): Method to split data into training and testing set, must be in [random, batch]. Random is not reccommended but is included for completeness. Defaults to &#39;batch&#39;.
+            drop_outliers (dict, optional): Dictionary denoting whether to drop outliers in a column based on a condition. Dictionary should be in the following format: {&#39;column&#39;: &#39;ivaf&#39;, &#39;operator&#39;: &#39;&lt;&#39;, &#39;value&#39;: -1e13}. Defaults to False.
+            time_series (bool, optional): Flag denoting whether to process the data as a time-series dataset or traditional non-time dataset. Defaults to False.
             lag (int, optional): Lag variable for time-series processing. Defaults to None.
             
         Returns:
@@ -144,7 +148,22 @@ class EmulatorData:
 
         return self, self.train_features, self.test_features, self.train_labels, self.test_labels
 
-    def drop_outliers(self, column, operator, value, ):
+    def drop_outliers(self, column: str, operator: str, value: float, ):
+        &#34;&#34;&#34;Drops simulations that are outliers based on the provided column, operator, and value. 
+        Extra complexity is handled due to the necessity of removing the entire 85 row series from 
+        the dataset rather than simply removing the rows with given conditions. Note that the 
+        condition indicates rows to be DROPPED, not kept (e.g. &#39;sle&#39;, &#39;&gt;&#39;, &#39;20&#39; would drop all
+        simulations containing sle values over 20.) Operator argument must be in [==, &gt;, &lt;, &gt;=, &lt;=]
+
+        Args:
+            column (str): Column with outlier condition
+            operator (str): Mathematical operator to use for subsetting
+            value (float): Value threshold for outlier
+
+        Returns:
+            EmulatorData: self, with self.data having outliers dropped.
+        &#34;&#34;&#34;
+
         if operator.lower() in (&#39;equal&#39;, &#39;equals&#39;, &#39;=&#39;, &#39;==&#39;):
             outlier_data = self.data[self.data[column] == value]
         elif operator.lower() in (&#39;not equal&#39;, &#39;not equals&#39;, &#39;!=&#39;, &#39;~=&#39;):
@@ -178,13 +197,34 @@ class EmulatorData:
         return self
 
     def split_data(self, target_column: str, ):
+        &#34;&#34;&#34;Splits data into features and labels based on target column.
+
+        Args:
+            target_column (str): Output column to be predicted.
+
+        Returns:
+            EmulatorData: self, with self.X and self.y as attributes.
+        &#34;&#34;&#34;
         self.target_column = target_column
         self.X = self.data.drop(columns=self.output_columns)
         self.y = self.data[target_column]
         self.input_columns = self.X.columns
         return self
 
-    def train_test_split(self, train_size=0.7, split_type=&#39;random&#39;):
+    def train_test_split(self, train_size: float=0.7, split_type: str=&#39;batch&#39;):
+        &#34;&#34;&#34;Splits dataset into training set and testing set. Can be split using two different
+        methods: random and batch. The random method splits by randomly sampling rows, whereas 
+        batch method randomly samples entire simulation series (85 rows) in order to keep simulations
+        together during testing. Random method is included for completeness but is not reccommended
+        for use in emulator creation.
+
+        Args:
+            train_size (float, optional): Proportion of data in training set, between 0 and 1. Defaults to 0.7.
+            split_type (str, optional): Splitting method, must be in [random, batch]. Defaults to &#39;batch&#39;.
+
+        Returns:
+            EmulatorData: self, with self.train_features, self.test_features, self.train_labels, self.test_labels as attributes.
+        &#34;&#34;&#34;
 
         if not isinstance(self.X, pd.DataFrame):
             self.X = pd.DataFrame(self.X, columns=self.input_columns)
@@ -240,10 +280,24 @@ class EmulatorData:
         return self
 
     def drop_missing(self):
+        &#34;&#34;&#34;Drops rows with missing values (wrapper for pandas.DataFrame.dropna()).
+
+        Returns:
+            EmulatorData: self, with NA values dropped from self.data.
+        &#34;&#34;&#34;
         self.data = self.data.dropna()
         return self
 
-    def create_boolean_indices(self, columns=&#39;all&#39;):
+    def create_boolean_indices(self, columns: str=&#39;all&#39;):
+        &#34;&#34;&#34;Creates boolean indices (one hot encoding) for categoritcal variables in columns 
+        argument. Wrapper for pandas.get_dummies() with added functionality for prefix separation.
+
+        Args:
+            columns (str, optional): Categorical variables to be encoded. Defaults to &#39;all&#39;.
+
+        Returns:
+            EmulatorData: self, with boolean indices in self.data.
+        &#34;&#34;&#34;
         if columns == &#39;all&#39;:
             self.data = pd.get_dummies(self.data, prefix_sep=&#34;-&#34;)
         else:
@@ -256,7 +310,16 @@ class EmulatorData:
                 self.data[col] = self.data[col].astype(float)
         return self
 
-    def drop_columns(self, columns):
+    def drop_columns(self, columns: list[str]):
+        &#34;&#34;&#34;Drops columns in columns argument from the dataset. Wrapper for pandas.DataFrame.drop()
+        with error checking.
+
+        Args:
+            columns (list[str]): List of columns (or singular string column) to be dropped from the dataset.
+
+        Returns:
+            EmulatorData: self, with desired columns dropped from self.data.
+        &#34;&#34;&#34;
         if not isinstance(columns, list) and not isinstance(columns, str):
             raise ValueError(f&#39;Columns argument must be of type: str|list, received {type(columns)}.&#39;)
         columns = list(columns)
@@ -265,7 +328,18 @@ class EmulatorData:
 
         return self
 
-    def scale(self, values, values_type, scaler=&#34;MinMaxScaler&#34;):
+    def scale(self, values: pd.DataFrame, values_type: str, scaler: str=&#34;MinMaxScaler&#34;):
+        &#34;&#34;&#34;Scales dataframe and saves scaler for future use in unscaling. Sklearn&#39;s scaling API is
+        used. MinMaxScaler is recommended but StandardScaler is also supported.
+
+        Args:
+            values (pd.DataFrame): Dataframe to be scaled.
+            values_type (str): Whether the dataframe to be scaled is a feature or labels dataframe, must be in [inputs, outputs]
+            scaler (str, optional): Type of scaler to be used, must be in [MinMaxScaler, StandardScaler]. Defaults to &#34;MinMaxScaler&#34;.
+
+        Returns:
+            pd.DataFrame: scaled dataset with self.scaler_X and self.scaler_y as attributes in the EmulatorData class.
+        &#34;&#34;&#34;
         if self.X is None and self.y is None:
             raise AttributeError(&#39;Data must be split before scaling using model.split_data method.&#39;)
 
@@ -285,21 +359,26 @@ class EmulatorData:
         if &#39;input&#39; in values_type.lower():
             self.input_columns = self.X.columns
             self.scaler_X.fit(self.X)
-            # dump(self.scaler_X, open(&#39;./src/data/output_files/scaler_X.pkl&#39;, &#39;wb&#39;))
             return pd.DataFrame(self.scaler_X.transform(values), columns=self.X.columns)
 
         # TODO: Don&#39;t need this anymore with SLE as the prediction
         elif &#39;output&#39; in values_type.lower():
             self.scaler_y.fit(np.array(self.y).reshape(-1, 1))
-            # dump(self.scaler_y, open(&#39;./src/data/output_files/scaler_y.pkl&#39;, &#39;wb&#39;))
             return self.scaler_y.transform(np.array(values).reshape(-1, 1))
 
         else:
             raise ValueError(f&#34;values_type must be in [&#39;inputs&#39;, &#39;outputs&#39;], received {values_type}&#34;)
 
-    def unscale(self, values, values_type):
-        # self.scaler_X = load(open(&#39;./src/data/output_files/scaler_X.pkl&#39;, &#39;rb&#39;))
-        # self.scaler_y = load(open(&#39;./src/data/output_files/scaler_y.pkl&#39;, &#39;rb&#39;))
+    def unscale(self, values: pd.DataFrame, values_type: str):
+        &#34;&#34;&#34;Unscales data based on scalers trained in EmulatorData.scale().
+
+        Args:
+            values (pd.DataFrame): Dataframe to be unscaled.
+            values_type (str): Whether the dataframe to be unscaled is a feature or labels dataframe, must be in [inputs, outputs]
+
+        Returns:
+           pd.DataFrame: unscaled dataset.
+        &#34;&#34;&#34;
 
         if &#39;input&#39; in values_type.lower():
             return pd.DataFrame(self.scaler_X.inverse_transform(values), columns=self.input_columns)
@@ -325,13 +404,29 @@ class EmulatorData:
 <span>(</span><span>directory: str)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Class containing attributes and methods for storing and handling ISMIP6 ice sheet data.</p>
+<p>Initializes class and opens/stores data. Includes loading processed files from
+ise.data.processors functions, converting IVAF to SLE, and saving initial condition data
+for later use.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>directory</code></strong> :&ensp;<code>str</code></dt>
+<dd>Directory containing processed files from ise.data.processors functions. Should contain master.csv</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class EmulatorData:
+    &#34;&#34;&#34;Class containing attributes and methods for storing and handling ISMIP6 ice sheet data.&#34;&#34;&#34;
     def __init__(self, directory: str):
+        &#34;&#34;&#34;Initializes class and opens/stores data. Includes loading processed files from 
+        ise.data.processors functions, converting IVAF to SLE, and saving initial condition data
+        for later use.
+
+        Args:
+            directory (str): Directory containing processed files from ise.data.processors functions. Should contain master.csv
+        &#34;&#34;&#34;
 
         self.directory = directory
 
@@ -344,10 +439,12 @@ class EmulatorData:
             except FileNotFoundError:
                 raise FileNotFoundError(&#39;Files not found, make sure to run all processing functions.&#39;)
 
+        # convert to SLE
         self.data[&#39;sle&#39;] = self.data.ivaf / 1e9 / 362.5  # m^3 / 1e9 / 362.5 = Gt / 1 mm --&gt; mm SLE
         self.data[&#39;modelname&#39;] = self.data.groupname + &#39;_&#39; + self.data.modelname
-        # self.data.smb = self.data.smb.fillna(method=&#34;ffill&#34;)
 
+
+        # Save data on initial conditions for use in data splitting
         unique_batches = self.data.groupby([&#39;modelname&#39;, &#39;sectors&#39;, &#39;exp_id&#39;]).size().reset_index().rename(
             columns={0: &#39;count&#39;}).drop(columns=&#39;count&#39;)
         self.batches = unique_batches.values.tolist()
@@ -373,20 +470,12 @@ class EmulatorData:
         Args:
             target_column (str, optional): Column to be predicted. Defaults to &#39;sle&#39;.
             drop_missing (bool, optional): Flag denoting whether to drop missing values. Defaults to True.
-            drop_columns (list[str], optional): List containing which columns (variables) to be dropped. 
-            Should be List[str] or boolean. If True is chosen, columns are dropped that will result 
-            in optimal performance. Defaults to True.
-            boolean_indices (bool, optional): Flag denoting whether to create boolean indices for all
-            categorical variables left after dropping columns. Defaults to True.
-            scale (bool, optional): Flag denoting whether to scale data between zero and 1. 
-            Sklearn&#39;s MinMaxScaler is used. Defaults to True.
-            split_type (str, optional): Method to split data into training and testing set, must be
-            in [random, batch]. Random is not reccommended but is included for completeness. Defaults to &#39;batch&#39;.
-            drop_outliers (dict, optional): Dictionary denoting whether to drop outliers in a column 
-            based on a condition. Dictionary should be in the following format: 
-            {&#39;column&#39;: &#39;ivaf&#39;, &#39;operator&#39;: &#39;&lt;&#39;, &#39;value&#39;: -1e13}. Defaults to False.
-            time_series (bool, optional): Flag denoting whether to process the data as a time-series
-            dataset or traditional non-time dataset. Defaults to False.
+            drop_columns (list[str], optional): List containing which columns (variables) to be dropped. Should be List[str] or boolean. If True is chosen, columns are dropped that will result in optimal performance. Defaults to True.
+            boolean_indices (bool, optional): Flag denoting whether to create boolean indices for all categorical variables left after dropping columns. Defaults to True.
+            scale (bool, optional): Flag denoting whether to scale data between zero and 1.  Sklearn&#39;s MinMaxScaler is used. Defaults to True.
+            split_type (str, optional): Method to split data into training and testing set, must be in [random, batch]. Random is not reccommended but is included for completeness. Defaults to &#39;batch&#39;.
+            drop_outliers (dict, optional): Dictionary denoting whether to drop outliers in a column based on a condition. Dictionary should be in the following format: {&#39;column&#39;: &#39;ivaf&#39;, &#39;operator&#39;: &#39;&lt;&#39;, &#39;value&#39;: -1e13}. Defaults to False.
+            time_series (bool, optional): Flag denoting whether to process the data as a time-series dataset or traditional non-time dataset. Defaults to False.
             lag (int, optional): Lag variable for time-series processing. Defaults to None.
             
         Returns:
@@ -441,7 +530,22 @@ class EmulatorData:
 
         return self, self.train_features, self.test_features, self.train_labels, self.test_labels
 
-    def drop_outliers(self, column, operator, value, ):
+    def drop_outliers(self, column: str, operator: str, value: float, ):
+        &#34;&#34;&#34;Drops simulations that are outliers based on the provided column, operator, and value. 
+        Extra complexity is handled due to the necessity of removing the entire 85 row series from 
+        the dataset rather than simply removing the rows with given conditions. Note that the 
+        condition indicates rows to be DROPPED, not kept (e.g. &#39;sle&#39;, &#39;&gt;&#39;, &#39;20&#39; would drop all
+        simulations containing sle values over 20.) Operator argument must be in [==, &gt;, &lt;, &gt;=, &lt;=]
+
+        Args:
+            column (str): Column with outlier condition
+            operator (str): Mathematical operator to use for subsetting
+            value (float): Value threshold for outlier
+
+        Returns:
+            EmulatorData: self, with self.data having outliers dropped.
+        &#34;&#34;&#34;
+
         if operator.lower() in (&#39;equal&#39;, &#39;equals&#39;, &#39;=&#39;, &#39;==&#39;):
             outlier_data = self.data[self.data[column] == value]
         elif operator.lower() in (&#39;not equal&#39;, &#39;not equals&#39;, &#39;!=&#39;, &#39;~=&#39;):
@@ -475,13 +579,34 @@ class EmulatorData:
         return self
 
     def split_data(self, target_column: str, ):
+        &#34;&#34;&#34;Splits data into features and labels based on target column.
+
+        Args:
+            target_column (str): Output column to be predicted.
+
+        Returns:
+            EmulatorData: self, with self.X and self.y as attributes.
+        &#34;&#34;&#34;
         self.target_column = target_column
         self.X = self.data.drop(columns=self.output_columns)
         self.y = self.data[target_column]
         self.input_columns = self.X.columns
         return self
 
-    def train_test_split(self, train_size=0.7, split_type=&#39;random&#39;):
+    def train_test_split(self, train_size: float=0.7, split_type: str=&#39;batch&#39;):
+        &#34;&#34;&#34;Splits dataset into training set and testing set. Can be split using two different
+        methods: random and batch. The random method splits by randomly sampling rows, whereas 
+        batch method randomly samples entire simulation series (85 rows) in order to keep simulations
+        together during testing. Random method is included for completeness but is not reccommended
+        for use in emulator creation.
+
+        Args:
+            train_size (float, optional): Proportion of data in training set, between 0 and 1. Defaults to 0.7.
+            split_type (str, optional): Splitting method, must be in [random, batch]. Defaults to &#39;batch&#39;.
+
+        Returns:
+            EmulatorData: self, with self.train_features, self.test_features, self.train_labels, self.test_labels as attributes.
+        &#34;&#34;&#34;
 
         if not isinstance(self.X, pd.DataFrame):
             self.X = pd.DataFrame(self.X, columns=self.input_columns)
@@ -537,10 +662,24 @@ class EmulatorData:
         return self
 
     def drop_missing(self):
+        &#34;&#34;&#34;Drops rows with missing values (wrapper for pandas.DataFrame.dropna()).
+
+        Returns:
+            EmulatorData: self, with NA values dropped from self.data.
+        &#34;&#34;&#34;
         self.data = self.data.dropna()
         return self
 
-    def create_boolean_indices(self, columns=&#39;all&#39;):
+    def create_boolean_indices(self, columns: str=&#39;all&#39;):
+        &#34;&#34;&#34;Creates boolean indices (one hot encoding) for categoritcal variables in columns 
+        argument. Wrapper for pandas.get_dummies() with added functionality for prefix separation.
+
+        Args:
+            columns (str, optional): Categorical variables to be encoded. Defaults to &#39;all&#39;.
+
+        Returns:
+            EmulatorData: self, with boolean indices in self.data.
+        &#34;&#34;&#34;
         if columns == &#39;all&#39;:
             self.data = pd.get_dummies(self.data, prefix_sep=&#34;-&#34;)
         else:
@@ -553,7 +692,16 @@ class EmulatorData:
                 self.data[col] = self.data[col].astype(float)
         return self
 
-    def drop_columns(self, columns):
+    def drop_columns(self, columns: list[str]):
+        &#34;&#34;&#34;Drops columns in columns argument from the dataset. Wrapper for pandas.DataFrame.drop()
+        with error checking.
+
+        Args:
+            columns (list[str]): List of columns (or singular string column) to be dropped from the dataset.
+
+        Returns:
+            EmulatorData: self, with desired columns dropped from self.data.
+        &#34;&#34;&#34;
         if not isinstance(columns, list) and not isinstance(columns, str):
             raise ValueError(f&#39;Columns argument must be of type: str|list, received {type(columns)}.&#39;)
         columns = list(columns)
@@ -562,7 +710,18 @@ class EmulatorData:
 
         return self
 
-    def scale(self, values, values_type, scaler=&#34;MinMaxScaler&#34;):
+    def scale(self, values: pd.DataFrame, values_type: str, scaler: str=&#34;MinMaxScaler&#34;):
+        &#34;&#34;&#34;Scales dataframe and saves scaler for future use in unscaling. Sklearn&#39;s scaling API is
+        used. MinMaxScaler is recommended but StandardScaler is also supported.
+
+        Args:
+            values (pd.DataFrame): Dataframe to be scaled.
+            values_type (str): Whether the dataframe to be scaled is a feature or labels dataframe, must be in [inputs, outputs]
+            scaler (str, optional): Type of scaler to be used, must be in [MinMaxScaler, StandardScaler]. Defaults to &#34;MinMaxScaler&#34;.
+
+        Returns:
+            pd.DataFrame: scaled dataset with self.scaler_X and self.scaler_y as attributes in the EmulatorData class.
+        &#34;&#34;&#34;
         if self.X is None and self.y is None:
             raise AttributeError(&#39;Data must be split before scaling using model.split_data method.&#39;)
 
@@ -582,21 +741,26 @@ class EmulatorData:
         if &#39;input&#39; in values_type.lower():
             self.input_columns = self.X.columns
             self.scaler_X.fit(self.X)
-            # dump(self.scaler_X, open(&#39;./src/data/output_files/scaler_X.pkl&#39;, &#39;wb&#39;))
             return pd.DataFrame(self.scaler_X.transform(values), columns=self.X.columns)
 
         # TODO: Don&#39;t need this anymore with SLE as the prediction
         elif &#39;output&#39; in values_type.lower():
             self.scaler_y.fit(np.array(self.y).reshape(-1, 1))
-            # dump(self.scaler_y, open(&#39;./src/data/output_files/scaler_y.pkl&#39;, &#39;wb&#39;))
             return self.scaler_y.transform(np.array(values).reshape(-1, 1))
 
         else:
             raise ValueError(f&#34;values_type must be in [&#39;inputs&#39;, &#39;outputs&#39;], received {values_type}&#34;)
 
-    def unscale(self, values, values_type):
-        # self.scaler_X = load(open(&#39;./src/data/output_files/scaler_X.pkl&#39;, &#39;rb&#39;))
-        # self.scaler_y = load(open(&#39;./src/data/output_files/scaler_y.pkl&#39;, &#39;rb&#39;))
+    def unscale(self, values: pd.DataFrame, values_type: str):
+        &#34;&#34;&#34;Unscales data based on scalers trained in EmulatorData.scale().
+
+        Args:
+            values (pd.DataFrame): Dataframe to be unscaled.
+            values_type (str): Whether the dataframe to be unscaled is a feature or labels dataframe, must be in [inputs, outputs]
+
+        Returns:
+           pd.DataFrame: unscaled dataset.
+        &#34;&#34;&#34;
 
         if &#39;input&#39; in values_type.lower():
             return pd.DataFrame(self.scaler_X.inverse_transform(values), columns=self.input_columns)
@@ -610,15 +774,35 @@ class EmulatorData:
 <h3>Methods</h3>
 <dl>
 <dt id="ise.data.EmulatorData.EmulatorData.create_boolean_indices"><code class="name flex">
-<span>def <span class="ident">create_boolean_indices</span></span>(<span>self, columns='all')</span>
+<span>def <span class="ident">create_boolean_indices</span></span>(<span>self, columns: str = 'all')</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Creates boolean indices (one hot encoding) for categoritcal variables in columns
+argument. Wrapper for pandas.get_dummies() with added functionality for prefix separation.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>columns</code></strong> :&ensp;<code>str</code>, optional</dt>
+<dd>Categorical variables to be encoded. Defaults to 'all'.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code><a title="ise.data.EmulatorData.EmulatorData" href="#ise.data.EmulatorData.EmulatorData">EmulatorData</a></code></dt>
+<dd>self, with boolean indices in self.data.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def create_boolean_indices(self, columns=&#39;all&#39;):
+<pre><code class="python">def create_boolean_indices(self, columns: str=&#39;all&#39;):
+    &#34;&#34;&#34;Creates boolean indices (one hot encoding) for categoritcal variables in columns 
+    argument. Wrapper for pandas.get_dummies() with added functionality for prefix separation.
+
+    Args:
+        columns (str, optional): Categorical variables to be encoded. Defaults to &#39;all&#39;.
+
+    Returns:
+        EmulatorData: self, with boolean indices in self.data.
+    &#34;&#34;&#34;
     if columns == &#39;all&#39;:
         self.data = pd.get_dummies(self.data, prefix_sep=&#34;-&#34;)
     else:
@@ -633,15 +817,35 @@ class EmulatorData:
 </details>
 </dd>
 <dt id="ise.data.EmulatorData.EmulatorData.drop_columns"><code class="name flex">
-<span>def <span class="ident">drop_columns</span></span>(<span>self, columns)</span>
+<span>def <span class="ident">drop_columns</span></span>(<span>self, columns: list[str])</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Drops columns in columns argument from the dataset. Wrapper for pandas.DataFrame.drop()
+with error checking.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>columns</code></strong> :&ensp;<code>list[str]</code></dt>
+<dd>List of columns (or singular string column) to be dropped from the dataset.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code><a title="ise.data.EmulatorData.EmulatorData" href="#ise.data.EmulatorData.EmulatorData">EmulatorData</a></code></dt>
+<dd>self, with desired columns dropped from self.data.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def drop_columns(self, columns):
+<pre><code class="python">def drop_columns(self, columns: list[str]):
+    &#34;&#34;&#34;Drops columns in columns argument from the dataset. Wrapper for pandas.DataFrame.drop()
+    with error checking.
+
+    Args:
+        columns (list[str]): List of columns (or singular string column) to be dropped from the dataset.
+
+    Returns:
+        EmulatorData: self, with desired columns dropped from self.data.
+    &#34;&#34;&#34;
     if not isinstance(columns, list) and not isinstance(columns, str):
         raise ValueError(f&#39;Columns argument must be of type: str|list, received {type(columns)}.&#39;)
     columns = list(columns)
@@ -655,26 +859,69 @@ class EmulatorData:
 <span>def <span class="ident">drop_missing</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Drops rows with missing values (wrapper for pandas.DataFrame.dropna()).</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code><a title="ise.data.EmulatorData.EmulatorData" href="#ise.data.EmulatorData.EmulatorData">EmulatorData</a></code></dt>
+<dd>self, with NA values dropped from self.data.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def drop_missing(self):
+    &#34;&#34;&#34;Drops rows with missing values (wrapper for pandas.DataFrame.dropna()).
+
+    Returns:
+        EmulatorData: self, with NA values dropped from self.data.
+    &#34;&#34;&#34;
     self.data = self.data.dropna()
     return self</code></pre>
 </details>
 </dd>
 <dt id="ise.data.EmulatorData.EmulatorData.drop_outliers"><code class="name flex">
-<span>def <span class="ident">drop_outliers</span></span>(<span>self, column, operator, value)</span>
+<span>def <span class="ident">drop_outliers</span></span>(<span>self, column: str, operator: str, value: float)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Drops simulations that are outliers based on the provided column, operator, and value.
+Extra complexity is handled due to the necessity of removing the entire 85 row series from
+the dataset rather than simply removing the rows with given conditions. Note that the
+condition indicates rows to be DROPPED, not kept (e.g. 'sle', '&gt;', '20' would drop all
+simulations containing sle values over 20.) Operator argument must be in [==, &gt;, &lt;, &gt;=, &lt;=]</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>column</code></strong> :&ensp;<code>str</code></dt>
+<dd>Column with outlier condition</dd>
+<dt><strong><code>operator</code></strong> :&ensp;<code>str</code></dt>
+<dd>Mathematical operator to use for subsetting</dd>
+<dt><strong><code>value</code></strong> :&ensp;<code>float</code></dt>
+<dd>Value threshold for outlier</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code><a title="ise.data.EmulatorData.EmulatorData" href="#ise.data.EmulatorData.EmulatorData">EmulatorData</a></code></dt>
+<dd>self, with self.data having outliers dropped.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def drop_outliers(self, column, operator, value, ):
+<pre><code class="python">def drop_outliers(self, column: str, operator: str, value: float, ):
+    &#34;&#34;&#34;Drops simulations that are outliers based on the provided column, operator, and value. 
+    Extra complexity is handled due to the necessity of removing the entire 85 row series from 
+    the dataset rather than simply removing the rows with given conditions. Note that the 
+    condition indicates rows to be DROPPED, not kept (e.g. &#39;sle&#39;, &#39;&gt;&#39;, &#39;20&#39; would drop all
+    simulations containing sle values over 20.) Operator argument must be in [==, &gt;, &lt;, &gt;=, &lt;=]
+
+    Args:
+        column (str): Column with outlier condition
+        operator (str): Mathematical operator to use for subsetting
+        value (float): Value threshold for outlier
+
+    Returns:
+        EmulatorData: self, with self.data having outliers dropped.
+    &#34;&#34;&#34;
+
     if operator.lower() in (&#39;equal&#39;, &#39;equals&#39;, &#39;=&#39;, &#39;==&#39;):
         outlier_data = self.data[self.data[column] == value]
     elif operator.lower() in (&#39;not equal&#39;, &#39;not equals&#39;, &#39;!=&#39;, &#39;~=&#39;):
@@ -723,25 +970,18 @@ code for more information on each process.</p>
 <dt><strong><code>drop_missing</code></strong> :&ensp;<code>bool</code>, optional</dt>
 <dd>Flag denoting whether to drop missing values. Defaults to True.</dd>
 <dt><strong><code>drop_columns</code></strong> :&ensp;<code>list[str]</code>, optional</dt>
-<dd>List containing which columns (variables) to be dropped. </dd>
-<dt>Should be List[str] or boolean. If True is chosen, columns are dropped that will result</dt>
-<dt>in optimal performance. Defaults to True.</dt>
+<dd>List containing which columns (variables) to be dropped. Should be List[str] or boolean. If True is chosen, columns are dropped that will result in optimal performance. Defaults to True.</dd>
 <dt><strong><code>boolean_indices</code></strong> :&ensp;<code>bool</code>, optional</dt>
-<dd>Flag denoting whether to create boolean indices for all</dd>
-<dt>categorical variables left after dropping columns. Defaults to True.</dt>
+<dd>Flag denoting whether to create boolean indices for all categorical variables left after dropping columns. Defaults to True.</dd>
 <dt><strong><code>scale</code></strong> :&ensp;<code>bool</code>, optional</dt>
-<dd>Flag denoting whether to scale data between zero and 1. </dd>
-<dt>Sklearn's MinMaxScaler is used. Defaults to True.</dt>
+<dd>Flag denoting whether to scale data between zero and 1.
+Sklearn's MinMaxScaler is used. Defaults to True.</dd>
 <dt><strong><code>split_type</code></strong> :&ensp;<code>str</code>, optional</dt>
-<dd>Method to split data into training and testing set, must be</dd>
-<dt>in [random, batch]. Random is not reccommended but is included for completeness. Defaults to 'batch'.</dt>
+<dd>Method to split data into training and testing set, must be in [random, batch]. Random is not reccommended but is included for completeness. Defaults to 'batch'.</dd>
 <dt><strong><code>drop_outliers</code></strong> :&ensp;<code>dict</code>, optional</dt>
-<dd>Dictionary denoting whether to drop outliers in a column </dd>
-<dt>based on a condition. Dictionary should be in the following format:</dt>
-<dt>{'column': 'ivaf', 'operator': '&lt;', 'value': -1e13}. Defaults to False.</dt>
+<dd>Dictionary denoting whether to drop outliers in a column based on a condition. Dictionary should be in the following format: {'column': 'ivaf', 'operator': '&lt;', 'value': -1e13}. Defaults to False.</dd>
 <dt><strong><code>time_series</code></strong> :&ensp;<code>bool</code>, optional</dt>
-<dd>Flag denoting whether to process the data as a time-series</dd>
-<dt>dataset or traditional non-time dataset. Defaults to False.</dt>
+<dd>Flag denoting whether to process the data as a time-series dataset or traditional non-time dataset. Defaults to False.</dd>
 <dt><strong><code>lag</code></strong> :&ensp;<code>int</code>, optional</dt>
 <dd>Lag variable for time-series processing. Defaults to None.</dd>
 </dl>
@@ -766,20 +1006,12 @@ code for more information on each process.</p>
     Args:
         target_column (str, optional): Column to be predicted. Defaults to &#39;sle&#39;.
         drop_missing (bool, optional): Flag denoting whether to drop missing values. Defaults to True.
-        drop_columns (list[str], optional): List containing which columns (variables) to be dropped. 
-        Should be List[str] or boolean. If True is chosen, columns are dropped that will result 
-        in optimal performance. Defaults to True.
-        boolean_indices (bool, optional): Flag denoting whether to create boolean indices for all
-        categorical variables left after dropping columns. Defaults to True.
-        scale (bool, optional): Flag denoting whether to scale data between zero and 1. 
-        Sklearn&#39;s MinMaxScaler is used. Defaults to True.
-        split_type (str, optional): Method to split data into training and testing set, must be
-        in [random, batch]. Random is not reccommended but is included for completeness. Defaults to &#39;batch&#39;.
-        drop_outliers (dict, optional): Dictionary denoting whether to drop outliers in a column 
-        based on a condition. Dictionary should be in the following format: 
-        {&#39;column&#39;: &#39;ivaf&#39;, &#39;operator&#39;: &#39;&lt;&#39;, &#39;value&#39;: -1e13}. Defaults to False.
-        time_series (bool, optional): Flag denoting whether to process the data as a time-series
-        dataset or traditional non-time dataset. Defaults to False.
+        drop_columns (list[str], optional): List containing which columns (variables) to be dropped. Should be List[str] or boolean. If True is chosen, columns are dropped that will result in optimal performance. Defaults to True.
+        boolean_indices (bool, optional): Flag denoting whether to create boolean indices for all categorical variables left after dropping columns. Defaults to True.
+        scale (bool, optional): Flag denoting whether to scale data between zero and 1.  Sklearn&#39;s MinMaxScaler is used. Defaults to True.
+        split_type (str, optional): Method to split data into training and testing set, must be in [random, batch]. Random is not reccommended but is included for completeness. Defaults to &#39;batch&#39;.
+        drop_outliers (dict, optional): Dictionary denoting whether to drop outliers in a column based on a condition. Dictionary should be in the following format: {&#39;column&#39;: &#39;ivaf&#39;, &#39;operator&#39;: &#39;&lt;&#39;, &#39;value&#39;: -1e13}. Defaults to False.
+        time_series (bool, optional): Flag denoting whether to process the data as a time-series dataset or traditional non-time dataset. Defaults to False.
         lag (int, optional): Lag variable for time-series processing. Defaults to None.
         
     Returns:
@@ -836,15 +1068,41 @@ code for more information on each process.</p>
 </details>
 </dd>
 <dt id="ise.data.EmulatorData.EmulatorData.scale"><code class="name flex">
-<span>def <span class="ident">scale</span></span>(<span>self, values, values_type, scaler='MinMaxScaler')</span>
+<span>def <span class="ident">scale</span></span>(<span>self, values: pandas.core.frame.DataFrame, values_type: str, scaler: str = 'MinMaxScaler')</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Scales dataframe and saves scaler for future use in unscaling. Sklearn's scaling API is
+used. MinMaxScaler is recommended but StandardScaler is also supported.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>values</code></strong> :&ensp;<code>pd.DataFrame</code></dt>
+<dd>Dataframe to be scaled.</dd>
+<dt><strong><code>values_type</code></strong> :&ensp;<code>str</code></dt>
+<dd>Whether the dataframe to be scaled is a feature or labels dataframe, must be in [inputs, outputs]</dd>
+<dt><strong><code>scaler</code></strong> :&ensp;<code>str</code>, optional</dt>
+<dd>Type of scaler to be used, must be in [MinMaxScaler, StandardScaler]. Defaults to "MinMaxScaler".</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>pd.DataFrame</code></dt>
+<dd>scaled dataset with self.scaler_X and self.scaler_y as attributes in the EmulatorData class.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def scale(self, values, values_type, scaler=&#34;MinMaxScaler&#34;):
+<pre><code class="python">def scale(self, values: pd.DataFrame, values_type: str, scaler: str=&#34;MinMaxScaler&#34;):
+    &#34;&#34;&#34;Scales dataframe and saves scaler for future use in unscaling. Sklearn&#39;s scaling API is
+    used. MinMaxScaler is recommended but StandardScaler is also supported.
+
+    Args:
+        values (pd.DataFrame): Dataframe to be scaled.
+        values_type (str): Whether the dataframe to be scaled is a feature or labels dataframe, must be in [inputs, outputs]
+        scaler (str, optional): Type of scaler to be used, must be in [MinMaxScaler, StandardScaler]. Defaults to &#34;MinMaxScaler&#34;.
+
+    Returns:
+        pd.DataFrame: scaled dataset with self.scaler_X and self.scaler_y as attributes in the EmulatorData class.
+    &#34;&#34;&#34;
     if self.X is None and self.y is None:
         raise AttributeError(&#39;Data must be split before scaling using model.split_data method.&#39;)
 
@@ -864,13 +1122,11 @@ code for more information on each process.</p>
     if &#39;input&#39; in values_type.lower():
         self.input_columns = self.X.columns
         self.scaler_X.fit(self.X)
-        # dump(self.scaler_X, open(&#39;./src/data/output_files/scaler_X.pkl&#39;, &#39;wb&#39;))
         return pd.DataFrame(self.scaler_X.transform(values), columns=self.X.columns)
 
     # TODO: Don&#39;t need this anymore with SLE as the prediction
     elif &#39;output&#39; in values_type.lower():
         self.scaler_y.fit(np.array(self.y).reshape(-1, 1))
-        # dump(self.scaler_y, open(&#39;./src/data/output_files/scaler_y.pkl&#39;, &#39;wb&#39;))
         return self.scaler_y.transform(np.array(values).reshape(-1, 1))
 
     else:
@@ -881,12 +1137,30 @@ code for more information on each process.</p>
 <span>def <span class="ident">split_data</span></span>(<span>self, target_column: str)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Splits data into features and labels based on target column.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>target_column</code></strong> :&ensp;<code>str</code></dt>
+<dd>Output column to be predicted.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code><a title="ise.data.EmulatorData.EmulatorData" href="#ise.data.EmulatorData.EmulatorData">EmulatorData</a></code></dt>
+<dd>self, with self.X and self.y as attributes.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def split_data(self, target_column: str, ):
+    &#34;&#34;&#34;Splits data into features and labels based on target column.
+
+    Args:
+        target_column (str): Output column to be predicted.
+
+    Returns:
+        EmulatorData: self, with self.X and self.y as attributes.
+    &#34;&#34;&#34;
     self.target_column = target_column
     self.X = self.data.drop(columns=self.output_columns)
     self.y = self.data[target_column]
@@ -895,15 +1169,44 @@ code for more information on each process.</p>
 </details>
 </dd>
 <dt id="ise.data.EmulatorData.EmulatorData.train_test_split"><code class="name flex">
-<span>def <span class="ident">train_test_split</span></span>(<span>self, train_size=0.7, split_type='random')</span>
+<span>def <span class="ident">train_test_split</span></span>(<span>self, train_size: float = 0.7, split_type: str = 'batch')</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Splits dataset into training set and testing set. Can be split using two different
+methods: random and batch. The random method splits by randomly sampling rows, whereas
+batch method randomly samples entire simulation series (85 rows) in order to keep simulations
+together during testing. Random method is included for completeness but is not reccommended
+for use in emulator creation.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>train_size</code></strong> :&ensp;<code>float</code>, optional</dt>
+<dd>Proportion of data in training set, between 0 and 1. Defaults to 0.7.</dd>
+<dt><strong><code>split_type</code></strong> :&ensp;<code>str</code>, optional</dt>
+<dd>Splitting method, must be in [random, batch]. Defaults to 'batch'.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code><a title="ise.data.EmulatorData.EmulatorData" href="#ise.data.EmulatorData.EmulatorData">EmulatorData</a></code></dt>
+<dd>self, with self.train_features, self.test_features, self.train_labels, self.test_labels as attributes.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def train_test_split(self, train_size=0.7, split_type=&#39;random&#39;):
+<pre><code class="python">def train_test_split(self, train_size: float=0.7, split_type: str=&#39;batch&#39;):
+    &#34;&#34;&#34;Splits dataset into training set and testing set. Can be split using two different
+    methods: random and batch. The random method splits by randomly sampling rows, whereas 
+    batch method randomly samples entire simulation series (85 rows) in order to keep simulations
+    together during testing. Random method is included for completeness but is not reccommended
+    for use in emulator creation.
+
+    Args:
+        train_size (float, optional): Proportion of data in training set, between 0 and 1. Defaults to 0.7.
+        split_type (str, optional): Splitting method, must be in [random, batch]. Defaults to &#39;batch&#39;.
+
+    Returns:
+        EmulatorData: self, with self.train_features, self.test_features, self.train_labels, self.test_labels as attributes.
+    &#34;&#34;&#34;
 
     if not isinstance(self.X, pd.DataFrame):
         self.X = pd.DataFrame(self.X, columns=self.input_columns)
@@ -960,17 +1263,36 @@ code for more information on each process.</p>
 </details>
 </dd>
 <dt id="ise.data.EmulatorData.EmulatorData.unscale"><code class="name flex">
-<span>def <span class="ident">unscale</span></span>(<span>self, values, values_type)</span>
+<span>def <span class="ident">unscale</span></span>(<span>self, values: pandas.core.frame.DataFrame, values_type: str)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Unscales data based on scalers trained in EmulatorData.scale().</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>values</code></strong> :&ensp;<code>pd.DataFrame</code></dt>
+<dd>Dataframe to be unscaled.</dd>
+<dt><strong><code>values_type</code></strong> :&ensp;<code>str</code></dt>
+<dd>Whether the dataframe to be unscaled is a feature or labels dataframe, must be in [inputs, outputs]</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>pd.DataFrame</code></dt>
+<dd>unscaled dataset.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def unscale(self, values, values_type):
-    # self.scaler_X = load(open(&#39;./src/data/output_files/scaler_X.pkl&#39;, &#39;rb&#39;))
-    # self.scaler_y = load(open(&#39;./src/data/output_files/scaler_y.pkl&#39;, &#39;rb&#39;))
+<pre><code class="python">def unscale(self, values: pd.DataFrame, values_type: str):
+    &#34;&#34;&#34;Unscales data based on scalers trained in EmulatorData.scale().
+
+    Args:
+        values (pd.DataFrame): Dataframe to be unscaled.
+        values_type (str): Whether the dataframe to be unscaled is a feature or labels dataframe, must be in [inputs, outputs]
+
+    Returns:
+       pd.DataFrame: unscaled dataset.
+    &#34;&#34;&#34;
 
     if &#39;input&#39; in values_type.lower():
         return pd.DataFrame(self.scaler_X.inverse_transform(values), columns=self.input_columns)

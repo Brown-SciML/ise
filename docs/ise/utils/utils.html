@@ -35,7 +35,14 @@ np.random.seed(10)
 
 file_dir = os.path.dirname(os.path.realpath(__file__))
 
-def check_input(input, options, argname=None):
+def check_input(input: str, options: list[str], argname: str=None):
+    &#34;&#34;&#34;Checks validity of input argument. Not used frequently due to error raising being better practice.
+
+    Args:
+        input (str): Input value.
+        options (list[str]): Valid options for the input value.
+        argname (str, optional): Name of the argument being tested. Defaults to None.
+    &#34;&#34;&#34;
     # simple assert that input is in the designated options (readability purposes only)
     if isinstance(input, str):
         input = input.lower()
@@ -44,7 +51,18 @@ def check_input(input, options, argname=None):
             raise ValueError(f&#34;{argname} must be in {options}, received {input}&#34;)
         raise ValueError(f&#34;input must be in {options}, received {input}&#34;)
 
-def get_all_filepaths(path, filetype=None, contains=None):
+def get_all_filepaths(path: str, filetype: str=None, contains: str=None):
+    &#34;&#34;&#34;Retrieves all filepaths for files within a directory. Supports subsetting based on filetype
+    and substring search.
+
+    Args:
+        path (str): Path to directory to be searched.
+        filetype (str, optional): File type to be returned (e.g. csv, nc). Defaults to None.
+        contains (str, optional): Substring that files found must contain. Defaults to None.
+
+    Returns:
+        list[str]: list of files within the directory matching the input criteria.
+    &#34;&#34;&#34;
     all_files = list()
     for (dirpath, dirnames, filenames) in os.walk(path):
         all_files += [os.path.join(dirpath, file) for file in filenames]
@@ -57,25 +75,19 @@ def get_all_filepaths(path, filetype=None, contains=None):
         all_files = [file for file in all_files if contains in file]
         
     return all_files
-            
-
-def plot_true_vs_predicted(preds, y_test, save=None):
-    try:
-        preds = preds.detach().numpy()
-    except AttributeError:
-        pass
-    plt.figure()
-    plt.scatter(y_test, preds, s=3, alpha=0.2)
-    plt.plot([min(y_test),max(y_test)], [min(y_test),max(y_test)], &#39;r-&#39;)
-    plt.title(&#39;Neural Network True vs Predicted&#39;)
-    plt.xlabel(&#39;True&#39;)
-    plt.ylabel(&#39;Predicted&#39;)
-    if save:
-        plt.savefig(&#34;results/nn.png&#34;)
-    plt.show()
     
 
-def _structure_emulatordata_args(input_args, time_series):
+def _structure_emulatordata_args(input_args: dict, time_series: bool):
+    &#34;&#34;&#34;Formats kwargs for EmulatorData processing. Includes establishing defaults if values are not
+    supplied.
+
+    Args:
+        input_args (dict): Dictionary containin kwargs for EmulatorData.process()
+        time_series (bool): Flag denoting whether the processing is time-series.
+
+    Returns:
+        dict: EmulatorData.process() kwargs formatted with defaults.
+    &#34;&#34;&#34;
     emulator_data_defaults = dict(
                     target_column=&#39;sle&#39;,
                     drop_missing=True,
@@ -145,15 +157,31 @@ def _structure_architecture_args(architecture, time_series):
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="ise.utils.utils.check_input"><code class="name flex">
-<span>def <span class="ident">check_input</span></span>(<span>input, options, argname=None)</span>
+<span>def <span class="ident">check_input</span></span>(<span>input: str, options: list[str], argname: str = None)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Checks validity of input argument. Not used frequently due to error raising being better practice.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>input</code></strong> :&ensp;<code>str</code></dt>
+<dd>Input value.</dd>
+<dt><strong><code>options</code></strong> :&ensp;<code>list[str]</code></dt>
+<dd>Valid options for the input value.</dd>
+<dt><strong><code>argname</code></strong> :&ensp;<code>str</code>, optional</dt>
+<dd>Name of the argument being tested. Defaults to None.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def check_input(input, options, argname=None):
+<pre><code class="python">def check_input(input: str, options: list[str], argname: str=None):
+    &#34;&#34;&#34;Checks validity of input argument. Not used frequently due to error raising being better practice.
+
+    Args:
+        input (str): Input value.
+        options (list[str]): Valid options for the input value.
+        argname (str, optional): Name of the argument being tested. Defaults to None.
+    &#34;&#34;&#34;
     # simple assert that input is in the designated options (readability purposes only)
     if isinstance(input, str):
         input = input.lower()
@@ -164,15 +192,41 @@ def _structure_architecture_args(architecture, time_series):
 </details>
 </dd>
 <dt id="ise.utils.utils.get_all_filepaths"><code class="name flex">
-<span>def <span class="ident">get_all_filepaths</span></span>(<span>path, filetype=None, contains=None)</span>
+<span>def <span class="ident">get_all_filepaths</span></span>(<span>path: str, filetype: str = None, contains: str = None)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Retrieves all filepaths for files within a directory. Supports subsetting based on filetype
+and substring search.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>path</code></strong> :&ensp;<code>str</code></dt>
+<dd>Path to directory to be searched.</dd>
+<dt><strong><code>filetype</code></strong> :&ensp;<code>str</code>, optional</dt>
+<dd>File type to be returned (e.g. csv, nc). Defaults to None.</dd>
+<dt><strong><code>contains</code></strong> :&ensp;<code>str</code>, optional</dt>
+<dd>Substring that files found must contain. Defaults to None.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list[str]</code></dt>
+<dd>list of files within the directory matching the input criteria.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_all_filepaths(path, filetype=None, contains=None):
+<pre><code class="python">def get_all_filepaths(path: str, filetype: str=None, contains: str=None):
+    &#34;&#34;&#34;Retrieves all filepaths for files within a directory. Supports subsetting based on filetype
+    and substring search.
+
+    Args:
+        path (str): Path to directory to be searched.
+        filetype (str, optional): File type to be returned (e.g. csv, nc). Defaults to None.
+        contains (str, optional): Substring that files found must contain. Defaults to None.
+
+    Returns:
+        list[str]: list of files within the directory matching the input criteria.
+    &#34;&#34;&#34;
     all_files = list()
     for (dirpath, dirnames, filenames) in os.walk(path):
         all_files += [os.path.join(dirpath, file) for file in filenames]
@@ -185,31 +239,6 @@ def _structure_architecture_args(architecture, time_series):
         all_files = [file for file in all_files if contains in file]
         
     return all_files</code></pre>
-</details>
-</dd>
-<dt id="ise.utils.utils.plot_true_vs_predicted"><code class="name flex">
-<span>def <span class="ident">plot_true_vs_predicted</span></span>(<span>preds, y_test, save=None)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def plot_true_vs_predicted(preds, y_test, save=None):
-    try:
-        preds = preds.detach().numpy()
-    except AttributeError:
-        pass
-    plt.figure()
-    plt.scatter(y_test, preds, s=3, alpha=0.2)
-    plt.plot([min(y_test),max(y_test)], [min(y_test),max(y_test)], &#39;r-&#39;)
-    plt.title(&#39;Neural Network True vs Predicted&#39;)
-    plt.xlabel(&#39;True&#39;)
-    plt.ylabel(&#39;Predicted&#39;)
-    if save:
-        plt.savefig(&#34;results/nn.png&#34;)
-    plt.show()</code></pre>
 </details>
 </dd>
 </dl>
@@ -232,7 +261,6 @@ def _structure_architecture_args(architecture, time_series):
 <ul class="">
 <li><code><a title="ise.utils.utils.check_input" href="#ise.utils.utils.check_input">check_input</a></code></li>
 <li><code><a title="ise.utils.utils.get_all_filepaths" href="#ise.utils.utils.get_all_filepaths">get_all_filepaths</a></code></li>
-<li><code><a title="ise.utils.utils.plot_true_vs_predicted" href="#ise.utils.utils.plot_true_vs_predicted">plot_true_vs_predicted</a></code></li>
 </ul>
 </li>
 </ul>
