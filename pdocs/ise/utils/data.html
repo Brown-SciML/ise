@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>ise.utils.data API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>ise.utils.data</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import pandas as pd
+from ise.utils.utils import _structure_emulatordata_args
+from ise.data import EmulatorData
+from itertools import product
+import numpy as np
+from scipy.stats import gaussian_kde
+from scipy.spatial.distance import jensenshannon
+
+
+def load_ml_data(data_directory, time_series=True):
+    &#34;&#34;&#34;Loads training and testing data for machine learning models. These files are generated using 
+    functions in the ise.data.processing modules or process_data in the ise.pipelines.processing module.
+
+    Args:
+        data_directory (str): Directory containing processed files.
+        time_series (bool): Flag denoting whether to load the time-series version of the data.
+
+    Returns:
+        train_features (pd.DataFrame): Training data features.
+        train_labels (pd.DataFrame): Training data labels.
+        test_features (pd.DataFrame): Testing data features.
+        test_labels (pd.DataFrame): Testing data labels.
+        test_scenarios (List[List[str]]): Scenarios included in the test dataset.
+    &#34;&#34;&#34;
+    if time_series:
+        try:
+            test_features = pd.read_csv(f&#39;{data_directory}/ts_test_features.csv&#39;)
+            train_features = pd.read_csv(f&#39;{data_directory}/ts_train_features.csv&#39;)
+            test_labels = pd.read_csv(f&#39;{data_directory}/ts_test_labels.csv&#39;)
+            train_labels = pd.read_csv(f&#39;{data_directory}/ts_train_labels.csv&#39;)
+            test_scenarios = pd.read_csv(f&#39;{data_directory}/ts_test_scenarios.csv&#39;).values.tolist()
+        except FileNotFoundError:
+                raise FileNotFoundError(f&#39;Files not found at {data_directory}. Format must be in format \&#34;ts_train_features.csv\&#34;&#39;)
+    else:
+        try:
+            test_features = pd.read_csv(f&#39;{data_directory}/traditional_test_features.csv&#39;)
+            train_features = pd.read_csv(f&#39;{data_directory}/traditional_train_features.csv&#39;)
+            test_labels = pd.read_csv(f&#39;{data_directory}/traditional_test_labels.csv&#39;)
+            train_labels = pd.read_csv(f&#39;{data_directory}/traditional_train_labels.csv&#39;)
+            test_scenarios = pd.read_csv(f&#39;{data_directory}/traditional_test_scenarios.csv&#39;).values.tolist()
+        except FileNotFoundError:
+                raise FileNotFoundError(f&#39;Files not found at {data_directory}. Format must be in format \&#34;traditional_train_features.csv\&#34;&#39;)
+    
+    return train_features, pd.Series(train_labels[&#39;sle&#39;], name=&#39;sle&#39;), test_features, pd.Series(test_labels[&#39;sle&#39;], name=&#39;sle&#39;), test_scenarios
+
+
+def undummify(df, prefix_sep=&#34;-&#34;):
+    cols2collapse = {
+        item.split(prefix_sep)[0]: (prefix_sep in item) for item in df.columns
+    }
+    
+    series_list = []
+    for col, needs_to_collapse in cols2collapse.items():
+        if needs_to_collapse:
+            undummified = (
+                df.filter(like=col)
+                .idxmax(axis=1)
+                .apply(lambda x: x.split(prefix_sep, maxsplit=1)[1])
+                .rename(col)
+            )
+            series_list.append(undummified)
+        else:
+            series_list.append(df[col])
+    undummified_df = pd.concat(series_list, axis=1)
+    return undummified_df
+
+def combine_testing_results(data_directory, preds, time_series=True, save_directory=None):
+    train_features, train_labels, test_features, test_labels, test_scenarios = load_ml_data(data_directory)
+    
+    X_test = pd.DataFrame(test_features)
+    if isinstance(test_labels, pd.Series):
+        y_test = test_labels
+    if isinstance(test_labels, pd.DataFrame):
+        y_test = pd.Series(test_labels[&#39;sle&#39;])
+    else:
+        y_test = pd.Series(test_labels)
+    
+    test = X_test.drop(columns=[col for col in X_test.columns if &#39;lag&#39; in col])
+    test[&#39;true&#39;] = y_test
+    test[&#39;pred&#39;] = preds
+    test[&#39;mse&#39;] = (test.true - test.pred)**2
+    test[&#39;mae&#39;] = abs(test.true - test.pred)
+    
+    # test[&#39;sectors&#39;] = round(test.sectors).astype(int)
+    test[&#39;year&#39;] = round(test.year).astype(int)
+    
+    test = undummify(test)
+    
+    if save_directory:
+        if isinstance(save_directory, str):
+            save_path = f&#34;{save_directory}/results.csv&#34;
+            
+        elif isinstance(save_directory, bool):
+            save_path = f&#34;results.csv&#34;
+        
+        test.to_csv(save_path, index=False)
+        
+    return test
+
+def group_by_run(dataset, column=None, condition=None,):
+    modelnames = dataset.modelname.unique()
+    exp_ids = dataset.exp_id.unique()
+    sectors = dataset.sectors.unique()
+
+    all_runs = [list(i) for i in list(product(modelnames, exp_ids, sectors))]
+
+    all_trues = []
+    all_preds = []
+    scenarios = []
+    for i, run in enumerate(all_runs):
+        modelname = run[0]
+        exp = run[1]
+        sector = run[2]
+        if column is None and condition is None:
+            subset = dataset[(dataset.modelname == modelname) &amp; (dataset.exp_id == exp) &amp; (dataset.sectors == sector)]
+        elif column is not None and condition is not None:
+            subset = dataset[(dataset.modelname == modelname) &amp; (dataset.exp_id == exp) &amp; (dataset.sectors == sector) &amp; (dataset[column] == condition)]
+        else:
+            raise ValueError(&#39;Column and condition type must be the same (None &amp; None, not None &amp; not None).&#39;)
+        if not subset.empty:
+            scenarios.append([modelname, exp, sector])
+            all_trues.append(subset.true.to_numpy())
+            all_preds.append(subset.pred.to_numpy())
+            
+    return np.array(all_trues), np.array(all_preds), scenarios
+
+
+def get_uncertainty_bands(data, confidence=&#39;95&#39;, quantiles=[0.05, 0.95]):
+    z = {&#39;95&#39;: 1.96, &#39;99&#39;: 2.58}
+    data = np.array(data)
+    mean = data.mean(axis=0)
+    sd = np.sqrt(data.var(axis=0))
+    upper_ci = mean + (z[confidence] * (sd/np.sqrt(data.shape[0])))
+    lower_ci = mean - (z[confidence] * (sd/np.sqrt(data.shape[0])))
+    quantiles = np.quantile(data, quantiles, axis=0)
+    upper_q = quantiles[1,:]
+    lower_q = quantiles[0,:]
+    return mean, sd, upper_ci, lower_ci, upper_q, lower_q
+
+def create_distribution(year, dataset):
+    data = dataset[:, year-2101] # -1 will be year 2100
+    kde = gaussian_kde(data, bw_method=&#39;silverman&#39;)
+    support = np.arange(-30, 20, 0.001)
+    density = kde(support)
+    return density, support
+
+def kl_divergence(p, q):
+    return np.sum(np.where(p != 0, p * np.log(p / q), 0))
+
+def js_divergence(p, q):
+    return jensenshannon(p, q)
+
+def calculate_distribution_metrics(dataset, column=None, condition=None):
+    trues, preds, _ = group_by_run(dataset, column=column, condition=condition)
+    true_distribution, _ = create_distribution(year=2100, dataset=trues)
+    pred_distribution, _ = create_distribution(year=2100, dataset=preds)
+    distribution_metrics = {
+        &#39;kl&#39;: kl_divergence(pred_distribution, true_distribution),
+        &#39;js&#39;: js_divergence(pred_distribution, true_distribution)
+    }
+    return distribution_metrics</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="ise.utils.data.calculate_distribution_metrics"><code class="name flex">
+<span>def <span class="ident">calculate_distribution_metrics</span></span>(<span>dataset, column=None, condition=None)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def calculate_distribution_metrics(dataset, column=None, condition=None):
+    trues, preds, _ = group_by_run(dataset, column=column, condition=condition)
+    true_distribution, _ = create_distribution(year=2100, dataset=trues)
+    pred_distribution, _ = create_distribution(year=2100, dataset=preds)
+    distribution_metrics = {
+        &#39;kl&#39;: kl_divergence(pred_distribution, true_distribution),
+        &#39;js&#39;: js_divergence(pred_distribution, true_distribution)
+    }
+    return distribution_metrics</code></pre>
+</details>
+</dd>
+<dt id="ise.utils.data.combine_testing_results"><code class="name flex">
+<span>def <span class="ident">combine_testing_results</span></span>(<span>data_directory, preds, time_series=True, save_directory=None)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def combine_testing_results(data_directory, preds, time_series=True, save_directory=None):
+    train_features, train_labels, test_features, test_labels, test_scenarios = load_ml_data(data_directory)
+    
+    X_test = pd.DataFrame(test_features)
+    if isinstance(test_labels, pd.Series):
+        y_test = test_labels
+    if isinstance(test_labels, pd.DataFrame):
+        y_test = pd.Series(test_labels[&#39;sle&#39;])
+    else:
+        y_test = pd.Series(test_labels)
+    
+    test = X_test.drop(columns=[col for col in X_test.columns if &#39;lag&#39; in col])
+    test[&#39;true&#39;] = y_test
+    test[&#39;pred&#39;] = preds
+    test[&#39;mse&#39;] = (test.true - test.pred)**2
+    test[&#39;mae&#39;] = abs(test.true - test.pred)
+    
+    # test[&#39;sectors&#39;] = round(test.sectors).astype(int)
+    test[&#39;year&#39;] = round(test.year).astype(int)
+    
+    test = undummify(test)
+    
+    if save_directory:
+        if isinstance(save_directory, str):
+            save_path = f&#34;{save_directory}/results.csv&#34;
+            
+        elif isinstance(save_directory, bool):
+            save_path = f&#34;results.csv&#34;
+        
+        test.to_csv(save_path, index=False)
+        
+    return test</code></pre>
+</details>
+</dd>
+<dt id="ise.utils.data.create_distribution"><code class="name flex">
+<span>def <span class="ident">create_distribution</span></span>(<span>year, dataset)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_distribution(year, dataset):
+    data = dataset[:, year-2101] # -1 will be year 2100
+    kde = gaussian_kde(data, bw_method=&#39;silverman&#39;)
+    support = np.arange(-30, 20, 0.001)
+    density = kde(support)
+    return density, support</code></pre>
+</details>
+</dd>
+<dt id="ise.utils.data.get_uncertainty_bands"><code class="name flex">
+<span>def <span class="ident">get_uncertainty_bands</span></span>(<span>data, confidence='95', quantiles=[0.05, 0.95])</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_uncertainty_bands(data, confidence=&#39;95&#39;, quantiles=[0.05, 0.95]):
+    z = {&#39;95&#39;: 1.96, &#39;99&#39;: 2.58}
+    data = np.array(data)
+    mean = data.mean(axis=0)
+    sd = np.sqrt(data.var(axis=0))
+    upper_ci = mean + (z[confidence] * (sd/np.sqrt(data.shape[0])))
+    lower_ci = mean - (z[confidence] * (sd/np.sqrt(data.shape[0])))
+    quantiles = np.quantile(data, quantiles, axis=0)
+    upper_q = quantiles[1,:]
+    lower_q = quantiles[0,:]
+    return mean, sd, upper_ci, lower_ci, upper_q, lower_q</code></pre>
+</details>
+</dd>
+<dt id="ise.utils.data.group_by_run"><code class="name flex">
+<span>def <span class="ident">group_by_run</span></span>(<span>dataset, column=None, condition=None)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def group_by_run(dataset, column=None, condition=None,):
+    modelnames = dataset.modelname.unique()
+    exp_ids = dataset.exp_id.unique()
+    sectors = dataset.sectors.unique()
+
+    all_runs = [list(i) for i in list(product(modelnames, exp_ids, sectors))]
+
+    all_trues = []
+    all_preds = []
+    scenarios = []
+    for i, run in enumerate(all_runs):
+        modelname = run[0]
+        exp = run[1]
+        sector = run[2]
+        if column is None and condition is None:
+            subset = dataset[(dataset.modelname == modelname) &amp; (dataset.exp_id == exp) &amp; (dataset.sectors == sector)]
+        elif column is not None and condition is not None:
+            subset = dataset[(dataset.modelname == modelname) &amp; (dataset.exp_id == exp) &amp; (dataset.sectors == sector) &amp; (dataset[column] == condition)]
+        else:
+            raise ValueError(&#39;Column and condition type must be the same (None &amp; None, not None &amp; not None).&#39;)
+        if not subset.empty:
+            scenarios.append([modelname, exp, sector])
+            all_trues.append(subset.true.to_numpy())
+            all_preds.append(subset.pred.to_numpy())
+            
+    return np.array(all_trues), np.array(all_preds), scenarios</code></pre>
+</details>
+</dd>
+<dt id="ise.utils.data.js_divergence"><code class="name flex">
+<span>def <span class="ident">js_divergence</span></span>(<span>p, q)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def js_divergence(p, q):
+    return jensenshannon(p, q)</code></pre>
+</details>
+</dd>
+<dt id="ise.utils.data.kl_divergence"><code class="name flex">
+<span>def <span class="ident">kl_divergence</span></span>(<span>p, q)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def kl_divergence(p, q):
+    return np.sum(np.where(p != 0, p * np.log(p / q), 0))</code></pre>
+</details>
+</dd>
+<dt id="ise.utils.data.load_ml_data"><code class="name flex">
+<span>def <span class="ident">load_ml_data</span></span>(<span>data_directory, time_series=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Loads training and testing data for machine learning models. These files are generated using
+functions in the ise.data.processing modules or process_data in the ise.pipelines.processing module.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>data_directory</code></strong> :&ensp;<code>str</code></dt>
+<dd>Directory containing processed files.</dd>
+<dt><strong><code>time_series</code></strong> :&ensp;<code>bool</code></dt>
+<dd>Flag denoting whether to load the time-series version of the data.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>train_features (pd.DataFrame): Training data features.
+train_labels (pd.DataFrame): Training data labels.
+test_features (pd.DataFrame): Testing data features.
+test_labels (pd.DataFrame): Testing data labels.
+test_scenarios (List[List[str]]): Scenarios included in the test dataset.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def load_ml_data(data_directory, time_series=True):
+    &#34;&#34;&#34;Loads training and testing data for machine learning models. These files are generated using 
+    functions in the ise.data.processing modules or process_data in the ise.pipelines.processing module.
+
+    Args:
+        data_directory (str): Directory containing processed files.
+        time_series (bool): Flag denoting whether to load the time-series version of the data.
+
+    Returns:
+        train_features (pd.DataFrame): Training data features.
+        train_labels (pd.DataFrame): Training data labels.
+        test_features (pd.DataFrame): Testing data features.
+        test_labels (pd.DataFrame): Testing data labels.
+        test_scenarios (List[List[str]]): Scenarios included in the test dataset.
+    &#34;&#34;&#34;
+    if time_series:
+        try:
+            test_features = pd.read_csv(f&#39;{data_directory}/ts_test_features.csv&#39;)
+            train_features = pd.read_csv(f&#39;{data_directory}/ts_train_features.csv&#39;)
+            test_labels = pd.read_csv(f&#39;{data_directory}/ts_test_labels.csv&#39;)
+            train_labels = pd.read_csv(f&#39;{data_directory}/ts_train_labels.csv&#39;)
+            test_scenarios = pd.read_csv(f&#39;{data_directory}/ts_test_scenarios.csv&#39;).values.tolist()
+        except FileNotFoundError:
+                raise FileNotFoundError(f&#39;Files not found at {data_directory}. Format must be in format \&#34;ts_train_features.csv\&#34;&#39;)
+    else:
+        try:
+            test_features = pd.read_csv(f&#39;{data_directory}/traditional_test_features.csv&#39;)
+            train_features = pd.read_csv(f&#39;{data_directory}/traditional_train_features.csv&#39;)
+            test_labels = pd.read_csv(f&#39;{data_directory}/traditional_test_labels.csv&#39;)
+            train_labels = pd.read_csv(f&#39;{data_directory}/traditional_train_labels.csv&#39;)
+            test_scenarios = pd.read_csv(f&#39;{data_directory}/traditional_test_scenarios.csv&#39;).values.tolist()
+        except FileNotFoundError:
+                raise FileNotFoundError(f&#39;Files not found at {data_directory}. Format must be in format \&#34;traditional_train_features.csv\&#34;&#39;)
+    
+    return train_features, pd.Series(train_labels[&#39;sle&#39;], name=&#39;sle&#39;), test_features, pd.Series(test_labels[&#39;sle&#39;], name=&#39;sle&#39;), test_scenarios</code></pre>
+</details>
+</dd>
+<dt id="ise.utils.data.undummify"><code class="name flex">
+<span>def <span class="ident">undummify</span></span>(<span>df, prefix_sep='-')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def undummify(df, prefix_sep=&#34;-&#34;):
+    cols2collapse = {
+        item.split(prefix_sep)[0]: (prefix_sep in item) for item in df.columns
+    }
+    
+    series_list = []
+    for col, needs_to_collapse in cols2collapse.items():
+        if needs_to_collapse:
+            undummified = (
+                df.filter(like=col)
+                .idxmax(axis=1)
+                .apply(lambda x: x.split(prefix_sep, maxsplit=1)[1])
+                .rename(col)
+            )
+            series_list.append(undummified)
+        else:
+            series_list.append(df[col])
+    undummified_df = pd.concat(series_list, axis=1)
+    return undummified_df</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="ise.utils" href="index.html">ise.utils</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="ise.utils.data.calculate_distribution_metrics" href="#ise.utils.data.calculate_distribution_metrics">calculate_distribution_metrics</a></code></li>
+<li><code><a title="ise.utils.data.combine_testing_results" href="#ise.utils.data.combine_testing_results">combine_testing_results</a></code></li>
+<li><code><a title="ise.utils.data.create_distribution" href="#ise.utils.data.create_distribution">create_distribution</a></code></li>
+<li><code><a title="ise.utils.data.get_uncertainty_bands" href="#ise.utils.data.get_uncertainty_bands">get_uncertainty_bands</a></code></li>
+<li><code><a title="ise.utils.data.group_by_run" href="#ise.utils.data.group_by_run">group_by_run</a></code></li>
+<li><code><a title="ise.utils.data.js_divergence" href="#ise.utils.data.js_divergence">js_divergence</a></code></li>
+<li><code><a title="ise.utils.data.kl_divergence" href="#ise.utils.data.kl_divergence">kl_divergence</a></code></li>
+<li><code><a title="ise.utils.data.load_ml_data" href="#ise.utils.data.load_ml_data">load_ml_data</a></code></li>
+<li><code><a title="ise.utils.data.undummify" href="#ise.utils.data.undummify">undummify</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

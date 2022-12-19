@@ -1,0 +1,1082 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>ise.data.EmulatorData API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>ise.data.EmulatorData</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import pandas as pd
+from sklearn import preprocessing as sp
+import numpy as np
+np.random.seed(10)
+import random
+
+
+class EmulatorData:
+    def __init__(self, directory):
+
+        self.directory = directory
+
+        try:
+            self.data = pd.read_csv(f&#34;{self.directory}/master.csv&#34;, low_memory=False)
+        except FileNotFoundError:
+            try:
+                self.inputs = pd.read_csv(f&#34;{self.directory}/inputs.csv&#34;)
+                self.outputs = pd.read_csv(f&#34;{self.directory}/outputs.csv&#34;)
+            except FileNotFoundError:
+                raise FileNotFoundError(&#39;Files not found, make sure to run all processing functions.&#39;)
+
+        self.data[&#39;sle&#39;] = self.data.ivaf / 1e9 / 362.5  # m^3 / 1e9 / 362.5 = Gt / 1 mm --&gt; mm SLE
+        self.data[&#39;modelname&#39;] = self.data.groupname + &#39;_&#39; + self.data.modelname
+        # self.data.smb = self.data.smb.fillna(method=&#34;ffill&#34;)
+
+        unique_batches = self.data.groupby([&#39;modelname&#39;, &#39;sectors&#39;, &#39;exp_id&#39;]).size().reset_index().rename(
+            columns={0: &#39;count&#39;}).drop(columns=&#39;count&#39;)
+        self.batches = unique_batches.values.tolist()
+        self.output_columns = [&#39;icearea&#39;, &#39;iareafl&#39;, &#39;iareagr&#39;, &#39;ivol&#39;, &#39;ivaf&#39;, &#39;smb&#39;, &#39;smbgr&#39;, &#39;bmbfl&#39;, &#39;sle&#39;]
+
+        for col in [&#39;icearea&#39;, &#39;iareafl&#39;, &#39;iareagr&#39;, &#39;ivol&#39;, &#39;smb&#39;, &#39;smbgr&#39;, &#39;bmbfl&#39;, &#39;sle&#39;]:
+            self.data[col] = self.data[col].fillna(self.data[col].mean())
+
+        self.X = None
+        self.y = None
+        self.scaler_X = None
+        self.scaler_y = None
+
+    def process(self, target_column=&#39;sle&#39;, drop_missing=True, drop_columns=True, boolean_indices=True, scale=True,
+                split_type=&#39;batch_test&#39;, drop_outliers=False, time_series=False, lag=None):
+
+
+        if time_series:
+            if lag is None:
+                raise ValueError(&#39;If time_series == True, lag cannot be None&#39;)
+            time_dependent_columns = [&#39;salinity&#39;, &#39;temperature&#39;, &#39;thermal_forcing&#39;,
+                                      &#39;pr_anomaly&#39;, &#39;evspsbl_anomaly&#39;, &#39;mrro_anomaly&#39;, &#39;smb_anomaly&#39;,
+                                      &#39;ts_anomaly&#39;,]
+            separated_dfs = [y for x, y in self.data.groupby([&#39;sectors&#39;, &#39;exp_id&#39;, &#39;modelname&#39;])]
+            for df in separated_dfs:
+                for shift in range(1, lag + 1):
+                    for column in time_dependent_columns:
+                        df[f&#34;{column}.lag{shift}&#34;] = df[column].shift(shift, fill_value=0)
+            self.data = pd.concat(separated_dfs)
+
+
+        if drop_columns:
+            if drop_columns is True:
+                self = self.drop_columns(columns=[&#39;experiment&#39;, &#39;exp_id&#39;, &#39;groupname&#39;, &#39;regions&#39;])
+            elif isinstance(drop_columns, list):
+                self = self.drop_columns(columns=drop_columns)
+            else:
+                raise ValueError(f&#39;drop_columns argument must be of type boolean|list, received {type(drop_columns)}&#39;)
+
+        if drop_missing:
+            self = self.drop_missing()
+
+        if boolean_indices:
+            self = self.create_boolean_indices()
+
+        if drop_outliers:
+            column = drop_outliers[&#39;column&#39;]
+            operator = drop_outliers[&#39;operator&#39;]
+            value = drop_outliers[&#39;value&#39;]
+            self = self.drop_outliers(column, operator, value, )
+
+        self = self.split_data(target_column=target_column)
+
+        if scale:
+            self.X = self.scale(self.X, &#39;inputs&#39;, scaler=&#39;MinMaxScaler&#39;)
+            if target_column == &#39;sle&#39;:
+                self.y = np.array(self.y)
+            else:
+                self.y = self.scale(self.y, &#39;outputs&#39;, scaler=&#39;MinMaxScaler&#39;)
+
+        self = self.train_test_split(split_type=split_type)
+
+        return self, self.train_features, self.test_features, self.train_labels, self.test_labels
+
+    def drop_outliers(self, column, operator, value, ):
+        if operator.lower() in (&#39;equal&#39;, &#39;equals&#39;, &#39;=&#39;, &#39;==&#39;):
+            outlier_data = self.data[self.data[column] == value]
+        elif operator.lower() in (&#39;not equal&#39;, &#39;not equals&#39;, &#39;!=&#39;, &#39;~=&#39;):
+            outlier_data = self.data[self.data[column] != value]
+        elif operator.lower() in (&#39;greather than&#39;, &#39;greater&#39;, &#39;&gt;=&#39;, &#39;&gt;&#39;):
+            outlier_data = self.data[self.data[column] &gt; value]
+        elif operator.lower() in (&#39;less than&#39;, &#39;less&#39;, &#39;&lt;=&#39;, &#39;&lt;&#39;):
+            outlier_data = self.data[self.data[column] &lt; value]
+        else:
+            raise ValueError(f&#39;Operator must be in [\&#34;==\&#34;, \&#34;!=\&#34;, \&#34;&gt;\&#34;, \&#34;&lt;\&#34;], received {operator}&#39;)
+
+        cols = outlier_data.columns
+        nonzero_columns = outlier_data.apply(lambda x: x &gt; 0).apply(lambda x: list(cols[x.values]), axis=1)
+
+        # Create dataframe of experiments with outliers (want to delete the entire 85 rows)
+        outlier_runs = pd.DataFrame()
+        outlier_runs[&#39;modelname&#39;] = nonzero_columns.apply(lambda x: x[-6])
+        outlier_runs[&#39;exp_id&#39;] = nonzero_columns.apply(lambda x: x[-5])
+        outlier_runs[&#39;sectors&#39;] = outlier_data.sectors
+        outlier_runs_list = outlier_runs.values.tolist()
+        unique_outliers = [list(x) for x in set(tuple(x) for x in outlier_runs_list)]
+
+        # Drop those runs
+        for i in unique_outliers:
+            modelname = i[0]
+            exp_id = i[1]
+            sector = i[2]
+            self.data = self.data.drop(
+                self.data[(self.data[modelname] == 1) &amp; (self.data[exp_id] == 1) &amp; (self.data.sectors == sector)].index)
+
+        return self
+
+    def split_data(self, target_column: str, ):
+        self.target_column = target_column
+        self.X = self.data.drop(columns=self.output_columns)
+        self.y = self.data[target_column]
+        self.input_columns = self.X.columns
+        return self
+
+    def train_test_split(self, train_size=0.7, split_type=&#39;random&#39;):
+
+        if not isinstance(self.X, pd.DataFrame):
+            self.X = pd.DataFrame(self.X, columns=self.input_columns)
+
+        if &#39;random&#39; in split_type.lower():
+            self.train_features = self.X.sample(frac=train_size, random_state=0)
+            training_indices = self.train_features.index
+            self.train_labels = self.y[training_indices].squeeze()
+
+            self.test_features = self.X.drop(training_indices)
+            self.test_labels = pd.Series(self.y.squeeze()).drop(training_indices)
+
+        elif split_type.lower() == &#34;batch&#34;:
+            # batch -- grouping of 85 years of a particular model, experiment, and sector
+
+            # Calculate how many batches you&#39;ll need (roughly) for train/test proportion
+            test_num_rows = len(self.X) * (1 - train_size)
+            num_years = len(set(self.data.year))
+            num_test_batches = test_num_rows // num_years
+
+            sectors_scaler = sp.MinMaxScaler().fit(np.array(self.data.sectors).reshape(-1, 1))
+
+            test_index = 0
+            test_scenarios = []
+            test_indices = []
+            test_features = []
+            test_labels = []
+            # Keep this running until you have enough samples
+            while len(test_scenarios) &lt; num_test_batches:
+                try:
+                    random_index = random.sample(range(len(self.batches)), 1)[0]
+                    batch = self.batches[random_index]
+                    if batch not in test_scenarios:
+                        data = self.X[(self.X[f&#34;modelname_{batch[0]}&#34;] == 1) &amp; (
+                                self.X[&#39;sectors&#39;] == sectors_scaler.transform(
+                            np.array(batch[1]).reshape(1, -1)).squeeze()) &amp; (self.X[f&#34;exp_id_{batch[2]}&#34;] == 1)]
+                        labels = self.y[(self.X[f&#34;modelname_{batch[0]}&#34;] == 1) &amp; (
+                                self.X[&#39;sectors&#39;] == sectors_scaler.transform(
+                            np.array(batch[1]).reshape(1, -1)).squeeze()) &amp; (self.X[f&#34;exp_id_{batch[2]}&#34;] == 1)]
+                        if not data.empty:
+                            test_scenarios.append(batch)
+                            test_indices.append(random_index)
+                            test_features.append(np.array(data))
+                            test_labels.append(labels.squeeze())
+                            test_index += 1
+                except KeyError:
+                    pass
+
+            self.test_features = np.array(test_features)
+            self.test_labels = np.array(test_labels)
+            train_scenarios = np.delete(np.array(self.batches), test_indices, axis=0).tolist()
+
+            train_features = []
+            train_labels = []
+            for batch in train_scenarios:
+                try:
+                    data = self.X[(self.X[f&#34;modelname_{batch[0]}&#34;] == 1) &amp; (
+                            self.X[&#39;sectors&#39;] == sectors_scaler.transform(
+                        np.array(batch[1]).reshape(1, -1)).squeeze()) &amp; (self.X[f&#34;exp_id_{batch[2]}&#34;] == 1)]
+                    labels = self.y[(self.X[f&#34;modelname_{batch[0]}&#34;] == 1) &amp; (
+                            self.X[&#39;sectors&#39;] == sectors_scaler.transform(
+                        np.array(batch[1]).reshape(1, -1)).squeeze()) &amp; (self.X[f&#34;exp_id_{batch[2]}&#34;] == 1)]
+                    if not data.empty:
+                        train_features.append(np.array(data))
+                        train_labels.append(labels.squeeze())
+                except KeyError:
+                    pass
+            self.train_features = np.array(train_features)
+            self.train_labels = np.array(train_labels)
+            self.test_scenarios = test_scenarios
+
+
+
+        elif split_type.lower() == &#34;batch_test&#34;:
+            # batch -- grouping of 85 years of a particular model, experiment, and sector
+            # Calculate how many batches you&#39;ll need (roughly) for train/test proportion
+            test_num_rows = len(self.X) * (1 - train_size)
+            num_years = len(set(self.data.year))
+            num_test_batches = test_num_rows // num_years
+
+            # Get all possible values for sector, experiment, and model
+            all_sectors = list(set(self.X.sectors))
+            all_experiments = [col for col in self.X.columns if &#34;exp_id&#34; in col]
+            all_modelnames = [col for col in self.X.columns if &#34;modelname&#34; in col]
+
+            # Set up concatenation of test data scenarios...
+            test_scenarios = []
+            test_dataset = pd.DataFrame()
+
+            # Keep this running until you have enough samples
+            np.random.seed(10)
+            while len(test_scenarios) &lt; num_test_batches:
+                # Get a random
+                random_model = np.random.choice(all_modelnames)
+                random_sector = np.random.choice(all_sectors)
+                random_experiment = np.random.choice(all_experiments)
+                test_scenario = [random_model, random_sector, random_experiment]
+                if test_scenario not in test_scenarios:
+                    scenario_df = self.X[(self.X[random_model] == 1) &amp; (self.X[&#39;sectors&#39;] == random_sector) &amp; (
+                            self.X[random_experiment] == 1)]
+                    if not scenario_df.empty:
+                        test_scenarios.append(test_scenario)
+                        test_dataset = pd.concat([test_dataset, scenario_df])
+            self.test_features = test_dataset
+            testing_indices = self.test_features.index
+            self.test_labels = self.y[testing_indices].squeeze()
+
+            self.train_features = self.X.drop(testing_indices)
+            self.train_labels = pd.Series(self.y.squeeze()).drop(testing_indices)
+
+            self.test_scenarios = test_scenarios
+
+        return self
+
+    def drop_missing(self):
+        self.data = self.data.dropna()
+        return self
+
+    def create_boolean_indices(self, columns=&#39;all&#39;):
+        if columns == &#39;all&#39;:
+            self.data = pd.get_dummies(self.data, prefix_sep=&#34;-&#34;)
+        else:
+            if not isinstance(columns, list):
+                raise ValueError(f&#39;Columns argument must be of type: list, received {type(columns)}.&#39;)
+
+            self.data = pd.get_dummies(self.data, columns=columns, prefix_sep=&#34;-&#34;)
+
+            for col in self.data.columns:
+                self.data[col] = self.data[col].astype(float)
+        return self
+
+    def drop_columns(self, columns):
+        if not isinstance(columns, list) and not isinstance(columns, str):
+            raise ValueError(f&#39;Columns argument must be of type: str|list, received {type(columns)}.&#39;)
+        columns = list(columns)
+
+        self.data = self.data.drop(columns=columns)
+
+        return self
+
+    def scale(self, values, values_type, scaler=&#34;MinMaxScaler&#34;):
+        if self.X is None and self.y is None:
+            raise AttributeError(&#39;Data must be split before scaling using model.split_data method.&#39;)
+
+        if &#34;minmax&#34; in scaler.lower():
+            if &#39;input&#39; in values_type.lower():
+                self.scaler_X = sp.MinMaxScaler()
+            else:
+                self.scaler_y = sp.MinMaxScaler()
+        elif &#34;standard&#34; in scaler.lower():
+            if &#39;input&#39; in values_type.lower():
+                self.scaler_X = sp.StandardScaler()
+            else:
+                self.scaler_y = sp.StandardScaler()
+        else:
+            raise ValueError(f&#39;scaler argument must be in [\&#39;MinMaxScaler\&#39;, \&#39;StandardScaler\&#39;], received {scaler}&#39;)
+
+        if &#39;input&#39; in values_type.lower():
+            self.input_columns = self.X.columns
+            self.scaler_X.fit(self.X)
+            # dump(self.scaler_X, open(&#39;./src/data/output_files/scaler_X.pkl&#39;, &#39;wb&#39;))
+            return pd.DataFrame(self.scaler_X.transform(values), columns=self.X.columns)
+
+        # TODO: Don&#39;t need this anymore with SLE as the prediction
+        elif &#39;output&#39; in values_type.lower():
+            self.scaler_y.fit(np.array(self.y).reshape(-1, 1))
+            # dump(self.scaler_y, open(&#39;./src/data/output_files/scaler_y.pkl&#39;, &#39;wb&#39;))
+            return self.scaler_y.transform(np.array(values).reshape(-1, 1))
+
+        else:
+            raise ValueError(f&#34;values_type must be in [&#39;inputs&#39;, &#39;outputs&#39;], received {values_type}&#34;)
+
+    def unscale(self, values, values_type):
+        # self.scaler_X = load(open(&#39;./src/data/output_files/scaler_X.pkl&#39;, &#39;rb&#39;))
+        # self.scaler_y = load(open(&#39;./src/data/output_files/scaler_y.pkl&#39;, &#39;rb&#39;))
+
+        if &#39;input&#39; in values_type.lower():
+            return pd.DataFrame(self.scaler_X.inverse_transform(values), columns=self.input_columns)
+
+        elif &#39;output&#39; in values_type.lower():
+            return self.scaler_y.inverse_transform(values.reshape(-1, 1))
+
+        else:
+            raise ValueError(f&#34;values_type must be in [&#39;inputs&#39;, &#39;outputs&#39;], received {values_type}&#34;)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="ise.data.EmulatorData.EmulatorData"><code class="flex name class">
+<span>class <span class="ident">EmulatorData</span></span>
+<span>(</span><span>directory)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class EmulatorData:
+    def __init__(self, directory):
+
+        self.directory = directory
+
+        try:
+            self.data = pd.read_csv(f&#34;{self.directory}/master.csv&#34;, low_memory=False)
+        except FileNotFoundError:
+            try:
+                self.inputs = pd.read_csv(f&#34;{self.directory}/inputs.csv&#34;)
+                self.outputs = pd.read_csv(f&#34;{self.directory}/outputs.csv&#34;)
+            except FileNotFoundError:
+                raise FileNotFoundError(&#39;Files not found, make sure to run all processing functions.&#39;)
+
+        self.data[&#39;sle&#39;] = self.data.ivaf / 1e9 / 362.5  # m^3 / 1e9 / 362.5 = Gt / 1 mm --&gt; mm SLE
+        self.data[&#39;modelname&#39;] = self.data.groupname + &#39;_&#39; + self.data.modelname
+        # self.data.smb = self.data.smb.fillna(method=&#34;ffill&#34;)
+
+        unique_batches = self.data.groupby([&#39;modelname&#39;, &#39;sectors&#39;, &#39;exp_id&#39;]).size().reset_index().rename(
+            columns={0: &#39;count&#39;}).drop(columns=&#39;count&#39;)
+        self.batches = unique_batches.values.tolist()
+        self.output_columns = [&#39;icearea&#39;, &#39;iareafl&#39;, &#39;iareagr&#39;, &#39;ivol&#39;, &#39;ivaf&#39;, &#39;smb&#39;, &#39;smbgr&#39;, &#39;bmbfl&#39;, &#39;sle&#39;]
+
+        for col in [&#39;icearea&#39;, &#39;iareafl&#39;, &#39;iareagr&#39;, &#39;ivol&#39;, &#39;smb&#39;, &#39;smbgr&#39;, &#39;bmbfl&#39;, &#39;sle&#39;]:
+            self.data[col] = self.data[col].fillna(self.data[col].mean())
+
+        self.X = None
+        self.y = None
+        self.scaler_X = None
+        self.scaler_y = None
+
+    def process(self, target_column=&#39;sle&#39;, drop_missing=True, drop_columns=True, boolean_indices=True, scale=True,
+                split_type=&#39;batch_test&#39;, drop_outliers=False, time_series=False, lag=None):
+
+
+        if time_series:
+            if lag is None:
+                raise ValueError(&#39;If time_series == True, lag cannot be None&#39;)
+            time_dependent_columns = [&#39;salinity&#39;, &#39;temperature&#39;, &#39;thermal_forcing&#39;,
+                                      &#39;pr_anomaly&#39;, &#39;evspsbl_anomaly&#39;, &#39;mrro_anomaly&#39;, &#39;smb_anomaly&#39;,
+                                      &#39;ts_anomaly&#39;,]
+            separated_dfs = [y for x, y in self.data.groupby([&#39;sectors&#39;, &#39;exp_id&#39;, &#39;modelname&#39;])]
+            for df in separated_dfs:
+                for shift in range(1, lag + 1):
+                    for column in time_dependent_columns:
+                        df[f&#34;{column}.lag{shift}&#34;] = df[column].shift(shift, fill_value=0)
+            self.data = pd.concat(separated_dfs)
+
+
+        if drop_columns:
+            if drop_columns is True:
+                self = self.drop_columns(columns=[&#39;experiment&#39;, &#39;exp_id&#39;, &#39;groupname&#39;, &#39;regions&#39;])
+            elif isinstance(drop_columns, list):
+                self = self.drop_columns(columns=drop_columns)
+            else:
+                raise ValueError(f&#39;drop_columns argument must be of type boolean|list, received {type(drop_columns)}&#39;)
+
+        if drop_missing:
+            self = self.drop_missing()
+
+        if boolean_indices:
+            self = self.create_boolean_indices()
+
+        if drop_outliers:
+            column = drop_outliers[&#39;column&#39;]
+            operator = drop_outliers[&#39;operator&#39;]
+            value = drop_outliers[&#39;value&#39;]
+            self = self.drop_outliers(column, operator, value, )
+
+        self = self.split_data(target_column=target_column)
+
+        if scale:
+            self.X = self.scale(self.X, &#39;inputs&#39;, scaler=&#39;MinMaxScaler&#39;)
+            if target_column == &#39;sle&#39;:
+                self.y = np.array(self.y)
+            else:
+                self.y = self.scale(self.y, &#39;outputs&#39;, scaler=&#39;MinMaxScaler&#39;)
+
+        self = self.train_test_split(split_type=split_type)
+
+        return self, self.train_features, self.test_features, self.train_labels, self.test_labels
+
+    def drop_outliers(self, column, operator, value, ):
+        if operator.lower() in (&#39;equal&#39;, &#39;equals&#39;, &#39;=&#39;, &#39;==&#39;):
+            outlier_data = self.data[self.data[column] == value]
+        elif operator.lower() in (&#39;not equal&#39;, &#39;not equals&#39;, &#39;!=&#39;, &#39;~=&#39;):
+            outlier_data = self.data[self.data[column] != value]
+        elif operator.lower() in (&#39;greather than&#39;, &#39;greater&#39;, &#39;&gt;=&#39;, &#39;&gt;&#39;):
+            outlier_data = self.data[self.data[column] &gt; value]
+        elif operator.lower() in (&#39;less than&#39;, &#39;less&#39;, &#39;&lt;=&#39;, &#39;&lt;&#39;):
+            outlier_data = self.data[self.data[column] &lt; value]
+        else:
+            raise ValueError(f&#39;Operator must be in [\&#34;==\&#34;, \&#34;!=\&#34;, \&#34;&gt;\&#34;, \&#34;&lt;\&#34;], received {operator}&#39;)
+
+        cols = outlier_data.columns
+        nonzero_columns = outlier_data.apply(lambda x: x &gt; 0).apply(lambda x: list(cols[x.values]), axis=1)
+
+        # Create dataframe of experiments with outliers (want to delete the entire 85 rows)
+        outlier_runs = pd.DataFrame()
+        outlier_runs[&#39;modelname&#39;] = nonzero_columns.apply(lambda x: x[-6])
+        outlier_runs[&#39;exp_id&#39;] = nonzero_columns.apply(lambda x: x[-5])
+        outlier_runs[&#39;sectors&#39;] = outlier_data.sectors
+        outlier_runs_list = outlier_runs.values.tolist()
+        unique_outliers = [list(x) for x in set(tuple(x) for x in outlier_runs_list)]
+
+        # Drop those runs
+        for i in unique_outliers:
+            modelname = i[0]
+            exp_id = i[1]
+            sector = i[2]
+            self.data = self.data.drop(
+                self.data[(self.data[modelname] == 1) &amp; (self.data[exp_id] == 1) &amp; (self.data.sectors == sector)].index)
+
+        return self
+
+    def split_data(self, target_column: str, ):
+        self.target_column = target_column
+        self.X = self.data.drop(columns=self.output_columns)
+        self.y = self.data[target_column]
+        self.input_columns = self.X.columns
+        return self
+
+    def train_test_split(self, train_size=0.7, split_type=&#39;random&#39;):
+
+        if not isinstance(self.X, pd.DataFrame):
+            self.X = pd.DataFrame(self.X, columns=self.input_columns)
+
+        if &#39;random&#39; in split_type.lower():
+            self.train_features = self.X.sample(frac=train_size, random_state=0)
+            training_indices = self.train_features.index
+            self.train_labels = self.y[training_indices].squeeze()
+
+            self.test_features = self.X.drop(training_indices)
+            self.test_labels = pd.Series(self.y.squeeze()).drop(training_indices)
+
+        elif split_type.lower() == &#34;batch&#34;:
+            # batch -- grouping of 85 years of a particular model, experiment, and sector
+
+            # Calculate how many batches you&#39;ll need (roughly) for train/test proportion
+            test_num_rows = len(self.X) * (1 - train_size)
+            num_years = len(set(self.data.year))
+            num_test_batches = test_num_rows // num_years
+
+            sectors_scaler = sp.MinMaxScaler().fit(np.array(self.data.sectors).reshape(-1, 1))
+
+            test_index = 0
+            test_scenarios = []
+            test_indices = []
+            test_features = []
+            test_labels = []
+            # Keep this running until you have enough samples
+            while len(test_scenarios) &lt; num_test_batches:
+                try:
+                    random_index = random.sample(range(len(self.batches)), 1)[0]
+                    batch = self.batches[random_index]
+                    if batch not in test_scenarios:
+                        data = self.X[(self.X[f&#34;modelname_{batch[0]}&#34;] == 1) &amp; (
+                                self.X[&#39;sectors&#39;] == sectors_scaler.transform(
+                            np.array(batch[1]).reshape(1, -1)).squeeze()) &amp; (self.X[f&#34;exp_id_{batch[2]}&#34;] == 1)]
+                        labels = self.y[(self.X[f&#34;modelname_{batch[0]}&#34;] == 1) &amp; (
+                                self.X[&#39;sectors&#39;] == sectors_scaler.transform(
+                            np.array(batch[1]).reshape(1, -1)).squeeze()) &amp; (self.X[f&#34;exp_id_{batch[2]}&#34;] == 1)]
+                        if not data.empty:
+                            test_scenarios.append(batch)
+                            test_indices.append(random_index)
+                            test_features.append(np.array(data))
+                            test_labels.append(labels.squeeze())
+                            test_index += 1
+                except KeyError:
+                    pass
+
+            self.test_features = np.array(test_features)
+            self.test_labels = np.array(test_labels)
+            train_scenarios = np.delete(np.array(self.batches), test_indices, axis=0).tolist()
+
+            train_features = []
+            train_labels = []
+            for batch in train_scenarios:
+                try:
+                    data = self.X[(self.X[f&#34;modelname_{batch[0]}&#34;] == 1) &amp; (
+                            self.X[&#39;sectors&#39;] == sectors_scaler.transform(
+                        np.array(batch[1]).reshape(1, -1)).squeeze()) &amp; (self.X[f&#34;exp_id_{batch[2]}&#34;] == 1)]
+                    labels = self.y[(self.X[f&#34;modelname_{batch[0]}&#34;] == 1) &amp; (
+                            self.X[&#39;sectors&#39;] == sectors_scaler.transform(
+                        np.array(batch[1]).reshape(1, -1)).squeeze()) &amp; (self.X[f&#34;exp_id_{batch[2]}&#34;] == 1)]
+                    if not data.empty:
+                        train_features.append(np.array(data))
+                        train_labels.append(labels.squeeze())
+                except KeyError:
+                    pass
+            self.train_features = np.array(train_features)
+            self.train_labels = np.array(train_labels)
+            self.test_scenarios = test_scenarios
+
+
+
+        elif split_type.lower() == &#34;batch_test&#34;:
+            # batch -- grouping of 85 years of a particular model, experiment, and sector
+            # Calculate how many batches you&#39;ll need (roughly) for train/test proportion
+            test_num_rows = len(self.X) * (1 - train_size)
+            num_years = len(set(self.data.year))
+            num_test_batches = test_num_rows // num_years
+
+            # Get all possible values for sector, experiment, and model
+            all_sectors = list(set(self.X.sectors))
+            all_experiments = [col for col in self.X.columns if &#34;exp_id&#34; in col]
+            all_modelnames = [col for col in self.X.columns if &#34;modelname&#34; in col]
+
+            # Set up concatenation of test data scenarios...
+            test_scenarios = []
+            test_dataset = pd.DataFrame()
+
+            # Keep this running until you have enough samples
+            np.random.seed(10)
+            while len(test_scenarios) &lt; num_test_batches:
+                # Get a random
+                random_model = np.random.choice(all_modelnames)
+                random_sector = np.random.choice(all_sectors)
+                random_experiment = np.random.choice(all_experiments)
+                test_scenario = [random_model, random_sector, random_experiment]
+                if test_scenario not in test_scenarios:
+                    scenario_df = self.X[(self.X[random_model] == 1) &amp; (self.X[&#39;sectors&#39;] == random_sector) &amp; (
+                            self.X[random_experiment] == 1)]
+                    if not scenario_df.empty:
+                        test_scenarios.append(test_scenario)
+                        test_dataset = pd.concat([test_dataset, scenario_df])
+            self.test_features = test_dataset
+            testing_indices = self.test_features.index
+            self.test_labels = self.y[testing_indices].squeeze()
+
+            self.train_features = self.X.drop(testing_indices)
+            self.train_labels = pd.Series(self.y.squeeze()).drop(testing_indices)
+
+            self.test_scenarios = test_scenarios
+
+        return self
+
+    def drop_missing(self):
+        self.data = self.data.dropna()
+        return self
+
+    def create_boolean_indices(self, columns=&#39;all&#39;):
+        if columns == &#39;all&#39;:
+            self.data = pd.get_dummies(self.data, prefix_sep=&#34;-&#34;)
+        else:
+            if not isinstance(columns, list):
+                raise ValueError(f&#39;Columns argument must be of type: list, received {type(columns)}.&#39;)
+
+            self.data = pd.get_dummies(self.data, columns=columns, prefix_sep=&#34;-&#34;)
+
+            for col in self.data.columns:
+                self.data[col] = self.data[col].astype(float)
+        return self
+
+    def drop_columns(self, columns):
+        if not isinstance(columns, list) and not isinstance(columns, str):
+            raise ValueError(f&#39;Columns argument must be of type: str|list, received {type(columns)}.&#39;)
+        columns = list(columns)
+
+        self.data = self.data.drop(columns=columns)
+
+        return self
+
+    def scale(self, values, values_type, scaler=&#34;MinMaxScaler&#34;):
+        if self.X is None and self.y is None:
+            raise AttributeError(&#39;Data must be split before scaling using model.split_data method.&#39;)
+
+        if &#34;minmax&#34; in scaler.lower():
+            if &#39;input&#39; in values_type.lower():
+                self.scaler_X = sp.MinMaxScaler()
+            else:
+                self.scaler_y = sp.MinMaxScaler()
+        elif &#34;standard&#34; in scaler.lower():
+            if &#39;input&#39; in values_type.lower():
+                self.scaler_X = sp.StandardScaler()
+            else:
+                self.scaler_y = sp.StandardScaler()
+        else:
+            raise ValueError(f&#39;scaler argument must be in [\&#39;MinMaxScaler\&#39;, \&#39;StandardScaler\&#39;], received {scaler}&#39;)
+
+        if &#39;input&#39; in values_type.lower():
+            self.input_columns = self.X.columns
+            self.scaler_X.fit(self.X)
+            # dump(self.scaler_X, open(&#39;./src/data/output_files/scaler_X.pkl&#39;, &#39;wb&#39;))
+            return pd.DataFrame(self.scaler_X.transform(values), columns=self.X.columns)
+
+        # TODO: Don&#39;t need this anymore with SLE as the prediction
+        elif &#39;output&#39; in values_type.lower():
+            self.scaler_y.fit(np.array(self.y).reshape(-1, 1))
+            # dump(self.scaler_y, open(&#39;./src/data/output_files/scaler_y.pkl&#39;, &#39;wb&#39;))
+            return self.scaler_y.transform(np.array(values).reshape(-1, 1))
+
+        else:
+            raise ValueError(f&#34;values_type must be in [&#39;inputs&#39;, &#39;outputs&#39;], received {values_type}&#34;)
+
+    def unscale(self, values, values_type):
+        # self.scaler_X = load(open(&#39;./src/data/output_files/scaler_X.pkl&#39;, &#39;rb&#39;))
+        # self.scaler_y = load(open(&#39;./src/data/output_files/scaler_y.pkl&#39;, &#39;rb&#39;))
+
+        if &#39;input&#39; in values_type.lower():
+            return pd.DataFrame(self.scaler_X.inverse_transform(values), columns=self.input_columns)
+
+        elif &#39;output&#39; in values_type.lower():
+            return self.scaler_y.inverse_transform(values.reshape(-1, 1))
+
+        else:
+            raise ValueError(f&#34;values_type must be in [&#39;inputs&#39;, &#39;outputs&#39;], received {values_type}&#34;)</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="ise.data.EmulatorData.EmulatorData.create_boolean_indices"><code class="name flex">
+<span>def <span class="ident">create_boolean_indices</span></span>(<span>self, columns='all')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_boolean_indices(self, columns=&#39;all&#39;):
+    if columns == &#39;all&#39;:
+        self.data = pd.get_dummies(self.data, prefix_sep=&#34;-&#34;)
+    else:
+        if not isinstance(columns, list):
+            raise ValueError(f&#39;Columns argument must be of type: list, received {type(columns)}.&#39;)
+
+        self.data = pd.get_dummies(self.data, columns=columns, prefix_sep=&#34;-&#34;)
+
+        for col in self.data.columns:
+            self.data[col] = self.data[col].astype(float)
+    return self</code></pre>
+</details>
+</dd>
+<dt id="ise.data.EmulatorData.EmulatorData.drop_columns"><code class="name flex">
+<span>def <span class="ident">drop_columns</span></span>(<span>self, columns)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def drop_columns(self, columns):
+    if not isinstance(columns, list) and not isinstance(columns, str):
+        raise ValueError(f&#39;Columns argument must be of type: str|list, received {type(columns)}.&#39;)
+    columns = list(columns)
+
+    self.data = self.data.drop(columns=columns)
+
+    return self</code></pre>
+</details>
+</dd>
+<dt id="ise.data.EmulatorData.EmulatorData.drop_missing"><code class="name flex">
+<span>def <span class="ident">drop_missing</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def drop_missing(self):
+    self.data = self.data.dropna()
+    return self</code></pre>
+</details>
+</dd>
+<dt id="ise.data.EmulatorData.EmulatorData.drop_outliers"><code class="name flex">
+<span>def <span class="ident">drop_outliers</span></span>(<span>self, column, operator, value)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def drop_outliers(self, column, operator, value, ):
+    if operator.lower() in (&#39;equal&#39;, &#39;equals&#39;, &#39;=&#39;, &#39;==&#39;):
+        outlier_data = self.data[self.data[column] == value]
+    elif operator.lower() in (&#39;not equal&#39;, &#39;not equals&#39;, &#39;!=&#39;, &#39;~=&#39;):
+        outlier_data = self.data[self.data[column] != value]
+    elif operator.lower() in (&#39;greather than&#39;, &#39;greater&#39;, &#39;&gt;=&#39;, &#39;&gt;&#39;):
+        outlier_data = self.data[self.data[column] &gt; value]
+    elif operator.lower() in (&#39;less than&#39;, &#39;less&#39;, &#39;&lt;=&#39;, &#39;&lt;&#39;):
+        outlier_data = self.data[self.data[column] &lt; value]
+    else:
+        raise ValueError(f&#39;Operator must be in [\&#34;==\&#34;, \&#34;!=\&#34;, \&#34;&gt;\&#34;, \&#34;&lt;\&#34;], received {operator}&#39;)
+
+    cols = outlier_data.columns
+    nonzero_columns = outlier_data.apply(lambda x: x &gt; 0).apply(lambda x: list(cols[x.values]), axis=1)
+
+    # Create dataframe of experiments with outliers (want to delete the entire 85 rows)
+    outlier_runs = pd.DataFrame()
+    outlier_runs[&#39;modelname&#39;] = nonzero_columns.apply(lambda x: x[-6])
+    outlier_runs[&#39;exp_id&#39;] = nonzero_columns.apply(lambda x: x[-5])
+    outlier_runs[&#39;sectors&#39;] = outlier_data.sectors
+    outlier_runs_list = outlier_runs.values.tolist()
+    unique_outliers = [list(x) for x in set(tuple(x) for x in outlier_runs_list)]
+
+    # Drop those runs
+    for i in unique_outliers:
+        modelname = i[0]
+        exp_id = i[1]
+        sector = i[2]
+        self.data = self.data.drop(
+            self.data[(self.data[modelname] == 1) &amp; (self.data[exp_id] == 1) &amp; (self.data.sectors == sector)].index)
+
+    return self</code></pre>
+</details>
+</dd>
+<dt id="ise.data.EmulatorData.EmulatorData.process"><code class="name flex">
+<span>def <span class="ident">process</span></span>(<span>self, target_column='sle', drop_missing=True, drop_columns=True, boolean_indices=True, scale=True, split_type='batch_test', drop_outliers=False, time_series=False, lag=None)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def process(self, target_column=&#39;sle&#39;, drop_missing=True, drop_columns=True, boolean_indices=True, scale=True,
+            split_type=&#39;batch_test&#39;, drop_outliers=False, time_series=False, lag=None):
+
+
+    if time_series:
+        if lag is None:
+            raise ValueError(&#39;If time_series == True, lag cannot be None&#39;)
+        time_dependent_columns = [&#39;salinity&#39;, &#39;temperature&#39;, &#39;thermal_forcing&#39;,
+                                  &#39;pr_anomaly&#39;, &#39;evspsbl_anomaly&#39;, &#39;mrro_anomaly&#39;, &#39;smb_anomaly&#39;,
+                                  &#39;ts_anomaly&#39;,]
+        separated_dfs = [y for x, y in self.data.groupby([&#39;sectors&#39;, &#39;exp_id&#39;, &#39;modelname&#39;])]
+        for df in separated_dfs:
+            for shift in range(1, lag + 1):
+                for column in time_dependent_columns:
+                    df[f&#34;{column}.lag{shift}&#34;] = df[column].shift(shift, fill_value=0)
+        self.data = pd.concat(separated_dfs)
+
+
+    if drop_columns:
+        if drop_columns is True:
+            self = self.drop_columns(columns=[&#39;experiment&#39;, &#39;exp_id&#39;, &#39;groupname&#39;, &#39;regions&#39;])
+        elif isinstance(drop_columns, list):
+            self = self.drop_columns(columns=drop_columns)
+        else:
+            raise ValueError(f&#39;drop_columns argument must be of type boolean|list, received {type(drop_columns)}&#39;)
+
+    if drop_missing:
+        self = self.drop_missing()
+
+    if boolean_indices:
+        self = self.create_boolean_indices()
+
+    if drop_outliers:
+        column = drop_outliers[&#39;column&#39;]
+        operator = drop_outliers[&#39;operator&#39;]
+        value = drop_outliers[&#39;value&#39;]
+        self = self.drop_outliers(column, operator, value, )
+
+    self = self.split_data(target_column=target_column)
+
+    if scale:
+        self.X = self.scale(self.X, &#39;inputs&#39;, scaler=&#39;MinMaxScaler&#39;)
+        if target_column == &#39;sle&#39;:
+            self.y = np.array(self.y)
+        else:
+            self.y = self.scale(self.y, &#39;outputs&#39;, scaler=&#39;MinMaxScaler&#39;)
+
+    self = self.train_test_split(split_type=split_type)
+
+    return self, self.train_features, self.test_features, self.train_labels, self.test_labels</code></pre>
+</details>
+</dd>
+<dt id="ise.data.EmulatorData.EmulatorData.scale"><code class="name flex">
+<span>def <span class="ident">scale</span></span>(<span>self, values, values_type, scaler='MinMaxScaler')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def scale(self, values, values_type, scaler=&#34;MinMaxScaler&#34;):
+    if self.X is None and self.y is None:
+        raise AttributeError(&#39;Data must be split before scaling using model.split_data method.&#39;)
+
+    if &#34;minmax&#34; in scaler.lower():
+        if &#39;input&#39; in values_type.lower():
+            self.scaler_X = sp.MinMaxScaler()
+        else:
+            self.scaler_y = sp.MinMaxScaler()
+    elif &#34;standard&#34; in scaler.lower():
+        if &#39;input&#39; in values_type.lower():
+            self.scaler_X = sp.StandardScaler()
+        else:
+            self.scaler_y = sp.StandardScaler()
+    else:
+        raise ValueError(f&#39;scaler argument must be in [\&#39;MinMaxScaler\&#39;, \&#39;StandardScaler\&#39;], received {scaler}&#39;)
+
+    if &#39;input&#39; in values_type.lower():
+        self.input_columns = self.X.columns
+        self.scaler_X.fit(self.X)
+        # dump(self.scaler_X, open(&#39;./src/data/output_files/scaler_X.pkl&#39;, &#39;wb&#39;))
+        return pd.DataFrame(self.scaler_X.transform(values), columns=self.X.columns)
+
+    # TODO: Don&#39;t need this anymore with SLE as the prediction
+    elif &#39;output&#39; in values_type.lower():
+        self.scaler_y.fit(np.array(self.y).reshape(-1, 1))
+        # dump(self.scaler_y, open(&#39;./src/data/output_files/scaler_y.pkl&#39;, &#39;wb&#39;))
+        return self.scaler_y.transform(np.array(values).reshape(-1, 1))
+
+    else:
+        raise ValueError(f&#34;values_type must be in [&#39;inputs&#39;, &#39;outputs&#39;], received {values_type}&#34;)</code></pre>
+</details>
+</dd>
+<dt id="ise.data.EmulatorData.EmulatorData.split_data"><code class="name flex">
+<span>def <span class="ident">split_data</span></span>(<span>self, target_column: str)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def split_data(self, target_column: str, ):
+    self.target_column = target_column
+    self.X = self.data.drop(columns=self.output_columns)
+    self.y = self.data[target_column]
+    self.input_columns = self.X.columns
+    return self</code></pre>
+</details>
+</dd>
+<dt id="ise.data.EmulatorData.EmulatorData.train_test_split"><code class="name flex">
+<span>def <span class="ident">train_test_split</span></span>(<span>self, train_size=0.7, split_type='random')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def train_test_split(self, train_size=0.7, split_type=&#39;random&#39;):
+
+    if not isinstance(self.X, pd.DataFrame):
+        self.X = pd.DataFrame(self.X, columns=self.input_columns)
+
+    if &#39;random&#39; in split_type.lower():
+        self.train_features = self.X.sample(frac=train_size, random_state=0)
+        training_indices = self.train_features.index
+        self.train_labels = self.y[training_indices].squeeze()
+
+        self.test_features = self.X.drop(training_indices)
+        self.test_labels = pd.Series(self.y.squeeze()).drop(training_indices)
+
+    elif split_type.lower() == &#34;batch&#34;:
+        # batch -- grouping of 85 years of a particular model, experiment, and sector
+
+        # Calculate how many batches you&#39;ll need (roughly) for train/test proportion
+        test_num_rows = len(self.X) * (1 - train_size)
+        num_years = len(set(self.data.year))
+        num_test_batches = test_num_rows // num_years
+
+        sectors_scaler = sp.MinMaxScaler().fit(np.array(self.data.sectors).reshape(-1, 1))
+
+        test_index = 0
+        test_scenarios = []
+        test_indices = []
+        test_features = []
+        test_labels = []
+        # Keep this running until you have enough samples
+        while len(test_scenarios) &lt; num_test_batches:
+            try:
+                random_index = random.sample(range(len(self.batches)), 1)[0]
+                batch = self.batches[random_index]
+                if batch not in test_scenarios:
+                    data = self.X[(self.X[f&#34;modelname_{batch[0]}&#34;] == 1) &amp; (
+                            self.X[&#39;sectors&#39;] == sectors_scaler.transform(
+                        np.array(batch[1]).reshape(1, -1)).squeeze()) &amp; (self.X[f&#34;exp_id_{batch[2]}&#34;] == 1)]
+                    labels = self.y[(self.X[f&#34;modelname_{batch[0]}&#34;] == 1) &amp; (
+                            self.X[&#39;sectors&#39;] == sectors_scaler.transform(
+                        np.array(batch[1]).reshape(1, -1)).squeeze()) &amp; (self.X[f&#34;exp_id_{batch[2]}&#34;] == 1)]
+                    if not data.empty:
+                        test_scenarios.append(batch)
+                        test_indices.append(random_index)
+                        test_features.append(np.array(data))
+                        test_labels.append(labels.squeeze())
+                        test_index += 1
+            except KeyError:
+                pass
+
+        self.test_features = np.array(test_features)
+        self.test_labels = np.array(test_labels)
+        train_scenarios = np.delete(np.array(self.batches), test_indices, axis=0).tolist()
+
+        train_features = []
+        train_labels = []
+        for batch in train_scenarios:
+            try:
+                data = self.X[(self.X[f&#34;modelname_{batch[0]}&#34;] == 1) &amp; (
+                        self.X[&#39;sectors&#39;] == sectors_scaler.transform(
+                    np.array(batch[1]).reshape(1, -1)).squeeze()) &amp; (self.X[f&#34;exp_id_{batch[2]}&#34;] == 1)]
+                labels = self.y[(self.X[f&#34;modelname_{batch[0]}&#34;] == 1) &amp; (
+                        self.X[&#39;sectors&#39;] == sectors_scaler.transform(
+                    np.array(batch[1]).reshape(1, -1)).squeeze()) &amp; (self.X[f&#34;exp_id_{batch[2]}&#34;] == 1)]
+                if not data.empty:
+                    train_features.append(np.array(data))
+                    train_labels.append(labels.squeeze())
+            except KeyError:
+                pass
+        self.train_features = np.array(train_features)
+        self.train_labels = np.array(train_labels)
+        self.test_scenarios = test_scenarios
+
+
+
+    elif split_type.lower() == &#34;batch_test&#34;:
+        # batch -- grouping of 85 years of a particular model, experiment, and sector
+        # Calculate how many batches you&#39;ll need (roughly) for train/test proportion
+        test_num_rows = len(self.X) * (1 - train_size)
+        num_years = len(set(self.data.year))
+        num_test_batches = test_num_rows // num_years
+
+        # Get all possible values for sector, experiment, and model
+        all_sectors = list(set(self.X.sectors))
+        all_experiments = [col for col in self.X.columns if &#34;exp_id&#34; in col]
+        all_modelnames = [col for col in self.X.columns if &#34;modelname&#34; in col]
+
+        # Set up concatenation of test data scenarios...
+        test_scenarios = []
+        test_dataset = pd.DataFrame()
+
+        # Keep this running until you have enough samples
+        np.random.seed(10)
+        while len(test_scenarios) &lt; num_test_batches:
+            # Get a random
+            random_model = np.random.choice(all_modelnames)
+            random_sector = np.random.choice(all_sectors)
+            random_experiment = np.random.choice(all_experiments)
+            test_scenario = [random_model, random_sector, random_experiment]
+            if test_scenario not in test_scenarios:
+                scenario_df = self.X[(self.X[random_model] == 1) &amp; (self.X[&#39;sectors&#39;] == random_sector) &amp; (
+                        self.X[random_experiment] == 1)]
+                if not scenario_df.empty:
+                    test_scenarios.append(test_scenario)
+                    test_dataset = pd.concat([test_dataset, scenario_df])
+        self.test_features = test_dataset
+        testing_indices = self.test_features.index
+        self.test_labels = self.y[testing_indices].squeeze()
+
+        self.train_features = self.X.drop(testing_indices)
+        self.train_labels = pd.Series(self.y.squeeze()).drop(testing_indices)
+
+        self.test_scenarios = test_scenarios
+
+    return self</code></pre>
+</details>
+</dd>
+<dt id="ise.data.EmulatorData.EmulatorData.unscale"><code class="name flex">
+<span>def <span class="ident">unscale</span></span>(<span>self, values, values_type)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def unscale(self, values, values_type):
+    # self.scaler_X = load(open(&#39;./src/data/output_files/scaler_X.pkl&#39;, &#39;rb&#39;))
+    # self.scaler_y = load(open(&#39;./src/data/output_files/scaler_y.pkl&#39;, &#39;rb&#39;))
+
+    if &#39;input&#39; in values_type.lower():
+        return pd.DataFrame(self.scaler_X.inverse_transform(values), columns=self.input_columns)
+
+    elif &#39;output&#39; in values_type.lower():
+        return self.scaler_y.inverse_transform(values.reshape(-1, 1))
+
+    else:
+        raise ValueError(f&#34;values_type must be in [&#39;inputs&#39;, &#39;outputs&#39;], received {values_type}&#34;)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="ise.data" href="index.html">ise.data</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="ise.data.EmulatorData.EmulatorData" href="#ise.data.EmulatorData.EmulatorData">EmulatorData</a></code></h4>
+<ul class="">
+<li><code><a title="ise.data.EmulatorData.EmulatorData.create_boolean_indices" href="#ise.data.EmulatorData.EmulatorData.create_boolean_indices">create_boolean_indices</a></code></li>
+<li><code><a title="ise.data.EmulatorData.EmulatorData.drop_columns" href="#ise.data.EmulatorData.EmulatorData.drop_columns">drop_columns</a></code></li>
+<li><code><a title="ise.data.EmulatorData.EmulatorData.drop_missing" href="#ise.data.EmulatorData.EmulatorData.drop_missing">drop_missing</a></code></li>
+<li><code><a title="ise.data.EmulatorData.EmulatorData.drop_outliers" href="#ise.data.EmulatorData.EmulatorData.drop_outliers">drop_outliers</a></code></li>
+<li><code><a title="ise.data.EmulatorData.EmulatorData.process" href="#ise.data.EmulatorData.EmulatorData.process">process</a></code></li>
+<li><code><a title="ise.data.EmulatorData.EmulatorData.scale" href="#ise.data.EmulatorData.EmulatorData.scale">scale</a></code></li>
+<li><code><a title="ise.data.EmulatorData.EmulatorData.split_data" href="#ise.data.EmulatorData.EmulatorData.split_data">split_data</a></code></li>
+<li><code><a title="ise.data.EmulatorData.EmulatorData.train_test_split" href="#ise.data.EmulatorData.EmulatorData.train_test_split">train_test_split</a></code></li>
+<li><code><a title="ise.data.EmulatorData.EmulatorData.unscale" href="#ise.data.EmulatorData.EmulatorData.unscale">unscale</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

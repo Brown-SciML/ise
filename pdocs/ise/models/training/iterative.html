@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>ise.models.training.iterative API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>ise.models.training.iterative</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">from ise.data.EmulatorData import EmulatorData
+from ise.models.training.Trainer import Trainer
+from ise.models.timeseries import TimeSeriesEmulator
+from ise.models.traditional.ExploratoryModel import ExploratoryModel
+from ise.utils.utils import _structure_emulatordata_args, _structure_architecture_args
+from datetime import datetime
+from torch import nn
+from ise.utils.data import load_ml_data
+
+
+
+
+
+def lag_sequence_test(data_directory, lag_array, sequence_array, iterations, model=TimeSeriesEmulator,
+                      emulator_data_args=None, architecture=None, verbose=True, epochs=100,
+                      batch_size=100, loss=nn.MSELoss(), ):
+    
+    if verbose:
+        print(&#39;1/3: Loading processed data...&#39;)
+        
+    emulator_data_args = _structure_emulatordata_args(emulator_data_args, time_series=True)
+    architecture = _structure_architecture_args(architecture, time_series=True)
+
+    count = 0
+    for iteration in range(1, iterations+1):
+        for lag in lag_array:
+            for sequence_length in sequence_array:
+                
+                print(f&#34;Training... Lag: {lag}, Sequence Length: {sequence_length}, Iteration: {iteration}, Trained {count} models&#34;)
+                
+                emulator_data = EmulatorData(directory=data_directory)
+                emulator_data_args[&#39;lag&#39;] = lag
+                emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
+                    **emulator_data_args
+                )
+
+                data_dict = {&#39;train_features&#39;: train_features,
+                            &#39;train_labels&#39;: train_labels,
+                            &#39;test_features&#39;: test_features,
+                            &#39;test_labels&#39;: test_labels, }
+                
+                trainer = Trainer()
+                
+                current_time = datetime.now().strftime(r&#34;%d-%m-%Y %H.%M.%S&#34;)
+                trainer.train(
+                    model=model,
+                    architecture=architecture,
+                    data_dict=data_dict,
+                    criterion=loss,
+                    epochs=epochs,
+                    batch_size=batch_size,
+                    tensorboard=True,
+                    save_model=False,
+                    performance_optimized=False,
+                    verbose=verbose,
+                    sequence_length=sequence_length,
+                    tensorboard_comment=f&#34; -- {current_time}, lag={lag}, sequence_length={sequence_length}&#34;
+                )
+                
+                # not verbose because if verbose==True, this is already calculated in training loop
+                if not verbose:
+                    metrics, preds = trainer.evaluate()
+                
+                count += 1
+    
+    print(f&#39;Finished trainin {count} models.&#39;)
+    
+    
+def rnn_architecture_test(data_directory, rnn_layers_array, hidden_nodes_array, iterations,
+                          model=TimeSeriesEmulator, architecture=None, verbose=True, 
+                          epochs=100, batch_size=100, loss=nn.MSELoss(), mc_dropout=False, dropout_prob=None, 
+                          performance_optimized=False, save_model=True, tensorboard=True,):
+    
+    
+    train_features, train_labels, test_features, test_labels, _ = load_ml_data(data_directory=data_directory, time_series=True)
+    
+    data_dict = {&#39;train_features&#39;: train_features,
+                &#39;train_labels&#39;: train_labels,
+                &#39;test_features&#39;: test_features,
+                &#39;test_labels&#39;: test_labels, }      
+    
+    count = 0
+    for iteration in range(1, iterations+1):
+        for num_rnn_layers in rnn_layers_array:
+            for num_rnn_hidden in hidden_nodes_array:
+                print(f&#34;Training... RNN Layers: {num_rnn_layers}, Hidden: {num_rnn_hidden}, Iteration: {iteration}, Trained {count} models&#34;)
+            
+                trainer = Trainer()
+                architecture = {
+                    &#39;num_rnn_layers&#39;: num_rnn_layers,
+                    &#39;num_rnn_hidden&#39;: num_rnn_hidden,
+                }
+                current_time = datetime.now().strftime(r&#34;%d-%m-%Y %H.%M.%S&#34;)
+                trainer.train(
+                    model=model,
+                    architecture=architecture,
+                    data_dict=data_dict,
+                    criterion=loss,
+                    epochs=epochs,
+                    batch_size=batch_size,
+                    mc_dropout=mc_dropout,
+                    dropout_prob=dropout_prob,
+                    tensorboard=tensorboard,
+                    save_model=save_model,
+                    performance_optimized=performance_optimized,
+                    verbose=verbose,
+                    sequence_length=5,
+                    tensorboard_comment=f&#34; -- {current_time}, num_rnn={num_rnn_layers}, num_hidden={num_rnn_hidden}&#34;
+                )
+                
+                if not verbose:
+                    metrics, preds = trainer.evaluate()
+                
+                count += 1
+    
+    print(&#39;&#39;)
+    print(f&#39;Finished training {count} models.&#39;)
+    
+    
+def traditional_architecture_test(data_directory, architectures: list[dict], iterations,
+                          model=ExploratoryModel, verbose=True, 
+                          epochs=100, batch_size=100, loss=nn.MSELoss(), ):
+    
+    
+    train_features, train_labels, test_features, test_labels = load_ml_data(data_directory=data_directory, time_series=False)
+    
+    data_dict = {&#39;train_features&#39;: train_features,
+                &#39;train_labels&#39;: train_labels,
+                &#39;test_features&#39;: test_features,
+                &#39;test_labels&#39;: test_labels, }      
+    
+    count = 0
+    for iteration in range(1, iterations+1):
+        for architecture in architectures:
+            num_linear_layers = architecture[&#39;num_linear_layers&#39;]
+            nodes = architecture[&#39;nodes&#39;]
+            print(f&#34;Training... Linear Layers: {num_linear_layers}, Nodes: {nodes}, Iteration: {iteration}, Trained {count} models&#34;)
+        
+            trainer = Trainer()
+            current_time = datetime.now().strftime(r&#34;%d-%m-%Y %H.%M.%S&#34;)
+            trainer.train(
+                model=model,
+                architecture=architecture,
+                data_dict=data_dict,
+                criterion=loss,
+                epochs=epochs,
+                batch_size=batch_size,
+                tensorboard=True,
+                save_model=True,
+                performance_optimized=False,
+                verbose=verbose,
+                sequence_length=5,
+                tensorboard_comment=f&#34; -- {current_time}, num_linear={num_linear_layers}, nodes={nodes}&#34;
+            )
+            
+            if not verbose:
+                metrics, preds = trainer.evaluate()
+            
+            count += 1
+    
+    print(f&#39;Finished trainin {count} models.&#39;)
+    
+
+# TODO: Write tests for the above
+
+
+# TODO: make dense_architecture_test() that tests what dense layers should be at the end of the RNN
+
+
+# TODO: Write function for dataset_tests and other tests I&#39;ve done before (reproducibility!!!), use dict{&#39;dataset1&#39;:[&#39;columns&#39;]} to loop
+
+# dataset1 = [&#39;mrro_anomaly&#39;, &#39;rhoi&#39;, &#39;rhow&#39;, &#39;groupname&#39;, &#39;experiment&#39;]
+# dataset2 = [&#39;mrro_anomaly&#39;, &#39;rhoi&#39;, &#39;rhow&#39;, &#39;groupname&#39;, &#39;experiment&#39;, &#39;ice_shelf_fracture&#39;, &#39;tier&#39;, ]
+# dataset3 = [&#39;mrro_anomaly&#39;, &#39;groupname&#39;, &#39;experiment&#39;]
+# dataset4 = [&#39;groupname&#39;, &#39;experiment&#39;]
+# dataset5 = [&#39;groupname&#39;, &#39;experiment&#39;, &#39;regions&#39;, &#39;tier&#39;]
+
+# def dataset_tests(datasets)
+# count = 0
+# for iteration in range(5):
+#     for dataset in [&#39;dataset5&#39;]:
+#         print(&#39;&#39;)
+#         print(f&#34;Training... Dataset: {dataset}, Iteration: {iteration}, Trained {count} models&#34;)
+#         test_features = pd.read_csv(f&#39;/users/pvankatw/emulator/src/data/ml/{dataset}/test_features.csv&#39;)
+#         train_features = pd.read_csv(f&#39;/users/pvankatw/emulator/src/data/ml/{dataset}/train_features.csv&#39;)
+#         test_labels = pd.read_csv(f&#39;/users/pvankatw/emulator/src/data/ml/{dataset}/test_labels.csv&#39;)
+#         train_labels = pd.read_csv(f&#39;/users/pvankatw/emulator/src/data/ml/{dataset}/train_labels.csv&#39;)
+#         scenarios = pd.read_csv(f&#39;/users/pvankatw/emulator/src/data/ml/{dataset}/test_scenarios.csv&#39;).values.tolist()
+#
+#
+#         data_dict = {&#39;train_features&#39;: train_features,
+#                     &#39;train_labels&#39;: train_labels,
+#                     &#39;test_features&#39;: test_features,
+#                     &#39;test_labels&#39;: test_labels,  }
+#
+#         start = time.time()
+#         trainer = Trainer()
+#         trainer.train(
+#             model=ExploratoryModel.ExploratoryModel,
+#             num_linear_layers=6,
+#             nodes=[256, 128, 64, 32, 16, 1],
+#             # num_linear_layers=12,
+#             # nodes=[2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1],
+#             data_dict=data_dict,
+#             criterion=nn.MSELoss(),
+#             epochs=100,
+#             batch_size=100,
+#             tensorboard=True,
+#             save_model=True,
+#             performance_optimized=False,
+#         )
+#         print(f&#39;Total Time: {time.time() - start:0.4f} seconds&#39;)
+#
+#         print(&#39;4/4: Evaluating Model&#39;)
+#
+#         model = trainer.model
+#         metrics, preds = trainer.evaluate()
+#
+#         count += 1</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="ise.models.training.iterative.lag_sequence_test"><code class="name flex">
+<span>def <span class="ident">lag_sequence_test</span></span>(<span>data_directory, lag_array, sequence_array, iterations, model=&lt;module &#x27;ise.models.timeseries.TimeSeriesEmulator&#x27; from &#x27;/gpfs/home/pvankatw/emulator/ise/models/timeseries/TimeSeriesEmulator.py&#x27;&gt;, emulator_data_args=None, architecture=None, verbose=True, epochs=100, batch_size=100, loss=MSELoss())</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def lag_sequence_test(data_directory, lag_array, sequence_array, iterations, model=TimeSeriesEmulator,
+                      emulator_data_args=None, architecture=None, verbose=True, epochs=100,
+                      batch_size=100, loss=nn.MSELoss(), ):
+    
+    if verbose:
+        print(&#39;1/3: Loading processed data...&#39;)
+        
+    emulator_data_args = _structure_emulatordata_args(emulator_data_args, time_series=True)
+    architecture = _structure_architecture_args(architecture, time_series=True)
+
+    count = 0
+    for iteration in range(1, iterations+1):
+        for lag in lag_array:
+            for sequence_length in sequence_array:
+                
+                print(f&#34;Training... Lag: {lag}, Sequence Length: {sequence_length}, Iteration: {iteration}, Trained {count} models&#34;)
+                
+                emulator_data = EmulatorData(directory=data_directory)
+                emulator_data_args[&#39;lag&#39;] = lag
+                emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
+                    **emulator_data_args
+                )
+
+                data_dict = {&#39;train_features&#39;: train_features,
+                            &#39;train_labels&#39;: train_labels,
+                            &#39;test_features&#39;: test_features,
+                            &#39;test_labels&#39;: test_labels, }
+                
+                trainer = Trainer()
+                
+                current_time = datetime.now().strftime(r&#34;%d-%m-%Y %H.%M.%S&#34;)
+                trainer.train(
+                    model=model,
+                    architecture=architecture,
+                    data_dict=data_dict,
+                    criterion=loss,
+                    epochs=epochs,
+                    batch_size=batch_size,
+                    tensorboard=True,
+                    save_model=False,
+                    performance_optimized=False,
+                    verbose=verbose,
+                    sequence_length=sequence_length,
+                    tensorboard_comment=f&#34; -- {current_time}, lag={lag}, sequence_length={sequence_length}&#34;
+                )
+                
+                # not verbose because if verbose==True, this is already calculated in training loop
+                if not verbose:
+                    metrics, preds = trainer.evaluate()
+                
+                count += 1
+    
+    print(f&#39;Finished trainin {count} models.&#39;)</code></pre>
+</details>
+</dd>
+<dt id="ise.models.training.iterative.rnn_architecture_test"><code class="name flex">
+<span>def <span class="ident">rnn_architecture_test</span></span>(<span>data_directory, rnn_layers_array, hidden_nodes_array, iterations, model=&lt;module &#x27;ise.models.timeseries.TimeSeriesEmulator&#x27; from &#x27;/gpfs/home/pvankatw/emulator/ise/models/timeseries/TimeSeriesEmulator.py&#x27;&gt;, architecture=None, verbose=True, epochs=100, batch_size=100, loss=MSELoss(), mc_dropout=False, dropout_prob=None, performance_optimized=False, save_model=True, tensorboard=True)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def rnn_architecture_test(data_directory, rnn_layers_array, hidden_nodes_array, iterations,
+                          model=TimeSeriesEmulator, architecture=None, verbose=True, 
+                          epochs=100, batch_size=100, loss=nn.MSELoss(), mc_dropout=False, dropout_prob=None, 
+                          performance_optimized=False, save_model=True, tensorboard=True,):
+    
+    
+    train_features, train_labels, test_features, test_labels, _ = load_ml_data(data_directory=data_directory, time_series=True)
+    
+    data_dict = {&#39;train_features&#39;: train_features,
+                &#39;train_labels&#39;: train_labels,
+                &#39;test_features&#39;: test_features,
+                &#39;test_labels&#39;: test_labels, }      
+    
+    count = 0
+    for iteration in range(1, iterations+1):
+        for num_rnn_layers in rnn_layers_array:
+            for num_rnn_hidden in hidden_nodes_array:
+                print(f&#34;Training... RNN Layers: {num_rnn_layers}, Hidden: {num_rnn_hidden}, Iteration: {iteration}, Trained {count} models&#34;)
+            
+                trainer = Trainer()
+                architecture = {
+                    &#39;num_rnn_layers&#39;: num_rnn_layers,
+                    &#39;num_rnn_hidden&#39;: num_rnn_hidden,
+                }
+                current_time = datetime.now().strftime(r&#34;%d-%m-%Y %H.%M.%S&#34;)
+                trainer.train(
+                    model=model,
+                    architecture=architecture,
+                    data_dict=data_dict,
+                    criterion=loss,
+                    epochs=epochs,
+                    batch_size=batch_size,
+                    mc_dropout=mc_dropout,
+                    dropout_prob=dropout_prob,
+                    tensorboard=tensorboard,
+                    save_model=save_model,
+                    performance_optimized=performance_optimized,
+                    verbose=verbose,
+                    sequence_length=5,
+                    tensorboard_comment=f&#34; -- {current_time}, num_rnn={num_rnn_layers}, num_hidden={num_rnn_hidden}&#34;
+                )
+                
+                if not verbose:
+                    metrics, preds = trainer.evaluate()
+                
+                count += 1
+    
+    print(&#39;&#39;)
+    print(f&#39;Finished training {count} models.&#39;)</code></pre>
+</details>
+</dd>
+<dt id="ise.models.training.iterative.traditional_architecture_test"><code class="name flex">
+<span>def <span class="ident">traditional_architecture_test</span></span>(<span>data_directory, architectures: list[dict], iterations, model=ise.models.traditional.ExploratoryModel.ExploratoryModel, verbose=True, epochs=100, batch_size=100, loss=MSELoss())</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def traditional_architecture_test(data_directory, architectures: list[dict], iterations,
+                          model=ExploratoryModel, verbose=True, 
+                          epochs=100, batch_size=100, loss=nn.MSELoss(), ):
+    
+    
+    train_features, train_labels, test_features, test_labels = load_ml_data(data_directory=data_directory, time_series=False)
+    
+    data_dict = {&#39;train_features&#39;: train_features,
+                &#39;train_labels&#39;: train_labels,
+                &#39;test_features&#39;: test_features,
+                &#39;test_labels&#39;: test_labels, }      
+    
+    count = 0
+    for iteration in range(1, iterations+1):
+        for architecture in architectures:
+            num_linear_layers = architecture[&#39;num_linear_layers&#39;]
+            nodes = architecture[&#39;nodes&#39;]
+            print(f&#34;Training... Linear Layers: {num_linear_layers}, Nodes: {nodes}, Iteration: {iteration}, Trained {count} models&#34;)
+        
+            trainer = Trainer()
+            current_time = datetime.now().strftime(r&#34;%d-%m-%Y %H.%M.%S&#34;)
+            trainer.train(
+                model=model,
+                architecture=architecture,
+                data_dict=data_dict,
+                criterion=loss,
+                epochs=epochs,
+                batch_size=batch_size,
+                tensorboard=True,
+                save_model=True,
+                performance_optimized=False,
+                verbose=verbose,
+                sequence_length=5,
+                tensorboard_comment=f&#34; -- {current_time}, num_linear={num_linear_layers}, nodes={nodes}&#34;
+            )
+            
+            if not verbose:
+                metrics, preds = trainer.evaluate()
+            
+            count += 1
+    
+    print(f&#39;Finished trainin {count} models.&#39;)</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="ise.models.training" href="index.html">ise.models.training</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="ise.models.training.iterative.lag_sequence_test" href="#ise.models.training.iterative.lag_sequence_test">lag_sequence_test</a></code></li>
+<li><code><a title="ise.models.training.iterative.rnn_architecture_test" href="#ise.models.training.iterative.rnn_architecture_test">rnn_architecture_test</a></code></li>
+<li><code><a title="ise.models.training.iterative.traditional_architecture_test" href="#ise.models.training.iterative.traditional_architecture_test">traditional_architecture_test</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>
