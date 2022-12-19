@@ -67,7 +67,8 @@ def _structure_emulatordata_args(input_args: dict, time_series: bool):
                     boolean_indices=True,
                     scale=True,
                     split_type='batch_test',
-                    drop_outliers={'column': 'ivaf', 'operator': '<', 'value': -1e13},
+                    drop_outliers='quantile',
+                    drop_expression=[0.01, 0.99],
                     time_series=time_series,
                     lag=None
                     )

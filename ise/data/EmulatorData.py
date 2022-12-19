@@ -49,7 +49,7 @@ class EmulatorData:
 
     def process(self, target_column: str='sle', drop_missing: bool=True, 
                 drop_columns: list[str]=True, boolean_indices: bool=True, scale: bool=True,
-                split_type: str='batch', drop_outliers: dict=False, 
+                split_type: str='batch', drop_outliers: str=False, drop_expression: list[tuple]=None,
                 time_series: bool=False, lag: int=None):
         """Carries out feature engineering & processing of formatted data. Includes dropping missing
         values, eliminating columns, creating boolean indices of categorical variables, scaling, 
@@ -63,7 +63,8 @@ class EmulatorData:
             boolean_indices (bool, optional): Flag denoting whether to create boolean indices for all categorical variables left after dropping columns. Defaults to True.
             scale (bool, optional): Flag denoting whether to scale data between zero and 1.  Sklearn's MinMaxScaler is used. Defaults to True.
             split_type (str, optional): Method to split data into training and testing set, must be in [random, batch]. Random is not reccommended but is included for completeness. Defaults to 'batch'.
-            drop_outliers (dict, optional): Dictionary denoting whether to drop outliers in a column based on a condition. Dictionary should be in the following format: {'column': 'ivaf', 'operator': '<', 'value': -1e13}. Defaults to False.
+            drop_outliers (str, optional): Method by which outliers will be dropped, must be in [quantile, explicit]. Defaults to False.
+            drop_expression (list[tuple], optional): Expressions by which to drop outliers, see EmulatorData.drop_outliers. If drop_outliers==quantile, drop_expression must be a list[float] containing quantile bounds. Defaults to None. 
             time_series (bool, optional): Flag denoting whether to process the data as a time-series dataset or traditional non-time dataset. Defaults to False.
             lag (int, optional): Lag variable for time-series processing. Defaults to None.
             
@@ -101,10 +102,14 @@ class EmulatorData:
             self = self.create_boolean_indices()
 
         if drop_outliers:
-            column = drop_outliers['column']
-            operator = drop_outliers['operator']
-            value = drop_outliers['value']
-            self = self.drop_outliers(column, operator, value, )
+            if drop_outliers.lower() == 'quantile':
+                self = self.drop_outliers(method=drop_outliers, quantiles=drop_expression)
+            elif drop_outliers.lower() == 'explicit':
+                self = self.drop_outliers(method=drop_outliers, expression=drop_expression)
+            else:
+                raise ValueError('drop_outliers argument must be in [quantile, explicit]')
+            
+            
 
         self = self.split_data(target_column=target_column)
 
@@ -119,32 +124,50 @@ class EmulatorData:
 
         return self, self.train_features, self.test_features, self.train_labels, self.test_labels
 
-    def drop_outliers(self, column: str, operator: str, value: float, ):
-        """Drops simulations that are outliers based on the provided column, operator, and value. 
+    def drop_outliers(self, method: str, expression: list[tuple]=None, quantiles: list[float]=[0.01, 0.99]):
+        """Drops simulations that are outliers based on the provided method and expression. 
         Extra complexity is handled due to the necessity of removing the entire 85 row series from 
         the dataset rather than simply removing the rows with given conditions. Note that the 
         condition indicates rows to be DROPPED, not kept (e.g. 'sle', '>', '20' would drop all
-        simulations containing sle values over 20.) Operator argument must be in [==, >, <, >=, <=]
+        simulations containing sle values over 20). If quantile method is used, outliers are dropped
+        from the SLE column based on the provided quantile in the quantiles argument. If explicit is
+        chosen, expression must contain a list of tuples such that the tuple contains 
+        [(column, operator, expression)] of the subset, e.g. [("sle", ">", 20), ("sle", "<", -20)].
 
         Args:
-            column (str): Column with outlier condition
-            operator (str): Mathematical operator to use for subsetting
-            value (float): Value threshold for outlier
+            method (str): Method of outlier deletion, must be in [quantile, explicit]
+            expression (list[tuple]): List of subset expressions in the form [column, operator, value], defaults to None.
+            quantiles (list[float]): , defaults to [0.01, 0.99].
 
         Returns:
             EmulatorData: self, with self.data having outliers dropped.
         """
+        
+        if method.lower() == 'quantile':
+            if quantiles is None:
+                raise AttributeError('If method == quantile, quantiles argument cannot be None')
+            lower_sle, upper_sle = np.quantile(np.array(self.data.sle), quantiles)
+            outlier_data = self.data[(self.data['sle'] <= lower_sle) & (self.data['sle'] >= upper_sle)]
+        elif method.lower() == 'explicit':
+            if expression is None:
+                raise AttributeError('If method == explicit, expression argument cannot be None')
+            elif not isinstance(expression, list) or isinstance(expression[0], tuple):
+                raise AttributeError('Expression argument must be a list of tuples, e.g. [("sle", ">", 20), ("sle", "<", -20)]')
+            
+            outlier_data = self.data
+            for subset_expression in expression:
+                column, operator, value = subset_expression            
 
-        if operator.lower() in ('equal', 'equals', '=', '=='):
-            outlier_data = self.data[self.data[column] == value]
-        elif operator.lower() in ('not equal', 'not equals', '!=', '~='):
-            outlier_data = self.data[self.data[column] != value]
-        elif operator.lower() in ('greather than', 'greater', '>=', '>'):
-            outlier_data = self.data[self.data[column] > value]
-        elif operator.lower() in ('less than', 'less', '<=', '<'):
-            outlier_data = self.data[self.data[column] < value]
-        else:
-            raise ValueError(f'Operator must be in [\"==\", \"!=\", \">\", \"<\"], received {operator}')
+                if operator.lower() in ('equal', 'equals', '=', '=='):
+                    outlier_data = outlier_data[outlier_data[column] == value]
+                elif operator.lower() in ('not equal', 'not equals', '!=', '~='):
+                    outlier_data = outlier_data[outlier_data[column] != value]
+                elif operator.lower() in ('greather than', 'greater', '>=', '>'):
+                    outlier_data = outlier_data[outlier_data[column] > value]
+                elif operator.lower() in ('less than', 'less', '<=', '<'):
+                    outlier_data = outlier_data[outlier_data[column] < value]
+                else:
+                    raise ValueError(f'Operator must be in [\"==\", \"!=\", \">\", \"<\"], received {operator}')
 
         cols = outlier_data.columns
         nonzero_columns = outlier_data.apply(lambda x: x > 0).apply(lambda x: list(cols[x.values]), axis=1)
