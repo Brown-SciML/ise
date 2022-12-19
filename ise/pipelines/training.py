@@ -15,20 +15,33 @@ from sklearn.decomposition import PCA
 
 
 
-def train_timeseries_network(data_directory, 
-                             architecture=None, 
-                             epochs=20, 
-                             batch_size=100, 
-                             model=TimeSeriesEmulator,
-                             loss=nn.MSELoss(),
-                             mc_dropout=True,
-                             dropout_prob=0.1,
-                             tensorboard=False,
-                             save_model=False,
-                             performance_optimized=False,
-                             verbose=False,
-                             tensorboard_comment=None
-                             ):
+def train_timeseries_network(data_directory: str, architecture: dict=None, epochs: int=20, 
+                             batch_size: int=100, model_class=TimeSeriesEmulator, loss=nn.MSELoss(), 
+                             mc_dropout: bool=True, dropout_prob: float=0.1, 
+                             tensorboard: bool=False, save_model: str=False,
+                             performance_optimized: bool=False, verbose: bool=False, 
+                             tensorboard_comment: str=None):
+    """Pipeline function for training a time-series neural network emulator. Loads processed data, trains 
+    network and saves it to the desired location. Outputs test metrics and predictions.
+
+    Args:
+        data_directory (str): Directory containing training and testing data.
+        architecture (dict, optional): Architecture arguments used to train the model. Defaults to None.
+        epochs (int, optional): Number of epochs to train the network. Defaults to 20.
+        batch_size (int, optional): Batch size of training. Defaults to 100.
+        model_class (ModelClass, optional): Model class used to train the model. Defaults to TimeSeriesEmulator.
+        loss (nn.Loss, optional): PyTorch loss to be used in training. Defaults to nn.MSELoss().
+        mc_dropout (bool, optional): Flag denoting whether the model was trained with MC dropout protocol. Defaults to True.
+        dropout_prob (float, optional): Dropout probability in MC dropout protocol. Unused if mc_dropout=False. Defaults to 0.1.
+        tensorboard (bool, optional): Flag denoting whether to output logs to Tensorboard. Defaults to False.
+        save_model (str, optional): Directory to save model. Can be False if model is not to be saved. Defaults to False.
+        performance_optimized (bool, optional): Flag denoting whether to optimize the training for faster performace. Leaves out in-loop validation testing, extra logging, etc. Defaults to False.
+        verbose (bool, optional): Flag denoting whether to output logs to terminal. Defaults to False.
+        tensorboard_comment (str, optional): Comment to be included in the tensorboard logs. Defaults to None.
+
+    Returns:
+        tuple: Tuple containing [model, metrics, test_preds], or the model, test metrics, and test predictions.
+    """
     
     if verbose:
         print('1/3: Loading processed data...')
@@ -60,7 +73,7 @@ def train_timeseries_network(data_directory,
     print(architecture)
 
     trainer.train(
-        model=model,
+        model_class=model_class,
         architecture=architecture,
         data_dict=data_dict,
         criterion=loss,
@@ -83,18 +96,37 @@ def train_timeseries_network(data_directory,
     return model, metrics, test_preds
 
 
-def train_traditional_network(data_directory, 
-                             architecture=None, 
-                             epochs=20, 
-                             batch_size=100, 
-                             model=ExploratoryModel,
+def train_traditional_network(data_directory: str, 
+                             architecture: dict=None, 
+                             epochs: int=20, 
+                             batch_size: int=100, 
+                             model_class=ExploratoryModel,
                              loss=nn.MSELoss(),
-                             tensorboard=False,
-                             save_model=False,
-                             performance_optimized=False,
-                             verbose=False,
-                             tensorboard_comment=None
+                             tensorboard: bool=False,
+                             save_model: str=False,
+                             performance_optimized: bool=False,
+                             verbose: bool=False,
+                             tensorboard_comment: str=None
                              ):
+    """Pipeline function for training a traditional neural network emulator. Loads processed data, trains 
+    network and saves it to the desired location. Outputs test metrics and predictions.
+
+    Args:
+        data_directory (str): Directory containing training and testing data.
+        architecture (dict, optional): Architecture arguments used to train the model. Defaults to None.
+        epochs (int, optional): Number of epochs to train the network. Defaults to 20.
+        batch_size (int, optional): Batch size of training. Defaults to 100.
+        model_class (ModelClass, optional): Model class used to train the model. Defaults to ExploratoryModel.
+        loss (nn.Loss, optional): PyTorch loss to be used in training. Defaults to nn.MSELoss().
+        tensorboard (bool, optional): Flag denoting whether to output logs to Tensorboard. Defaults to False.
+        save_model (str, optional): Directory to save model. Can be False if model is not to be saved. Defaults to False.
+        performance_optimized (bool, optional): Flag denoting whether to optimize the training for faster performace. Leaves out in-loop validation testing, extra logging, etc. Defaults to False.
+        verbose (bool, optional): Flag denoting whether to output logs to terminal. Defaults to False.
+        tensorboard_comment (str, optional): Comment to be included in the tensorboard logs. Defaults to None.
+
+    Returns:
+        tuple: Tuple containing [model, metrics, test_preds], or the model, test metrics, and test predictions.
+    """
     
     if verbose:
         print('1/3: Loading processed data')
@@ -127,7 +159,7 @@ def train_traditional_network(data_directory,
         }
 
     trainer.train(
-        model=model,
+        model_class=model_class,
         architecture=architecture,
         data_dict=data_dict,
         criterion=loss,
@@ -145,9 +177,26 @@ def train_traditional_network(data_directory,
         print('3/3: Evaluating Model')
     model = trainer.model
     metrics, test_preds = trainer.evaluate(verbose=verbose)
-    return metrics, test_preds
+    return model, metrics, test_preds
 
-def train_gaussian_process(data_directory, n, features=['temperature'], sampling_method='random', kernel=None, verbose=False, save_directory=None):
+def train_gaussian_process(data_directory: str, n: int, features: list[str]=['temperature'], 
+                           sampling_method: str='first_n', kernel=None, verbose: bool=False, 
+                           save_directory: str=None):
+    """Pipeline function for training a gaussian process emulator. Loads processed data and trains 
+    gaussian process. Outputs test metrics and predictions.
+
+    Args:
+        data_directory (str): Directory containing training and testing data.
+        n (int): Number of observations to use for training.
+        features (list[str], optional): List of columns to use for training. May also contain list of [pc1, pc2, pc3, ...] to use N principal components. Defaults to ['temperature'].
+        sampling_method (str, optional): Method of sampling n rows, must be in [first_n, random]. First_n takes the first n rows in the dataset, whereas random uses random sampling. First_n is recommended. Defaults to 'first_n'.
+        kernel (sklearn.kernels, optional): Sklean kernel to be used for GP training. Defaults to None.
+        verbose (bool, optional): Flag denoting whether to output logs to terminal. Defaults to False.
+        save_directory (str, optional): Directory to save outputs. Defaults to None.
+
+    Returns:
+        tuple: Tuple containing [preds, std_prediction, metrics], or the test predictions, uncertainty, and test metrics.
+    """
     
     if verbose:
         print('1/3: Loading processed data...')

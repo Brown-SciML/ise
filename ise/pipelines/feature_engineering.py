@@ -1,13 +1,24 @@
+"""Pipeline for feature engineering. After data has been processed from the raw NC files using 
+ise.pipelines.processing, this module will get data ready for modeling."""
 from ise.data.EmulatorData import EmulatorData
 from ise.utils.utils import _structure_emulatordata_args
 import pandas as pd
 
 
-def feature_engineer(data_directory, time_series, export_directory=None, emulator_data_args=None):
-   
-   
+def feature_engineer(data_directory: str, time_series: bool, export_directory: str=None, emulator_data_args: dict=None):
+    """Performs feature engineering after ise.pipelines.processing has been run. Includes loading
+    data, formatting, processing, and splitting data to get data into training and testing sets.
+
+    Args:
+        data_directory (str): Directory containing training and testing data.
+        time_series (bool): Flag denoting wether model was trained with time-series data.
+        export_directory (str, optional): Directory to save exported files. Defaults to None.
+        emulator_data_args (dict, optional): Kwarg arguments to EmulatorData.process. Default will keep optimal values, see EmulatorData.process for more details. Defaults to None.
+
+    Returns:
+        tuple: Tuple containing [emulator_data, train_features, test_features, train_labels, test_labels], or the EmulatorData class and the associate training and testing datasets.
+    """
     emulator_data_args = _structure_emulatordata_args(input_args=emulator_data_args, time_series=time_series)
-    
     emulator_data = EmulatorData(directory=data_directory)
     emulator_data, train_features, test_features, train_labels, test_labels = emulator_data.process(
         **emulator_data_args,

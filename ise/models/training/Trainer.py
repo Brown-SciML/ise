@@ -96,12 +96,12 @@ class Trainer:
                               sequence_length=sequence_length,
                               )
 
-    def train(self, model, data_dict, criterion, epochs, batch_size, mc_dropout=False, dropout_prob=None, tensorboard=False, architecture=None,
+    def train(self, model_class, data_dict, criterion, epochs, batch_size, mc_dropout=False, dropout_prob=None, tensorboard=False, architecture=None,
               save_model=False, performance_optimized=False, verbose=True, sequence_length=5, tensorboard_comment=None):
         """Training loop for training a PyTorch model. Include validation, GPU compatibility, and tensorboard integration.
 
         Args:
-            model (ModelClass): Model to be trained. Usually custom model class.
+            model_class (ModelClass): Model to be trained. Usually custom model class.
             data_dict (dict): Dictionary containing training and testing arrays/tensors.
                     Example: {'train_features': train_features, train_labels': train_labels, 'test_features': test_features, 'test_labels': test_labels,}
             criterion (torch.nn.Loss): Loss class from PyTorch NN module.
@@ -116,7 +116,7 @@ class Trainer:
         """
         
         # Initiates model with inputted architecture and formats data
-        self._initiate_model(model, data_dict, architecture, sequence_length, batch_size, mc_dropout, dropout_prob)
+        self._initiate_model(model_class, data_dict, architecture, sequence_length, batch_size, mc_dropout, dropout_prob)
 
         # Use multiple GPU parallelization if available
         # if torch.cuda.device_count() > 1:

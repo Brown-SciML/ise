@@ -11,7 +11,7 @@ from ise.utils.data import load_ml_data
 
 
 
-def lag_sequence_test(data_directory, lag_array, sequence_array, iterations, model=TimeSeriesEmulator,
+def lag_sequence_test(data_directory, lag_array, sequence_array, iterations, model_class=TimeSeriesEmulator,
                       emulator_data_args=None, architecture=None, verbose=True, epochs=100,
                       batch_size=100, loss=nn.MSELoss(), ):
     
@@ -43,7 +43,7 @@ def lag_sequence_test(data_directory, lag_array, sequence_array, iterations, mod
                 
                 current_time = datetime.now().strftime(r"%d-%m-%Y %H.%M.%S")
                 trainer.train(
-                    model=model,
+                    model_class=model_class,
                     architecture=architecture,
                     data_dict=data_dict,
                     criterion=loss,
@@ -66,10 +66,32 @@ def lag_sequence_test(data_directory, lag_array, sequence_array, iterations, mod
     print(f'Finished trainin {count} models.')
     
     
-def rnn_architecture_test(data_directory, rnn_layers_array, hidden_nodes_array, iterations,
-                          model=TimeSeriesEmulator, architecture=None, verbose=True, 
-                          epochs=100, batch_size=100, loss=nn.MSELoss(), mc_dropout=False, dropout_prob=None, 
-                          performance_optimized=False, save_model=True, tensorboard=True,):
+def rnn_architecture_test(data_directory: str, rnn_layers_array: list[int], 
+                          hidden_nodes_array: list[int], iterations: int, model_class=TimeSeriesEmulator, 
+                          verbose: bool=True, epochs: int=100, 
+                          batch_size: int=100, loss=nn.MSELoss(), mc_dropout: bool=False, 
+                          dropout_prob: float=None, performance_optimized: bool=False, 
+                          save_model: str=True, tensorboard: bool=True,):
+    """Tests various configurations of the RNN architecture specified. It will take the (Cartesian) 
+    product of the rnn_layers_array and hidden_nodes_array and train N networks (iterations) and logs
+    the performance.
+
+    Args:
+        data_directory (str): Directory containing training and testing data.
+        rnn_layers_array (list[int]): List of possible RNN layer numbers to be tested.
+        hidden_nodes_array (list[int]): List of possible hidden layer nodes to be tested.
+        iterations (int): Number of times each combination of rnn_layers_array and hidden_nodes_array will be tested.
+        model_class (ModelClass, optional): Model class to be trained. Defaults to TimeSeriesEmulator.
+        verbose (bool, optional): Flag denoting whether to output logs to terminal. Defaults to True.
+        epochs (int, optional): Number of epochs to train the network. Defaults to 100.
+        batch_size (int, optional): Batch size of training. Defaults to 100.
+        loss (_type_, optional): PyTorch loss to be used in training. Defaults to nn.MSELoss().
+        mc_dropout (bool, optional): Flag denoting whether the model was trained with MC dropout protocol. Defaults to False.
+        dropout_prob (float, optional): Dropout probability in MC dropout protocol. Unused if mc_dropout=False. Defaults to None.
+        performance_optimized (bool, optional): Flag denoting whether to optimize the training for faster performace. Leaves out in-loop validation testing, extra logging, etc. Defaults to False.
+        save_model (str, optional): Directory to save model. Can be False if model is not to be saved. Defaults to True.
+        tensorboard (bool, optional): Flag denoting whether to output logs to Tensorboard. Defaults to True.
+    """
     
     
     train_features, train_labels, test_features, test_labels, _ = load_ml_data(data_directory=data_directory, time_series=True)
@@ -92,7 +114,7 @@ def rnn_architecture_test(data_directory, rnn_layers_array, hidden_nodes_array, 
                 }
                 current_time = datetime.now().strftime(r"%d-%m-%Y %H.%M.%S")
                 trainer.train(
-                    model=model,
+                    model_class=model_class,
                     architecture=architecture,
                     data_dict=data_dict,
                     criterion=loss,
@@ -118,7 +140,7 @@ def rnn_architecture_test(data_directory, rnn_layers_array, hidden_nodes_array, 
     
     
 def traditional_architecture_test(data_directory, architectures: list[dict], iterations,
-                          model=ExploratoryModel, verbose=True, 
+                          model_class=ExploratoryModel, verbose=True, 
                           epochs=100, batch_size=100, loss=nn.MSELoss(), ):
     
     
@@ -139,7 +161,7 @@ def traditional_architecture_test(data_directory, architectures: list[dict], ite
             trainer = Trainer()
             current_time = datetime.now().strftime(r"%d-%m-%Y %H.%M.%S")
             trainer.train(
-                model=model,
+                model_class=model_class,
                 architecture=architecture,
                 data_dict=data_dict,
                 criterion=loss,
@@ -162,58 +184,5 @@ def traditional_architecture_test(data_directory, architectures: list[dict], ite
     
 
 # TODO: Write tests for the above
-
-
 # TODO: make dense_architecture_test() that tests what dense layers should be at the end of the RNN
-
-
 # TODO: Write function for dataset_tests and other tests I've done before (reproducibility!!!), use dict{'dataset1':['columns']} to loop
-
-# dataset1 = ['mrro_anomaly', 'rhoi', 'rhow', 'groupname', 'experiment']
-# dataset2 = ['mrro_anomaly', 'rhoi', 'rhow', 'groupname', 'experiment', 'ice_shelf_fracture', 'tier', ]
-# dataset3 = ['mrro_anomaly', 'groupname', 'experiment']
-# dataset4 = ['groupname', 'experiment']
-# dataset5 = ['groupname', 'experiment', 'regions', 'tier']
-
-# def dataset_tests(datasets)
-# count = 0
-# for iteration in range(5):
-#     for dataset in ['dataset5']:
-#         print('')
-#         print(f"Training... Dataset: {dataset}, Iteration: {iteration}, Trained {count} models")
-#         test_features = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/test_features.csv')
-#         train_features = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/train_features.csv')
-#         test_labels = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/test_labels.csv')
-#         train_labels = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/train_labels.csv')
-#         scenarios = pd.read_csv(f'/users/pvankatw/emulator/src/data/ml/{dataset}/test_scenarios.csv').values.tolist()
-#
-#
-#         data_dict = {'train_features': train_features,
-#                     'train_labels': train_labels,
-#                     'test_features': test_features,
-#                     'test_labels': test_labels,  }
-#
-#         start = time.time()
-#         trainer = Trainer()
-#         trainer.train(
-#             model=ExploratoryModel.ExploratoryModel,
-#             num_linear_layers=6,
-#             nodes=[256, 128, 64, 32, 16, 1],
-#             # num_linear_layers=12,
-#             # nodes=[2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1],
-#             data_dict=data_dict,
-#             criterion=nn.MSELoss(),
-#             epochs=100,
-#             batch_size=100,
-#             tensorboard=True,
-#             save_model=True,
-#             performance_optimized=False,
-#         )
-#         print(f'Total Time: {time.time() - start:0.4f} seconds')
-#
-#         print('4/4: Evaluating Model')
-#
-#         model = trainer.model
-#         metrics, preds = trainer.evaluate()
-#
-#         count += 1

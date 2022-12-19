@@ -62,7 +62,7 @@ class EmulatorData:
             drop_columns (list[str], optional): List containing which columns (variables) to be dropped. Should be List[str] or boolean. If True is chosen, columns are dropped that will result in optimal performance. Defaults to True.
             boolean_indices (bool, optional): Flag denoting whether to create boolean indices for all categorical variables left after dropping columns. Defaults to True.
             scale (bool, optional): Flag denoting whether to scale data between zero and 1.  Sklearn's MinMaxScaler is used. Defaults to True.
-            split_type (str, optional): Method to split data into training and testing set, must be in [random, batch]. Random is not reccommended but is included for completeness. Defaults to 'batch'.
+            split_type (str, optional): Method to split data into training and testing set, must be in [random, batch]. Random is not recommended but is included for completeness. Defaults to 'batch'.
             drop_outliers (str, optional): Method by which outliers will be dropped, must be in [quantile, explicit]. Defaults to False.
             drop_expression (list[tuple], optional): Expressions by which to drop outliers, see EmulatorData.drop_outliers. If drop_outliers==quantile, drop_expression must be a list[float] containing quantile bounds. Defaults to None. 
             time_series (bool, optional): Flag denoting whether to process the data as a time-series dataset or traditional non-time dataset. Defaults to False.
@@ -147,11 +147,12 @@ class EmulatorData:
             if quantiles is None:
                 raise AttributeError('If method == quantile, quantiles argument cannot be None')
             lower_sle, upper_sle = np.quantile(np.array(self.data.sle), quantiles)
-            outlier_data = self.data[(self.data['sle'] <= lower_sle) & (self.data['sle'] >= upper_sle)]
+            outlier_data = self.data[(self.data['sle'] <= lower_sle) | (self.data['sle'] >= upper_sle)]
         elif method.lower() == 'explicit':
+            
             if expression is None:
                 raise AttributeError('If method == explicit, expression argument cannot be None')
-            elif not isinstance(expression, list) or isinstance(expression[0], tuple):
+            elif not isinstance(expression, list) or not isinstance(expression[0], tuple):
                 raise AttributeError('Expression argument must be a list of tuples, e.g. [("sle", ">", 20), ("sle", "<", -20)]')
             
             outlier_data = self.data
@@ -186,7 +187,8 @@ class EmulatorData:
             exp_id = i[1]
             sector = i[2]
             self.data = self.data.drop(
-                self.data[(self.data[modelname] == 1) & (self.data[exp_id] == 1) & (self.data.sectors == sector)].index)
+                self.data[(self.data[modelname] == 1) & (self.data[exp_id] == 1) & (self.data.sectors == sector)].index
+            )
 
         return self
 
@@ -209,7 +211,7 @@ class EmulatorData:
         """Splits dataset into training set and testing set. Can be split using two different
         methods: random and batch. The random method splits by randomly sampling rows, whereas 
         batch method randomly samples entire simulation series (85 rows) in order to keep simulations
-        together during testing. Random method is included for completeness but is not reccommended
+        together during testing. Random method is included for completeness but is not recommended
         for use in emulator creation.
 
         Args:
@@ -270,6 +272,9 @@ class EmulatorData:
             self.train_labels = pd.Series(self.y.squeeze()).drop(testing_indices)
 
             self.test_scenarios = test_scenarios
+        
+        else:
+            raise(f'split_type must be in [random, batch], received {split_type}')
 
         return self
 
