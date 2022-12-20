@@ -48,8 +48,11 @@ def test_pretrained_model(model_path: str, model_class, architecture: dict, data
     if verbose:
         print('2/3: Loading pretrained weights...')
     # Assigned pre-trained weights
-    trainer.model.load_state_dict(torch.load(model_path, map_location=device))
-    model = trainer.model
+    if isinstance(model_path, str):
+        trainer.model.load_state_dict(torch.load(model_path, map_location=device))
+        model = trainer.model
+    else:
+        model = model_path
     
     # Evaluate on test_features
     if verbose:
@@ -143,6 +146,42 @@ def mc_accuracy(model_path: str, model_class, architecture: dict, data_directory
     ci_acc = ((test_labels >= lower_ci) & (test_labels <= upper_ci)).mean()
     
     return ci_acc, q_acc
+
+def binned_sle_table(results_dataframe: pd.DataFrame, bins: list[float],):
+    """Creates table that analyzes loss functions over given ranges of SLE. Input is the results
+    dataframe from ise.utils.data.combine_testing_results. Note that bins can be an integer denoting
+    how many equal-width bins you want to cut the data into, or it can be a list of cutoffs. If the list does not
+    contain the mins and maxes of SLE in the dataset, it will be added automatically.
+
+    Args:
+        results_dataframe (pd.DataFrame): Testing results dataframe outputted from ise.utils.data.combine_testing_results
+        bins (list, optional): List of bin cutoffs or integer number of equal-width bins. Defaults to None.
+
+    Returns:
+        pd.DataFrame: Table of metrics per binned SLE.
+    """
+    if not bins:
+        bins = 5
+    
+    if not isinstance(bins, list) and not isinstance(bins, int):
+        raise AttributeError(f'bins type must be list[numeric] or int, received {type(bins)}')
+    
+    if isinstance(bins, list):
+        min_sle, max_sle = min(results_dataframe.true), max(results_dataframe.true)
+        if bins[0] != min_sle:
+            bins.insert(0, min_sle)
+        if bins[-1] != max_sle:
+            bins.append(max_sle)    
+    
+    results_dataframe['sle_bin'], groups = pd.cut(results_dataframe.true, bins, labels=None, retbins=True, include_lowest=True)
+    mse_by_group = results_dataframe.groupby('sle_bin').mean()[['mse', 'mae']]
+    mse_by_group['Count'] = results_dataframe.groupby('sle_bin').count()['true']
+    mse_by_group['Prop'] = ((mse_by_group['Count'] / len(results_dataframe))*100)
+    mse_by_group['Prop'] = round(mse_by_group['Prop'],4).astype(str) + '%'
+    mse_by_group.index = [f"Between {val:0.2f} and {groups[i+1]:0.2f} mm SLE" for i, val in enumerate(groups[:-1])]
+    mse_by_group.columns = ['Mean Squared Error', 'Mean Absolute Error', 'Count in Test Dataset', 'Proportion in Test Dataset']
+
+    return pd.DataFrame(mse_by_group)
 
         
     

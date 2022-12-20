@@ -5,13 +5,13 @@ from ise.utils.utils import _structure_emulatordata_args
 import pandas as pd
 
 
-def feature_engineer(data_directory: str, time_series: bool, export_directory: str=None, emulator_data_args: dict=None):
+def feature_engineer(data_directory: str, time_series: bool=True, export_directory: str=None, emulator_data_args: dict=None):
     """Performs feature engineering after ise.pipelines.processing has been run. Includes loading
     data, formatting, processing, and splitting data to get data into training and testing sets.
 
     Args:
         data_directory (str): Directory containing training and testing data.
-        time_series (bool): Flag denoting wether model was trained with time-series data.
+        time_series (bool): Flag denoting wether model was trained with time-series data. Defaults to True.
         export_directory (str, optional): Directory to save exported files. Defaults to None.
         emulator_data_args (dict, optional): Kwarg arguments to EmulatorData.process. Default will keep optimal values, see EmulatorData.process for more details. Defaults to None.
 

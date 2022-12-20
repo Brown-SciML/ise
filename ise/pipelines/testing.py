@@ -3,7 +3,7 @@ of descriptive plots, and analyzing the accuracy of uncertainty bounds."""
 import os
 from ise.models.timeseries import TimeSeriesEmulator
 from ise.utils.data import combine_testing_results, load_ml_data, calculate_distribution_metrics
-from ise.models.testing import test_pretrained_model
+from ise.models.testing import test_pretrained_model, binned_sle_table
 from ise.utils.models import load_model
 from ise.visualization import Plotter
 import pandas as pd
@@ -17,7 +17,7 @@ def analyze_model(data_directory: str, model_path: str, architecture: dict, mode
 
     Args:
         data_directory (str): Directory containing training and testing data.
-        model_path (str): Path to the pretrained model. Must be a '.pt' model.
+        model_path (str): Path to the pretrained model. Must be a '.pt' model. Can also be a loaded model if the model was trained in the same script.
         architecture (dict): Architecture arguments used to train the model. 
         model_class (_type_): Model class used to train the model.
         time_series (bool, optional): Flag denoting wether model was trained with time-series data. Defaults to True.
@@ -53,18 +53,26 @@ def analyze_model(data_directory: str, model_path: str, architecture: dict, mode
     )
     _, _, test_features, _, _ = load_ml_data(data_directory)
     architecture['input_layer_size'] = test_features.shape[1]
-    model = load_model(
-        model_path=model_path,
-        model_class=TimeSeriesEmulator,
-        architecture=architecture,
-        mc_dropout=mc_dropout,
-        dropout_prob=dropout_prob,
-    )
+    
+    if isinstance(model_path, str):
+        model = load_model(
+            model_path=model_path,
+            model_class=TimeSeriesEmulator,
+            architecture=architecture,
+            mc_dropout=mc_dropout,
+            dropout_prob=dropout_prob,
+        )
+    else:
+        model = model_path
     distribution_metrics = calculate_distribution_metrics(dataset)
     print(f"""True vs Predicted Distribution Closeness:
 KL Divergence: {distribution_metrics['kl']}
 JS Divergence: {distribution_metrics['js']}
 """)
+    
+    binned = binned_sle_table(dataset, bins=5)
+    
+    print(f"\nBinned SLE Metrics: \n{binned}")
 
     if verbose:
         print('3/4: Generating plots')
