@@ -1,3 +1,5 @@
+"""Utility functions for handling data."""
+
 import pandas as pd
 from ise.utils.utils import _structure_emulatordata_args
 from ise.data import EmulatorData
@@ -7,7 +9,7 @@ from scipy.stats import gaussian_kde
 from scipy.spatial.distance import jensenshannon
 
 
-def load_ml_data(data_directory, time_series=True):
+def load_ml_data(data_directory: str, time_series: bool=True):
     """Loads training and testing data for machine learning models. These files are generated using
     functions in the ise.data.processing modules or process_data in the ise.pipelines.processing module.
 
@@ -16,11 +18,7 @@ def load_ml_data(data_directory, time_series=True):
         time_series (bool): Flag denoting whether to load the time-series version of the data.
 
     Returns:
-        train_features (pd.DataFrame): Training data features.
-        train_labels (pd.DataFrame): Training data labels.
-        test_features (pd.DataFrame): Testing data features.
-        test_labels (pd.DataFrame): Testing data labels.
-        test_scenarios (List[List[str]]): Scenarios included in the test dataset.
+        tuple: Tuple containing [train features, train_labels, test_features, test_labels, test_scenarios], or the training and testing datasets including the scenarios used in testing.
     """
     if time_series:
         try:
@@ -44,7 +42,17 @@ def load_ml_data(data_directory, time_series=True):
     return train_features, pd.Series(train_labels['sle'], name='sle'), test_features, pd.Series(test_labels['sle'], name='sle'), test_scenarios
 
 
-def undummify(df, prefix_sep="-"):
+def undummify(df: pd.DataFrame, prefix_sep: str="-"):
+    """Undummifies, or reverses pd.get_dummies, a dataframe. Includes taking encoded categorical 
+    variable columns (boolean indices), and converts them back into the original data format.
+
+    Args:
+        df (pd.DataFrame): Dataframe to be converted.
+        prefix_sep (str, optional): Prefix separator used in pd.get_dummies. Recommended not to change this. Defaults to "-".
+
+    Returns:
+        _type_: _description_
+    """
     cols2collapse = {
         item.split(prefix_sep)[0]: (prefix_sep in item) for item in df.columns
     }
@@ -126,7 +134,20 @@ def combine_testing_results(data_directory: str, preds: np.ndarray, bounds: dict
         
     return test
 
-def group_by_run(dataset, column=None, condition=None,):
+def group_by_run(dataset: pd.DataFrame, column: str=None, condition: str=None,):
+    """Groups the dataset into each individual simulation series by both the true value of the 
+    simulated SLE as well as the model predicted SLE. The resulting arrays are NXM matrices with
+    N being the number of simulations and M being 85, or the length of the series.
+
+    Args:
+        dataset (pd.DataFrame): Dataset to be grouped
+        column (str, optional): Column to subset on. Defaults to None.
+        condition (str, optional): Condition to subset with. Can be int, str, float, etc. Defaults to None.
+        
+    Returns:
+        tuple: Tuple containing [all_trues, all_preds], or NXM matrices of each series corresponding to true values and predicted values.
+    """
+
     modelnames = dataset.modelname.unique()
     exp_ids = dataset.exp_id.unique()
     sectors = dataset.sectors.unique()
@@ -154,7 +175,18 @@ def group_by_run(dataset, column=None, condition=None,):
     return np.array(all_trues), np.array(all_preds), scenarios
 
 
-def get_uncertainty_bands(data, confidence='95', quantiles=[0.05, 0.95]):
+def get_uncertainty_bands(data: pd.DataFrame, confidence: str='95', quantiles: list[float]=[0.05, 0.95]):
+    """Calculates uncertainty bands on the monte carlo dropout protocol. Includes traditional 
+    confidence interval calculation as well as a quantile-based approach.
+
+    Args:
+        data (pd.DataFrame): Dataframe or array of NXM, typically from ise.utils.data.group_by_run.
+        confidence (str, optional): Confidence level, must be in [95, 99]. Defaults to '95'.
+        quantiles (list[float], optional): Quantiles of uncertainty bands. Defaults to [0.05, 0.95].
+
+    Returns:
+        tuple: Tuple containing [mean, sd, upper_ci, lower_ci, upper_q, lower_q], or the mean prediction, standard deviation, and the lower and upper confidence interval and quantile bands.
+    """
     z = {'95': 1.96, '99': 2.58}
     data = np.array(data)
     mean = data.mean(axis=0)
@@ -166,20 +198,67 @@ def get_uncertainty_bands(data, confidence='95', quantiles=[0.05, 0.95]):
     lower_q = quantiles[0,:]
     return mean, sd, upper_ci, lower_ci, upper_q, lower_q
 
-def create_distribution(year, dataset):
+def create_distribution(year: int, dataset: np.ndarray):
+    """Creates a distribution from an array of numbers using a gaussian kernel density estimator.
+    Takes an array and ensures it follows probability rules (e.g. integrate to 1, nonzero, etc.), 
+    useful for calculating divergences such as ise.utils.data.kl_divergence and ise.utils.data.js_divergence.
+
+    Args:
+        year (int): Year to generate the distribution.
+        dataset (np.ndarray): MX85 matrix of true values or predictions for the series, see ise.utils.data.group_by_run.
+
+    Returns:
+        tuple: Tuple containing [density, support], or the output distribution and the x values associated with those probabilities.
+    """
     data = dataset[:, year-2101] # -1 will be year 2100
     kde = gaussian_kde(data, bw_method='silverman')
     support = np.arange(-30, 20, 0.001)
     density = kde(support)
     return density, support
 
-def kl_divergence(p, q):
+def kl_divergence(p: np.ndarray, q: np.ndarray):
+    """Calculates the Kullback-Leibler Divergence between two distributions. Q is typically a
+    'known' distirubtion and should be the true values, whereas P is typcically the test distribution,
+    or the predicted distribution. Note the the KL divergence is assymetric, and near-zero values for
+    p with a non-near zero values for q cause the KL divergence to inflate [citation].
+
+    Args:
+        p (np.ndarray): Test distribution
+        q (np.ndarray): Known distribution
+
+    Returns:
+        float: KL Divergence
+    """
     return np.sum(np.where(p != 0, p * np.log(p / q), 0))
 
-def js_divergence(p, q):
+def js_divergence(p: np.ndarray, q: np.ndarray):
+    """Calculates the Jensen-Shannon Divergence between two distributions. Q is typically a
+    'known' distirubtion and should be the true values, whereas P is typcically the test distribution,
+    or the predicted distribution. Note the the JS divergence, unlike the KL divergence, is symetric.
+
+    Args:
+        p (np.ndarray): Test distribution
+        q (np.ndarray): Known distribution
+
+    Returns:
+        float: JS Divergence
+    """
     return jensenshannon(p, q)
 
-def calculate_distribution_metrics(dataset, column=None, condition=None):
+def calculate_distribution_metrics(dataset: pd.DataFrame, column: str=None, condition: str=None):
+    """Wrapper for calculating distribution metrics from a dataset. Includes ise.utils.data.group_by_run to 
+    group the true values and predicted values into NXM matrices (with N=number of samples and 
+    M=85, or the number of years in the series). Then, it uses ise.utils.data.create_distribution to
+    calculate individual distributions from the arrays and calculates the divergences.
+
+    Args:
+        dataset (pd.DataFrame): Dataset to be grouped
+        column (str, optional): Column to subset on. Defaults to None.
+        condition (str, optional): Condition to subset with. Can be int, str, float, etc. Defaults to None.
+        
+    Returns:
+        dict: Dictionary containing dict['kl'] for the KL-Divergence and dict['js'] for the Jensen-Shannon Divergence.
+    """
     trues, preds, _ = group_by_run(dataset, column=column, condition=condition)
     true_distribution, _ = create_distribution(year=2100, dataset=trues)
     pred_distribution, _ = create_distribution(year=2100, dataset=preds)

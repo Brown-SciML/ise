@@ -124,12 +124,12 @@ class Trainer:
                               sequence_length=sequence_length,
                               )
 
-    def train(self, model, data_dict, criterion, epochs, batch_size, mc_dropout=False, dropout_prob=None, tensorboard=False, architecture=None,
+    def train(self, model_class, data_dict, criterion, epochs, batch_size, mc_dropout=False, dropout_prob=None, tensorboard=False, architecture=None,
               save_model=False, performance_optimized=False, verbose=True, sequence_length=5, tensorboard_comment=None):
         &#34;&#34;&#34;Training loop for training a PyTorch model. Include validation, GPU compatibility, and tensorboard integration.
 
         Args:
-            model (ModelClass): Model to be trained. Usually custom model class.
+            model_class (ModelClass): Model to be trained. Usually custom model class.
             data_dict (dict): Dictionary containing training and testing arrays/tensors.
                     Example: {&#39;train_features&#39;: train_features, train_labels&#39;: train_labels, &#39;test_features&#39;: test_features, &#39;test_labels&#39;: test_labels,}
             criterion (torch.nn.Loss): Loss class from PyTorch NN module.
@@ -144,7 +144,7 @@ class Trainer:
         &#34;&#34;&#34;
         
         # Initiates model with inputted architecture and formats data
-        self._initiate_model(model, data_dict, architecture, sequence_length, batch_size, mc_dropout, dropout_prob)
+        self._initiate_model(model_class, data_dict, architecture, sequence_length, batch_size, mc_dropout, dropout_prob)
 
         # Use multiple GPU parallelization if available
         # if torch.cuda.device_count() &gt; 1:
@@ -410,12 +410,12 @@ R2: {r2:0.6f}&#34;&#34;&#34;)
                               sequence_length=sequence_length,
                               )
 
-    def train(self, model, data_dict, criterion, epochs, batch_size, mc_dropout=False, dropout_prob=None, tensorboard=False, architecture=None,
+    def train(self, model_class, data_dict, criterion, epochs, batch_size, mc_dropout=False, dropout_prob=None, tensorboard=False, architecture=None,
               save_model=False, performance_optimized=False, verbose=True, sequence_length=5, tensorboard_comment=None):
         &#34;&#34;&#34;Training loop for training a PyTorch model. Include validation, GPU compatibility, and tensorboard integration.
 
         Args:
-            model (ModelClass): Model to be trained. Usually custom model class.
+            model_class (ModelClass): Model to be trained. Usually custom model class.
             data_dict (dict): Dictionary containing training and testing arrays/tensors.
                     Example: {&#39;train_features&#39;: train_features, train_labels&#39;: train_labels, &#39;test_features&#39;: test_features, &#39;test_labels&#39;: test_labels,}
             criterion (torch.nn.Loss): Loss class from PyTorch NN module.
@@ -430,7 +430,7 @@ R2: {r2:0.6f}&#34;&#34;&#34;)
         &#34;&#34;&#34;
         
         # Initiates model with inputted architecture and formats data
-        self._initiate_model(model, data_dict, architecture, sequence_length, batch_size, mc_dropout, dropout_prob)
+        self._initiate_model(model_class, data_dict, architecture, sequence_length, batch_size, mc_dropout, dropout_prob)
 
         # Use multiple GPU parallelization if available
         # if torch.cuda.device_count() &gt; 1:
@@ -659,13 +659,13 @@ R2: {r2:0.6f}&#34;&#34;&#34;)
 </details>
 </dd>
 <dt id="ise.models.training.Trainer.Trainer.train"><code class="name flex">
-<span>def <span class="ident">train</span></span>(<span>self, model, data_dict, criterion, epochs, batch_size, mc_dropout=False, dropout_prob=None, tensorboard=False, architecture=None, save_model=False, performance_optimized=False, verbose=True, sequence_length=5, tensorboard_comment=None)</span>
+<span>def <span class="ident">train</span></span>(<span>self, model_class, data_dict, criterion, epochs, batch_size, mc_dropout=False, dropout_prob=None, tensorboard=False, architecture=None, save_model=False, performance_optimized=False, verbose=True, sequence_length=5, tensorboard_comment=None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Training loop for training a PyTorch model. Include validation, GPU compatibility, and tensorboard integration.</p>
 <h2 id="args">Args</h2>
 <dl>
-<dt><strong><code>model</code></strong> :&ensp;<code>ModelClass</code></dt>
+<dt><strong><code>model_class</code></strong> :&ensp;<code>ModelClass</code></dt>
 <dd>Model to be trained. Usually custom model class.</dd>
 <dt><strong><code>data_dict</code></strong> :&ensp;<code>dict</code></dt>
 <dd>Dictionary containing training and testing arrays/tensors.
@@ -692,12 +692,12 @@ Example: torch.nn.MSELoss()</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def train(self, model, data_dict, criterion, epochs, batch_size, mc_dropout=False, dropout_prob=None, tensorboard=False, architecture=None,
+<pre><code class="python">def train(self, model_class, data_dict, criterion, epochs, batch_size, mc_dropout=False, dropout_prob=None, tensorboard=False, architecture=None,
           save_model=False, performance_optimized=False, verbose=True, sequence_length=5, tensorboard_comment=None):
     &#34;&#34;&#34;Training loop for training a PyTorch model. Include validation, GPU compatibility, and tensorboard integration.
 
     Args:
-        model (ModelClass): Model to be trained. Usually custom model class.
+        model_class (ModelClass): Model to be trained. Usually custom model class.
         data_dict (dict): Dictionary containing training and testing arrays/tensors.
                 Example: {&#39;train_features&#39;: train_features, train_labels&#39;: train_labels, &#39;test_features&#39;: test_features, &#39;test_labels&#39;: test_labels,}
         criterion (torch.nn.Loss): Loss class from PyTorch NN module.
@@ -712,7 +712,7 @@ Example: torch.nn.MSELoss()</dd>
     &#34;&#34;&#34;
     
     # Initiates model with inputted architecture and formats data
-    self._initiate_model(model, data_dict, architecture, sequence_length, batch_size, mc_dropout, dropout_prob)
+    self._initiate_model(model_class, data_dict, architecture, sequence_length, batch_size, mc_dropout, dropout_prob)
 
     # Use multiple GPU parallelization if available
     # if torch.cuda.device_count() &gt; 1:

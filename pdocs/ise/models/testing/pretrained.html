@@ -54,7 +54,7 @@ def test_pretrained_model(model_path: str, model_class, architecture: dict, data
         verbose (bool, optional): Flag denoting whether to output logs to terminal. Defaults to True.
     
     Returns:
-        tuple: Tuple containing [metrics, preds], or test metrics and predictions on test_features.
+        tuple: Tuple containing [metrics, preds, bounds], or test metrics, predictions, and uncertainty bounds on test_features.
     &#34;&#34;&#34;    
     
     if verbose:
@@ -91,6 +91,11 @@ def test_pretrained_model(model_path: str, model_class, architecture: dict, data
         preds = means
     else:
         preds, means, upper_ci, lower_ci, quantiles = model.predict(X_test, mc_iterations=1)
+    
+    upper_q = quantiles[1,:]
+    lower_q = quantiles[0,:]
+    bounds = {&#39;upper_ci&#39;: upper_ci, &#39;lower_ci&#39;: lower_ci,
+              &#39;upper_q&#39;: upper_q, &#39;lower_q&#39;: lower_q}
         
     test_labels = np.array(test_labels).squeeze()
     mse = sum((preds - test_labels)**2) / len(preds)
@@ -106,7 +111,7 @@ MAE: {mae:0.6f}
 RMSE: {rmse:0.6f}
 R2: {r2:0.6f}&#34;&#34;&#34;)
 
-    return metrics, preds
+    return metrics, preds, bounds
 
 def mc_accuracy(model_path: str, model_class, architecture: dict, data_directory: str, 
                 time_series: bool, dropout_prob: float=0.1, mc_iterations: int=30, verbose: bool=True):
@@ -305,7 +310,7 @@ them based on standard metrics. Outputs the metrics in a dictionary as well as t
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>tuple</code></dt>
-<dd>Tuple containing [metrics, preds], or test metrics and predictions on test_features.</dd>
+<dd>Tuple containing [metrics, preds, bounds], or test metrics, predictions, and uncertainty bounds on test_features.</dd>
 </dl></div>
 <details class="source">
 <summary>
@@ -329,7 +334,7 @@ them based on standard metrics. Outputs the metrics in a dictionary as well as t
         verbose (bool, optional): Flag denoting whether to output logs to terminal. Defaults to True.
     
     Returns:
-        tuple: Tuple containing [metrics, preds], or test metrics and predictions on test_features.
+        tuple: Tuple containing [metrics, preds, bounds], or test metrics, predictions, and uncertainty bounds on test_features.
     &#34;&#34;&#34;    
     
     if verbose:
@@ -366,6 +371,11 @@ them based on standard metrics. Outputs the metrics in a dictionary as well as t
         preds = means
     else:
         preds, means, upper_ci, lower_ci, quantiles = model.predict(X_test, mc_iterations=1)
+    
+    upper_q = quantiles[1,:]
+    lower_q = quantiles[0,:]
+    bounds = {&#39;upper_ci&#39;: upper_ci, &#39;lower_ci&#39;: lower_ci,
+              &#39;upper_q&#39;: upper_q, &#39;lower_q&#39;: lower_q}
         
     test_labels = np.array(test_labels).squeeze()
     mse = sum((preds - test_labels)**2) / len(preds)
@@ -381,7 +391,7 @@ MAE: {mae:0.6f}
 RMSE: {rmse:0.6f}
 R2: {r2:0.6f}&#34;&#34;&#34;)
 
-    return metrics, preds</code></pre>
+    return metrics, preds, bounds</code></pre>
 </details>
 </dd>
 </dl>

@@ -1,3 +1,6 @@
+"""Utility functions for handling various parts of the package, including argument checking and
+formatting and file traversal."""
+
 import os
 import matplotlib.pyplot as plt
 import pandas as pd

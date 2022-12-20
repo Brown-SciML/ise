@@ -1,3 +1,5 @@
+"""Pipeline functions for analyzing a trained network, including model testing, automatic generation
+of descriptive plots, and analyzing the accuracy of uncertainty bounds."""
 import os
 from ise.models.timeseries import TimeSeriesEmulator
 from ise.utils.data import combine_testing_results, load_ml_data, calculate_distribution_metrics
@@ -6,8 +8,25 @@ from ise.utils.models import load_model
 from ise.visualization import Plotter
 import pandas as pd
 
-def analyze_model(data_directory, model_path, architecture, model_class, time_series=True, mc_dropout=True,
-                       dropout_prob=0.1, mc_iterations=100, verbose=True, save_directory=None):
+def analyze_model(data_directory: str, model_path: str, architecture: dict, model_class, 
+                  time_series: bool=True, mc_dropout: bool=True, dropout_prob: float=0.1, 
+                  mc_iterations: int=100, verbose: bool=True, save_directory: str=None):
+    """Analyzes the performance of a pretrained model. Includes running model evaluation with test
+    metrics on testing data, creating a results dataframe for easy analysis, and automatic generation
+    of plots for both test cases and error analysis.
+
+    Args:
+        data_directory (str): Directory containing training and testing data.
+        model_path (str): Path to the pretrained model. Must be a '.pt' model.
+        architecture (dict): Architecture arguments used to train the model. 
+        model_class (_type_): Model class used to train the model.
+        time_series (bool, optional): Flag denoting wether model was trained with time-series data. Defaults to True.
+        mc_dropout (bool, optional): Flag denoting whether the model was trained with MC dropout protocol. Defaults to True.
+        dropout_prob (float, optional): Dropout probability in MC dropout protocol. Unused if mc_dropout=False. Defaults to 0.1.
+        mc_iterations (int, optional): MC iterations to be used in testing. Unused if mc_dropout=False. Defaults to 100.
+        verbose (bool, optional): Flag denoting whether to output logs to terminal. Defaults to True.
+        save_directory (str, optional): Directory to save outputs. Defaults to None.
+    """    
 
     if verbose:
         print('1/4: Calculating test metrics')

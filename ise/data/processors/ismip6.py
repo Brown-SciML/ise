@@ -1,4 +1,4 @@
-"""ismip6 module for processing ismip6 ice sheet model outputs."""
+"""Processing functions for ismip6 ice sheet model outputs."""
 import os
 from itertools import compress
 from tqdm import tqdm

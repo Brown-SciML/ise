@@ -1,3 +1,5 @@
+"""Utility functions for working with pretrained models."""
+
 import torch
 
 def load_model(model_path, model_class, architecture, mc_dropout=False, dropout_prob=0.1):

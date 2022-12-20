@@ -1,5 +1,5 @@
-"""merge.py module for joining the processed inputs from the forcing directory and the outputs
-from the ismip6 ice sheet models to create a master dataset
+"""Processing functions for joining the processed inputs from the forcing directory and the outputs
+from the ismip6 ice sheet models to create a master dataset.
 """
 import pandas as pd
 import re

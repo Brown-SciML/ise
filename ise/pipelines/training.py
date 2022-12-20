@@ -1,3 +1,5 @@
+""""Pipeline functions for training various kinds of emulators, including traditional and time-based
+neural networks as well as a gaussian process-based emulator."""
 from ise.models.training.Trainer import Trainer
 from ise.models.traditional import ExploratoryModel
 from ise.models.timeseries import TimeSeriesEmulator
