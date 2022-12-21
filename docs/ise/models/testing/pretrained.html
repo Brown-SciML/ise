@@ -77,8 +77,11 @@ def test_pretrained_model(model_path: str, model_class, architecture: dict, data
     if verbose:
         print(&#39;2/3: Loading pretrained weights...&#39;)
     # Assigned pre-trained weights
-    trainer.model.load_state_dict(torch.load(model_path, map_location=device))
-    model = trainer.model
+    if isinstance(model_path, str):
+        trainer.model.load_state_dict(torch.load(model_path, map_location=device))
+        model = trainer.model
+    else:
+        model = model_path
     
     # Evaluate on test_features
     if verbose:
@@ -173,6 +176,42 @@ def mc_accuracy(model_path: str, model_class, architecture: dict, data_directory
     
     return ci_acc, q_acc
 
+def binned_sle_table(results_dataframe: pd.DataFrame, bins: list[float],):
+    &#34;&#34;&#34;Creates table that analyzes loss functions over given ranges of SLE. Input is the results
+    dataframe from ise.utils.data.combine_testing_results. Note that bins can be an integer denoting
+    how many equal-width bins you want to cut the data into, or it can be a list of cutoffs. If the list does not
+    contain the mins and maxes of SLE in the dataset, it will be added automatically.
+
+    Args:
+        results_dataframe (pd.DataFrame): Testing results dataframe outputted from ise.utils.data.combine_testing_results
+        bins (list, optional): List of bin cutoffs or integer number of equal-width bins. Defaults to None.
+
+    Returns:
+        pd.DataFrame: Table of metrics per binned SLE.
+    &#34;&#34;&#34;
+    if not bins:
+        bins = 5
+    
+    if not isinstance(bins, list) and not isinstance(bins, int):
+        raise AttributeError(f&#39;bins type must be list[numeric] or int, received {type(bins)}&#39;)
+    
+    if isinstance(bins, list):
+        min_sle, max_sle = min(results_dataframe.true), max(results_dataframe.true)
+        if bins[0] != min_sle:
+            bins.insert(0, min_sle)
+        if bins[-1] != max_sle:
+            bins.append(max_sle)    
+    
+    results_dataframe[&#39;sle_bin&#39;], groups = pd.cut(results_dataframe.true, bins, labels=None, retbins=True, include_lowest=True)
+    mse_by_group = results_dataframe.groupby(&#39;sle_bin&#39;).mean()[[&#39;mse&#39;, &#39;mae&#39;]]
+    mse_by_group[&#39;Count&#39;] = results_dataframe.groupby(&#39;sle_bin&#39;).count()[&#39;true&#39;]
+    mse_by_group[&#39;Prop&#39;] = ((mse_by_group[&#39;Count&#39;] / len(results_dataframe))*100)
+    mse_by_group[&#39;Prop&#39;] = round(mse_by_group[&#39;Prop&#39;],4).astype(str) + &#39;%&#39;
+    mse_by_group.index = [f&#34;Between {val:0.2f} and {groups[i+1]:0.2f} mm SLE&#34; for i, val in enumerate(groups[:-1])]
+    mse_by_group.columns = [&#39;Mean Squared Error&#39;, &#39;Mean Absolute Error&#39;, &#39;Count in Test Dataset&#39;, &#39;Proportion in Test Dataset&#39;]
+
+    return pd.DataFrame(mse_by_group)
+
         
     
     </code></pre>
@@ -185,6 +224,67 @@ def mc_accuracy(model_path: str, model_class, architecture: dict, data_directory
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
+<dt id="ise.models.testing.pretrained.binned_sle_table"><code class="name flex">
+<span>def <span class="ident">binned_sle_table</span></span>(<span>results_dataframe: pandas.core.frame.DataFrame, bins: list[float])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Creates table that analyzes loss functions over given ranges of SLE. Input is the results
+dataframe from ise.utils.data.combine_testing_results. Note that bins can be an integer denoting
+how many equal-width bins you want to cut the data into, or it can be a list of cutoffs. If the list does not
+contain the mins and maxes of SLE in the dataset, it will be added automatically.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>results_dataframe</code></strong> :&ensp;<code>pd.DataFrame</code></dt>
+<dd>Testing results dataframe outputted from ise.utils.data.combine_testing_results</dd>
+<dt><strong><code>bins</code></strong> :&ensp;<code>list</code>, optional</dt>
+<dd>List of bin cutoffs or integer number of equal-width bins. Defaults to None.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>pd.DataFrame</code></dt>
+<dd>Table of metrics per binned SLE.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def binned_sle_table(results_dataframe: pd.DataFrame, bins: list[float],):
+    &#34;&#34;&#34;Creates table that analyzes loss functions over given ranges of SLE. Input is the results
+    dataframe from ise.utils.data.combine_testing_results. Note that bins can be an integer denoting
+    how many equal-width bins you want to cut the data into, or it can be a list of cutoffs. If the list does not
+    contain the mins and maxes of SLE in the dataset, it will be added automatically.
+
+    Args:
+        results_dataframe (pd.DataFrame): Testing results dataframe outputted from ise.utils.data.combine_testing_results
+        bins (list, optional): List of bin cutoffs or integer number of equal-width bins. Defaults to None.
+
+    Returns:
+        pd.DataFrame: Table of metrics per binned SLE.
+    &#34;&#34;&#34;
+    if not bins:
+        bins = 5
+    
+    if not isinstance(bins, list) and not isinstance(bins, int):
+        raise AttributeError(f&#39;bins type must be list[numeric] or int, received {type(bins)}&#39;)
+    
+    if isinstance(bins, list):
+        min_sle, max_sle = min(results_dataframe.true), max(results_dataframe.true)
+        if bins[0] != min_sle:
+            bins.insert(0, min_sle)
+        if bins[-1] != max_sle:
+            bins.append(max_sle)    
+    
+    results_dataframe[&#39;sle_bin&#39;], groups = pd.cut(results_dataframe.true, bins, labels=None, retbins=True, include_lowest=True)
+    mse_by_group = results_dataframe.groupby(&#39;sle_bin&#39;).mean()[[&#39;mse&#39;, &#39;mae&#39;]]
+    mse_by_group[&#39;Count&#39;] = results_dataframe.groupby(&#39;sle_bin&#39;).count()[&#39;true&#39;]
+    mse_by_group[&#39;Prop&#39;] = ((mse_by_group[&#39;Count&#39;] / len(results_dataframe))*100)
+    mse_by_group[&#39;Prop&#39;] = round(mse_by_group[&#39;Prop&#39;],4).astype(str) + &#39;%&#39;
+    mse_by_group.index = [f&#34;Between {val:0.2f} and {groups[i+1]:0.2f} mm SLE&#34; for i, val in enumerate(groups[:-1])]
+    mse_by_group.columns = [&#39;Mean Squared Error&#39;, &#39;Mean Absolute Error&#39;, &#39;Count in Test Dataset&#39;, &#39;Proportion in Test Dataset&#39;]
+
+    return pd.DataFrame(mse_by_group)</code></pre>
+</details>
+</dd>
 <dt id="ise.models.testing.pretrained.mc_accuracy"><code class="name flex">
 <span>def <span class="ident">mc_accuracy</span></span>(<span>model_path: str, model_class, architecture: dict, data_directory: str, time_series: bool, dropout_prob: float = 0.1, mc_iterations: int = 30, verbose: bool = True)</span>
 </code></dt>
@@ -357,8 +457,11 @@ them based on standard metrics. Outputs the metrics in a dictionary as well as t
     if verbose:
         print(&#39;2/3: Loading pretrained weights...&#39;)
     # Assigned pre-trained weights
-    trainer.model.load_state_dict(torch.load(model_path, map_location=device))
-    model = trainer.model
+    if isinstance(model_path, str):
+        trainer.model.load_state_dict(torch.load(model_path, map_location=device))
+        model = trainer.model
+    else:
+        model = model_path
     
     # Evaluate on test_features
     if verbose:
@@ -412,6 +515,7 @@ R2: {r2:0.6f}&#34;&#34;&#34;)
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
+<li><code><a title="ise.models.testing.pretrained.binned_sle_table" href="#ise.models.testing.pretrained.binned_sle_table">binned_sle_table</a></code></li>
 <li><code><a title="ise.models.testing.pretrained.mc_accuracy" href="#ise.models.testing.pretrained.mc_accuracy">mc_accuracy</a></code></li>
 <li><code><a title="ise.models.testing.pretrained.test_pretrained_model" href="#ise.models.testing.pretrained.test_pretrained_model">test_pretrained_model</a></code></li>
 </ul>

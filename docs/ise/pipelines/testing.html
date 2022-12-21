@@ -34,7 +34,7 @@ of descriptive plots, and analyzing the accuracy of uncertainty bounds.&#34;&#34
 import os
 from ise.models.timeseries import TimeSeriesEmulator
 from ise.utils.data import combine_testing_results, load_ml_data, calculate_distribution_metrics
-from ise.models.testing import test_pretrained_model
+from ise.models.testing import test_pretrained_model, binned_sle_table
 from ise.utils.models import load_model
 from ise.visualization import Plotter
 import pandas as pd
@@ -48,7 +48,7 @@ def analyze_model(data_directory: str, model_path: str, architecture: dict, mode
 
     Args:
         data_directory (str): Directory containing training and testing data.
-        model_path (str): Path to the pretrained model. Must be a &#39;.pt&#39; model.
+        model_path (str): Path to the pretrained model. Must be a &#39;.pt&#39; model. Can also be a loaded model if the model was trained in the same script.
         architecture (dict): Architecture arguments used to train the model. 
         model_class (_type_): Model class used to train the model.
         time_series (bool, optional): Flag denoting wether model was trained with time-series data. Defaults to True.
@@ -84,18 +84,26 @@ def analyze_model(data_directory: str, model_path: str, architecture: dict, mode
     )
     _, _, test_features, _, _ = load_ml_data(data_directory)
     architecture[&#39;input_layer_size&#39;] = test_features.shape[1]
-    model = load_model(
-        model_path=model_path,
-        model_class=TimeSeriesEmulator,
-        architecture=architecture,
-        mc_dropout=mc_dropout,
-        dropout_prob=dropout_prob,
-    )
+    
+    if isinstance(model_path, str):
+        model = load_model(
+            model_path=model_path,
+            model_class=TimeSeriesEmulator,
+            architecture=architecture,
+            mc_dropout=mc_dropout,
+            dropout_prob=dropout_prob,
+        )
+    else:
+        model = model_path
     distribution_metrics = calculate_distribution_metrics(dataset)
     print(f&#34;&#34;&#34;True vs Predicted Distribution Closeness:
 KL Divergence: {distribution_metrics[&#39;kl&#39;]}
 JS Divergence: {distribution_metrics[&#39;js&#39;]}
 &#34;&#34;&#34;)
+    
+    binned = binned_sle_table(dataset, bins=5)
+    
+    print(f&#34;\nBinned SLE Metrics: \n{binned}&#34;)
 
     if verbose:
         print(&#39;3/4: Generating plots&#39;)
@@ -140,7 +148,7 @@ of plots for both test cases and error analysis.</p>
 <dt><strong><code>data_directory</code></strong> :&ensp;<code>str</code></dt>
 <dd>Directory containing training and testing data.</dd>
 <dt><strong><code>model_path</code></strong> :&ensp;<code>str</code></dt>
-<dd>Path to the pretrained model. Must be a '.pt' model.</dd>
+<dd>Path to the pretrained model. Must be a '.pt' model. Can also be a loaded model if the model was trained in the same script.</dd>
 <dt><strong><code>architecture</code></strong> :&ensp;<code>dict</code></dt>
 <dd>Architecture arguments used to train the model. </dd>
 <dt><strong><code>model_class</code></strong> :&ensp;<code>_type_</code></dt>
@@ -171,7 +179,7 @@ of plots for both test cases and error analysis.</p>
 
     Args:
         data_directory (str): Directory containing training and testing data.
-        model_path (str): Path to the pretrained model. Must be a &#39;.pt&#39; model.
+        model_path (str): Path to the pretrained model. Must be a &#39;.pt&#39; model. Can also be a loaded model if the model was trained in the same script.
         architecture (dict): Architecture arguments used to train the model. 
         model_class (_type_): Model class used to train the model.
         time_series (bool, optional): Flag denoting wether model was trained with time-series data. Defaults to True.
@@ -207,18 +215,26 @@ of plots for both test cases and error analysis.</p>
     )
     _, _, test_features, _, _ = load_ml_data(data_directory)
     architecture[&#39;input_layer_size&#39;] = test_features.shape[1]
-    model = load_model(
-        model_path=model_path,
-        model_class=TimeSeriesEmulator,
-        architecture=architecture,
-        mc_dropout=mc_dropout,
-        dropout_prob=dropout_prob,
-    )
+    
+    if isinstance(model_path, str):
+        model = load_model(
+            model_path=model_path,
+            model_class=TimeSeriesEmulator,
+            architecture=architecture,
+            mc_dropout=mc_dropout,
+            dropout_prob=dropout_prob,
+        )
+    else:
+        model = model_path
     distribution_metrics = calculate_distribution_metrics(dataset)
     print(f&#34;&#34;&#34;True vs Predicted Distribution Closeness:
 KL Divergence: {distribution_metrics[&#39;kl&#39;]}
 JS Divergence: {distribution_metrics[&#39;js&#39;]}
 &#34;&#34;&#34;)
+    
+    binned = binned_sle_table(dataset, bins=5)
+    
+    print(f&#34;\nBinned SLE Metrics: \n{binned}&#34;)
 
     if verbose:
         print(&#39;3/4: Generating plots&#39;)

@@ -36,13 +36,13 @@ from ise.utils.utils import _structure_emulatordata_args
 import pandas as pd
 
 
-def feature_engineer(data_directory: str, time_series: bool, export_directory: str=None, emulator_data_args: dict=None):
+def feature_engineer(data_directory: str, time_series: bool=True, export_directory: str=None, emulator_data_args: dict=None):
     &#34;&#34;&#34;Performs feature engineering after ise.pipelines.processing has been run. Includes loading
     data, formatting, processing, and splitting data to get data into training and testing sets.
 
     Args:
         data_directory (str): Directory containing training and testing data.
-        time_series (bool): Flag denoting wether model was trained with time-series data.
+        time_series (bool): Flag denoting wether model was trained with time-series data. Defaults to True.
         export_directory (str, optional): Directory to save exported files. Defaults to None.
         emulator_data_args (dict, optional): Kwarg arguments to EmulatorData.process. Default will keep optimal values, see EmulatorData.process for more details. Defaults to None.
 
@@ -75,7 +75,7 @@ def feature_engineer(data_directory: str, time_series: bool, export_directory: s
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="ise.pipelines.feature_engineering.feature_engineer"><code class="name flex">
-<span>def <span class="ident">feature_engineer</span></span>(<span>data_directory: str, time_series: bool, export_directory: str = None, emulator_data_args: dict = None)</span>
+<span>def <span class="ident">feature_engineer</span></span>(<span>data_directory: str, time_series: bool = True, export_directory: str = None, emulator_data_args: dict = None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Performs feature engineering after ise.pipelines.processing has been run. Includes loading
@@ -85,7 +85,7 @@ data, formatting, processing, and splitting data to get data into training and t
 <dt><strong><code>data_directory</code></strong> :&ensp;<code>str</code></dt>
 <dd>Directory containing training and testing data.</dd>
 <dt><strong><code>time_series</code></strong> :&ensp;<code>bool</code></dt>
-<dd>Flag denoting wether model was trained with time-series data.</dd>
+<dd>Flag denoting wether model was trained with time-series data. Defaults to True.</dd>
 <dt><strong><code>export_directory</code></strong> :&ensp;<code>str</code>, optional</dt>
 <dd>Directory to save exported files. Defaults to None.</dd>
 <dt><strong><code>emulator_data_args</code></strong> :&ensp;<code>dict</code>, optional</dt>
@@ -100,13 +100,13 @@ data, formatting, processing, and splitting data to get data into training and t
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def feature_engineer(data_directory: str, time_series: bool, export_directory: str=None, emulator_data_args: dict=None):
+<pre><code class="python">def feature_engineer(data_directory: str, time_series: bool=True, export_directory: str=None, emulator_data_args: dict=None):
     &#34;&#34;&#34;Performs feature engineering after ise.pipelines.processing has been run. Includes loading
     data, formatting, processing, and splitting data to get data into training and testing sets.
 
     Args:
         data_directory (str): Directory containing training and testing data.
-        time_series (bool): Flag denoting wether model was trained with time-series data.
+        time_series (bool): Flag denoting wether model was trained with time-series data. Defaults to True.
         export_directory (str, optional): Directory to save exported files. Defaults to None.
         emulator_data_args (dict, optional): Kwarg arguments to EmulatorData.process. Default will keep optimal values, see EmulatorData.process for more details. Defaults to None.
 
