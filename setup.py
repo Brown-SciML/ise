@@ -7,5 +7,5 @@ setup(
    author='Peter Van Katwyk',
    author_email='pvnakatwyk@gmail.com',
    packages=['ise'],  #same as name
-   install_requires=['torch'], #external packages as dependencies
+   install_requires=['pdoc'], #external packages as dependencies
 )
