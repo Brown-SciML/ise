@@ -229,7 +229,7 @@ class Trainer:
             elif isinstance(save_model, bool):
                 import os
                 dirname = os.path.dirname(__file__)
-                model_path = os.path.join(dirname, f"../saved_models/{self.time}.pt")
+                model_path = os.path.join(dirname, f"../{self.time}.pt")
             
             torch.save(self.model.state_dict(), model_path)
             print('')

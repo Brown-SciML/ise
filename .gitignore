@@ -10,6 +10,8 @@ old/
 experiment_models/
 untracked_folder/
 main.py
+*.out
+*.sh
 
 
 .vscode/
