@@ -7,5 +7,5 @@ setup(
    author='Peter Van Katwyk',
    author_email='pvnakatwyk@gmail.com',
    packages=['ise'],  #same as name
-   install_requires=['pdoc', 'numpy', 'pandas', 'scikit-learn', 'torch'], #external packages as dependencies
+   install_requires=['pdoc', 'numpy', 'pandas', 'scikit-learn', 'torch', 'xarray', 'tensorboard', 'matplotlib', 'seaborn'], #external packages as dependencies
 )
