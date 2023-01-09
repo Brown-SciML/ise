@@ -1,3 +1,6 @@
+"""Plotting functions for analyzing and comparing the ensembles from simulated data and emulated data. Generally compares distributions at given years or plots all paths over the entire series."""
+
+
 import numpy as np
 np.random.seed(10)
 import matplotlib.pyplot as plt
@@ -12,7 +15,18 @@ class UncertaintyBounds:
             data, confidence=confidence, quantiles=quantiles
         )
 
-def plot_ensemble(dataset, uncertainty='quantiles', column=None, condition=None, save=None, cache=None):
+def plot_ensemble(dataset: pd.DataFrame, uncertainty: str='quantiles', column: str=None, condition: str=None, save: str=None, cache: dict=None):
+    """Generates a plot of the comparison of ensemble results from the true simulations and the predicted emulation.
+    Adds uncertainty bounds and plots them side-by-side.
+
+    Args:
+        dataset (pd.DataFrame): testing results dataframe, result from [ise.utils.data.combine_testing_results](https://brown-sciml.github.io/ise/ise/utils/data.html#combine_testing_results).
+        uncertainty (str, optional): Type of uncertainty for creating bounds, must be in [quantiles, confidence]. Defaults to 'quantiles'.
+        column (str, optional): Column to subset on, used in [ise.utils.data.group_by_run](https://brown-sciml.github.io/ise/ise/utils/data.html#group_by_run). Defaults to None.
+        condition (str, optional): Condition to subset with, used in [ise.utils.data.group_by_run](https://brown-sciml.github.io/ise/ise/utils/data.html#group_by_run). Can be int, str, float, etc. Defaults to None.
+        save (str, optional): Path to save plot. Defaults to None.
+        cache (dict, optional): Cached results from previous calculation, used internally in [ise.visualization.Plotter](https://brown-sciml.github.io/ise/ise/visualization/Plotter.html#Plotter). Defaults to None.
+    """
     
     if cache is None:
         all_trues, all_preds, scenarios = group_by_run(dataset, column=column, condition=condition)
@@ -76,7 +90,17 @@ def plot_ensemble(dataset, uncertainty='quantiles', column=None, condition=None,
         plt.savefig(save)
     
 
-def plot_ensemble_mean(dataset, uncertainty=False, column=None, condition=None, save=None, cache=None):
+def plot_ensemble_mean(dataset: pd.DataFrame, uncertainty: str=False, column=None, condition=None, save=None, cache=None):
+    """Generates a plot of the mean sea level contribution from the true simulations and the predicted emulation.
+
+    Args:
+        dataset (pd.DataFrame): testing results dataframe, result from [ise.utils.data.combine_testing_results](https://brown-sciml.github.io/ise/ise/utils/data.html#combine_testing_results).
+        uncertainty (str, optional): Type of uncertainty for creating bounds. If not None/False, must be in [quantiles, confidence]. Defaults to 'quantiles'.
+        column (str, optional): Column to subset on, used in [ise.utils.data.group_by_run](https://brown-sciml.github.io/ise/ise/utils/data.html#group_by_run). Defaults to None.
+        condition (str, optional): Condition to subset with, used in [ise.utils.data.group_by_run](https://brown-sciml.github.io/ise/ise/utils/data.html#group_by_run). Can be int, str, float, etc. Defaults to None.
+        save (str, optional): Path to save plot. Defaults to None.
+        cache (dict, optional): Cached results from previous calculation, used internally in [ise.visualization.Plotter](https://brown-sciml.github.io/ise/ise/visualization/Plotter.html#Plotter). Defaults to None.
+    """
     
     if cache is None:
         all_trues, all_preds, scenarios = group_by_run(dataset, column=column, condition=condition)
@@ -134,7 +158,17 @@ def plot_ensemble_mean(dataset, uncertainty=False, column=None, condition=None, 
     if save:
         plt.savefig(save)
     
-def plot_distributions(dataset, year, column=None, condition=None, save=None, cache=None):
+def plot_distributions(dataset: pd.DataFrame, year: int=2100, column: str=None, condition: str=None, save: str=None, cache: dict=None):
+    """Generates a plot of comparison of distributions at a given time slice (year) from the true simulations and the predicted emulation.
+
+    Args:
+        dataset (pd.DataFrame): testing results dataframe, result from [ise.utils.data.combine_testing_results](https://brown-sciml.github.io/ise/ise/utils/data.html#combine_testing_results).
+        year (int, optional): Distribution year (time slice). Defaults to 2100.
+        column (str, optional): Column to subset on, used in [ise.utils.data.group_by_run](https://brown-sciml.github.io/ise/ise/utils/data.html#group_by_run). Defaults to None.
+        condition (str, optional): Condition to subset with, used in [ise.utils.data.group_by_run](https://brown-sciml.github.io/ise/ise/utils/data.html#group_by_run). Can be int, str, float, etc. Defaults to None.
+        save (str, optional): Path to save plot. Defaults to None.
+        cache (dict, optional): Cached results from previous calculation, used internally in [ise.visualization.Plotter](https://brown-sciml.github.io/ise/ise/visualization/Plotter.html#Plotter). Defaults to None.
+    """
     
     if cache is None:
         all_trues, all_preds, scenarios = group_by_run(dataset, column=column, condition=condition)
@@ -155,8 +189,17 @@ def plot_distributions(dataset, year, column=None, condition=None, save=None, ca
         plt.savefig(save)
         
 
-def plot_histograms(dataset, year, column=None, condition=None, save=None, cache=None):
-    
+def plot_histograms(dataset: pd.DataFrame, year: int=2100, column: str=None, condition: str=None, save: str=None, cache: dict=None):
+    """Generates a plot of comparison of histograms at a given time slice (year) from the true simulations and the predicted emulation.
+
+    Args:
+        dataset (pd.DataFrame): testing results dataframe, result from [ise.utils.data.combine_testing_results](https://brown-sciml.github.io/ise/ise/utils/data.html#combine_testing_results).
+        year (int, optional): Histogram year (time slice). Defaults to 2100.
+        column (str, optional): Column to subset on, used in [ise.utils.data.group_by_run](https://brown-sciml.github.io/ise/ise/utils/data.html#group_by_run). Defaults to None.
+        condition (str, optional): Condition to subset with, used in [ise.utils.data.group_by_run](https://brown-sciml.github.io/ise/ise/utils/data.html#group_by_run). Can be int, str, float, etc. Defaults to None.
+        save (str, optional): Path to save plot. Defaults to None.
+        cache (dict, optional): Cached results from previous calculation, used internally in [ise.visualization.Plotter](https://brown-sciml.github.io/ise/ise/visualization/Plotter.html#Plotter). Defaults to None.
+    """
     if cache is None:
         all_trues, all_preds, scenarios = group_by_run(dataset, column=column, condition=condition)
     

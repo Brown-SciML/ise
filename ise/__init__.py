@@ -2,7 +2,7 @@ r"""
 
 # ISE
 
-ISE, or ice-sheet emulators, is a package for end-to-end creation of ice-sheet emulators.
+ISE, or ice-sheet emulators, is a package for end-to-end creation and analysis of ice-sheet emulators.
 
 The main features of ISE include loading and processing of ISMIP6 sea level contribution simulations,
 data preparation and feature engineering for machine learning, and training and testing of trained neural network emulators.

@@ -6,6 +6,7 @@ from ise.models.gp import kernels
 
 FORCING_DIRECTORY = r"/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/"
 ISMIP6_OUTPUT_DIRECTORY = r"/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/Zenodo_Outputs/"
+GRIDS_DIRECTORY = r"/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/ISMIP6_sectors/"
 PROCESSED_FORCING_OUTPUTS = r"/users/pvankatw/emulator/untracked_folder/processed_forcing_outputs/"
 ML_DATA_DIRECTORY = r"/users/pvankatw/emulator/untracked_folder/ml_data_directory/"
 SAVED_MODEL_PATH = r"/users/pvankatw/emulator/untracked_folder/saved_models/"
@@ -13,6 +14,7 @@ SAVED_MODEL_PATH = r"/users/pvankatw/emulator/untracked_folder/saved_models/"
 print('1/4: Processing Data')
 master = processing.process_data(
     forcing_directory=FORCING_DIRECTORY, 
+    grids_directory=GRIDS_DIRECTORY,
     ismip6_output_directory=ISMIP6_OUTPUT_DIRECTORY,
     export_directory=PROCESSED_FORCING_OUTPUTS,
 )
