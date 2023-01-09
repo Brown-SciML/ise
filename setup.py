@@ -2,8 +2,8 @@ from setuptools import setup
 
 setup(
    name='ise',
-   version='1.0.0',
-   description='Package for creating ice sheet emulators for sea level rise.',
+   version='0.0.1',
+   description='Package for creating ice sheet emulators predicting future sea level rise.',
    author='Peter Van Katwyk',
    author_email='pvankatwyk@gmail.com',
    packages=['ise'],

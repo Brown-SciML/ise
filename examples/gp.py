@@ -9,7 +9,7 @@ processed_data = r"/users/pvankatw/emulator/untracked_folder/ml_data_directory"
 gp_save_dir = r'/users/pvankatw/emulator/untracked_folder/gp/'
 kernel = kernels.PowerExponentialKernel(exponential=0.1, ) + kernels.NuggetKernel()
 training.train_gaussian_process(data_directory=processed_data, n=1000, 
-                                features=['temperature', 'salinity'], sampling_method='first_n', 
+                                features=['year', 'temperature', 'salinity'], sampling_method='first_n', 
                                 kernel=kernel, verbose=True, save_directory=gp_save_dir)
 
 

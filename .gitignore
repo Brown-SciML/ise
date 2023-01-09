@@ -10,6 +10,7 @@ old/
 experiment_models/
 untracked_folder/
 main.py
+run_gp.py
 *.out
 *.sh
 

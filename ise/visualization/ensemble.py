@@ -25,9 +25,6 @@ def plot_ensemble(dataset, uncertainty='quantiles', column=None, condition=None,
         p = cache['pred_bounds']
         mean_true, true_upper_ci, true_lower_ci, true_upper_q, true_lower_q = t.mean, t.upper_ci, t.lower_ci, t.upper_q, t.lower_q
         mean_pred, pred_upper_ci, pred_lower_ci, pred_upper_q, pred_lower_q = p.mean, p.upper_ci, p.lower_ci, p.upper_q, p.lower_q
-        
-        
-    
     
     true_df = pd.DataFrame(all_trues).transpose()
     pred_df = pd.DataFrame(all_preds).transpose()
@@ -38,25 +35,25 @@ def plot_ensemble(dataset, uncertainty='quantiles', column=None, condition=None,
     axs[1].plot(pred_df)
     axs[1].plot(mean_pred, 'r-', linewidth=4, label='Mean')
     if uncertainty and uncertainty.lower() == "confidence":
-        axs[0].plot(true_upper_ci, 'b--', linewidth=3, label='5/95% Percentile (True)')
+        axs[0].plot(true_upper_ci, 'b--', linewidth=3, label='5/95% Confidence (True)')
         axs[0].plot(true_lower_ci, 'b--', linewidth=3)
-        axs[1].plot(pred_upper_ci, 'b--', linewidth=3, label='5/95% Percentile (Predicted)')
+        axs[1].plot(pred_upper_ci, 'b--', linewidth=3, label='5/95% Confidence (Predicted)')
         axs[1].plot(pred_lower_ci, 'b--', linewidth=3)
     
     elif uncertainty and uncertainty.lower() == "quantiles":
-        axs[0].plot(pred_upper_q, 'b--', linewidth=3, label='5/95% Confidence (Predicted)')
+        axs[0].plot(pred_upper_q, 'b--', linewidth=3, label='5/95% Percentile (Predicted)')
         axs[0].plot(pred_lower_q, 'b--', linewidth=3)
-        axs[1].plot(true_upper_q, 'b--', linewidth=3, label='5/95% Confidence (True)')
+        axs[1].plot(true_upper_q, 'b--', linewidth=3, label='5/95% Percentile (True)')
         axs[1].plot(true_lower_q, 'b--', linewidth=3)
     
     elif uncertainty and uncertainty.lower() == 'both':
-        axs[0].plot(true_upper_ci, 'r--', linewidth=2, label='5/95% Percentile (True)')
+        axs[0].plot(true_upper_ci, 'r--', linewidth=2, label='5/95% Confidence (True)')
         axs[0].plot(true_lower_ci, 'r--', linewidth=2)
-        axs[1].plot(pred_upper_ci, 'b--', linewidth=2, label='5/95% Percentile (Predicted)')
+        axs[1].plot(pred_upper_ci, 'b--', linewidth=2, label='5/95% Confidence (Predicted)')
         axs[1].plot(pred_lower_ci, 'b--', linewidth=2)
-        axs[1].plot(pred_upper_q, 'o--', linewidth=2, label='5/95% Confidence (Predicted)')
+        axs[1].plot(pred_upper_q, 'o--', linewidth=2, label='5/95% Percentile (Predicted)')
         axs[1].plot(pred_lower_q, 'o--', linewidth=2)
-        axs[0].plot(true_upper_q, 'k--', linewidth=2, label='5/95% Confidence (True)')
+        axs[0].plot(true_upper_q, 'k--', linewidth=2, label='5/95% Percentile (True)')
         axs[0].plot(true_lower_q, 'k--', linewidth=2)
         
     

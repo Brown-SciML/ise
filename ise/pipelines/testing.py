@@ -6,6 +6,7 @@ from ise.utils.data import combine_testing_results, load_ml_data, calculate_dist
 from ise.models.testing import test_pretrained_model, binned_sle_table
 from ise.utils.models import load_model
 from ise.visualization import Plotter
+import json
 import pandas as pd
 
 def analyze_model(data_directory: str, model_path: str, architecture: dict, model_class, 
@@ -29,6 +30,7 @@ def analyze_model(data_directory: str, model_path: str, architecture: dict, mode
         plot (bool, optional): Flag denoting whether to output plots. Defaults to True.
     """    
 
+    # Test the pretrained model to generate metrics and predictions
     if verbose:
         print('1/4: Calculating test metrics')
     metrics, preds, bounds = test_pretrained_model(
@@ -43,7 +45,12 @@ def analyze_model(data_directory: str, model_path: str, architecture: dict, mode
         verbose=False
     )
     
+    if save_directory:
+        with open(f'{save_directory}/metrics.txt', 'w') as metrics_file:
+            metrics_file.write(json.dumps(metrics))
     
+    
+    # Create the results dataframe, which is the undummified version
     if verbose:
         print('2/4: Creating results dataframe')
     dataset = combine_testing_results(
@@ -65,6 +72,8 @@ def analyze_model(data_directory: str, model_path: str, architecture: dict, mode
         )
     else:
         model = model_path
+        
+    # Calculate the distribution metrics, tables, etc.
     distribution_metrics = calculate_distribution_metrics(dataset)
     print(f"""True vs Predicted Distribution Closeness:
 KL Divergence: {distribution_metrics['kl']}
@@ -72,6 +81,8 @@ JS Divergence: {distribution_metrics['js']}
 """)
     
     binned = binned_sle_table(dataset, bins=5)
+    if save_directory:
+        binned.to_csv(f'{save_directory}/binned_sle_table.csv')
     
     print(f"\nBinned SLE Metrics: \n{binned}")
 
