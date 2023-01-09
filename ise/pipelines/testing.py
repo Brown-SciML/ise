@@ -10,7 +10,7 @@ import pandas as pd
 
 def analyze_model(data_directory: str, model_path: str, architecture: dict, model_class, 
                   time_series: bool=True, mc_dropout: bool=True, dropout_prob: float=0.1, 
-                  mc_iterations: int=100, verbose: bool=True, save_directory: str=None):
+                  mc_iterations: int=100, verbose: bool=True, save_directory: str=None, plot: bool=True):
     """Analyzes the performance of a pretrained model. Includes running model evaluation with test
     metrics on testing data, creating a results dataframe for easy analysis, and automatic generation
     of plots for both test cases and error analysis.
@@ -26,6 +26,7 @@ def analyze_model(data_directory: str, model_path: str, architecture: dict, mode
         mc_iterations (int, optional): MC iterations to be used in testing. Unused if mc_dropout=False. Defaults to 100.
         verbose (bool, optional): Flag denoting whether to output logs to terminal. Defaults to True.
         save_directory (str, optional): Directory to save outputs. Defaults to None.
+        plot (bool, optional): Flag denoting whether to output plots. Defaults to True.
     """    
 
     if verbose:
@@ -77,22 +78,23 @@ JS Divergence: {distribution_metrics['js']}
     if verbose:
         print('3/4: Generating plots')
 
-    plotter = Plotter.Plotter(results_dataset=dataset, save_directory=save_directory)
-    plotter.plot_ensemble(save=f'{save_directory}/ensemble_plot.png')
-    plotter.plot_ensemble_mean(save=f'{save_directory}/ensemble_means.png')
-    plotter.plot_distributions(year=2100, save=f'{save_directory}/distributions.png')
-    plotter.plot_histograms(year=2100, save=f'{save_directory}/histograms.png')
-    plotter.plot_callibration(alpha=0.5, save=f'{save_directory}/callibration.png')
+    if plot:
+        plotter = Plotter.Plotter(results_dataset=dataset, save_directory=save_directory)
+        plotter.plot_ensemble(save=f'{save_directory}/ensemble_plot.png')
+        plotter.plot_ensemble_mean(save=f'{save_directory}/ensemble_means.png')
+        plotter.plot_distributions(year=2100, save=f'{save_directory}/distributions.png')
+        plotter.plot_histograms(year=2100, save=f'{save_directory}/histograms.png')
+        plotter.plot_callibration(alpha=0.5, save=f'{save_directory}/callibration.png')
 
     if verbose:
         print('4/4: Generating example test cases')
 
-    test_case_dir = f"{save_directory}/test cases/"
-    if not os.path.exists(path=test_case_dir):
-        os.mkdir(test_case_dir)
-
-    plotter.plot_test_series(
-        model=model, data_directory=data_directory, save_directory=f'{save_directory}/test cases/'
-    )
+    if plot:
+        test_case_dir = f"{save_directory}/test cases/"
+        if not os.path.exists(path=test_case_dir):
+            os.mkdir(test_case_dir)
+        plotter.plot_test_series(
+            model=model, data_directory=data_directory, save_directory=f'{save_directory}/test cases/'
+        )
 
     return metrics, preds, plotter
