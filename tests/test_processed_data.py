@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from paths import PROCESSED_FORCING_OUTPUTS
 
-# Test Forcing Data
+# Test Processed Data
 def test_processed_data_exists():
     assert os.path.exists(PROCESSED_FORCING_OUTPUTS), "Processed forcings directory doesn't exist. Run the processing pipelines found in ise.pipelines.processing."
     
