@@ -63,4 +63,4 @@ def test_output_file_counts():
     for _, _, files in os.walk(ISMIP6_OUTPUT_DIRECTORY):
         count += len(files)
     
-    assert count == 3335, "All files as found in Globus are not present. Functionality may be limited."
+    assert count == 3335, "All files as found in Zenodo are not present. Functionality may be limited."
