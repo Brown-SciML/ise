@@ -1,32 +1,54 @@
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import matplotlib.pyplot as plt
 import numpy as np
-np.random.seed(10)
 import torch
 from torch import optim, nn
 from ise.models.training.dataclasses import PyTorchDataset, TSDataset
 from torch.utils.data import DataLoader
 import time
+import pandas as pd
 from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
 
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+np.random.seed(10)
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Trainer:
-    def __init__(self, ):
+    """Class for training neural network emulators. Contains helper functions for handling data as
+    well as training, testing, and deploying the neural networks.
+    """
+
+    def __init__(
+        self,
+    ):
+        """Initializes class and opens/stores data."""
         self.model = None
         self.data = {}
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # Determine whether on GPU or not
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu"
+        )  # Determine whether on GPU or not
         self.num_input_features = None
-        self.loss_logs = {'training_loss': [], 'vasqrtl_loss': [], }
+        self.loss_logs = {
+            "training_loss": [],
+            "vasqrtl_loss": [],
+        }
         self.train_loader = None
         self.test_loader = None
         self.data_dict = None
-        self.logs = {'training': {'epoch': [], 'batch': []}, 'testing': []}
+        self.logs = {"training": {"epoch": [], "batch": []}, "testing": []}
 
-    def _format_data(self, train_features, train_labels, test_features, test_labels, train_batch_size=100,
-                     test_batch_size=10, sequence_length=5):
+    def _format_data(
+        self,
+        train_features: pd.DataFrame,
+        train_labels,
+        test_features,
+        test_labels,
+        train_batch_size=100,
+        test_batch_size=10,
+        sequence_length=5,
+    ):
         """Takes training and testing dataframes and converts them into PyTorch DataLoaders to be used in the training loop.
 
         Args:
@@ -59,45 +81,83 @@ class Trainer:
                 sequence_length=sequence_length,
             )
         else:
-            train_dataset = PyTorchDataset(torch.from_numpy(self.X_train).float(),
-                                           torch.from_numpy(self.y_train).float().squeeze())
-            test_dataset = PyTorchDataset(torch.from_numpy(self.X_test).float(),
-                                          torch.from_numpy(self.y_test).float().squeeze())
+            train_dataset = PyTorchDataset(
+                torch.from_numpy(self.X_train).float(),
+                torch.from_numpy(self.y_train).float().squeeze(),
+            )
+            test_dataset = PyTorchDataset(
+                torch.from_numpy(self.X_test).float(),
+                torch.from_numpy(self.y_test).float().squeeze(),
+            )
 
         # Create dataset and data loaders to be used in training loop
-        self.train_loader = DataLoader(dataset=train_dataset, batch_size=train_batch_size, shuffle=True)
-        self.test_loader = DataLoader(dataset=test_dataset, batch_size=test_batch_size, )
+        self.train_loader = DataLoader(
+            dataset=train_dataset, batch_size=train_batch_size, shuffle=True
+        )
+        self.test_loader = DataLoader(
+            dataset=test_dataset,
+            batch_size=test_batch_size,
+        )
 
         return self
 
-    def _initiate_model(self, model_class, data_dict, architecture, sequence_length, batch_size, mc_dropout, dropout_prob):
+    def _initiate_model(
+        self,
+        model_class,
+        data_dict,
+        architecture,
+        sequence_length,
+        batch_size,
+        mc_dropout,
+        dropout_prob,
+    ):
         # save attributes
         self.data_dict = data_dict
-        self.num_input_features = self.data_dict['train_features'].shape[1]
-        
+        self.num_input_features = self.data_dict["train_features"].shape[1]
+
         # TODO: Write load_saved_model method in model file
         # Loop through possible architecture parameters and if it not given, set it to None
-        for param in ['num_linear_layers', 'nodes', 'num_rnn_hidden', 'num_rnn_layers']:
+        for param in ["num_linear_layers", "nodes", "num_rnn_hidden", "num_rnn_layers"]:
             try:
                 architecture[param]
             except:
                 architecture[param] = None
-        architecture['input_layer_size'] = self.num_input_features
+        architecture["input_layer_size"] = self.num_input_features
 
         # establish model - if using exploratory model, use num_linear_layers and nodes arg
-        self.model = model_class(architecture=architecture, mc_dropout=mc_dropout, dropout_prob=dropout_prob).to(self.device)
-        self.time_series = True if hasattr(self.model, 'time_series') else False
+        self.model = model_class(
+            architecture=architecture, mc_dropout=mc_dropout, dropout_prob=dropout_prob
+        ).to(self.device)
+        self.time_series = True if hasattr(self.model, "time_series") else False
 
         # If the data loader hasn't been created, run _format_data function
         if self.train_loader is None or self.train_loader is None:
-            self._format_data(data_dict['train_features'], data_dict['train_labels'], data_dict['test_features'],
-                              data_dict['test_labels'],
-                              train_batch_size=batch_size,
-                              sequence_length=sequence_length,
-                              )
+            self._format_data(
+                data_dict["train_features"],
+                data_dict["train_labels"],
+                data_dict["test_features"],
+                data_dict["test_labels"],
+                train_batch_size=batch_size,
+                sequence_length=sequence_length,
+            )
 
-    def train(self, model_class, data_dict, criterion, epochs, batch_size, mc_dropout=False, dropout_prob=None, tensorboard=False, architecture=None,
-              save_model=False, performance_optimized=False, verbose=True, sequence_length=5, tensorboard_comment=None):
+    def train(
+        self,
+        model_class,
+        data_dict,
+        criterion,
+        epochs,
+        batch_size,
+        mc_dropout=False,
+        dropout_prob=None,
+        tensorboard=False,
+        architecture=None,
+        save_model=False,
+        performance_optimized=False,
+        verbose=True,
+        sequence_length=5,
+        tensorboard_comment=None,
+    ):
         """Training loop for training a PyTorch model. Include validation, GPU compatibility, and tensorboard integration.
 
         Args:
@@ -114,15 +174,25 @@ class Trainer:
             save_model (bool, optional): Flag determining whether the trained model should be saved. Defaults to False.
             performance_optimized (bool, optional): Flag determining whether the training loop should be optimized for fast training. Defaults to False.
         """
-        
+
         # Initiates model with inputted architecture and formats data
-        self._initiate_model(model_class, data_dict, architecture, sequence_length, batch_size, mc_dropout, dropout_prob)
+        self._initiate_model(
+            model_class,
+            data_dict,
+            architecture,
+            sequence_length,
+            batch_size,
+            mc_dropout,
+            dropout_prob,
+        )
 
         # Use multiple GPU parallelization if available
         # if torch.cuda.device_count() > 1:
         #     self.model = nn.DataParallel(self.model)
 
-        optimizer = optim.Adam(self.model.parameters(), )
+        optimizer = optim.Adam(
+            self.model.parameters(),
+        )
         # criterion = nn.MSELoss()
         self.time = datetime.now().strftime(r"%d-%m-%Y %H.%M.%S")
 
@@ -140,7 +210,9 @@ class Trainer:
             total_loss = 0
             total_mae = 0
             for X_train_batch, y_train_batch in self.train_loader:
-                X_train_batch, y_train_batch = X_train_batch.to(self.device), y_train_batch.to(self.device)
+                X_train_batch, y_train_batch = X_train_batch.to(
+                    self.device
+                ), y_train_batch.to(self.device)
 
                 optimizer.zero_grad()
 
@@ -150,13 +222,13 @@ class Trainer:
                 optimizer.step()
 
                 total_loss += loss.item()
-                self.logs['training']['batch'].append(loss.item())
+                self.logs["training"]["batch"].append(loss.item())
 
                 if not performance_optimized:
                     total_mae += mae(pred, y_train_batch.unsqueeze(1)).item()
 
             avg_mse = total_loss / len(self.train_loader)
-            self.logs['training']['epoch'].append(avg_mse)
+            self.logs["training"]["epoch"].append(avg_mse)
 
             if not performance_optimized:
                 avg_rmse = np.sqrt(avg_mse)
@@ -169,7 +241,9 @@ class Trainer:
                 test_total_loss = 0
                 test_total_mae = 0
                 for X_test_batch, y_test_batch in self.test_loader:
-                    X_test_batch, y_test_batch = X_test_batch.to(self.device), y_test_batch.to(self.device)
+                    X_test_batch, y_test_batch = X_test_batch.to(
+                        self.device
+                    ), y_test_batch.to(self.device)
                     test_pred = self.model(X_test_batch)
                     loss = criterion(test_pred, y_test_batch.unsqueeze(1))
                     test_total_loss += loss.item()
@@ -177,11 +251,11 @@ class Trainer:
 
                 test_mse = test_total_loss / len(self.test_loader)
                 test_mae = test_total_mae / len(self.test_loader)
-                self.logs['testing'].append(test_mse)
+                self.logs["testing"].append(test_mse)
                 testing_end = time.time()
 
                 preds, _, _, _, _ = self.model.predict(self.X_test, mc_iterations=1)
-                if self.device.type != 'cuda':
+                if self.device.type != "cuda":
                     r2 = r2_score(self.y_test, preds)
                 else:
                     r2 = r2_score(self.y_test, preds)
@@ -200,23 +274,32 @@ class Trainer:
 
             if verbose:
                 if not performance_optimized:
-                    print('')
-                    print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}, Validation Loss (MSE): {test_mse:0.8f}
-    Training time: {training_end - epoch_start: 0.2f} seconds, Validation time: {testing_end - training_end: 0.2f} seconds""")
+                    print("")
+                    print(
+                        f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}, Validation Loss (MSE): {test_mse:0.8f}
+    Training time: {training_end - epoch_start: 0.2f} seconds, Validation time: {testing_end - training_end: 0.2f} seconds"""
+                    )
 
                 else:
-                    print('')
-                    print(f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}
-    Training time: {training_end - epoch_start: 0.2f} seconds""")
+                    print("")
+                    print(
+                        f"""Epoch: {epoch}/{epochs}, Training Loss (MSE): {avg_mse:0.8f}
+    Training time: {training_end - epoch_start: 0.2f} seconds"""
+                    )
 
         if tensorboard:
             metrics, _ = self.evaluate()
             tb.add_hparams(
-                {"rnn_layers": architecture['num_rnn_layers'], "hidden": architecture['num_rnn_hidden'], "batch_size": batch_size, },
-
                 {
-                    "Test MSE": metrics['MSE'], "Test MAE": metrics['MAE'], "R^2": metrics['R2'],
-                    "RMSE": metrics["RMSE"]
+                    "rnn_layers": architecture["num_rnn_layers"],
+                    "hidden": architecture["num_rnn_hidden"],
+                    "batch_size": batch_size,
+                },
+                {
+                    "Test MSE": metrics["MSE"],
+                    "Test MAE": metrics["MAE"],
+                    "R^2": metrics["R2"],
+                    "RMSE": metrics["RMSE"],
                 },
             )
 
@@ -225,25 +308,26 @@ class Trainer:
         if save_model:
             if isinstance(save_model, str):
                 model_path = f"{save_model}/{self.time}.pt"
-                
+
             elif isinstance(save_model, bool):
                 import os
+
                 dirname = os.path.dirname(__file__)
                 model_path = os.path.join(dirname, f"../{self.time}.pt")
-            
+
             torch.save(self.model.state_dict(), model_path)
-            print('')
-            print(f'Model saved to {model_path}')
-            print('')
+            print("")
+            print(f"Model saved to {model_path}")
+            print("")
 
         return self
 
     def plot_loss(self, save=False):
-        plt.plot(self.logs['training']['epoch'], 'r-', label='Training Loss')
-        plt.plot(self.logs['testing'], 'b-', label='Validation Loss')
-        plt.title('Emulator MSE loss per Epoch')
-        plt.xlabel(f'Epoch #')
-        plt.ylabel('Loss (MSE)')
+        plt.plot(self.logs["training"]["epoch"], "r-", label="Training Loss")
+        plt.plot(self.logs["testing"], "b-", label="Validation Loss")
+        plt.title("Emulator MSE loss per Epoch")
+        plt.xlabel(f"Epoch #")
+        plt.ylabel("Loss (MSE)")
         plt.legend()
 
         if save:
@@ -255,27 +339,31 @@ class Trainer:
         self.model.eval()
         preds = torch.tensor([]).to(self.device)
         for X_test_batch, y_test_batch in self.test_loader:
-            X_test_batch, y_test_batch = X_test_batch.to(self.device), y_test_batch.to(self.device)
+            X_test_batch, y_test_batch = X_test_batch.to(self.device), y_test_batch.to(
+                self.device
+            )
             test_pred = self.model(X_test_batch)
             preds = torch.cat((preds, test_pred), 0)
 
-        if self.device.type == 'cuda':
+        if self.device.type == "cuda":
             preds = preds.squeeze().cpu().detach().numpy()
         else:
             preds = preds.squeeze().detach().numpy()
-            
-        mse = sum((preds - self.y_test.squeeze())**2) / len(preds)
+
+        mse = sum((preds - self.y_test.squeeze()) ** 2) / len(preds)
         mae = sum(abs((preds - self.y_test.squeeze()))) / len(preds)
         rmse = np.sqrt(mse)
         r2 = r2_score(self.y_test, preds)
 
-        metrics = {'MSE': mse, 'MAE': mae, 'RMSE': rmse, 'R2': r2}
+        metrics = {"MSE": mse, "MAE": mae, "RMSE": rmse, "R2": r2}
 
         if verbose:
-            print(f"""Test Metrics
+            print(
+                f"""Test Metrics
 MSE: {mse:0.6f}
 MAE: {mae:0.6f}
 RMSE: {rmse:0.6f}
-R2: {r2:0.6f}""")
+R2: {r2:0.6f}"""
+            )
 
         return metrics, preds

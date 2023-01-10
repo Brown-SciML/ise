@@ -6,8 +6,13 @@ from ise.data.processors.forcings import process_forcings
 from ise.data.processors.ismip6 import process_ismip6_outputs
 from ise.data.processors.merge import merge_datasets
 
-def process_data(forcing_directory: str, grids_directory: str, 
-                 ismip6_output_directory: str, export_directory: str) -> pd.DataFrame:
+
+def process_data(
+    forcing_directory: str,
+    grids_directory: str,
+    ismip6_output_directory: str,
+    export_directory: str,
+) -> pd.DataFrame:
     """Function for processing forcing data, Zenodo output data, and merging them together for
     use in modelling.
 
@@ -23,10 +28,15 @@ def process_data(forcing_directory: str, grids_directory: str,
         outputs.
     """
 
-    process_forcings(forcing_directory, grids_directory, export_directory, 
-                     to_process='all', verbose=False)
+    process_forcings(
+        forcing_directory,
+        grids_directory,
+        export_directory,
+        to_process="all",
+        verbose=False,
+    )
     process_ismip6_outputs(ismip6_output_directory, export_directory)
-    master, inputs, outputs = merge_datasets(export_directory, export_directory, 
-                                             export_directory, include_icecollapse=False)
+    master, inputs, outputs = merge_datasets(
+        export_directory, export_directory, export_directory, include_icecollapse=False
+    )
     return master
-    

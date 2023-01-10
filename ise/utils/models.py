@@ -2,7 +2,10 @@
 
 import torch
 
-def load_model(model_path, model_class, architecture, mc_dropout=False, dropout_prob=0.1):
+
+def load_model(
+    model_path, model_class, architecture, mc_dropout=False, dropout_prob=0.1
+):
     """Loads PyTorch model from saved state_dict.
 
     Args:
@@ -16,6 +19,6 @@ def load_model(model_path, model_class, architecture, mc_dropout=False, dropout_
         model (Model): Pretrained model.
     """
     model = model_class(architecture, mc_dropout=mc_dropout, dropout_prob=dropout_prob)
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.load_state_dict(torch.load(model_path, map_location=device))
     return model.to(device)

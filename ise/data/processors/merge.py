@@ -9,11 +9,18 @@ import json
 
 # Open up the JSON with Table 1 from H. Seroussi et al.: ISMIP6 Antarctica projections
 # Link: https://tc.copernicus.org/articles/14/3033/2020/tc-14-3033-2020.pdf
-resp = requests.get(r'https://raw.githubusercontent.com/Brown-SciML/ise/master/ise/data/datasets/processed_output_files/ismip6_experiments.json')
+resp = requests.get(
+    r"https://raw.githubusercontent.com/Brown-SciML/ise/master/ise/data/datasets/processed_output_files/ismip6_experiments.json"
+)
 ismip6_experiments = json.loads(resp.text)
 
-def merge_datasets(processed_forcing_directory: str, processed_ismip6_directory: str,
-                   export_directory: str, include_icecollapse: bool=False):
+
+def merge_datasets(
+    processed_forcing_directory: str,
+    processed_ismip6_directory: str,
+    export_directory: str,
+    include_icecollapse: bool = False,
+):
     """Wrapper function that runs all merging functions. Includes combining the input data
     from the forcing data with the output data from the Zenodo directory.
 
@@ -32,13 +39,17 @@ def merge_datasets(processed_forcing_directory: str, processed_ismip6_directory:
         processed_forcing_directory=processed_forcing_directory,
         processed_ismip6_directory=processed_ismip6_directory,
         include_icecollapse=include_icecollapse,
-        export=export_directory
+        export=export_directory,
     )
     return master, inputs, outputs
 
 
-def combine_datasets(processed_forcing_directory: str, processed_ismip6_directory: str,
-                     include_icecollapse: bool=False, export=True):
+def combine_datasets(
+    processed_forcing_directory: str,
+    processed_ismip6_directory: str,
+    include_icecollapse: bool = False,
+    export=True,
+):
     """Combines the input datasets -- atmospheric forcing, three oceanic forcing (salinity,
     temperature and thermal forcing), and ice sheet collapse forcing with the output dataset
     generated in H. Seroussi et al.: ISMIP6 Antarctica projections.
@@ -48,7 +59,7 @@ def combine_datasets(processed_forcing_directory: str, processed_ismip6_director
         processed_ismip6_directory (str): Directory of the processed output files.
         include_icecollapse (bool): Flag denoting whether to include ice collapse, defaults to False
         export (str, optional): Directory of exported files, defaults to True
-    
+
 
     Returns:
         pd.DataFrame: master, inputs, outputs, Combined datasets
@@ -63,37 +74,66 @@ def combine_datasets(processed_forcing_directory: str, processed_ismip6_director
         tf = pd.read_csv(f"{processed_forcing_directory}/thermal_forcing.csv")
         outputs = pd.read_csv(f"{processed_ismip6_directory}/ismip6_outputs.csv")
     except FileNotFoundError as exc:
-        raise FileNotFoundError('Files not found, make sure to run all processing functions.') from exc
+        raise FileNotFoundError(
+            "Files not found, make sure to run all processing functions."
+        ) from exc
 
     # Merge the oceanic datasets together (thermal forcing, temperature, salinity)
     # and apply the format_aogcms function for formatting strings in AOGCM column
     ocean = salinity
-    ocean['aogcm'] = ocean['aogcm'].apply(format_aogcms)
-    af['aogcm'] = af['aogcm'].apply(format_aogcms)
-    for data in [temp, tf,]:
-        data['aogcm'] = data['aogcm'].apply(format_aogcms)
-        ocean = pd.merge(ocean, data, on=['sectors', 'year', 'aogcm', 'regions'], how="outer")
+    ocean["aogcm"] = ocean["aogcm"].apply(format_aogcms)
+    af["aogcm"] = af["aogcm"].apply(format_aogcms)
+    for data in [
+        temp,
+        tf,
+    ]:
+        data["aogcm"] = data["aogcm"].apply(format_aogcms)
+        ocean = pd.merge(
+            ocean, data, on=["sectors", "year", "aogcm", "regions"], how="outer"
+        )
     ocean = ocean.drop_duplicates()
-    ocean = ocean[['sectors', 'regions', 'year', 'aogcm', 'salinity', 'temperature', 'thermal_forcing']]
+    ocean = ocean[
+        [
+            "sectors",
+            "regions",
+            "year",
+            "aogcm",
+            "salinity",
+            "temperature",
+            "thermal_forcing",
+        ]
+    ]
 
     # Apply the same formatting function to atmospheric and ice forcing
-    af['aogcm'] = af['aogcm'].apply(format_aogcms)
-    ice['aogcm'] = ice['aogcm'].apply(format_aogcms)
+    af["aogcm"] = af["aogcm"].apply(format_aogcms)
+    ice["aogcm"] = ice["aogcm"].apply(format_aogcms)
 
     # Merge all inputs into one dataframe using an inner join
-    inputs = pd.merge(ocean, af, on=['sectors', 'year', 'aogcm', 'regions'], how="inner")
+    inputs = pd.merge(
+        ocean, af, on=["sectors", "year", "aogcm", "regions"], how="inner"
+    )
 
     # If indicated, add ice collapse
     if include_icecollapse:
-        inputs = pd.merge(inputs, ice, on=['sectors', 'year', 'aogcm', 'regions'], how="inner")
+        inputs = pd.merge(
+            inputs, ice, on=["sectors", "year", "aogcm", "regions"], how="inner"
+        )
 
     # Map the experiment to attribute function, which takes Table 1 from H.
     # Seroussi et al.: ISMIP6 Antarctica projections
     # and adds columns for other attributes listed in the table...
-    outputs['experiment'], outputs['aogcm'], outputs['scenario'], outputs['ocean_forcing'], outputs['ocean_sensitivity'], outputs['ice_shelf_fracture'], outputs['tier'] = zip(*outputs['exp_id'].map(exp_to_attributes))
+    (
+        outputs["experiment"],
+        outputs["aogcm"],
+        outputs["scenario"],
+        outputs["ocean_forcing"],
+        outputs["ocean_sensitivity"],
+        outputs["ice_shelf_fracture"],
+        outputs["tier"],
+    ) = zip(*outputs["exp_id"].map(exp_to_attributes))
 
     # Merge inputs and outputs
-    master = pd.merge(inputs, outputs, on=['year', 'sectors', 'aogcm'])
+    master = pd.merge(inputs, outputs, on=["year", "sectors", "aogcm"])
 
     if export:
         master.to_csv(f"{export}/master.csv", index=False)
@@ -103,7 +143,9 @@ def combine_datasets(processed_forcing_directory: str, processed_ismip6_director
     return master, inputs, outputs
 
 
-def exp_to_attributes(x: str,):
+def exp_to_attributes(
+    x: str,
+):
     """Combines Table 1 in H. Seroussi et al.: ISMIP6 Antarctica projections and associates
     the attributes listed in Table 1 with each experiment in the output dataset.
 
@@ -116,9 +158,18 @@ def exp_to_attributes(x: str,):
 
     try:
         attributes = ismip6_experiments[x]
-        return attributes['Experiment'], attributes['AOGCM'], attributes['Scenario'], attributes['Ocean forcing'], attributes['Ocean sensitivity'], attributes['Ice shelf fracture'], attributes['Tier']
+        return (
+            attributes["Experiment"],
+            attributes["AOGCM"],
+            attributes["Scenario"],
+            attributes["Ocean forcing"],
+            attributes["Ocean sensitivity"],
+            attributes["Ice shelf fracture"],
+            attributes["Tier"],
+        )
     except:
         pass
+
 
 def format_aogcms(x: str) -> str:
     """Formats AOGCM strings so that joins between datasets work properly. This is necessary due to
@@ -141,7 +192,7 @@ def format_aogcms(x: str) -> str:
             # If not, find the numeric value (e.g. 85) and change to rcp (_rcp85)
             numeric = re.search("\d{2,3}", x).group()
             x = x[:-2]
-            if x.endswith('_'):
+            if x.endswith("_"):
                 x += f"rcp{numeric}"
             else:
                 x += f"_rcp{numeric}"

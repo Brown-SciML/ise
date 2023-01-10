@@ -4,5 +4,5 @@ from ise.models.training.iterative import (
     _structure_emulatordata_args,
     _structure_architecture_args,
     lag_sequence_test,
-    rnn_architecture_test
+    rnn_architecture_test,
 )

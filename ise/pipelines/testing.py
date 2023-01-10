@@ -2,16 +2,31 @@
 of descriptive plots, and analyzing the accuracy of uncertainty bounds."""
 import os
 from ise.models.timeseries import TimeSeriesEmulator
-from ise.utils.data import combine_testing_results, load_ml_data, calculate_distribution_metrics
+from ise.utils.data import (
+    combine_testing_results,
+    load_ml_data,
+    calculate_distribution_metrics,
+)
 from ise.models.testing import test_pretrained_model, binned_sle_table
 from ise.utils.models import load_model
 from ise.visualization import Plotter
 import json
 import pandas as pd
 
-def analyze_model(data_directory: str, model_path: str, architecture: dict, model_class, 
-                  time_series: bool=True, mc_dropout: bool=True, dropout_prob: float=0.1, 
-                  mc_iterations: int=100, verbose: bool=True, save_directory: str=None, plot: bool=True):
+
+def analyze_model(
+    data_directory: str,
+    model_path: str,
+    architecture: dict,
+    model_class,
+    time_series: bool = True,
+    mc_dropout: bool = True,
+    dropout_prob: float = 0.1,
+    mc_iterations: int = 100,
+    verbose: bool = True,
+    save_directory: str = None,
+    plot: bool = True,
+):
     """Analyzes the performance of a pretrained model. Includes running model evaluation with test
     metrics on testing data, creating a results dataframe for easy analysis, and automatic generation
     of plots for both test cases and error analysis.
@@ -19,7 +34,7 @@ def analyze_model(data_directory: str, model_path: str, architecture: dict, mode
     Args:
         data_directory (str): Directory containing training and testing data.
         model_path (str): Path to the pretrained model. Must be a '.pt' model. Can also be a loaded model if the model was trained in the same script.
-        architecture (dict): Architecture arguments used to train the model. 
+        architecture (dict): Architecture arguments used to train the model.
         model_class (_type_): Model class used to train the model.
         time_series (bool, optional): Flag denoting wether model was trained with time-series data. Defaults to True.
         mc_dropout (bool, optional): Flag denoting whether the model was trained with MC dropout protocol. Defaults to True.
@@ -28,11 +43,11 @@ def analyze_model(data_directory: str, model_path: str, architecture: dict, mode
         verbose (bool, optional): Flag denoting whether to output logs to terminal. Defaults to True.
         save_directory (str, optional): Directory to save outputs. Defaults to None.
         plot (bool, optional): Flag denoting whether to output plots. Defaults to True.
-    """    
+    """
 
     # Test the pretrained model to generate metrics and predictions
     if verbose:
-        print('1/4: Calculating test metrics')
+        print("1/4: Calculating test metrics")
     metrics, preds, bounds = test_pretrained_model(
         model_path=model_path,
         model_class=model_class,
@@ -42,26 +57,25 @@ def analyze_model(data_directory: str, model_path: str, architecture: dict, mode
         mc_dropout=mc_dropout,
         dropout_prob=dropout_prob,
         mc_iterations=mc_iterations,
-        verbose=False
+        verbose=False,
     )
-    
+
     if save_directory:
-        with open(f'{save_directory}/metrics.txt', 'w') as metrics_file:
+        with open(f"{save_directory}/metrics.txt", "w") as metrics_file:
             metrics_file.write(json.dumps(metrics))
-    
-    
+
     # Create the results dataframe, which is the undummified version
     if verbose:
-        print('2/4: Creating results dataframe')
+        print("2/4: Creating results dataframe")
     dataset = combine_testing_results(
         data_directory=data_directory,
         preds=preds,
         bounds=bounds,
-        save_directory=save_directory
+        save_directory=save_directory,
     )
     _, _, test_features, _, _ = load_ml_data(data_directory)
-    architecture['input_layer_size'] = test_features.shape[1]
-    
+    architecture["input_layer_size"] = test_features.shape[1]
+
     if isinstance(model_path, str):
         model = load_model(
             model_path=model_path,
@@ -72,40 +86,48 @@ def analyze_model(data_directory: str, model_path: str, architecture: dict, mode
         )
     else:
         model = model_path
-        
+
     # Calculate the distribution metrics, tables, etc.
     distribution_metrics = calculate_distribution_metrics(dataset)
-    print(f"""True vs Predicted Distribution Closeness:
+    print(
+        f"""True vs Predicted Distribution Closeness:
 KL Divergence: {distribution_metrics['kl']}
 JS Divergence: {distribution_metrics['js']}
-""")
-    
+"""
+    )
+
     binned = binned_sle_table(dataset, bins=5)
     if save_directory:
-        binned.to_csv(f'{save_directory}/binned_sle_table.csv')
-    
+        binned.to_csv(f"{save_directory}/binned_sle_table.csv")
+
     print(f"\nBinned SLE Metrics: \n{binned}")
 
     if verbose:
-        print('3/4: Generating plots')
+        print("3/4: Generating plots")
 
     if plot:
-        plotter = Plotter.Plotter(results_dataset=dataset, save_directory=save_directory)
-        plotter.plot_ensemble(save=f'{save_directory}/ensemble_plot.png')
-        plotter.plot_ensemble_mean(save=f'{save_directory}/ensemble_means.png')
-        plotter.plot_distributions(year=2100, save=f'{save_directory}/distributions.png')
-        plotter.plot_histograms(year=2100, save=f'{save_directory}/histograms.png')
-        plotter.plot_callibration(alpha=0.5, save=f'{save_directory}/callibration.png')
+        plotter = Plotter.Plotter(
+            results_dataset=dataset, save_directory=save_directory
+        )
+        plotter.plot_ensemble(save=f"{save_directory}/ensemble_plot.png")
+        plotter.plot_ensemble_mean(save=f"{save_directory}/ensemble_means.png")
+        plotter.plot_distributions(
+            year=2100, save=f"{save_directory}/distributions.png"
+        )
+        plotter.plot_histograms(year=2100, save=f"{save_directory}/histograms.png")
+        plotter.plot_callibration(alpha=0.5, save=f"{save_directory}/callibration.png")
 
     if verbose:
-        print('4/4: Generating example test cases')
+        print("4/4: Generating example test cases")
 
     if plot:
         test_case_dir = f"{save_directory}/test cases/"
         if not os.path.exists(path=test_case_dir):
             os.mkdir(test_case_dir)
         plotter.plot_test_series(
-            model=model, data_directory=data_directory, save_directory=f'{save_directory}/test cases/'
+            model=model,
+            data_directory=data_directory,
+            save_directory=f"{save_directory}/test cases/",
         )
 
     return metrics, preds, plotter

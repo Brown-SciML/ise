@@ -1,15 +1,30 @@
+"""Custom Kernels required for gaussian process regression."""
+
 from sklearn.gaussian_process.kernels import RBF, _check_length_scale, WhiteKernel
 from scipy.spatial.distance import pdist, cdist, squareform
 import numpy as np
 
+
 class PowerExponentialKernel(RBF):
-    def __init__(self, exponential=2.0, length_scale=1.0, length_scale_bounds=(1e-5, 1e5),):
-        super().__init__(length_scale_bounds=length_scale_bounds, length_scale=length_scale, )
+    def __init__(
+        self,
+        exponential=2.0,
+        length_scale=1.0,
+        length_scale_bounds=(1e-5, 1e5),
+    ):
+        super().__init__(
+            length_scale_bounds=length_scale_bounds,
+            length_scale=length_scale,
+        )
         self.exponential = exponential
-        
-    
+
     # OVERWRITE CALL METHOD FROM SKLEARN.GAUSSIAN_PROCESS.KERNELS.RBF
-    def __call__(self, X, Y=None, eval_gradient=False,):
+    def __call__(
+        self,
+        X,
+        Y=None,
+        eval_gradient=False,
+    ):
         """Return the kernel k(X, Y) and optionally its gradient.
 
         Parameters
@@ -60,9 +75,9 @@ class PowerExponentialKernel(RBF):
                 return K, K_gradient
             elif self.anisotropic:
                 # We need to recompute the pairwise dimension-wise distances
-                K_gradient = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** self.exponential / (
-                    length_scale**2
-                )
+                K_gradient = (
+                    X[:, np.newaxis, :] - X[np.newaxis, :, :]
+                ) ** self.exponential / (length_scale**2)
                 K_gradient *= K[..., np.newaxis]
                 return K, K_gradient
         else:

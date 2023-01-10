@@ -5,12 +5,14 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+
 np.random.seed(10)
 
 
 file_dir = os.path.dirname(os.path.realpath(__file__))
 
-def check_input(input: str, options: list[str], argname: str=None):
+
+def check_input(input: str, options: list[str], argname: str = None):
     """Checks validity of input argument. Not used frequently due to error raising being better practice.
 
     Args:
@@ -26,7 +28,8 @@ def check_input(input: str, options: list[str], argname: str=None):
             raise ValueError(f"{argname} must be in {options}, received {input}")
         raise ValueError(f"input must be in {options}, received {input}")
 
-def get_all_filepaths(path: str, filetype: str=None, contains: str=None):
+
+def get_all_filepaths(path: str, filetype: str = None, contains: str = None):
     """Retrieves all filepaths for files within a directory. Supports subsetting based on filetype
     and substring search.
 
@@ -41,16 +44,16 @@ def get_all_filepaths(path: str, filetype: str=None, contains: str=None):
     all_files = list()
     for (dirpath, dirnames, filenames) in os.walk(path):
         all_files += [os.path.join(dirpath, file) for file in filenames]
-        
+
     if filetype:
-        if filetype.lower() != 'all':
+        if filetype.lower() != "all":
             all_files = [file for file in all_files if file.endswith(filetype)]
-    
+
     if contains:
         all_files = [file for file in all_files if contains in file]
-        
+
     return all_files
-    
+
 
 def _structure_emulatordata_args(input_args: dict, time_series: bool):
     """Formats kwargs for EmulatorData processing. Includes establishing defaults if values are not
@@ -64,21 +67,21 @@ def _structure_emulatordata_args(input_args: dict, time_series: bool):
         dict: EmulatorData.process() kwargs formatted with defaults.
     """
     emulator_data_defaults = dict(
-                    target_column='sle',
-                    drop_missing=True,
-                    drop_columns=['groupname', 'experiment'],
-                    boolean_indices=True,
-                    scale=True,
-                    split_type='batch',
-                    drop_outliers='explicit',
-                    drop_expression=[('ivaf', "<", -1e13)],
-                    time_series=time_series,
-                    lag=None
-                    )
-    
+        target_column="sle",
+        drop_missing=True,
+        drop_columns=["groupname", "experiment"],
+        boolean_indices=True,
+        scale=True,
+        split_type="batch",
+        drop_outliers="explicit",
+        drop_expression=[("ivaf", "<", -1e13)],
+        time_series=time_series,
+        lag=None,
+    )
+
     if time_series:
-        emulator_data_defaults['lag'] = 5
-    
+        emulator_data_defaults["lag"] = 5
+
     # If no other args are supplied, use defaults
     if input_args is None:
         return emulator_data_defaults
@@ -87,10 +90,9 @@ def _structure_emulatordata_args(input_args: dict, time_series: bool):
         for key in input_args.keys():
             emulator_data_defaults[key] = input_args[key]
         output_args = emulator_data_defaults
-        
 
-    
     return output_args
+
 
 def _structure_architecture_args(architecture, time_series):
     """Formats the arguments for model architectures.
@@ -102,27 +104,33 @@ def _structure_architecture_args(architecture, time_series):
     Returns:
         architecture (dict): Formatted architecture argument.
     """
-    
+
     # Check to make sure inappropriate args are not used
-    if not time_series and ('num_rnn_layers' in architecture.keys() or 'num_rnn_hidden' in architecture.keys()):
-            raise AttributeError(f'Time series architecture args must be in [num_linear_layers, nodes], received {architecture}')
-    if time_series and ('nodes' in architecture.keys() or 'num_linear_layers' in architecture.keys()):
-            raise AttributeError(f'Time series architecture args must be in [num_rnn_layers, num_rnn_hidden], received {architecture}')
-        
+    if not time_series and (
+        "num_rnn_layers" in architecture.keys()
+        or "num_rnn_hidden" in architecture.keys()
+    ):
+        raise AttributeError(
+            f"Time series architecture args must be in [num_linear_layers, nodes], received {architecture}"
+        )
+    if time_series and (
+        "nodes" in architecture.keys() or "num_linear_layers" in architecture.keys()
+    ):
+        raise AttributeError(
+            f"Time series architecture args must be in [num_rnn_layers, num_rnn_hidden], received {architecture}"
+        )
+
     if architecture is None:
         if time_series:
             architecture = {
-                'num_rnn_layers': 3,
-                'num_rnn_hidden': 128,
+                "num_rnn_layers": 3,
+                "num_rnn_hidden": 128,
             }
         else:
             architecture = {
-                'num_linear_layers': 4,
-                'nodes': [128, 64, 32, 1],
+                "num_linear_layers": 4,
+                "nodes": [128, 64, 32, 1],
             }
     else:
         return architecture
     return architecture
-
-
-
