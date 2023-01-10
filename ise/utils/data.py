@@ -95,7 +95,7 @@ def undummify(df: pd.DataFrame, prefix_sep: str = "-"):
 def combine_testing_results(
     data_directory: str,
     preds: np.ndarray,
-    bounds: dict = None,
+    bounds: dict|pd.DataFrame = None,
     time_series: bool = True,
     save_directory: str = None,
 ):
@@ -105,7 +105,16 @@ def combine_testing_results(
     Args:
         data_directory (str): Directory containing training and testing data.
         preds (np.ndarray): Array of predictions, can be np.ndarray or pd.Series.
-        bounds (dict): Dictionary or pd.DataFrame of uncertainty bounds to be added to the dataframe, defaults to None.
+        bounds (dict | pd.DataFrame): Dictionary or pd.DataFrame of uncertainty bounds to be added to the dataframe, defaults to None.
+        Example:
+        ```
+            bounds = {
+        "upper_ci": upper_ci,
+        "lower_ci": lower_ci,
+        "upper_q": upper_q,
+        "lower_q": lower_q,
+    }
+        ```
         time_series (bool, optional): Flag denoting whether to process the data as a time-series dataset or traditional non-time dataset. Defaults to True.
         save_directory (str, optional): Directory where output files will be saved. Defaults to None.
 
