@@ -5,6 +5,7 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+from typing import List
 
 np.random.seed(10)
 
@@ -12,12 +13,12 @@ np.random.seed(10)
 file_dir = os.path.dirname(os.path.realpath(__file__))
 
 
-def check_input(input: str, options: list[str], argname: str = None):
+def check_input(input: str, options: List[str], argname: str = None):
     """Checks validity of input argument. Not used frequently due to error raising being better practice.
 
     Args:
         input (str): Input value.
-        options (list[str]): Valid options for the input value.
+        options (List[str]): Valid options for the input value.
         argname (str, optional): Name of the argument being tested. Defaults to None.
     """
     # simple assert that input is in the designated options (readability purposes only)
@@ -39,7 +40,7 @@ def get_all_filepaths(path: str, filetype: str = None, contains: str = None):
         contains (str, optional): Substring that files found must contain. Defaults to None.
 
     Returns:
-        list[str]: list of files within the directory matching the input criteria.
+        List[str]: list of files within the directory matching the input criteria.
     """
     all_files = list()
     for (dirpath, dirnames, filenames) in os.walk(path):

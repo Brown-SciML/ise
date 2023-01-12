@@ -17,6 +17,7 @@ from ise.utils.data import unscale_column
 np.random.seed(10)
 from sklearn.metrics import r2_score
 from sklearn.decomposition import PCA
+from typing import List
 
 
 def train_timeseries_network(
@@ -211,7 +212,7 @@ def train_traditional_network(
 def train_gaussian_process(
     data_directory: str,
     n: int,
-    features: list[str] = ["temperature"],
+    features: List[str] = ["temperature"],
     sampling_method: str = "first_n",
     kernel=None,
     verbose: bool = False,
@@ -223,7 +224,7 @@ def train_gaussian_process(
     Args:
         data_directory (str): Directory containing training and testing data.
         n (int): Number of observations to use for training.
-        features (list[str], optional): List of columns to use for training. May also contain list of [pc1, pc2, pc3, ...] to use N principal components. Defaults to ['temperature'].
+        features (List[str], optional): List of columns to use for training. May also contain list of [pc1, pc2, pc3, ...] to use N principal components. Defaults to ['temperature'].
         sampling_method (str, optional): Method of sampling n rows, must be in [first_n, random]. First_n takes the first n rows in the dataset, whereas random uses random sampling. First_n is recommended. Defaults to 'first_n'.
         kernel (sklearn.kernels, optional): Sklean kernel to be used for GP training. Defaults to None.
         verbose (bool, optional): Flag denoting whether to output logs to terminal. Defaults to False.
@@ -348,7 +349,7 @@ def train_gaussian_process(
 def train_multiyear_gaussian_process(
     data_directory: str,
     n: int,
-    features: list[str] = ['temperature', 'salinity',],
+    features: List[str] = ['temperature', 'salinity',],
     kernel=None,
     save_directory: str = None,
 ):
@@ -360,7 +361,7 @@ def train_multiyear_gaussian_process(
     Args:
         data_directory (str): Directory containing training and testing data.
         n (int): _description_
-        features (list[str], optional): _description_. Defaults to ['temperature', 'salinity',].
+        features (List[str], optional): _description_. Defaults to ['temperature', 'salinity',].
         kernel (_type_, optional): _description_. Defaults to None.
         save_directory (str, optional): _description_. Defaults to None.
 
