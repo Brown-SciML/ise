@@ -6,6 +6,7 @@ from ise.utils.utils import _structure_emulatordata_args, _structure_architectur
 from datetime import datetime
 from torch import nn
 from ise.utils.data import load_ml_data
+from typing import List
 
 
 def lag_sequence_test(
@@ -85,8 +86,8 @@ def lag_sequence_test(
 
 def rnn_architecture_test(
     data_directory: str,
-    rnn_layers_array: list[int],
-    hidden_nodes_array: list[int],
+    rnn_layers_array: List[int],
+    hidden_nodes_array: List[int],
     iterations: int,
     model_class=TimeSeriesEmulator,
     verbose: bool = True,
@@ -173,7 +174,7 @@ def rnn_architecture_test(
 
 def traditional_architecture_test(
     data_directory,
-    architectures: list[dict],
+    architectures: List[dict],
     iterations,
     model_class=ExploratoryModel,
     verbose=True,

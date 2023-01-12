@@ -8,6 +8,8 @@ import numpy as np
 from scipy.stats import gaussian_kde
 from scipy.spatial.distance import jensenshannon
 from sklearn.preprocessing import MinMaxScaler
+from typing import List
+
 
 
 def load_ml_data(data_directory: str, time_series: bool = True):
@@ -220,7 +222,7 @@ def group_by_run(
 
 
 def get_uncertainty_bands(
-    data: pd.DataFrame, confidence: str = "95", quantiles: list[float] = [0.05, 0.95]
+    data: pd.DataFrame, confidence: str = "95", quantiles: List[float] = [0.05, 0.95]
 ):
     """Calculates uncertainty bands on the monte carlo dropout protocol. Includes traditional
     confidence interval calculation as well as a quantile-based approach.

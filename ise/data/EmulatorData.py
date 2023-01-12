@@ -86,7 +86,7 @@ class EmulatorData:
         scale: bool = True,
         split_type: str = "batch",
         drop_outliers: str = False,
-        drop_expression: list[tuple] = None,
+        drop_expression: List[tuple] = None,
         time_series: bool = False,
         lag: int = None,
     ):
@@ -189,8 +189,8 @@ class EmulatorData:
     def drop_outliers(
         self,
         method: str,
-        expression: list[tuple] = None,
-        quantiles: list[float] = [0.01, 0.99],
+        expression: List[tuple] = None,
+        quantiles: List[float] = [0.01, 0.99],
     ):
         """Drops simulations that are outliers based on the provided method and expression.
         Extra complexity is handled due to the necessity of removing the entire 85 row series from

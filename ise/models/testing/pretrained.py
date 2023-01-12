@@ -7,6 +7,7 @@ import numpy as np
 np.random.seed(10)
 from sklearn.metrics import r2_score
 from ise.utils.data import load_ml_data
+from typing import List
 
 
 def test_pretrained_model(
@@ -217,7 +218,7 @@ def mc_accuracy(
 
 def binned_sle_table(
     results_dataframe: pd.DataFrame,
-    bins: list[float],
+    bins: List[float],
 ):
     """Creates table that analyzes loss functions over given ranges of SLE. Input is the results
     dataframe from ise.utils.data.combine_testing_results. Note that bins can be an integer denoting
