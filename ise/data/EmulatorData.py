@@ -3,6 +3,7 @@ import random
 import pandas as pd
 import numpy as np
 from sklearn import preprocessing as sp
+from typing import List
 
 np.random.seed(10)
 
@@ -80,7 +81,7 @@ class EmulatorData:
         self,
         target_column: str = "sle",
         drop_missing: bool = True,
-        drop_columns: list[str] = True,
+        drop_columns: List[str] = True,
         boolean_indices: bool = True,
         scale: bool = True,
         split_type: str = "batch",
@@ -97,7 +98,7 @@ class EmulatorData:
         Args:
             target_column (str, optional): Column to be predicted. Defaults to 'sle'.
             drop_missing (bool, optional): Flag denoting whether to drop missing values. Defaults to True.
-            drop_columns (list[str], optional): List containing which columns (variables) to be dropped. Should be List[str] or boolean. If True is chosen, columns are dropped that will result in optimal performance. Defaults to True.
+            drop_columns (List[str], optional): List containing which columns (variables) to be dropped. Should be List[str] or boolean. If True is chosen, columns are dropped that will result in optimal performance. Defaults to True.
             boolean_indices (bool, optional): Flag denoting whether to create boolean indices for all categorical variables left after dropping columns. Defaults to True.
             scale (bool, optional): Flag denoting whether to scale data between zero and 1.  Sklearn's MinMaxScaler is used. Defaults to True.
             split_type (str, optional): Method to split data into training and testing set, must be in [random, batch]. Random is not recommended but is included for completeness. Defaults to 'batch'.
@@ -400,12 +401,12 @@ class EmulatorData:
                 self.data[col] = self.data[col].astype(float)
         return self
 
-    def drop_columns(self, columns: list[str]):
+    def drop_columns(self, columns: List[str]):
         """Drops columns in columns argument from the dataset. Wrapper for pandas.DataFrame.drop()
         with error checking.
 
         Args:
-            columns (list[str]): List of columns (or singular string column) to be dropped from the dataset.
+            columns (List[str]): List of columns (or singular string column) to be dropped from the dataset.
 
         Returns:
             EmulatorData: self, with desired columns dropped from self.data.

@@ -152,7 +152,7 @@ class Trainer:
         dropout_prob: float = 0.1,
         tensorboard: bool = False,
         architecture: dict = None,
-        save_model: str|bool = False,
+        save_model: str = False,
         performance_optimized: bool = False,
         verbose: bool = True,
         sequence_length: int = 5,

@@ -94,9 +94,9 @@ def undummify(df: pd.DataFrame, prefix_sep: str = "-"):
 
 def combine_testing_results(
     data_directory: str,
-    preds: np.ndarray|pd.Series|str,
-    bounds: dict|pd.DataFrame = None,
-    gp_data: dict|pd.DataFrame = None,
+    preds: np.ndarray, #|pd.Series|str,
+    bounds: dict = None, #|pd.DataFrame = None,
+    gp_data: dict = None, #|pd.DataFrame = None,
     time_series: bool = True,
     save_directory: str = None,
 ):
@@ -321,7 +321,7 @@ def calculate_distribution_metrics(
     return distribution_metrics
 
 
-def unscale_column(dataset: pd.DataFrame, column: str | list = "year"):
+def unscale_column(dataset: pd.DataFrame, column: str = "year"):
     """Unscale column in dataset, particularly for unscaling year and sectors column given that
     they have a known range of values (2016-2100 and 1-18 respectively).
 
