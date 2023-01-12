@@ -4,7 +4,7 @@ from ise.models.training.Trainer import Trainer
 from ise.models.traditional import ExploratoryModel
 from ise.models.timeseries import TimeSeriesEmulator
 from ise.models.traditional.ExploratoryModel import ExploratoryModel
-from ise.models.gp.GaussianProcess import GP
+from ise.models.gp.GP import GP
 from torch import nn
 import pandas as pd
 import os
@@ -345,13 +345,28 @@ def train_gaussian_process(
 
 
 
-def train_yearly_gaussian_process(
+def train_multiyear_gaussian_process(
     data_directory: str,
     n: int,
     features: list[str] = ['temperature', 'salinity',],
     kernel=None,
     save_directory: str = None,
 ):
+    """Trains a multi-year gaussian process as shown in Edwards et al, 2021 (Projected land ice contributions to twenty-first-century sea level rise).
+    In a loop, the training data is subsetted, a gaussian process model is trained, and predictions are made
+    on the test data. This results in a compilation of test predictions from 85 independent unsaved
+    gaussian process models.
+
+    Args:
+        data_directory (str): Directory containing training and testing data.
+        n (int): _description_
+        features (list[str], optional): _description_. Defaults to ['temperature', 'salinity',].
+        kernel (_type_, optional): _description_. Defaults to None.
+        save_directory (str, optional): _description_. Defaults to None.
+
+    Returns:
+        _type_: _description_
+    """
     gp = GP(kernel=kernel)
 
     train_features = pd.read_csv(f'{data_directory}/ts_train_features.csv')
@@ -374,7 +389,6 @@ def train_yearly_gaussian_process(
 
         train_features_year = train_features_year[features]
         test_features_year = test_features_year[features]
-        n = 1000
         gp.fit(np.array(train_features_year)[:n], np.array(train_labels_year)[:n])
         preds, std_prediction, metrics = gp.test(test_features_year, test_labels_year)
         

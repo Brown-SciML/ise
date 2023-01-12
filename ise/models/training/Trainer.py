@@ -144,35 +144,38 @@ class Trainer:
     def train(
         self,
         model_class,
-        data_dict,
+        data_dict: dict,
         criterion,
-        epochs,
-        batch_size,
-        mc_dropout=False,
-        dropout_prob=None,
-        tensorboard=False,
-        architecture=None,
-        save_model=False,
-        performance_optimized=False,
-        verbose=True,
-        sequence_length=5,
-        tensorboard_comment=None,
+        epochs: int,
+        batch_size: int,
+        mc_dropout: bool = False,
+        dropout_prob: float = 0.1,
+        tensorboard: bool = False,
+        architecture: dict = None,
+        save_model: str|bool = False,
+        performance_optimized: bool = False,
+        verbose: bool = True,
+        sequence_length: int = 5,
+        tensorboard_comment: str = None,
     ):
         """Training loop for training a PyTorch model. Include validation, GPU compatibility, and tensorboard integration.
 
         Args:
             model_class (ModelClass): Model to be trained. Usually custom model class.
             data_dict (dict): Dictionary containing training and testing arrays/tensors.
-                    Example: {'train_features': train_features, train_labels': train_labels, 'test_features': test_features, 'test_labels': test_labels,}
-            criterion (torch.nn.Loss): Loss class from PyTorch NN module.
-                    Example: torch.nn.MSELoss()
+            criterion (torch.nn.Loss): Loss class from PyTorch NN module. Typically torch.nn.MSELoss().
             epochs (int): Number of training epochs
             batch_size (int): Number of training batches
+            mc_dropout (bool, optional): Flag denoting whether the model was trained with MC dropout protocol. Defaults to False.
+            dropout_prob (float, optional): Dropout probability in MC dropout protocol. Unused if mc_dropout=False. Defaults to 0.1.
             tensorboard (bool, optional): Flag determining whether Tensorboard logs should be generated and outputted. Defaults to False.
             num_linear_layers (int, optional): Number of linear layers in the model. Only used if paired with ExploratoryModel. Defaults to None.
             nodes (list, optional): List of integers denoting the number of nodes in num_linear_layers. Len(nodes) must equal num_linear_layers. Defaults to None.
             save_model (bool, optional): Flag determining whether the trained model should be saved. Defaults to False.
             performance_optimized (bool, optional): Flag determining whether the training loop should be optimized for fast training. Defaults to False.
+        
+        Returns:
+            self (Trainer): Trainer object
         """
 
         # Initiates model with inputted architecture and formats data
@@ -201,32 +204,41 @@ class Trainer:
         if tensorboard:
             tb = SummaryWriter(comment=tensorboard_comment)
         mae = nn.L1Loss()
-        X_test = torch.tensor(self.X_test, dtype=torch.float).to(self.device)
-        y_test = torch.tensor(self.y_test, dtype=torch.float).to(self.device)
+
+        # Loop through epochs
         for epoch in range(1, epochs + 1):
             self.model.train()
             epoch_start = time.time()
 
             total_loss = 0
             total_mae = 0
+            
+            # for each batch in train_loader
             for X_train_batch, y_train_batch in self.train_loader:
-                X_train_batch, y_train_batch = X_train_batch.to(
-                    self.device
-                ), y_train_batch.to(self.device)
+                
+                # send to gpu if available
+                X_train_batch = X_train_batch.to(self.device)
+                y_train_batch = y_train_batch.to(self.device)
 
+                # set gradients to zero for the batch
                 optimizer.zero_grad()
 
+                # get prediction and calculate loss
                 pred = self.model(X_train_batch)
                 loss = criterion(pred, y_train_batch.unsqueeze(1))
+                
+                # calculate dloss/dx for every parameter x (gradients) and advance optimizer
                 loss.backward()
                 optimizer.step()
 
+                # add loss to total loss
                 total_loss += loss.item()
                 self.logs["training"]["batch"].append(loss.item())
 
                 if not performance_optimized:
                     total_mae += mae(pred, y_train_batch.unsqueeze(1)).item()
 
+            # divide total losses by number of batches and save to logs
             avg_mse = total_loss / len(self.train_loader)
             self.logs["training"]["epoch"].append(avg_mse)
 
@@ -236,30 +248,42 @@ class Trainer:
 
             training_end = time.time()
 
+
+            # If it isn't performance_optimized, run a validation process as well
             if not performance_optimized:
                 self.model.eval()
                 test_total_loss = 0
                 test_total_mae = 0
+                
+                # for each batch in the test_loader
                 for X_test_batch, y_test_batch in self.test_loader:
-                    X_test_batch, y_test_batch = X_test_batch.to(
-                        self.device
-                    ), y_test_batch.to(self.device)
+                    
+                    # send to gpu if available
+                    X_test_batch = X_test_batch.to(self.device)
+                    y_test_batch = y_test_batch.to(self.device)
+                    
+                    # get prediction and calculate loss
                     test_pred = self.model(X_test_batch)
                     loss = criterion(test_pred, y_test_batch.unsqueeze(1))
+                    
+                    # add losses to total epoch loss
                     test_total_loss += loss.item()
                     test_total_mae += mae(test_pred, y_test_batch.unsqueeze(1)).item()
 
+                # divide total losses by number of batches and save to logs
                 test_mse = test_total_loss / len(self.test_loader)
                 test_mae = test_total_mae / len(self.test_loader)
                 self.logs["testing"].append(test_mse)
                 testing_end = time.time()
 
+                # get the r2 score for that particular epoch
                 preds, _, _, _, _ = self.model.predict(self.X_test, mc_iterations=1)
                 if self.device.type != "cuda":
                     r2 = r2_score(self.y_test, preds)
                 else:
                     r2 = r2_score(self.y_test, preds)
 
+            # if tensorboard, add logs to tensorboard object
             if tensorboard:
                 tb.add_scalar("Training MSE", avg_mse, epoch)
 
@@ -272,6 +296,8 @@ class Trainer:
                     tb.add_scalar("Validation MAE", test_mae, epoch)
                     tb.add_scalar("R^2", r2, epoch)
 
+
+            # if verbose, do all the print statements that are calculated
             if verbose:
                 if not performance_optimized:
                     print("")
@@ -305,6 +331,7 @@ class Trainer:
 
             tb.close()
 
+        # if save_model, save to the state_dict to the desired directory.
         if save_model:
             if isinstance(save_model, str):
                 model_path = f"{save_model}/{self.time}.pt"
