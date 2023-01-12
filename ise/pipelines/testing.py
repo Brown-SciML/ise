@@ -61,8 +61,14 @@ def analyze_model(
     )
 
     if save_directory:
+        # save metrics, preds, and bounds
         with open(f"{save_directory}/metrics.txt", "w") as metrics_file:
             metrics_file.write(json.dumps(metrics))
+        
+        pd.Series(preds, name="preds").to_csv(f"{save_directory}/NN_predictions.csv")
+        pd.DataFrame(bounds).to_csv(r'bounds.csv')
+        # with open(f"{save_directory}/bounds.txt", "w") as bounds_file:
+        #     bounds_file.write(json.dumps(bounds))
 
     # Create the results dataframe, which is the undummified version
     if verbose:

@@ -12,6 +12,8 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 import numpy as np
 
+from ise.utils.data import unscale_column
+
 np.random.seed(10)
 from sklearn.metrics import r2_score
 from sklearn.decomposition import PCA
@@ -340,3 +342,64 @@ def train_gaussian_process(
         pd.Series(std_prediction, name="std_prediction").to_csv(uq_path, index=False)
 
     return preds, std_prediction, metrics
+
+
+
+def train_yearly_gaussian_process(
+    data_directory: str,
+    n: int,
+    features: list[str] = ['temperature', 'salinity',],
+    kernel=None,
+    save_directory: str = None,
+):
+    gp = GP(kernel=kernel)
+
+    train_features = pd.read_csv(f'{data_directory}/ts_train_features.csv')
+    train_labels = pd.read_csv(f'{data_directory}/ts_train_labels.csv')
+    test_features = pd.read_csv(f'{data_directory}/ts_test_features.csv')
+    test_labels = pd.read_csv(f'{data_directory}/ts_test_labels.csv')
+
+    train_features = unscale_column(train_features, column=['year', 'sectors'])
+    test_features = unscale_column(test_features, column=['year', 'sectors'])
+
+    all_preds = []
+    all_std = []
+    all_metrics = []
+    for year in train_features.year.unique():
+        print(str(year) + "\n")
+        train_features_year = train_features[train_features.year == year]
+        train_labels_year = train_labels[train_labels.index.isin(train_features_year.index)]
+        test_features_year = test_features[test_features.year == year]
+        test_labels_year = test_labels[test_labels.index.isin(test_features_year.index)]
+
+        train_features_year = train_features_year[features]
+        test_features_year = test_features_year[features]
+        n = 1000
+        gp.fit(np.array(train_features_year)[:n], np.array(train_labels_year)[:n])
+        preds, std_prediction, metrics = gp.test(test_features_year, test_labels_year)
+        
+        all_preds.append(preds)
+        all_std.append(std_prediction)
+        all_metrics.append(metrics)
+        
+    preds = pd.concat(all_preds).sort_index()
+    std = pd.concat(all_std).sort_index()
+    
+    gp_results = pd.Series(pd.concat(all_preds).sort_index(), name="preds")
+    gp_results['std'] = pd.concat(all_std).sort_index()
+    
+    if save_directory:
+        if isinstance(save_directory, str):
+            preds_path = f"{save_directory}/gp_preds.csv"
+            uq_path = f"{save_directory}/gp_std.csv"
+
+        elif isinstance(save_directory, bool):
+            preds_path = f"gp_preds.csv"
+            uq_path = f"gp_std.csv"
+        
+        pd.Series(preds, name="gp_preds").to_csv(preds_path, index=False)
+        pd.Series(std, name="gp_std").to_csv(uq_path, index=False)
+        
+
+    
+    return preds, std

@@ -91,7 +91,7 @@ class TimeSeriesEmulator(torch.nn.Module):
         return x
 
     def predict(self, x, approx_dist=None, mc_iterations=None, confidence="95"):
-
+        
         approx_dist = self.mc_dropout if approx_dist is None else approx_dist
         if approx_dist and mc_iterations is None:
             raise ValueError(

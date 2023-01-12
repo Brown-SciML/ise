@@ -61,6 +61,8 @@ def test_pretrained_model(
     # Load Model
     trainer = Trainer()
     sequence_length = 5 if time_series else None
+    
+    # TODO: do i need this? what about ise.utils.models.load_model ?
     trainer._initiate_model(
         model_class,
         data_dict=data_dict,
@@ -173,6 +175,8 @@ def mc_accuracy(
     # Load Model
     trainer = Trainer()
     sequence_length = 5 if time_series else None
+    
+    # TODO: do i need this? what about ise.utils.models.load_model ?
     trainer._initiate_model(
         model_class,
         data_dict=data_dict,

@@ -94,8 +94,9 @@ def undummify(df: pd.DataFrame, prefix_sep: str = "-"):
 
 def combine_testing_results(
     data_directory: str,
-    preds: np.ndarray,
+    preds: np.ndarray|pd.Series|str,
     bounds: dict|pd.DataFrame = None,
+    gp_data: dict|pd.DataFrame = None,
     time_series: bool = True,
     save_directory: str = None,
 ):
@@ -104,17 +105,9 @@ def combine_testing_results(
 
     Args:
         data_directory (str): Directory containing training and testing data.
-        preds (np.ndarray): Array of predictions, can be np.ndarray or pd.Series.
-        bounds (dict | pd.DataFrame): Dictionary or pd.DataFrame of uncertainty bounds to be added to the dataframe, defaults to None.
-        Example:
-        ```
-            bounds = {
-        "upper_ci": upper_ci,
-        "lower_ci": lower_ci,
-        "upper_q": upper_q,
-        "lower_q": lower_q,
-    }
-        ```
+        preds (np.ndarray | pd.Series | str): Array/Series of neural network predictions, or the path to the csv containing predictions.
+        bounds (dict | pd.DataFrame): Dictionary or pd.DataFrame of uncertainty bounds to be added to the dataframe, generally outputted from ise.models.testing.pretrained.test_pretrained_model. Defaults to None.
+        gp_data (dict | pd.DataFrame): Dictionary or pd.DataFrame containing gaussian process predictions to add to the dataset. Columns/keys must be `preds` and `std`. Defaults to None.
         time_series (bool, optional): Flag denoting whether to process the data as a time-series dataset or traditional non-time dataset. Defaults to True.
         save_directory (str, optional): Directory where output files will be saved. Defaults to None.
 
@@ -130,38 +123,32 @@ def combine_testing_results(
         test_scenarios,
     ) = load_ml_data(data_directory, time_series=time_series)
 
+
     X_test = pd.DataFrame(test_features)
     if isinstance(test_labels, pd.Series):
         y_test = test_labels
-    if isinstance(test_labels, pd.DataFrame):
+    elif isinstance(test_labels, pd.DataFrame):
         y_test = pd.Series(test_labels["sle"])
     else:
         y_test = pd.Series(test_labels)
 
     test = X_test.drop(columns=[col for col in X_test.columns if "lag" in col])
     test["true"] = y_test
-    test["pred"] = preds
+    test["pred"] = np.array(pd.read_csv(preds)) if isinstance(preds, str) else preds
     test["mse"] = (test.true - test.pred) ** 2
     test["mae"] = abs(test.true - test.pred)
+    
+    if gp_data:
+        test["gp_preds"] = gp_data["preds"]
+        test["gp_std"] = gp_data["std"]
 
     test = undummify(test)
-
-    # unscale sectors and year
-    from sklearn.preprocessing import MinMaxScaler
-
-    sectors_scaler = MinMaxScaler().fit(np.arange(1, 19).reshape(-1, 1))
-    test["sectors"] = sectors_scaler.inverse_transform(
-        np.array(test.sectors).reshape(-1, 1)
-    )
-    test["sectors"] = round(test.sectors).astype(int)
-
-    year_scaler = MinMaxScaler().fit(np.arange(2016, 2101).reshape(-1, 1))
-    test["year"] = year_scaler.inverse_transform(np.array(test.year).reshape(-1, 1))
-    test["year"] = round(test.year).astype(int)
+    test = unscale_column(test, column=['year', 'sector'])
 
     if bounds is not None:
         if not isinstance(bounds, pd.DataFrame):
             bounds = pd.DataFrame(bounds)
+        # add bounds to dataframe
         test = test.merge(bounds, left_index=True, right_index=True)
 
     if save_directory:
