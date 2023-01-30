@@ -127,12 +127,14 @@ class EmulatorData:
             separated_dfs = [
                 y for x, y in self.data.groupby(["sectors", "exp_id", "modelname"])
             ]
+
             for df in separated_dfs:
                 for shift in range(1, lag + 1):
                     for column in time_dependent_columns:
                         df[f"{column}.lag{shift}"] = df[column].shift(
-                            shift, fill_value=0
-                        )
+                            shift, fill_value=np.nan
+                        ).fillna(method='bfill')
+
             self.data = pd.concat(separated_dfs)
 
         if drop_columns:

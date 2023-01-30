@@ -90,7 +90,7 @@ class TimeSeriesEmulator(torch.nn.Module):
         #         x = self.relu(nn.Linear(self.nodes[i - 1], self.nodes[i]))(x))
         return x
 
-    def predict(self, x, approx_dist=None, mc_iterations=None, confidence="95"):
+    def predict(self, x, approx_dist=None, mc_iterations=None, quantile_range=[0.05, 0.95], confidence="95"):
         
         approx_dist = self.mc_dropout if approx_dist is None else approx_dist
         if approx_dist and mc_iterations is None:
@@ -148,7 +148,7 @@ class TimeSeriesEmulator(torch.nn.Module):
                     f"confidence must be in {z.keys()}, received {confidence}"
                 )
             means = out_preds.mean(axis=0)
-            quantiles = np.quantile(out_preds, [0.05, 0.95], axis=0)
+            quantiles = np.quantile(out_preds, quantile_range, axis=0)
             sd = np.sqrt(np.var(out_preds, axis=0))
             upper_ci = means + (z[confidence] * (sd / np.sqrt(out_preds.shape[0])))
             lower_ci = means - (z[confidence] * (sd / np.sqrt(out_preds.shape[0])))
