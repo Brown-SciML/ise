@@ -160,7 +160,7 @@ def rnn_architecture_test(
                     performance_optimized=performance_optimized,
                     verbose=verbose,
                     sequence_length=5,
-                    tensorboard_comment=f" -- {current_time}, num_rnn={num_rnn_layers}, num_hidden={num_rnn_hidden}",
+                    tensorboard_comment=f" -- {current_time}, num_rnn={num_rnn_layers}, num_hidden={num_rnn_hidden}, dropout_prob={dropout_prob}",
                 )
 
                 if not verbose:
