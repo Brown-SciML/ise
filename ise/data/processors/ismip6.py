@@ -121,6 +121,7 @@ def process_single_file(path: str) -> pd.DataFrame:
         pd.DataFrame: data, Data from that file.
     """
 
+    # TODO: Need to figure out what this (and other lines of code in this function) is doing and comment
     var = list(compress(variables, [v in path for v in variables]))
 
     # ! Fix this: getting confused with "smb" vs "smbgr" using "in" operator

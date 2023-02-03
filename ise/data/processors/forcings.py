@@ -217,6 +217,7 @@ class AtmosphereForcing:
         """
         self.data = self.data.drop(labels=["lon_bnds", "lat_bnds", "lat2d", "lon2d"])
         self.data = self.data.to_dataframe().reset_index(level="time", drop=True)
+        # merge forcing data with grid data
         self.data = pd.merge(
             self.data, grids.data, left_index=True, right_index=True, how="outer"
         )
@@ -602,7 +603,7 @@ def aggregate_icecollapse(
     filepaths = get_all_filepaths(path=directory, filetype="nc")
 
     # In the case of ocean forcings, use the filepaths of the files to determine
-    # which directories need to be used for OceanForcing processing. Change to
+    # which directories need to be used for processing. Change to
     # those directories rather than individual files.
     aogcms = list(set([f.split("/")[-2] for f in filepaths]))
     filepaths = [f"{directory}/{aogcm}/" for aogcm in aogcms]

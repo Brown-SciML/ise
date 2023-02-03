@@ -83,10 +83,7 @@ def combine_datasets(
     ocean = salinity
     ocean["aogcm"] = ocean["aogcm"].apply(format_aogcms)
     af["aogcm"] = af["aogcm"].apply(format_aogcms)
-    for data in [
-        temp,
-        tf,
-    ]:
+    for data in [temp, tf,]:
         data["aogcm"] = data["aogcm"].apply(format_aogcms)
         ocean = pd.merge(
             ocean, data, on=["sectors", "year", "aogcm", "regions"], how="outer"

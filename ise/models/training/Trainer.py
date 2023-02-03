@@ -334,13 +334,13 @@ class Trainer:
         # if save_model, save to the state_dict to the desired directory.
         if save_model:
             if isinstance(save_model, str):
-                model_path = f"{save_model}/{self.time}.pt"
+                model_path = f"{save_model}/{self.time}, {str(architecture)}.pt"
 
             elif isinstance(save_model, bool):
                 import os
 
                 dirname = os.path.dirname(__file__)
-                model_path = os.path.join(dirname, f"../{self.time}.pt")
+                model_path = os.path.join(dirname, f"../{self.time}, {str(architecture)}.pt")
 
             torch.save(self.model.state_dict(), model_path)
             print("")
