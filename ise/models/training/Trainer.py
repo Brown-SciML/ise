@@ -199,7 +199,7 @@ class Trainer:
         # criterion = nn.MSELoss()
         self.time = datetime.now().strftime(r"%d-%m-%Y %H.%M.%S")
 
-        # tensorboard_comment = f" -- {self.time}, FC={architecture['num_linear_layers']}, nodes={architecture['nodes']}, batch_size={batch_size},"
+        # tensorboard_comment = f" -- outputs, {self.time}, FC={architecture['num_linear_layers']}, nodes={architecture['nodes']}, batch_size={batch_size},"
         # comment = f" -- {self.time}, dataset={dataset},"
         if tensorboard:
             tb = SummaryWriter(comment=tensorboard_comment)
@@ -320,6 +320,7 @@ class Trainer:
                     "rnn_layers": architecture["num_rnn_layers"],
                     "hidden": architecture["num_rnn_hidden"],
                     "batch_size": batch_size,
+                    "dropout": dropout_prob,
                 },
                 {
                     "Test MSE": metrics["MSE"],

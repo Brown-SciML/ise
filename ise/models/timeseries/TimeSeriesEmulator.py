@@ -14,14 +14,12 @@ class TimeSeriesEmulator(torch.nn.Module):
         super().__init__()
         self.model_name = "TimeSeriesEmulator"
         self.input_layer_size = architecture["input_layer_size"]
-        # self.num_linear_layers = architecture['num_linear_layers']
-        # self.nodes = architecture['nodes']
         self.num_rnn_layers = architecture["num_rnn_layers"]
         self.num_rnn_hidden = architecture["num_rnn_hidden"]
         self.time_series = True
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
-        )  # Determine whether on GPU or not
+        )
         self.mc_dropout = mc_dropout
 
         if not all(
@@ -72,25 +70,19 @@ class TimeSeriesEmulator(torch.nn.Module):
             .requires_grad_()
             .to(self.device)
         )
-
         _, (hn, _) = self.rnn(x, (h0, c0))
-        x = self.linear1(hn[0])
-        x = self.relu(x)
+        x = hn[-1, :, :]
         if self.mc_dropout:
             x = self.dropout(x)
+        x = self.linear1(x)
+        x = self.relu(x)
+        if self.mc_dropout:
+            x = self.dropout(x) # fc dropout
         x = self.linear_out(x)
-
-        # TODO: Make adjustable number of linear layers and nodes
-        # for i in range(self.num_linear_layers):
-        #     if i == 0:
-        #         x = self.relu(nn.Linear(self.hidden, self.nodes[i]))(x))
-        #     elif i == self.num_linear_layers - 1:
-        #         x = nn.Linear(self.nodes[i - 1], self.nodes[i]))(x)
-        #     else:
-        #         x = self.relu(nn.Linear(self.nodes[i - 1], self.nodes[i]))(x))
+        
         return x
 
-    def predict(self, x, approx_dist=None, mc_iterations=None, quantile_range=[0.05, 0.95], confidence="95"):
+    def predict(self, x, approx_dist=None, mc_iterations=None, quantile_range=[0.025, 0.975], confidence="95"):
         
         approx_dist = self.mc_dropout if approx_dist is None else approx_dist
         if approx_dist and mc_iterations is None:
@@ -150,8 +142,8 @@ class TimeSeriesEmulator(torch.nn.Module):
             means = out_preds.mean(axis=0)
             quantiles = np.quantile(out_preds, quantile_range, axis=0)
             sd = np.sqrt(np.var(out_preds, axis=0))
-            upper_ci = means + (z[confidence] * (sd / np.sqrt(out_preds.shape[0])))
-            lower_ci = means - (z[confidence] * (sd / np.sqrt(out_preds.shape[0])))
+            upper_ci = means + (z[confidence] * sd)
+            lower_ci = means - (z[confidence] * sd)
         else:
             means, upper_ci, lower_ci, quantiles = None, None, None, None
 
