@@ -277,7 +277,7 @@ class Trainer:
                 testing_end = time.time()
 
                 # get the r2 score for that particular epoch
-                preds, _, _, _, _ = self.model.predict(self.X_test, mc_iterations=1)
+                preds, means, sd = self.model.predict(self.X_test, mc_iterations=1)
                 if self.device.type != "cuda":
                     r2 = r2_score(self.y_test, preds)
                 else:

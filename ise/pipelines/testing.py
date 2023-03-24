@@ -66,7 +66,6 @@ def analyze_model(
             metrics_file.write(json.dumps(metrics))
         
         pd.Series(preds, name="preds").to_csv(f"{save_directory}/NN_predictions.csv")
-        pd.DataFrame(bounds).to_csv(r'bounds.csv')
         # with open(f"{save_directory}/bounds.txt", "w") as bounds_file:
         #     bounds_file.write(json.dumps(bounds))
 

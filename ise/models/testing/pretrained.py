@@ -69,7 +69,7 @@ def test_pretrained_model(
         data_dict=data_dict,
         architecture=architecture,
         sequence_length=sequence_length,
-        batch_size=100,
+        batch_size=256,
         mc_dropout=mc_dropout,
         dropout_prob=dropout_prob,
     )
@@ -90,20 +90,21 @@ def test_pretrained_model(
     X_test = torch.from_numpy(np.array(test_features, dtype=np.float64)).float()
 
     if mc_dropout:
-        all_preds, means, upper_ci, lower_ci, quantiles = model.predict(
+        all_preds, means, sd = model.predict(
             X_test, mc_iterations=mc_iterations
         )
         preds = means
     else:
-        preds, means, upper_ci, lower_ci, quantiles = model.predict(
+        preds, means, sd = model.predict(
             X_test, mc_iterations=1
         )
 
+    quantiles = np.quantile(all_preds, [0.05, 0.95], axis=0)
     upper_q = quantiles[1, :]
     lower_q = quantiles[0, :]
     bounds = {
-        "upper_ci": upper_ci,
-        "lower_ci": lower_ci,
+        "upper_ci": means + 1.96*sd,
+        "lower_ci": means - 1.96*sd,
         "upper_q": upper_q,
         "lower_q": lower_q,
     }
@@ -183,7 +184,7 @@ def mc_accuracy(
         data_dict=data_dict,
         architecture=architecture,
         sequence_length=sequence_length,
-        batch_size=100,
+        batch_size=256,
         mc_dropout=True,
         dropout_prob=dropout_prob,
     )
@@ -201,9 +202,12 @@ def mc_accuracy(
     X_test = torch.from_numpy(np.array(test_features, dtype=np.float64)).float()
 
     # Predict on test set and return confidence intervals and quantiles
-    all_preds, means, upper_ci, lower_ci, quantiles = model.predict(
+    all_preds, means, sd = model.predict(
         X_test, mc_iterations=mc_iterations
     )
+    quantiles = np.quantile(all_preds, [0.05, 0.95], axis=0)
+    lower_ci = means - 1.96*sd
+    upper_ci = means + 1.96*sd
     upper_q = quantiles[1, :]
     lower_q = quantiles[0, :]
     preds = means

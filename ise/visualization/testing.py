@@ -58,12 +58,18 @@ def plot_test_series(
             ],
             dtype=np.float64,
         )
-        preds, means, upper_ci, lower_ci, quantiles = model.predict(
+        preds, means, sd = model.predict(
             single_test_features,
             approx_dist=approx_dist,
             mc_iterations=mc_iterations,
             confidence=confidence,
         )  # TODO: this doesn't work with traditional
+        
+        quantiles = np.quantile(preds, [0.05, 0.95], axis=0)
+        lower_ci = means - 1.96*sd
+        upper_ci = means + 1.96*sd
+        upper_q = quantiles[1, :]
+        lower_q = quantiles[0, :]
 
         if not approx_dist:
             plt.figure(figsize=(15, 8))

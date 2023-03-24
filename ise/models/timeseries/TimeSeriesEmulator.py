@@ -116,6 +116,7 @@ class TimeSeriesEmulator(torch.nn.Module):
             preds = torch.tensor([]).to(self.device)
             for X_test_batch in loader:
                 self.eval()
+                self.enable_dropout()
                 if approx_dist:
                     self.enable_dropout()
 
