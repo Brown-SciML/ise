@@ -48,7 +48,7 @@ def analyze_model(
     # Test the pretrained model to generate metrics and predictions
     if verbose:
         print("1/4: Calculating test metrics")
-    metrics, preds, bounds = test_pretrained_model(
+    metrics, preds, sd = test_pretrained_model(
         model_path=model_path,
         model_class=model_class,
         architecture=architecture,
@@ -75,7 +75,7 @@ def analyze_model(
     dataset = combine_testing_results(
         data_directory=data_directory,
         preds=preds,
-        bounds=bounds,
+        sd=sd,
         save_directory=save_directory,
     )
     _, _, test_features, _, _ = load_ml_data(data_directory)

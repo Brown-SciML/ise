@@ -30,7 +30,7 @@ def check_input(input: str, options: List[str], argname: str = None):
         raise ValueError(f"input must be in {options}, received {input}")
 
 
-def get_all_filepaths(path: str, filetype: str = None, contains: str = None):
+def get_all_filepaths(path: str, filetype: str = None, contains: str = None, not_contains: str = None):
     """Retrieves all filepaths for files within a directory. Supports subsetting based on filetype
     and substring search.
 
@@ -38,6 +38,7 @@ def get_all_filepaths(path: str, filetype: str = None, contains: str = None):
         path (str): Path to directory to be searched.
         filetype (str, optional): File type to be returned (e.g. csv, nc). Defaults to None.
         contains (str, optional): Substring that files found must contain. Defaults to None.
+        not_contains(str, optional): Substring that files found must NOT contain. Defaults to None.
 
     Returns:
         List[str]: list of files within the directory matching the input criteria.
@@ -52,6 +53,9 @@ def get_all_filepaths(path: str, filetype: str = None, contains: str = None):
 
     if contains:
         all_files = [file for file in all_files if contains in file]
+        
+    if not_contains:
+        all_files = [file for file in all_files if not_contains not in file]
 
     return all_files
 
@@ -75,7 +79,7 @@ def _structure_emulatordata_args(input_args: dict, time_series: bool):
         scale=True,
         split_type="batch",
         drop_outliers="explicit",
-        drop_expression=[("ivaf", "<", -1e13)],
+        drop_expression=[("sle", "<", -26.3)],
         time_series=time_series,
         lag=None,
     )

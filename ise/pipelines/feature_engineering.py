@@ -7,6 +7,7 @@ import pandas as pd
 
 def feature_engineer(
     data_directory: str,
+    spatial_grouping: str = 'sectors',
     time_series: bool = True,
     export_directory: str = None,
     emulator_data_args: dict = None,
@@ -15,7 +16,8 @@ def feature_engineer(
     data, formatting, processing, and splitting data to get data into training and testing sets.
 
     Args:
-        data_directory (str): Directory containing training and testing data.
+        data_directory (str): Directory containing master.csv data.
+        spatial_grouping (str, optional): Spatial grouping to be used for data aggregation. Must be in [sectors, region]. Defaults to 'sectors'.
         time_series (bool): Flag denoting wether model was trained with time-series data. Defaults to True.
         export_directory (str, optional): Directory to save exported files. Defaults to None.
         emulator_data_args (dict, optional): Kwarg arguments to EmulatorData.process. Default will keep optimal values, see EmulatorData.process for more details. Defaults to None.
@@ -26,7 +28,7 @@ def feature_engineer(
     emulator_data_args = _structure_emulatordata_args(
         input_args=emulator_data_args, time_series=time_series
     )
-    emulator_data = EmulatorData(directory=data_directory)
+    emulator_data = EmulatorData(directory=data_directory, spatial_grouping=spatial_grouping)
     (
         emulator_data,
         train_features,

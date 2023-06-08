@@ -3,11 +3,13 @@ import torch
 
 
 class PyTorchDataset(Dataset):
-    def __init__(self, X_data, y_data):
-        self.X_data = X_data
-        self.y_data = y_data
+    def __init__(self, X, y):
+        self.X_data = X
+        self.y_data = y
 
     def __getitem__(self, index):
+        if self.y_data is None:
+            return self.X_data[index]
         return self.X_data[index], self.y_data[index]
 
     def __len__(self):

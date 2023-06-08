@@ -7,6 +7,9 @@ Processing functions for ismip6 ice sheet model outputs.
 
 # [merge](https://brown-sciml.github.io/ise/ise/data/processors/merge.html)
 Processing functions for joining the processed inputs from the forcing directory and the outputs from the ismip6 ice sheet models to create a master dataset.
+
+# [control](https://brown-sciml.github.io/ise/ise/data/processors/control.html)
+Processing functions for the control experiments.
 """
 
 
@@ -31,3 +34,5 @@ from ise.data.processors.ismip6 import (
 )
 
 from ise.data.processors.merge import combine_datasets, exp_to_attributes, format_aogcms
+
+from ise.data.processors.control import create_control_dataset

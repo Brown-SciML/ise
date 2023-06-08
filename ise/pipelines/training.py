@@ -85,7 +85,7 @@ def train_timeseries_network(
 
     if architecture is None:
         architecture = {
-            "num_rnn_layers": 4,
+            "num_rnn_layers": 1,
             "num_rnn_hidden": 128,
         }
 

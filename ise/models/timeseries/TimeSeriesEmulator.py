@@ -41,7 +41,7 @@ class TimeSeriesEmulator(torch.nn.Module):
                 hidden_size=self.num_rnn_hidden,
                 batch_first=True,
                 num_layers=self.num_rnn_layers,
-                dropout=dropout_prob,
+                dropout=dropout_prob if self.num_rnn_layers>1 else 0,
             )
         else:
             self.rnn = nn.LSTM(
@@ -132,23 +132,26 @@ class TimeSeriesEmulator(torch.nn.Module):
 
         if 1 in out_preds.shape:
             out_preds = out_preds.squeeze()
+            
+        means = out_preds.mean(axis=0)
+        sd = out_preds.std(axis=0)
 
-        # If you chose to approximate output distribution (MC Dropout)
-        if approx_dist:
-            z = {"95": 1.96, "99": 2.58}
-            if confidence not in z.keys():
-                raise ValueError(
-                    f"confidence must be in {z.keys()}, received {confidence}"
-                )
-            means = out_preds.mean(axis=0)
-            quantiles = np.quantile(out_preds, quantile_range, axis=0)
-            sd = np.sqrt(np.var(out_preds, axis=0))
-            upper_ci = means + (z[confidence] * sd)
-            lower_ci = means - (z[confidence] * sd)
-        else:
-            means, upper_ci, lower_ci, quantiles = None, None, None, None
+        # # If you chose to approximate output distribution (MC Dropout)
+        # if approx_dist:
+        #     z = {"95": 1.96, "99": 2.58}
+        #     if confidence not in z.keys():
+        #         raise ValueError(
+        #             f"confidence must be in {z.keys()}, received {confidence}"
+        #         )
+        #     means = out_preds.mean(axis=0)
+        #     quantiles = np.quantile(out_preds, quantile_range, axis=0)
+        #     sd = np.sqrt(np.var(out_preds, axis=0))
+        #     upper_ci = means + (z[confidence] * sd)
+        #     lower_ci = means - (z[confidence] * sd)
+        # else:
+        #     means, upper_ci, lower_ci, quantiles = None, None, None, None
 
-        return out_preds, means, upper_ci, lower_ci, quantiles
+        return out_preds, means, sd
 
     def enable_dropout(
         self,

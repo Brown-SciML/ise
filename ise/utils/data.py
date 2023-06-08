@@ -24,6 +24,7 @@ def load_ml_data(data_directory: str, time_series: bool = True):
         tuple: Tuple containing [train features, train_labels, test_features, test_labels, test_scenarios], or the training and testing datasets including the scenarios used in testing.
     """
     if time_series:
+        # TODO: Test scenarios has no use, get rid of it
         try:
             test_features = pd.read_csv(f"{data_directory}/ts_test_features.csv")
             train_features = pd.read_csv(f"{data_directory}/ts_train_features.csv")
@@ -33,9 +34,18 @@ def load_ml_data(data_directory: str, time_series: bool = True):
                 f"{data_directory}/ts_test_scenarios.csv"
             ).values.tolist()
         except FileNotFoundError:
-            raise FileNotFoundError(
-                f'Files not found at {data_directory}. Format must be in format "ts_train_features.csv"'
-            )
+            try:
+                test_features = pd.read_csv(f"{data_directory}/val_features.csv")
+                train_features = pd.read_csv(f"{data_directory}/train_features.csv")
+                test_labels = pd.read_csv(f"{data_directory}/val_labels.csv")
+                train_labels = pd.read_csv(f"{data_directory}/train_labels.csv")
+                test_scenarios = pd.read_csv(
+                f"{data_directory}/ts_test_scenarios.csv"
+            ).values.tolist()
+            except:
+                raise FileNotFoundError(
+                    f'Files not found at {data_directory}. Format must be in format "ts_train_features.csv"'
+                )
     else:
         try:
             test_features = pd.read_csv(
@@ -97,7 +107,7 @@ def undummify(df: pd.DataFrame, prefix_sep: str = "-"):
 def combine_testing_results(
     data_directory: str,
     preds: np.ndarray, #|pd.Series|str,
-    bounds: dict = None, #|pd.DataFrame = None,
+    sd: dict = None, #|pd.DataFrame = None,
     gp_data: dict = None, #|pd.DataFrame = None,
     time_series: bool = True,
     save_directory: str = None,
@@ -143,15 +153,17 @@ def combine_testing_results(
     if gp_data:
         test["gp_preds"] = gp_data["preds"]
         test["gp_std"] = gp_data["std"]
+        test['gp_upper_bound'] = test.gp_preds + 1.96 * test.gp_std
+        test['gp_lower_bound'] = test.gp_preds - 1.96 * test.gp_std
+        
 
     test = undummify(test)
     test = unscale_column(test, column=['year', 'sector'])
 
-    if bounds is not None:
-        if not isinstance(bounds, pd.DataFrame):
-            bounds = pd.DataFrame(bounds)
-        # add bounds to dataframe
-        test = test.merge(bounds, left_index=True, right_index=True)
+    if sd is not None:
+        test['sd'] = sd
+        test['upper_bound'] = preds + 1.96 * sd
+        test['lower_bound'] = preds - 1.96 * sd
 
     if save_directory:
         if isinstance(save_directory, str):

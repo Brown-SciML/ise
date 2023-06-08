@@ -102,12 +102,6 @@ def test_pretrained_model(
     quantiles = np.quantile(all_preds, [0.05, 0.95], axis=0)
     upper_q = quantiles[1, :]
     lower_q = quantiles[0, :]
-    bounds = {
-        "upper_ci": means + 1.96*sd,
-        "lower_ci": means - 1.96*sd,
-        "upper_q": upper_q,
-        "lower_q": lower_q,
-    }
 
     test_labels = np.array(test_labels).squeeze()
     mse = sum((preds - test_labels) ** 2) / len(preds)
@@ -125,7 +119,7 @@ RMSE: {rmse:0.6f}
 R2: {r2:0.6f}"""
     )
 
-    return metrics, preds, bounds
+    return metrics, preds, sd
 
 
 def mc_accuracy(

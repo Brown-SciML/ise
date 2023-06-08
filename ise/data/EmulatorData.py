@@ -11,16 +11,24 @@ np.random.seed(10)
 class EmulatorData:
     """Class containing attributes and methods for storing and handling ISMIP6 ice sheet data."""
 
-    def __init__(self, directory: str):
+    def __init__(self, directory: str, spatial_grouping: str = "sectors"):
         """Initializes class and opens/stores data. Includes loading processed files from
         ise.data.processors functions, converting IVAF to SLE, and saving initial condition data
         for later use.
 
         Args:
-            directory (str): Directory containing processed files from ise.data.processors functions. Should contain master.csv
+            directory (str): Directory containing processed files from ise.data.processors functions. Should contain master.csv.
+            spatial_grouping (str, optional): Spatial grouping to be used for data aggregation. Must be in [sectors, regions]. Defaults to 'sectors'.
+            
         """
 
         self.directory = directory
+        
+        if spatial_grouping not in ["sectors", "regions"]:
+            raise ValueError(
+                "spatial_grouping must be in ['sectors', 'regions']."
+            )
+        self.spatial_grouping = spatial_grouping
 
         try:
             self.data = pd.read_csv(f"{self.directory}/master.csv", low_memory=False)
@@ -28,6 +36,8 @@ class EmulatorData:
             try:
                 self.inputs = pd.read_csv(f"{self.directory}/inputs.csv")
                 self.outputs = pd.read_csv(f"{self.directory}/outputs.csv")
+                
+                # TODO: merge self.inputs and self.ouputs to make self.data
             except FileNotFoundError:
                 raise FileNotFoundError(
                     "Files not found, make sure to run all processing functions."
@@ -41,7 +51,7 @@ class EmulatorData:
 
         # Save data on initial conditions for use in data splitting
         unique_batches = (
-            self.data.groupby(["modelname", "sectors", "exp_id"])
+            self.data.groupby(["modelname", self.spatial_grouping, "exp_id"])
             .size()
             .reset_index()
             .rename(columns={0: "count"})
@@ -125,7 +135,7 @@ class EmulatorData:
                 "ts_anomaly",
             ]
             separated_dfs = [
-                y for x, y in self.data.groupby(["sectors", "exp_id", "modelname"])
+                y for x, y in self.data.groupby([self.spatial_grouping, "exp_id", "modelname"])
             ]
 
             for df in separated_dfs:
@@ -139,8 +149,9 @@ class EmulatorData:
 
         if drop_columns:
             if drop_columns is True:
+                secondary_spatial_grouping = 'regions' if self.spatial_grouping == 'sectors' else 'sectors'
                 self.drop_columns(
-                    columns=["experiment", "exp_id", "groupname", "regions"]
+                    columns=["experiment", "exp_id", "groupname", secondary_spatial_grouping]
                 )
             elif isinstance(drop_columns, list):
                 self.drop_columns(columns=drop_columns)
@@ -148,13 +159,17 @@ class EmulatorData:
                 raise ValueError(
                     f"drop_columns argument must be of type boolean|list, received {type(drop_columns)}"
                 )
-
+        print('drop_missing')
         if drop_missing:
             self = self.drop_missing()
+            
+        if self.spatial_grouping == 'regions':
+            self = self.group_by_region()
 
         if boolean_indices:
             self = self.create_boolean_indices()
 
+        print('drop_outliers')
         if drop_outliers:
             if drop_outliers.lower() == "quantile":
                 self = self.drop_outliers(
@@ -169,6 +184,7 @@ class EmulatorData:
                     "drop_outliers argument must be in [quantile, explicit]"
                 )
 
+        print('split_data')
         self = self.split_data(target_column=target_column)
 
         if scale:
@@ -178,6 +194,7 @@ class EmulatorData:
             else:
                 self.y = self.scale(self.y, "outputs", scaler="MinMaxScaler")
 
+        print('train_test_split')
         self = self.train_test_split(split_type=split_type)
 
         return (
@@ -251,6 +268,9 @@ class EmulatorData:
                         f'Operator must be in ["==", "!=", ">", "<"], received {operator}'
                     )
 
+        if outlier_data.empty:
+            return self
+        
         cols = outlier_data.columns
         nonzero_columns = outlier_data.apply(lambda x: x > 0).apply(
             lambda x: list(cols[x.values]), axis=1
@@ -260,7 +280,7 @@ class EmulatorData:
         outlier_runs = pd.DataFrame()
         outlier_runs["modelname"] = nonzero_columns.apply(lambda x: x[-6])
         outlier_runs["exp_id"] = nonzero_columns.apply(lambda x: x[-5])
-        outlier_runs["sectors"] = outlier_data.sectors
+        outlier_runs[self.spatial_grouping] = outlier_data[self.spatial_grouping]
         outlier_runs_list = outlier_runs.values.tolist()
         unique_outliers = [list(x) for x in set(tuple(x) for x in outlier_runs_list)]
 
@@ -273,10 +293,29 @@ class EmulatorData:
                 self.data[
                     (self.data[modelname] == 1)
                     & (self.data[exp_id] == 1)
-                    & (self.data.sectors == sector)
+                    & (self.data[self.spatial_grouping] == sector)
                 ].index
             )
 
+        return self
+    
+
+    def group_by_region(self):
+        # self.data = self.data.groupby(by=[self.data.regions, self.data.modelname, self.data.exp_id, self.data.year]).mean()
+        agg_dict = {}
+        cols = [x for x in self.data.columns if self.data[x].dtype not in ['object', 'str']]
+        for x in cols:
+            if x == 'sle':
+                agg_dict['sle'] = 'sum'
+            elif x in ('regions', 'modelname', 'exp_id', 'year'):
+                pass
+            else:
+                agg_dict[x] = 'mean'
+        
+        self.data = self.data.groupby(by=[self.data.regions, self.data.modelname, self.data.exp_id, self.data.year]).agg(agg_dict)
+
+        self.data = self.data.reset_index()
+        self.data = self.data.drop(columns=['sectors'])
         return self
 
     def split_data(
@@ -331,7 +370,7 @@ class EmulatorData:
             num_test_batches = test_num_rows // num_years
 
             # Get all possible values for sector, experiment, and model
-            all_sectors = list(set(self.X.sectors))
+            all_sectors = list(set(self.X[self.spatial_grouping]))
             all_experiments = [col for col in self.X.columns if "exp_id" in col]
             all_modelnames = [col for col in self.X.columns if "modelname" in col]
 
@@ -342,6 +381,7 @@ class EmulatorData:
             # Keep this running until you have enough samples
             np.random.seed(10)
             while len(test_scenarios) < num_test_batches:
+                print(len(test_scenarios), '/', num_test_batches, end='\r')
                 # Get a random
                 random_model = np.random.choice(all_modelnames)
                 random_sector = np.random.choice(all_sectors)
@@ -350,7 +390,7 @@ class EmulatorData:
                 if test_scenario not in test_scenarios:
                     scenario_df = self.X[
                         (self.X[random_model] == 1)
-                        & (self.X["sectors"] == random_sector)
+                        & (self.X[self.spatial_grouping] == random_sector)
                         & (self.X[random_experiment] == 1)
                     ]
                     if not scenario_df.empty:

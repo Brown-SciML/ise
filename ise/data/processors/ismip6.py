@@ -45,7 +45,6 @@ def process_repository(zenodo_directory: str, export_filepath=None) -> pd.DataFr
     Returns:
         pd.DataFrame: all_data, Processed outputs
     """
-    # files = get_all_filepaths(zenodo_directory, filetype='nc', contains='minus_ctrl_proj')
     groups_dir = f"{zenodo_directory}/ComputedScalarsPaper/"
     all_groups = os.listdir(groups_dir)
     all_data = pd.DataFrame()
