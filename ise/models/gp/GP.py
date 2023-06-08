@@ -3,6 +3,7 @@
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.metrics import r2_score
 import numpy as np
+from joblib import dump, load
 
 np.random.seed(10)
 
@@ -47,3 +48,18 @@ RMSE: {rmse:0.6f}
 R2: {r2:0.6f}"""
             )
         return preds, std_prediction, metrics
+    
+
+    def save(self, path):
+        """Save model to path."""
+        if not path.endswith('.joblib'):
+            raise ValueError('Path must end with .joblib')
+        dump(self, path) 
+    
+    def load(self, path):
+        """Load model from path."""
+        if not path.endswith('.joblib'):
+            raise ValueError('Path must end with .joblib')
+        return load(path)
+        
+        
