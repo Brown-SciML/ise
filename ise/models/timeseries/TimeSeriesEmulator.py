@@ -108,7 +108,7 @@ class TimeSeriesEmulator(torch.nn.Module):
                 f"Input x must be of type [np.ndarray, torch.FloatTensor], received {type(x)}"
             )
 
-        loader = DataLoader(dataset, batch_size=10, shuffle=False)
+        loader = DataLoader(dataset, batch_size=1024, shuffle=False)
         iterations = 1 if not approx_dist else mc_iterations
         out_preds = np.zeros([iterations, len(dataset)])
 

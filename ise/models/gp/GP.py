@@ -60,6 +60,7 @@ R2: {r2:0.6f}"""
         """Load model from path."""
         if not path.endswith('.joblib'):
             raise ValueError('Path must end with .joblib')
-        return load(path)
+        self = load(path)
+        return self
         
         
