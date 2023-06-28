@@ -146,6 +146,8 @@ def plot_ensemble(
     plt.subplots_adjust(wspace=0, hspace=0)
     plt.legend()
 
+
+    # TODO: FileNotFoundError: [Errno 2] No such file or directory: 'None/ensemble_plot.png'
     if save:
         plt.savefig(save)
 

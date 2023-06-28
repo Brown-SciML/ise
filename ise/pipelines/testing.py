@@ -45,6 +45,7 @@ def analyze_model(
         plot (bool, optional): Flag denoting whether to output plots. Defaults to True.
     """
 
+    # TODO: write functionality to save a file with the model metadata used (path, architecture, etc.)
     # Test the pretrained model to generate metrics and predictions
     if verbose:
         print("1/4: Calculating test metrics")
