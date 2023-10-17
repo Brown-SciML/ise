@@ -208,11 +208,31 @@ def train_traditional_network(
     metrics, test_preds = trainer.evaluate(verbose=verbose)
     return model, metrics, test_preds
 
+def train_independent_gp(
+    data_directory: str,
+    features: List[str] = ['ts_anomaly', 'salinity','temperature',],
+    kernel=None,
+    verbose: bool = False,
+    save_directory: str = None,
+):
+    """Pipeline function for training 85 independent gaussian process emulator. Loads processed data and trains
+    gaussian process. Outputs test metrics and predictions.
+
+    Args:
+        data_directory (str): Directory containing training and testing data.
+        features (List[str], optional): List of columns to use for training. Defaults to ['ts_anomaly', 'salinity','temperature',].
+        kernel (sklearn.kernels, optional): Sklean kernel to be used for GP training. Defaults to None.
+        verbose (bool, optional): Flag denoting whether to output logs to terminal. Defaults to False.
+        save_directory (str, optional): Directory to save outputs. Defaults to None.
+    """
+    # TODO: Finish writing this from individual_year_model.py in scripts
+    pass
+
 
 def train_gaussian_process(
     data_directory: str,
     n: int,
-    features: List[str] = ["temperature"],
+    features: List[str] = ['ts_anomaly', 'salinity','temperature',],
     sampling_method: str = "first_n",
     kernel=None,
     verbose: bool = False,

@@ -1,6 +1,6 @@
 # A variational LSTM emulator of sea level contribution from the Antarctic ice sheet
 
-**Peter Van Katwyk $^{1,2,3}$, Baylor Fox-Kemper $^{1, 3}, Helene Seroussi $^{4}, Sophie Nowicki $^{5}$, Karianne J. Bergen $^{1, 2}$**
+**Peter Van Katwyk $^{1,2,3}$, Baylor Fox-Kemper $^{1, 3}, Helene Seroussi $^{4}$, Sophie Nowicki $^{5}$, Karianne J. Bergen $^{1, 2}$**
 
 $^{1}$ Department of Earth, Environmental, and Planetary Sciences, Brown University, Providence, RI, USA
 
