@@ -13,6 +13,7 @@ main.py
 run_gp.py
 *.out
 *.sh
+supplemental/
 
 
 .vscode/

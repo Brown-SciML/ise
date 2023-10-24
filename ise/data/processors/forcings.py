@@ -215,7 +215,11 @@ class AtmosphereForcing:
             self: AtmosphereForcing: AtmosphereForcing class with
             sectors added.
         """
-        self.data = self.data.drop(labels=["lon_bnds", "lat_bnds", "lat2d", "lon2d"])
+        for col in ["lon_bnds", "lat_bnds", "lat2d", "lon2d"]:
+            try:  
+                self.data = self.data.drop(labels=[col])
+            except ValueError:
+                pass
         self.data = self.data.to_dataframe().reset_index(level="time", drop=True)
         # merge forcing data with grid data
         self.data = pd.merge(
@@ -358,7 +362,7 @@ class IceCollapse:
 
         # Load all data: thermal forcing, salinity, and temperature
         files = get_all_filepaths(path=self.path, filetype="nc")
-
+        files = [f for f in files if "8km" in f]
         if len(files) > 1:  # if there is a "v2" file in the directory, use that one
             for file in files:
                 if "v2" in file:
@@ -379,7 +383,11 @@ class IceCollapse:
         Returns:
             self: IceCollapse: IceCollapse class with sectors added.
         """
-        self.data = self.data.drop(labels=["lon", "lon_bnds", "lat", "lat_bnds"])
+        for col in ["lon_bnds", "lat_bnds", "lat2d", "lon2d"]:
+            try:  
+                self.data = self.data.drop(labels=[col])
+            except ValueError:
+                pass
         self.data = self.data.to_dataframe().reset_index(level="time", drop=False)
         self.data = pd.merge(
             self.data, grids.data, left_index=True, right_index=True, how="outer"
@@ -389,8 +397,10 @@ class IceCollapse:
             columns=[
                 "time",
                 "mapping",
-                "lat",
-                "lon",
+                "lat_x",
+                "lat_y",
+                "lon_x",
+                "lon_y",
             ]
         )
         return self
@@ -473,6 +483,7 @@ def aggregate_atmosphere(
     # Get all NC files that contain data from 1995-2100
     filepaths = get_all_filepaths(path=directory, filetype="nc")
     filepaths = [f for f in filepaths if "1995-2100" in f]
+    filepaths = [f for f in filepaths if "8km" in f]
 
     # Useful progress prints
     print("Files to be processed...")
@@ -536,6 +547,7 @@ def aggregate_ocean(
     # Get all NC files that contain data from 1995-2100
     filepaths = get_all_filepaths(path=directory, filetype="nc")
     filepaths = [f for f in filepaths if "1995-2100" in f]
+    filepaths = [f for f in filepaths if "8km" in f]
 
     # In the case of ocean forcings, use the filepaths of the files to determine
     # which directories need to be used for OceanForcing processing. Change to
@@ -607,6 +619,7 @@ def aggregate_icecollapse(
     # those directories rather than individual files.
     aogcms = list(set([f.split("/")[-2] for f in filepaths]))
     filepaths = [f"{directory}/{aogcm}/" for aogcm in aogcms]
+    # filepaths = [f for f in filepaths if "8km" in f]
 
     # Useful progress prints
     print("Files to be processed...")
