@@ -139,3 +139,4 @@ def _structure_architecture_args(architecture, time_series):
     else:
         return architecture
     return architecture
+
