@@ -246,7 +246,7 @@ def calculate_ivaf_minus_control(data_directory, densities, scalefac_path):
         
     return 1
         
-calculate_ivaf_minus_control(data_directory, densities_fp, scalefac_fp)
+calculate_ivaf_minus_control(data_directory, r"/users/pvankatw/research/current/ise/sectors/utils/gris_model_densities.csv", scalefac_fp)
     
 
 

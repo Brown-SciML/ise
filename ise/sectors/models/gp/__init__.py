@@ -1,7 +1,7 @@
 r"""
-[GaussianProcess](https://brown-sciml.github.io/ise/ise/models/gp/GaussianProcess.html)
+[GaussianProcess](https://brown-sciml.github.io/ise/ise/sectors/models/gp/GaussianProcess.html)
 
-[kernels](https://brown-sciml.github.io/ise/ise/models/gp/kernels.html)
+[kernels](https://brown-sciml.github.io/ise/ise/sectors/models/gp/kernels.html)
 """
 
 from ise.sectors.models.gp.GP import GP
