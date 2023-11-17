@@ -8,17 +8,8 @@ import os
 warnings.simplefilter("ignore") 
 
 
-class AISProcessor:
+class Processor:
     def __init__(self, ice_sheet, forcings_directory, projections_directory, scalefac_path=None, densities_path=None):
-        """
-        Initializes a GrISProcessor object with the given parameters.
-
-        Args:
-            forcings_directory (str): The path to the directory containing the forcing data.
-            projections_directory (str): The path to the directory containing the projection data.
-            scalefac_path (str): The path to the file containing the scaling factors.
-            densities_path (str, optional): The path to the file containing the densities data. Defaults to None.
-        """
         self.forcings_directory = forcings_directory
         self.projections_directory = projections_directory
         self.densities_path = densities_path
@@ -42,7 +33,7 @@ class AISProcessor:
         # if the last ivaf file is missing, assume none of them are and calculate and export all ivaf files
         if self.ice_sheet == "AIS" and not os.path.exists(f"{self.projections_directory}/VUW/PISM/exp08/ivaf_GIS_VUW_PISM_exp08.nc"):
             self._calculate_ivaf_minus_control(self.projections_directory, self.densities_path, self.scalefac_path)
-        elif self.ice_sheet in ("GrIS", "GIS") and not os.path.exists(f"{self.projections_directory}/VUW/PISM/exp08/ivaf_GIS_VUW_PISM_exp08.nc"):
+        elif self.ice_sheet in ("GrIS", "GIS") and not os.path.exists(f"{self.projections_directory}/VUW/PISM/exp04/ivaf_AIS_VUW_PISM_exp04.nc"):
             self._calculate_ivaf_minus_control(self.projections_directory, self.densities_path, self.scalefac_path)
         
         
@@ -125,7 +116,10 @@ class AISProcessor:
                 else:
                     pass
         
-        
+        # delete later
+        for directory in exp_dirs[399:]:
+            self._calculate_ivaf_single_file(directory, densities, scalefac_model, ctrl_proj=False)
+            
         # first calculate ivaf for control projections
         for directory in ctrl_proj_dirs:
             self._calculate_ivaf_single_file(directory, densities, scalefac_model, ctrl_proj=True)
@@ -138,33 +132,42 @@ class AISProcessor:
         return 1
         
 
-    def _calculate_ivaf_single_file(self, directory, densities, scalefac_model, ctrl_proj=False):
-        """
-        Calculates the ice volume above flotation (IVAF) for a single file in a given directory.
-        
-        Args:
-        - directory (str): The directory path where the file is located.
-        - densities (pandas.DataFrame): A DataFrame containing the densities of ice and water for each group and model.
-        - scalefac_model (xarray.Dataset): An xarray Dataset containing the scale factor for each model.
-        - ctrl_proj (bool): A boolean indicating whether the calculation is for a control projection or not.
-        
-        Returns:
-        - int: 1 if processing is successful, -1 if unsuccessful.
-        """
-
-        
-        # resolution = 5 if self.ice_sheet in ('GrIS', 'GIS') else 8
-        
-        directory = r"/gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-AIS/NCAR/CISM/ctrl_proj_open"
-        
+    def _calculate_ivaf_single_file(self, directory, densities, scalefac_model, ctrl_proj=False):                
         path = directory.split('/')
         exp = path[-1]
         model = path[-2]
         group = path[-3]
         
+        # Determine which control to use based on experiment (only applies to AIS) per Nowicki, 2020
+        if not ctrl_proj:
+            if self.ice_sheet.lower() == 'ais':
+                if exp in ('exp01', 'exp02', 'exp03','exp04','exp11','expA1','expA2','expA3','expA4', 'expB1', 'expB2', 'expB3', 'expB4', 'expB5', 'expC2', 'expC5', 'expC8', 'expC11', 'expE1', 'expE2', 'expE3', 'expE4', 'expE5', 'expE11', 'expE12', 'expE13', 'expE14'):
+                    ctrl_path = os.path.join("/".join(path[:-1]), f'ctrl_proj_open/ivaf_{self.ice_sheet}_{group}_{model}_ctrl_proj_open.nc')
+                elif exp in ('exp05','exp06','exp07','exp08','exp09','exp10','exp12','exp13','expA5','expA6','expA7','expA8', 'expB6', 'expB7', 'expB8', 'expB9', 'expB10', 'expC3', 'expC6', 'expC9', 'expC12', 'expE6', 'expE7', 'expE8', 'expE9', 'expE10', 'expE15', 'expE16', 'expE17', 'expE18') or 'expD' in exp:
+                    ctrl_path = os.path.join("/".join(path[:-1]), f'ctrl_proj_std/ivaf_{self.ice_sheet}_{group}_{model}_ctrl_proj_std.nc')
+                elif exp in ('expC1', 'expC4', 'expC7', 'expC10'):  # N/A value for ocean_forcing in Nowicki, 2020 table A2
+                    return -1
+                else:
+                    print(f"Experiment {exp} not recognized. Skipped.")
+                    return -1
+                    
+            else: 
+                ctrl_path = os.path.join("/".join(path[:-1]), f'ctrl_proj/ivaf_{self.ice_sheet}_{group}_{model}_ctrl_proj.nc')
+            
+            # for some reason there is no ctrl_proj_open for AWI and JPL1, skip
+            if group == 'AWI'and 'ctrl_proj_open' in ctrl_path:
+                return -1     
+            if group == 'JPL1'and 'ctrl_proj_open' in ctrl_path:
+                return -1     
         
         # MUN_GISM1 is corrupted, skip
         if group == 'MUN' and model == 'GSM1':
+            return -1
+        # folder is empty, skip
+        elif group == 'IMAU' and exp == 'exp11':
+            return -1
+        # bed file in NCAR_CISM/expD10 is empty, skip
+        elif group == 'NCAR' and exp in ('expD10', 'expD11'):
             return -1
         
         # lookup densities from csv
@@ -173,19 +176,35 @@ class AISProcessor:
         rhow = subset_densities.rhow.values[0]
         
         # load data
-        bed = xr.open_dataset(os.path.join(directory, f'topg_{self.ice_sheet}_{group}_{model}_{exp}.nc'))
-        thickness = xr.open_dataset(os.path.join(directory, f'lithk_{self.ice_sheet}_{group}_{model}_{exp}.nc'))
-        mask = xr.open_dataset(os.path.join(directory, f'sftgif_{self.ice_sheet}_{group}_{model}_{exp}.nc'))
-        ground_mask = xr.open_dataset(os.path.join(directory, f'sftgrf_{self.ice_sheet}_{group}_{model}_{exp}.nc'))
+        if self.ice_sheet == "AIS" and group == 'ULB':
+            # ULB uses fETISh for AIS naming, not actual model name (fETISh_16km or fETISh_32km)
+            naming_convention = f'{self.ice_sheet}_{group}_fETISh_{exp}.nc'
+            
+        else:
+            naming_convention = f'{self.ice_sheet}_{group}_{model}_{exp}.nc'
+            
+        bed = xr.open_dataset(os.path.join(directory, f'topg_{naming_convention}'), decode_times=False)
+        thickness = xr.open_dataset(os.path.join(directory, f'lithk_{naming_convention}'), decode_times=False)
+        mask = xr.open_dataset(os.path.join(directory, f'sftgif_{naming_convention}'), decode_times=False)
+        ground_mask = xr.open_dataset(os.path.join(directory, f'sftgrf_{naming_convention}'), decode_times=False)
         length_time = len(thickness.time)
         
         
-        # fill na values with zero
-        # if np.any(thickness.lithk.isnull()) or np.any(mask.sftgif.isnull()) or np.any(ground_mask.sftgrf.isnull()):
-        #     thickness = thickness.fillna(0)
-        #     mask = mask.fillna(0)
-        #     ground_mask = ground_mask.fillna(0)
         
+        # NCAR_CISM_expD1: Processing successful.
+        # Traceback (most recent call last):
+        # File "/oscar/home/pvankatw/research/current/main.py", line 20, in <module>
+        #     processor.process_projections(output_directory=r"/users/pvankatw/research/current/supplemental/processed_data/")
+        # File "/oscar/home/pvankatw/research/current/ise/grids/data/Processor.py", line 35, in process_projections
+        #     self._calculate_ivaf_minus_control(self.projections_directory, self.densities_path, self.scalefac_path)
+        # File "/oscar/home/pvankatw/research/current/ise/grids/data/Processor.py", line 121, in _calculate_ivaf_minus_control
+        #     self._calculate_ivaf_single_file(directory, densities, scalefac_model, ctrl_proj=False)
+        # File "/oscar/home/pvankatw/research/current/ise/grids/data/Processor.py", line 195, in _calculate_ivaf_single_file
+        #     if len(set(thickness.y.values)) != len(scalefac_model):
+        # File "/users/pvankatw/anaconda/emulator/lib/python3.10/site-packages/xarray/core/common.py", line 246, in __getattr__
+        #     raise AttributeError(
+        # AttributeError: 'Dataset' object has no attribute 'y'
+        #         #
         
         #! TODO: Ask about this
         if len(set(thickness.y.values)) != len(scalefac_model):
@@ -239,24 +258,28 @@ class AISProcessor:
             ivaf[:, :, i] =  masked_output * scalefac_model * (self.resolution*1000)**2
             
             
-
-        
-        
-        
-        # everything else looks find but the bed is different, so hf is different.
         
         # subtract out control if for an experment
         ivaf_nc = bed.copy()  # copy file structure and metadata for ivaf file
         if not ctrl_proj:
-            # open control dataset
-            ivaf_ctrl = xr.open_dataset(os.path.join("/".join(path[:-1]), f'{path[-1]}/ivaf_{self.ice_sheet}_{group}_{model}_{path[-1]}.nc'))
+            #open control dataset
+            try:
+                ivaf_ctrl = xr.open_dataset(ctrl_path, )
+            except ValueError:
+                ivaf_ctrl = xr.open_dataset(ctrl_path, decode_times=False)
             
-            # if the time lengths don't match (one goes for 85 years and the other 86) select only time frames that match
-            if ivaf_ctrl.time.values.shape[0] > ivaf.shape[0]:
-                ivaf_ctrl = ivaf_ctrl.isel(time=slice(0,ivaf.shape[0]))
-                ivaf_nc = ivaf_nc.drop_sel(time=ivaf_nc.time.values[:(ivaf.shape[0]-ivaf_ctrl.time.values.shape[0])]) # drop extra time steps
-            elif ivaf_ctrl.time.values.shape[0] < ivaf.shape[0]:
-                ivaf_nc = ivaf_nc.drop_sel(time=ivaf_nc.time.values[ivaf_ctrl.time.values.shape[0]-ivaf.shape[0]:]) # drop extra time steps
+            # some include historical values (going back to 2005 for example), subset those out
+            if ivaf_ctrl.time.values.shape[0] > 87:
+                datetimeindex = ivaf_ctrl.indexes['time'].to_datetimeindex()
+                ivaf_ctrl['time'] = datetimeindex
+                ivaf_ctrl = ivaf_ctrl.sel(time=slice(np.datetime64('2015-01-01'), np.datetime64('2101-01-01')))
+            
+            # if the time lengths don't match (one goes for 87 years and the other 86) select only time frames that match
+            if ivaf_ctrl.time.values.shape[0] > ivaf.shape[2]:
+                ivaf_ctrl = ivaf_ctrl.isel(time=slice(0,ivaf.shape[2]))
+                ivaf_nc = ivaf_nc.drop_sel(time=ivaf_nc.time.values[:(ivaf.shape[2]-ivaf_ctrl.time.values.shape[0])]) # drop extra time steps
+            elif ivaf_ctrl.time.values.shape[0] < ivaf.shape[2]:
+                ivaf_nc = ivaf_nc.drop_sel(time=ivaf_nc.time.values[ivaf_ctrl.time.values.shape[0]-ivaf.shape[2]:]) # drop extra time steps
                 ivaf = ivaf[:,:, 0:ivaf_ctrl.time.values.shape[0]]
                 
             else:
@@ -269,7 +292,7 @@ class AISProcessor:
         # save ivaf file
         ivaf_nc['ivaf'] = (('x', 'y', 'time'), ivaf)
         ivaf_nc = ivaf_nc.drop_vars(['topg',])
-        ivaf_nc.to_netcdf(os.path.join(directory, f'ivaf_{self.ice_sheet}_{group}_{model}_{exp}_python.nc'))
+        ivaf_nc.to_netcdf(os.path.join(directory, f'ivaf_{self.ice_sheet}_{group}_{model}_{exp}.nc'))
 
         print(f"{group}_{model}_{exp}: Processing successful.")
         
@@ -277,9 +300,7 @@ class AISProcessor:
         
         
 
-
-
-def get_gris_model_densities(zenodo_directory: str, output_path: str=None):
+def get_model_densities(zenodo_directory: str, output_path: str=None):
     """
     Extracts values for rhoi and rhow from NetCDF files in the specified directory and returns a pandas DataFrame
     containing the group, model, rhoi, and rhow values for each file.
@@ -319,12 +340,19 @@ def get_gris_model_densities(zenodo_directory: str, output_path: str=None):
 
     densities = []      
     for file in results:
-        if 'ctrl_proj' in file['filename']:
+        if 'ctrl_proj' in file['filename'] or 'hist' in file['filename']:
             continue
+        
         elif 'ILTS' in file['filename']:
             fp = file['filename'].split('_')
             group = 'ILTS_PIK'
             model = fp[-2]  
+            
+        elif 'ULB_fETISh' in file['filename']:
+            fp = file['filename'].split('_')
+            group = 'ULB'
+            model = "fETISh_32km" if '32km' in file['filename'] else "fETISh_16km"
+            
         else:
             fp = file['filename'].split('_')
             group = fp[-3]
@@ -374,3 +402,5 @@ def interpolate_values(data):
     x[-1] = x[-2] + (x[-2]-x[-3])
     
     return x, y
+
+
