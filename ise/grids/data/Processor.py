@@ -5,17 +5,37 @@ import numpy as np
 import netCDF4 as nc
 import warnings
 import os
+import cftime
 warnings.simplefilter("ignore") 
 
 
 class Processor:
+    """
+    A class for processing ice sheet data.
+    
+    Attributes:
+    - ice_sheet (str): Ice sheet to be processed. Must be 'AIS' or 'GIS'.
+    - forcings_directory (str): The path to the directory containing the forcings data.
+    - projections_directory (str): The path to the directory containing the projections data.
+    - scalefac_path (str): The path to the netCDF file containing scaling factors for each grid cell.
+    - densities_path (str): The path to the CSV file containing ice and ocean density (rhow/rhoi) data for each experiment.
+    
+    Methods:
+    - __init__(self, ice_sheet, forcings_directory, projections_directory, scalefac_path=None, densities_path=None): Initializes the Processor object.
+    - process_forcings(self): Processes the forcings data.
+    - process_projections(self, output_directory): Processes the projections data.
+    - _calculate_ivaf_minus_control(self, data_directory, densities_fp, scalefac_path): Calculates the ice volume above flotation (IVAF) for each file in the given data directory, subtracting out the control projection IVAF if applicable.
+    - _calculate_ivaf_single_file(self, directory, densities, scalefac_model, ctrl_proj=False): Calculates the ice volume above flotation (IVAF) for a single file.
+    """
     def __init__(self, ice_sheet, forcings_directory, projections_directory, scalefac_path=None, densities_path=None):
         self.forcings_directory = forcings_directory
         self.projections_directory = projections_directory
         self.densities_path = densities_path
         self.scalefac_path = scalefac_path
         self.ice_sheet = ice_sheet.upper()
-        self.resolution = 5 if self.ice_sheet.lower() in ('gris', 'gis') else 8
+        if self.ice_sheet.lower() in ('gris', 'gis'):
+            self.ice_sheet = 'GIS'
+        self.resolution = 5 if self.ice_sheet == 'GIS' else 8
         
     def process_forcings(self):
         if self.forcings_directory is None:
@@ -24,6 +44,18 @@ class Processor:
         pass
     
     def process_projections(self, output_directory):
+        """
+        Process the ISMIP6 projections by calculating and exporting ivaf files.
+            
+        Args:
+            output_directory (str): The directory to save the processed projections.
+        
+        Raises:
+            ValueError: If projections_directory or output_directory is not specified.
+        
+        Returns:
+            int: 1 indicating successful processing.
+        """
         if self.projections_directory is None:
             raise ValueError("Projections path must be specified")
         
@@ -31,9 +63,9 @@ class Processor:
             raise ValueError("Output directory must be specified")
         
         # if the last ivaf file is missing, assume none of them are and calculate and export all ivaf files
-        if self.ice_sheet == "AIS" and not os.path.exists(f"{self.projections_directory}/VUW/PISM/exp08/ivaf_GIS_VUW_PISM_exp08.nc"):
+        if self.ice_sheet == "AIS": # and not os.path.exists(f"{self.projections_directory}/VUW/PISM/exp08/ivaf_GIS_VUW_PISM_exp08.nc"):
             self._calculate_ivaf_minus_control(self.projections_directory, self.densities_path, self.scalefac_path)
-        elif self.ice_sheet in ("GrIS", "GIS") and not os.path.exists(f"{self.projections_directory}/VUW/PISM/exp04/ivaf_AIS_VUW_PISM_exp04.nc"):
+        elif self.ice_sheet == 'GIS': # and not os.path.exists(f"{self.projections_directory}/VUW/PISM/exp04/ivaf_AIS_VUW_PISM_exp04.nc"):
             self._calculate_ivaf_minus_control(self.projections_directory, self.densities_path, self.scalefac_path)
         
         
@@ -44,14 +76,22 @@ class Processor:
                 if 'ivaf' in file and 'ctrl_proj' not in file:
                     ivaf_files.append(os.path.join(root, file))
         
-        # create array of ivaf values of shape (num_files, num_timestamps, y, x) and store in projections_array
-        projections_array = np.zeros([len(ivaf_files), 86, 577, 337])
+        # create array of ivaf values of shape (num_files, x, y, time) and store in projections_array
+        if self.ice_sheet.upper() == "AIS":
+            projections_array = np.zeros([len(ivaf_files), 761, 761, 86])
+        else:
+            projections_array = np.zeros([len(ivaf_files), 337, 577, 86])
+            
+        # load individual ivaf file arrays into a single array (num_files, x, y, time)
         metadata = []
         for i, file in enumerate(ivaf_files):
-            data = xr.open_dataset(file)
+            try:
+                data = xr.open_dataset(file)
+            except ValueError:
+                data = xr.open_dataset(file, decode_times=False)
             ivaf = data.ivaf.values
-            if ivaf.shape[0] != 86:
-                ivaf = ivaf[0:86,:,:]
+            if ivaf.shape[2] != 86:
+                ivaf = ivaf[:,:,0:86]
             projections_array[i, :, :, :] = ivaf
             
             # capture metadata for storage
@@ -62,9 +102,9 @@ class Processor:
             metadata.append([group, model, exp])
             
         # save projections array and metadata
-        np.save(f"{output_directory}/projections_array.npy", projections_array)
+        np.save(f"{output_directory}/projections_{self.ice_sheet}.npy", projections_array)
         metadata_df = pd.DataFrame(metadata, columns=['group', 'model', 'exp'])
-        metadata_df.to_csv(f"{output_directory}/projections_metadata.csv", index=False)
+        metadata_df.to_csv(f"{output_directory}/projections_{self.ice_sheet}_metadata.csv", index=False)
             
         return 1
         
@@ -82,7 +122,7 @@ class Processor:
         - scalefac_path (str): path to netCDF file containing scaling factors for each grid cell
         
         Returns:
-        - int: 1 (dummy value)
+        - int: 1 indicating successful calculation.
         
         Raises:
         - ValueError: if densities_fp is None or not a string or pandas DataFrame
@@ -104,6 +144,10 @@ class Processor:
         
         if self.ice_sheet == "AIS":
             scalefac_model = scalefac_model[::self.resolution, ::self.resolution]
+        elif self.ice_sheet == 'GIS' and scalefac_model.shape != (337, 577):
+            if scalefac_model.shape[0] == 6081:
+                raise ValueError(f"Scalefac model must be 337x577 for GIS, received {scalefac_model.shape}. Make sure you are using the GIS scaling model and not the AIS.")
+            raise ValueError(f"Scalefac model must be 337x577 for GIS, received {scalefac_model.shape}.")
         
         ctrl_proj_dirs = []
         exp_dirs = []
@@ -116,31 +160,41 @@ class Processor:
                 else:
                     pass
         
-        # delete later
-        for directory in exp_dirs[399:]:
-            self._calculate_ivaf_single_file(directory, densities, scalefac_model, ctrl_proj=False)
-            
+
         # first calculate ivaf for control projections
         for directory in ctrl_proj_dirs:
             self._calculate_ivaf_single_file(directory, densities, scalefac_model, ctrl_proj=True)
         
         # then, for each experiment, calculate ivaf and subtract out control
-        for directory in exp_dirs:
+        for directory in exp_dirs: # [print(x, i) for x, i in enumerate(exp_dirs)]
             self._calculate_ivaf_single_file(directory, densities, scalefac_model, ctrl_proj=False)
             
             
         return 1
         
 
-    def _calculate_ivaf_single_file(self, directory, densities, scalefac_model, ctrl_proj=False):                
+    def _calculate_ivaf_single_file(self, directory, densities, scalefac_model, ctrl_proj=False):  
+        """
+        Calculate the Ice Volume Above Floatation (IVAF) for a single file.
+
+        Args:
+            directory (str): The directory path of the file.
+            densities (pandas.DataFrame): A DataFrame containing density values for different groups and models.
+            scalefac_model (float): The scale factor for the model.
+            ctrl_proj (bool, optional): Flag indicating whether the projection is a control projection. Defaults to False.
+
+        Returns:
+            int: 1 if the processing is successful, -1 otherwise.
+        """
+           
         path = directory.split('/')
         exp = path[-1]
         model = path[-2]
         group = path[-3]
-        
+                
         # Determine which control to use based on experiment (only applies to AIS) per Nowicki, 2020
         if not ctrl_proj:
-            if self.ice_sheet.lower() == 'ais':
+            if self.ice_sheet == 'AIS':
                 if exp in ('exp01', 'exp02', 'exp03','exp04','exp11','expA1','expA2','expA3','expA4', 'expB1', 'expB2', 'expB3', 'expB4', 'expB5', 'expC2', 'expC5', 'expC8', 'expC11', 'expE1', 'expE2', 'expE3', 'expE4', 'expE5', 'expE11', 'expE12', 'expE13', 'expE14'):
                     ctrl_path = os.path.join("/".join(path[:-1]), f'ctrl_proj_open/ivaf_{self.ice_sheet}_{group}_{model}_ctrl_proj_open.nc')
                 elif exp in ('exp05','exp06','exp07','exp08','exp09','exp10','exp12','exp13','expA5','expA6','expA7','expA8', 'expB6', 'expB7', 'expB8', 'expB9', 'expB10', 'expC3', 'expC6', 'expC9', 'expC12', 'expE6', 'expE7', 'expE8', 'expE9', 'expE10', 'expE15', 'expE16', 'expE17', 'expE18') or 'expD' in exp:
@@ -190,23 +244,7 @@ class Processor:
         length_time = len(thickness.time)
         
         
-        
-        # NCAR_CISM_expD1: Processing successful.
-        # Traceback (most recent call last):
-        # File "/oscar/home/pvankatw/research/current/main.py", line 20, in <module>
-        #     processor.process_projections(output_directory=r"/users/pvankatw/research/current/supplemental/processed_data/")
-        # File "/oscar/home/pvankatw/research/current/ise/grids/data/Processor.py", line 35, in process_projections
-        #     self._calculate_ivaf_minus_control(self.projections_directory, self.densities_path, self.scalefac_path)
-        # File "/oscar/home/pvankatw/research/current/ise/grids/data/Processor.py", line 121, in _calculate_ivaf_minus_control
-        #     self._calculate_ivaf_single_file(directory, densities, scalefac_model, ctrl_proj=False)
-        # File "/oscar/home/pvankatw/research/current/ise/grids/data/Processor.py", line 195, in _calculate_ivaf_single_file
-        #     if len(set(thickness.y.values)) != len(scalefac_model):
-        # File "/users/pvankatw/anaconda/emulator/lib/python3.10/site-packages/xarray/core/common.py", line 246, in __getattr__
-        #     raise AttributeError(
-        # AttributeError: 'Dataset' object has no attribute 'y'
-        #         #
-        
-        #! TODO: Ask about this
+        #! TODO: Ask about this -- idk if it really matters? x/y doesn't get used regardless
         if len(set(thickness.y.values)) != len(scalefac_model):
             bed['x'], bed['y'] = interpolate_values(bed)
             thickness['x'], thickness['y'] = interpolate_values(thickness)
@@ -227,20 +265,21 @@ class Processor:
                 pass
             bed = bed.expand_dims(dim={'time': length_time})
             
-        
+        # flip around axes so the order is (x, y, time)
         bed_data = np.transpose(bed.topg.values, (2,1,0))
         thickness_data = np.transpose(thickness.lithk.values, (2,1,0))
         mask_data = np.transpose(mask.sftgif.values, (2,1,0))
         ground_mask_data = np.transpose(ground_mask.sftgrf.values, (2,1,0))
         
+        # for each time step, calculate ivaf
         ivaf = np.zeros(bed_data.shape)
         for i in range(length_time):   
             
             # get data slices for current time         
-            thickness_i = thickness_data[:,:,i]
-            bed_i = bed_data[:,:,i]
-            mask_i = mask_data[:,:,i]
-            ground_mask_i = ground_mask_data[:,:,i]
+            thickness_i = thickness_data[:,:,i].copy()
+            bed_i = bed_data[:,:,i].copy()
+            mask_i = mask_data[:,:,i].copy()
+            ground_mask_i = ground_mask_data[:,:,i].copy()
             
             # set data slices to zero where mask = 0 or any value is NaN
             thickness_i[(mask_i == 0) | (np.isnan(mask_i))| (np.isnan(thickness_i))| (np.isnan(ground_mask_i))| (np.isnan(bed_i))] = 0
@@ -251,8 +290,7 @@ class Processor:
             # take min(bed_i, 0)
             bed_i[bed_i > 0] = 0
             
-            
-            # thif = rhow / rhoi * bed_i
+            # calculate IVAF (based on MATLAB processing scripts from Seroussi, 2021)
             hf_i = thickness_i+((rhow/rhoi)*bed_i)   
             masked_output = hf_i * ground_mask_data[:, :, i] * mask_data[:, :, i]
             ivaf[:, :, i] =  masked_output * scalefac_model * (self.resolution*1000)**2
@@ -270,8 +308,13 @@ class Processor:
             
             # some include historical values (going back to 2005 for example), subset those out
             if ivaf_ctrl.time.values.shape[0] > 87:
-                datetimeindex = ivaf_ctrl.indexes['time'].to_datetimeindex()
-                ivaf_ctrl['time'] = datetimeindex
+                if isinstance(bed.time.values[0], cftime._cftime.DatetimeNoLeap):
+                    datetimeindex = ivaf_ctrl.indexes['time'].to_datetimeindex()
+                    ivaf_ctrl['time'] = datetimeindex
+                if isinstance(ivaf_ctrl.time.values[0], cftime._cftime.DatetimeNoLeap):
+                    datetimeindex = ivaf_ctrl.indexes['time'].to_datetimeindex()
+                    ivaf_ctrl['time'] = datetimeindex
+                # elif isinstance(bed.time.values[0])
                 ivaf_ctrl = ivaf_ctrl.sel(time=slice(np.datetime64('2015-01-01'), np.datetime64('2101-01-01')))
             
             # if the time lengths don't match (one goes for 87 years and the other 86) select only time frames that match
@@ -363,7 +406,7 @@ def get_model_densities(zenodo_directory: str, output_path: str=None):
     df['rhoi'], df['rhow'] = df.rhoi.astype('float'), df.rhow.astype('float')
     df = df.drop_duplicates()
     
-    ice_sheet = "AIS" if "AIS" in file['filename'] else "GrIS"
+    ice_sheet = "AIS" if "AIS" in file['filename'] else "GIS"
     
     if output_path is not None:
         if output_path.endswith('/'):
