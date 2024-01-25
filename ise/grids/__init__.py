@@ -9,3 +9,5 @@ contribution from the Antarctic ice sheet](https://doi.org/10.22541/essoar.16887
 This module also contains all processing functions all training functions and necessary tools for 
 analyzing the emulator performance.
 """
+
+from ise.grids.utils import get_all_filepaths

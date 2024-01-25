@@ -6,10 +6,12 @@ import warnings
 import cftime
 from sklearn.decomposition import PCA
 import pickle as pkl
+from ise.grids.utils import get_all_filepaths
 warnings.simplefilter("ignore") 
 
 
-class Processor:
+
+class ProjectionProcessor:
     """
     A class for processing ice sheet data.
     
@@ -36,25 +38,8 @@ class Processor:
         if self.ice_sheet.lower() in ('gris', 'gis'):
             self.ice_sheet = 'GIS'
         self.resolution = 5 if self.ice_sheet == 'GIS' else 8
-        
-    def process_forcings(self, output_directory):
-        if self.forcings_directory is None:
-            raise ValueError("Forcings path must be specified")
-        
-        
-        # generate PCA models for each forcing
-        all_forcing_fps = get_all_filepaths(path=self.forcing_directory, filetype='nc', contains='1995-2100', not_contains='Ice_Shelf_Fracture')
-        forcing_fps = [x for x in all_forcing_fps if '8km' in x and 'v1' not in x]
-        atmosphere_fps = [x for x in forcing_fps if "Atmosphere_Forcing" in x]
-        ocean_fps = [x for x in forcing_fps if "Ocean_Forcing" in x]
-        
-        generate_atmosphere_pcas(atmosphere_fps, output_directory)
-        generate_ocean_pcas(ocean_fps, output_directory)
-        
-        
-        pass
     
-    def process_projections(self, output_directory):
+    def process(self, output_directory):
         """
         Process the ISMIP6 projections by calculating IVAF for both control 
         and experiments, subtracting out the control IVAF from experiments,
@@ -89,41 +74,40 @@ class Processor:
                 if 'ivaf' in file and 'ctrl_proj' not in file:
                     ivaf_files.append(os.path.join(root, file))
         
-        # create array of ivaf values of shape (num_files, x, y, time) and store in projections_array
-        if self.ice_sheet.upper() == "AIS":
-            projections_array = np.zeros([len(ivaf_files), 761, 761, 86])
-        else:
-            projections_array = np.zeros([len(ivaf_files), 337, 577, 86])
+        # TODO: This part makes one big array. It's too big, take out?
+        
+        # # create array of ivaf values of shape (num_files, x, y, time) and store in projections_array
+        # if self.ice_sheet.upper() == "AIS":
+        #     projections_array = np.zeros([len(ivaf_files), 761, 761, 86])
+        # else:
+        #     projections_array = np.zeros([len(ivaf_files), 337, 577, 86])
             
-        # load individual ivaf file arrays into a single array (num_files, x, y, time)
-        metadata = []
-        for i, file in enumerate(ivaf_files):
-            try:
-                data = xr.open_dataset(file)
-            except ValueError:
-                data = xr.open_dataset(file, decode_times=False)
-            ivaf = data.ivaf.values
-            if ivaf.shape[2] != 86:
-                ivaf = ivaf[:,:,0:86]
-            projections_array[i, :, :, :] = ivaf
+        # # load individual ivaf file arrays into a single array (num_files, x, y, time)
+        # metadata = []
+        # for i, file in enumerate(ivaf_files):
+        #     try:
+        #         data = xr.open_dataset(file)
+        #     except ValueError:
+        #         data = xr.open_dataset(file, decode_times=False)
+        #     ivaf = data.ivaf.values
+        #     if ivaf.shape[2] != 86:
+        #         ivaf = ivaf[:,:,0:86]
+        #     projections_array[i, :, :, :] = ivaf
             
-            # capture metadata for storage
-            path = file.split('/')
-            exp = path[-2]
-            model = path[-3]
-            group = path[-4]
-            metadata.append([group, model, exp])
+        #     # capture metadata for storage
+        #     path = file.split('/')
+        #     exp = path[-2]
+        #     model = path[-3]
+        #     group = path[-4]
+        #     metadata.append([group, model, exp])
             
-        # save projections array and metadata
-        np.save(f"{output_directory}/projections_{self.ice_sheet}.npy", projections_array)
-        metadata_df = pd.DataFrame(metadata, columns=['group', 'model', 'exp'])
-        metadata_df.to_csv(f"{output_directory}/projections_{self.ice_sheet}_metadata.csv", index=False)
+        # # save projections array and metadata
+        # np.save(f"{output_directory}/projections_{self.ice_sheet}.npy", projections_array)
+        # metadata_df = pd.DataFrame(metadata, columns=['group', 'model', 'exp'])
+        # metadata_df.to_csv(f"{output_directory}/projections_{self.ice_sheet}_metadata.csv", index=False)
             
         return 1
-        
-        
-        
-        
+ 
     def _calculate_ivaf_minus_control(self, data_directory: str, densities_fp: str, scalefac_path: str):
         """
         Calculates the ice volume above flotation (IVAF) for each file in the given data directory, 
@@ -356,8 +340,6 @@ class Processor:
         print(f"{group}_{model}_{exp}: Processing successful.")
         
         return 1
-        
-        
 
 def get_model_densities(zenodo_directory: str, output_path: str=None):
     """
@@ -431,8 +413,6 @@ def get_model_densities(zenodo_directory: str, output_path: str=None):
             df.to_csv(output_path, index=False)
     
     return df
-        
-
 
 def interpolate_values(data):
     """
@@ -462,117 +442,209 @@ def interpolate_values(data):
     
     return x, y
 
-def get_all_filepaths(path: str, filetype: str = None, contains: str = None, not_contains: str = None):
-    """Retrieves all filepaths for files within a directory. Supports subsetting based on filetype
-    and substring search.
 
-    Args:
-        path (str): Path to directory to be searched.
-        filetype (str, optional): File type to be returned (e.g. csv, nc). Defaults to None.
-        contains (str, optional): Substring that files found must contain. Defaults to None.
-        not_contains(str, optional): Substring that files found must NOT contain. Defaults to None.
-
-    Returns:
-        List[str]: list of files within the directory matching the input criteria.
-    """
-    all_files = list()
-    for (dirpath, dirnames, filenames) in os.walk(path):
-        all_files += [os.path.join(dirpath, file) for file in filenames]
-
-    if filetype:
-        if filetype.lower() != "all":
-            all_files = [file for file in all_files if file.endswith(filetype)]
-
-    if contains:
-        all_files = [file for file in all_files if contains in file]
+class DimensionalityReducer:
+    def __init__(self, forcing_dir, output_dir):
+        super().__init__()
+        if forcing_dir is None:
+            raise ValueError("Forcing directory must be specified.")
+        if output_dir is None:
+            raise ValueError("Output directory must be specified.")
+        self.forcing_dir = forcing_dir
+        self.output_path = output_dir
+        self.forcing_paths = {'all': None, 'atmosphere': None, 'ocean': None}
+        self.pca_model_directory = None
         
-    if not_contains:
-        all_files = [file for file in all_files if not_contains not in file]
+    # def reduce_dimensionlity(self, forcing_dir: str=None, output_dir: str=None):
+            # generate pca models
+            # convert each forcing file to pca space
+        
+        
+    def generate_pca_models(self, ):
+        """
+        Generate principal component analysis (PCA) models for atmosphere and ocean variables. 
+        
+        Parameters:
+        - atmosphere_fps (list): List of file paths for atmosphere data.
+        - ocean_fps (list): List of file paths for ocean data.
+        - save_dir (str): Directory to save the generated PCA models and results.
+        
+        Returns:
+            int: 0 if successful.
+        """
+        
+        
+        all_forcing_fps = get_all_filepaths(path=self.forcing_dir, filetype='nc', contains='1995-2100', not_contains='Ice_Shelf_Fracture')
+        self.forcing_paths['all'] = [x for x in all_forcing_fps if '8km' in x and 'v1' not in x]
+        self.forcing_paths['atmosphere'] = [x for x in self.forcing_paths['all'] if "Atmosphere_Forcing" in x]
+        self.forcing_paths['ocean'] = [x for x in self.forcing_paths['all'] if "Ocean_Forcing" in x]
+        
+        self._generate_atmosphere_pcas(self.forcing_paths['atmosphere'], self.output_dir)
+        self._generate_ocean_pcas(self.forcing_paths['ocean'], self.output_dir)
+        self.pca_model_directory = self.output_dir
+        
+        return 1
     
-    return all_files, atmosphere_fps, ocean_fps
-
-def run_PCA(variable_array, num_pcs=None):
-    """
-    Runs Principal Component Analysis (PCA) on the given variable array.
-
-    Args:
-        variable_array (array-like): The input array containing the variables.
-        num_pcs (int, optional): The number of principal components to keep. 
-            If not specified, all components will be kept.
-
-    Returns:
-        tuple: A tuple containing the fitted PCA model and the transformed array.
-
-    """
-    if not num_pcs:
-        pca = PCA()
-    else:
-        pca = PCA(n_components=num_pcs)
+    def convert_forcings(self, pca_model_directory: str=None, output_dir: str=None):
         
-    # if np.isnan(variable_array).any():
-    #     return None, None
+        output_dir = self.output_dir if output_dir is None else output_dir
+        if self.pca_model_directory is None and pca_model_directory is None:
+            raise ValueError("PCA model directory must be specified, or DimensionalityReducer.generate_pca_models must be run first.")
     
-    # TODO: just drop the rows rather than not do the PCA
-    pca = pca.fit(variable_array)
-    pca_array = pca.transform(variable_array)
-    return pca, pca_array
-
-def generate_atmosphere_pcas(atmosphere_fps: list, save_dir: str):
-    """
-    Generate principal component analysis (PCA) for atmospheric variables.
-
-    Args:
-        atmosphere_fps (list): List of file paths to atmospheric CMIP files.
-        save_dir (str): Directory to save the PCA results.
-
-    Returns:
-        int: Always returns 0.
-    """
+        
     
-    # for each variable
-    var_names = ['pr_anomaly', 'evspsbl_anomaly', 'mrro_anomaly', 'smb_anomaly', 'ts_anomaly']
-    # var_names = ['mrro_anomaly']
-    for var in var_names:
-        print(var)
-        variable_array = np.zeros([len(atmosphere_fps), 106, 761*761])
+
+    def _generate_atmosphere_pcas(self, atmosphere_fps: list, save_dir: str):
+        """
+        Generate principal component analysis (PCA) for atmospheric variables.
+
+        Args:
+            atmosphere_fps (list): List of file paths to atmospheric CMIP files.
+            save_dir (str): Directory to save the PCA results.
+
+        Returns:
+            int: 0 if successful.
+        """
         
-        # loop through each atmospheric CMIP file
-        for i, fp in enumerate(atmosphere_fps):
+        # for each variable
+        var_names = ['pr_anomaly', 'evspsbl_anomaly', 'mrro_anomaly', 'smb_anomaly', 'ts_anomaly']
+        for var in var_names:
+            print(var)
+            variable_array = np.zeros([len(atmosphere_fps), 106, 761*761])
             
-            # get the variable you need (rather than the entire dataset)
-            data_flattened, dataset = get_xarray_variable(fp, var)
+            # loop through each atmospheric CMIP file
+            for i, fp in enumerate(atmosphere_fps):
+                
+                # get the variable you need (rather than the entire dataset)
+                data_flattened, dataset = get_xarray_variable(fp, var)
+                
+                # store it in the total array
+                variable_array[i, :, :] = data_flattened     
+                
             
-            # store it in the total array
-            variable_array[i, :, :] = data_flattened     
+            # deal with np.nans (ask about later)
+            variable_array = np.nan_to_num(variable_array)   
             
+            # reshape variable_array (num_files, num_timestamps, num_gridpoints) --> (num_files*num_timestamps, num_gridpoints)
+            variable_array = variable_array.reshape(len(atmosphere_fps)*len(dataset.time), 761*761)
+            
+            # run PCA
+            # if np.isnan(variable_array).any():
+            #     continue
+            pca, pca_array = self._run_PCA(variable_array, num_pcs=None)
+            
+            # change back to (num_files, num_timestamps, num_pcs)
+            pca_array = pca_array.reshape(len(atmosphere_fps), len(dataset.time), -1)
+            
+            # get percent explained
+            exp_var_pca = pca.explained_variance_ratio_
+            cum_sum_eigenvalues = np.cumsum(exp_var_pca)
+            arg_90 = np.argmax(cum_sum_eigenvalues>0.90)+1
+            print(f"Variable {var} has {arg_90} PCs that explain 90% of the variance")
+            
+            # output pca object
+            save_path = f"{save_dir}/pca_{var}_{arg_90}pcs.pkl"
+            pkl.dump(pca, open(save_path,"wb"))
+            # np.save(f"{save_dir}/data/{var}_{arg_90}pcs.npy", pca_array)
+            
+        return 0
+    
+    def _generate_ocean_pcas(self, ocean_fps: list, save_dir: str):
+        """
+        Generate principal component analysis (PCA) for ocean variables.
+
+        Args:
+            ocean_fps (list): List of file paths for ocean variables.
+            save_dir (str): Directory to save the PCA results.
+
+        Returns:
+            int: 0 if PCA generation is successful, -1 otherwise.
+        """
         
-        # deal with np.nans (ask about later)
-        variable_array = np.nan_to_num(variable_array)   
+        thermal_forcing_fps = [x for x in ocean_fps if 'thermal_forcing' in x]
+        salinity_fps = [x for x in ocean_fps if 'salinity' in x]
+        tempereature_fps = [x for x in ocean_fps if 'temperature' in x]
+        
+        thermal_forcing_array = np.zeros([len(thermal_forcing_fps), 106, 761*761])
+        salinity_array = np.zeros([len(salinity_fps), 106, 761*761])
+        temperature_array = np.zeros([len(tempereature_fps), 106, 761*761])
+        
+        # get the variables you need (rather than the entire dataset)
+        for i, fp in enumerate(thermal_forcing_fps):
+            data_flattened, dataset = get_xarray_variable(fp, varname='thermal_forcing')
+            thermal_forcing_array[i, :, :] = data_flattened # store
+        for i, fp in enumerate(salinity_fps):
+            data_flattened, dataset = get_xarray_variable(fp, varname='salinity')
+            salinity_array[i, :, :] = data_flattened # store
+        for i, fp in enumerate(tempereature_fps):
+            data_flattened, dataset = get_xarray_variable(fp, varname='temperature')
+            temperature_array[i, :, :] = data_flattened
         
         # reshape variable_array (num_files, num_timestamps, num_gridpoints) --> (num_files*num_timestamps, num_gridpoints)
-        variable_array = variable_array.reshape(len(atmosphere_fps)*len(dataset.time), 761*761)
+        thermal_forcing_array = thermal_forcing_array.reshape(len(thermal_forcing_fps)*len(dataset.time), 761*761)
+        salinity_array = salinity_array.reshape(len(salinity_fps)*len(dataset.time), 761*761)
+        temperature_array = temperature_array.reshape(len(tempereature_fps)*len(dataset.time), 761*761)
+        
+        # remove nans
+        thermal_forcing_array = thermal_forcing_array[:, ~(np.isnan(thermal_forcing_array).any(axis=0))]
+        salinity_array = salinity_array[:, ~(np.isnan(salinity_array).any(axis=0))]
+        temperature_array = temperature_array[:, ~(np.isnan(temperature_array).any(axis=0))]
         
         # run PCA
-        # if np.isnan(variable_array).any():
-        #     continue
-        pca, pca_array = run_PCA(variable_array, num_pcs=None)
-        
-        # change back to (num_files, num_timestamps, num_pcs)
-        pca_array = pca_array.reshape(len(atmosphere_fps), len(dataset.time), -1)
+        pca_tf, pca_tf_array = self._run_PCA(thermal_forcing_array, num_pcs=None)
+        pca_sal, pca_sal_array = self._run_PCA(salinity_array, num_pcs=None)
+        pca_temp, pca_temp_array = self._run_PCA(temperature_array, num_pcs=None)
         
         # get percent explained
-        exp_var_pca = pca.explained_variance_ratio_
-        cum_sum_eigenvalues = np.cumsum(exp_var_pca)
-        arg_90 = np.argmax(cum_sum_eigenvalues>0.90)+1
-        print(f"Variable {var} has {arg_90} PCs that explain 90% of the variance")
+        tf_exp_var_pca = pca_tf.explained_variance_ratio_
+        tf_cum_sum_eigenvalues = np.cumsum(tf_exp_var_pca)
+        tf_arg_90 = np.argmax(tf_cum_sum_eigenvalues>0.90)+1
+        save_path = f"{save_dir}/pca_thermal_forcing_{tf_arg_90}pcs.pkl"
+        pkl.dump(pca_tf, open(save_path,"wb"))
+        # np.save(f"{save_dir}/data/thermal_forcing_{tf_arg_90}pcs.npy", pca_tf_array)
         
-        # output pca object
-        save_path = f"{save_dir}/pca_{var}_{arg_90}pcs.pkl"
-        pkl.dump(pca, open(save_path,"wb"))
-        np.save(f"{save_dir}/data/{var}_{arg_90}pcs.npy", pca_array)
+        sal_exp_var_pca = pca_sal.explained_variance_ratio_
+        sal_cum_sum_eigenvalues = np.cumsum(sal_exp_var_pca)
+        sal_arg_90 = np.argmax(sal_cum_sum_eigenvalues>0.90)+1
+        save_path = f"{save_dir}/pca_salinity_{sal_arg_90}pcs.pkl"
+        pkl.dump(pca_sal, open(save_path,"wb"))
+        # np.save(f"{save_dir}/data/salinity_{sal_arg_90}pcs.npy", pca_sal_array)
         
-    return 0
+        temp_exp_var_pca = pca_temp.explained_variance_ratio_
+        temp_cum_sum_eigenvalues = np.cumsum(temp_exp_var_pca)
+        temp_arg_90 = np.argmax(temp_cum_sum_eigenvalues>0.90)+1
+        save_path = f"{save_dir}/pca_temperature_{temp_arg_90}pcs.pkl"
+        pkl.dump(pca_temp, open(save_path,"wb"))
+        # np.save(f"{save_dir}/data/temperature_{temp_arg_90}pcs.npy", pca_temp_array)
         
+        return 0
+    
+    def _run_PCA(self, variable_array, num_pcs=None):
+        """
+        Runs Principal Component Analysis (PCA) on the given variable array.
+
+        Args:
+            variable_array (array-like): The input array containing the variables.
+            num_pcs (int, optional): The number of principal components to keep. 
+                If not specified, all components will be kept.
+
+        Returns:
+            tuple: A tuple containing the fitted PCA model and the transformed array.
+
+        """
+        if not num_pcs:
+            pca = PCA()
+        else:
+            pca = PCA(n_components=num_pcs)
+            
+        # if np.isnan(variable_array).any():
+        #     return None, None
+        
+        # TODO: just drop the rows rather than not do the PCA
+        pca = pca.fit(variable_array)
+        pca_array = pca.transform(variable_array)
+        return pca, pca_array
+            
 def get_xarray_variable(dataset_fp, varname):
     """
     Retrieve a variable from an xarray dataset.
@@ -607,98 +679,6 @@ def get_xarray_variable(dataset_fp, varname):
     except KeyError:
         return np.nan, np.nan
     data_flattened = data.reshape(len(dataset.time), -1)
-    # print(len(dataset.time), data_flattened.shape)
-    # d = pd.DataFrame(data_flattened)
-    # print(d.head())
     
     return data_flattened, dataset
-
-    
-        
-def generate_ocean_pcas(ocean_fps: list, save_dir: str):
-    """
-    Generate principal component analysis (PCA) for ocean variables.
-
-    Args:
-        ocean_fps (list): List of file paths for ocean variables.
-        save_dir (str): Directory to save the PCA results.
-
-    Returns:
-        int: 0 if PCA generation is successful, -1 otherwise.
-    """
-    
-    thermal_forcing_fps = [x for x in ocean_fps if 'thermal_forcing' in x]
-    salinity_fps = [x for x in ocean_fps if 'salinity' in x]
-    tempereature_fps = [x for x in ocean_fps if 'temperature' in x]
-    
-    thermal_forcing_array = np.zeros([len(thermal_forcing_fps), 106, 761*761])
-    salinity_array = np.zeros([len(salinity_fps), 106, 761*761])
-    temperature_array = np.zeros([len(tempereature_fps), 106, 761*761])
-    
-    # get the variables you need (rather than the entire dataset)
-    for i, fp in enumerate(thermal_forcing_fps):
-        data_flattened, dataset = get_xarray_variable(fp, varname='thermal_forcing')
-        thermal_forcing_array[i, :, :] = data_flattened # store
-    for i, fp in enumerate(salinity_fps):
-        data_flattened, dataset = get_xarray_variable(fp, varname='salinity')
-        salinity_array[i, :, :] = data_flattened # store
-    for i, fp in enumerate(tempereature_fps):
-        data_flattened, dataset = get_xarray_variable(fp, varname='temperature')
-        temperature_array[i, :, :] = data_flattened
-    
-    # reshape variable_array (num_files, num_timestamps, num_gridpoints) --> (num_files*num_timestamps, num_gridpoints)
-    thermal_forcing_array = thermal_forcing_array.reshape(len(thermal_forcing_fps)*len(dataset.time), 761*761)
-    salinity_array = salinity_array.reshape(len(salinity_fps)*len(dataset.time), 761*761)
-    temperature_array = temperature_array.reshape(len(tempereature_fps)*len(dataset.time), 761*761)
-    
-    # remove nans
-    thermal_forcing_array = thermal_forcing_array[:, ~(np.isnan(thermal_forcing_array).any(axis=0))]
-    salinity_array = salinity_array[:, ~(np.isnan(salinity_array).any(axis=0))]
-    temperature_array = temperature_array[:, ~(np.isnan(temperature_array).any(axis=0))]
-    
-    # run PCA
-    pca_tf, pca_tf_array = run_PCA(thermal_forcing_array, num_pcs=None)
-    pca_sal, pca_sal_array = run_PCA(salinity_array, num_pcs=None)
-    pca_temp, pca_temp_array = run_PCA(temperature_array, num_pcs=None)
-    
-    # get percent explained
-    tf_exp_var_pca = pca_tf.explained_variance_ratio_
-    tf_cum_sum_eigenvalues = np.cumsum(tf_exp_var_pca)
-    tf_arg_90 = np.argmax(tf_cum_sum_eigenvalues>0.90)+1
-    save_path = f"{save_dir}/pca_thermal_forcing_{tf_arg_90}pcs.pkl"
-    pkl.dump(pca_tf, open(save_path,"wb"))
-    np.save(f"{save_dir}/data/thermal_forcing_{tf_arg_90}pcs.npy", pca_tf_array)
-    
-    sal_exp_var_pca = pca_sal.explained_variance_ratio_
-    sal_cum_sum_eigenvalues = np.cumsum(sal_exp_var_pca)
-    sal_arg_90 = np.argmax(sal_cum_sum_eigenvalues>0.90)+1
-    save_path = f"{save_dir}/pca_salinity_{sal_arg_90}pcs.pkl"
-    pkl.dump(pca_sal, open(save_path,"wb"))
-    np.save(f"{save_dir}/data/salinity_{sal_arg_90}pcs.npy", pca_sal_array)
-    
-    temp_exp_var_pca = pca_temp.explained_variance_ratio_
-    temp_cum_sum_eigenvalues = np.cumsum(temp_exp_var_pca)
-    temp_arg_90 = np.argmax(temp_cum_sum_eigenvalues>0.90)+1
-    save_path = f"{save_dir}/pca_temperature_{temp_arg_90}pcs.pkl"
-    pkl.dump(pca_temp, open(save_path,"wb"))
-    np.save(f"{save_dir}/data/temperature_{temp_arg_90}pcs.npy", pca_temp_array)
-    
-    return 0
-
-def generate_pcas(atmosphere_fps, ocean_fps, save_dir):
-    """
-    Generate principal component analysis (PCA) for atmosphere and ocean variables. 
-    
-    Parameters:
-    - atmosphere_fps (list): List of file paths for atmosphere data.
-    - ocean_fps (list): List of file paths for ocean data.
-    - save_dir (str): Directory to save the generated PCA models and results.
-    
-    Returns:
-    - int: 0 indicating successful execution.
-    """
-    generate_atmosphere_pcas(atmosphere_fps, save_dir)
-    generate_ocean_pcas(ocean_fps, save_dir)
-    return 0
-
 
