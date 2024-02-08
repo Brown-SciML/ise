@@ -5,9 +5,12 @@ import numpy as np
 import warnings
 import cftime
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import MinMaxScaler
 import pickle as pkl
 from ise.grids.utils import get_all_filepaths
 from datetime import date, timedelta, datetime
+from tqdm import tqdm
+import matplotlib.pyplot as plt
 # warnings.simplefilter("ignore") 
 
 
@@ -67,45 +70,6 @@ class ProjectionProcessor:
         elif self.ice_sheet == 'GIS': # and not os.path.exists(f"{self.projections_directory}/VUW/PISM/exp04/ivaf_AIS_VUW_PISM_exp04.nc"):
             self._calculate_ivaf_minus_control(self.projections_directory, self.densities_path, self.scalefac_path)
         
-        
-        # get ivaf files in projections directory
-        # ivaf_files = []
-        # for root, dirs, files in os.walk(self.projections_directory):
-        #     for file in files:
-        #         if 'ivaf' in file and 'ctrl_proj' not in file:
-        #             ivaf_files.append(os.path.join(root, file))
-        
-        # TODO: This part makes one big array. It's too big, take out?
-        
-        # # create array of ivaf values of shape (num_files, x, y, time) and store in projections_array
-        # if self.ice_sheet.upper() == "AIS":
-        #     projections_array = np.zeros([len(ivaf_files), 761, 761, 86])
-        # else:
-        #     projections_array = np.zeros([len(ivaf_files), 337, 577, 86])
-            
-        # # load individual ivaf file arrays into a single array (num_files, x, y, time)
-        # metadata = []
-        # for i, file in enumerate(ivaf_files):
-        #     try:
-        #         data = xr.open_dataset(file)
-        #     except ValueError:
-        #         data = xr.open_dataset(file, decode_times=False)
-        #     ivaf = data.ivaf.values
-        #     if ivaf.shape[2] != 86:
-        #         ivaf = ivaf[:,:,0:86]
-        #     projections_array[i, :, :, :] = ivaf
-            
-        #     # capture metadata for storage
-        #     path = file.split('/')
-        #     exp = path[-2]
-        #     model = path[-3]
-        #     group = path[-4]
-        #     metadata.append([group, model, exp])
-            
-        # # save projections array and metadata
-        # np.save(f"{output_directory}/projections_{self.ice_sheet}.npy", projections_array)
-        # metadata_df = pd.DataFrame(metadata, columns=['group', 'model', 'exp'])
-        # metadata_df.to_csv(f"{output_directory}/projections_{self.ice_sheet}_metadata.csv", index=False)
             
         return 1
  
@@ -149,6 +113,7 @@ class ProjectionProcessor:
                 raise ValueError(f"Scalefac model must be 337x577 for GIS, received {scalefac_model.shape}. Make sure you are using the GIS scaling model and not the AIS.")
             raise ValueError(f"Scalefac model must be 337x577 for GIS, received {scalefac_model.shape}.")
         
+        # get all files in directory with "ctrl_proj" and "exp" in them and store separately
         ctrl_proj_dirs = []
         exp_dirs = []
         for root, dirs, _ in os.walk(data_directory):
@@ -162,11 +127,11 @@ class ProjectionProcessor:
         
 
         # first calculate ivaf for control projections
-        # for directory in ctrl_proj_dirs:
-        #     self._calculate_ivaf_single_file(directory, densities, scalefac_model, ctrl_proj=True)
+        for directory in ctrl_proj_dirs:
+            self._calculate_ivaf_single_file(directory, densities, scalefac_model, ctrl_proj=True)
             
         # then, for each experiment, calculate ivaf and subtract out control
-        for directory in exp_dirs: # [print(x, i) for x, i in enumerate(exp_dirs)]
+        for directory in exp_dirs:
             self._calculate_ivaf_single_file(directory, densities, scalefac_model, ctrl_proj=False)
             
             
@@ -185,7 +150,12 @@ class ProjectionProcessor:
 
         Returns:
             int: 1 if the processing is successful, -1 otherwise.
+            
+            
         """
+        
+        # directory = r"/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-AIS/ILTS_PIK/SICOPOLIS/exp05"
+        # get metadata from path
         path = directory.split('/')
         exp = path[-1]
         model = path[-2]
@@ -205,6 +175,7 @@ class ProjectionProcessor:
                     return -1
                     
             else: 
+                # GrIS doesn't have ctrl_proj_open vs ctrl_proj_std
                 ctrl_path = os.path.join("/".join(path[:-1]), f'ctrl_proj/ivaf_{self.ice_sheet}_{group}_{model}_ctrl_proj.nc')
             
             # for some reason there is no ctrl_proj_open for AWI and JPL1, skip
@@ -237,26 +208,45 @@ class ProjectionProcessor:
             naming_convention = f'{self.ice_sheet}_{group}_{model}_{exp}.nc'
         
         # load data
-        bed = xr.open_dataset(os.path.join(directory, f'topg_{naming_convention}'), decode_times=False)
-        thickness = xr.open_dataset(os.path.join(directory, f'lithk_{naming_convention}'), decode_times=False)
-        mask = xr.open_dataset(os.path.join(directory, f'sftgif_{naming_convention}'), decode_times=False)
-        ground_mask = xr.open_dataset(os.path.join(directory, f'sftgrf_{naming_convention}'), decode_times=False)
+        bed = xr.open_dataset(os.path.join(directory, f'topg_{naming_convention}'), decode_times=False).transpose('x', 'y', 'time', ...)
+        thickness = xr.open_dataset(os.path.join(directory, f'lithk_{naming_convention}'), decode_times=False).transpose('x', 'y', 'time', ...)
+        mask = xr.open_dataset(os.path.join(directory, f'sftgif_{naming_convention}'), decode_times=False).transpose('x', 'y', 'time', ...)
+        ground_mask = xr.open_dataset(os.path.join(directory, f'sftgrf_{naming_convention}'), decode_times=False).transpose('x', 'y', 'time', ...)
         length_time = len(thickness.time)
-        # note on decode_times=False -- by doing so, it stays in "days from" rather than trying to infer a type. Make handling much more predictable.
+        # note on decode_times=False -- by doing so, it stays in "days from" rather than trying to infer a type. Makes handling much more predictable.
 
-        try:
-            bed = convert_and_subset_times(bed)
-            thickness = convert_and_subset_times(thickness)
-            mask = convert_and_subset_times(mask)
-            ground_mask = convert_and_subset_times(ground_mask)
-            length_time = len(thickness.time)
-        except TypeError:
-            print(directory)
-            print(path)
-            raise TypeError
+
+        # if -9999 instead of np.nan, replace (come back and optimize? couldn't figure out with xarray)
+        if bed.topg[0,0,0] <= -9999. or bed.topg[0,0,0] >= 9999:
+            topg = bed.topg.values
+            topg[(np.where(topg <= -9999.)) | (np.where(topg >= 9999))] = np.nan
+            bed['topg'].values = topg
+            del topg
+            
+            lithk = thickness.lithk.values
+            lithk[(np.where(lithk <= -9999.)) | (np.where(lithk >= 9999))] = np.nan
+            thickness['lithk'].values = lithk
+            del lithk
+            
+            sftgif = mask.sftgif.values
+            sftgif[(np.where(sftgif <= -9999.)) | (np.where(sftgif >= 9999))] = np.nan
+            mask['sftgif'].values = sftgif
+            del sftgif
+            
+            sftgrf = ground_mask.sftgrf.values
+            sftgrf[(np.where(sftgrf <= -9999.)) | (np.where(sftgrf >= 9999))] = np.nan
+            ground_mask['sftgrf'].values = sftgrf
+            del sftgrf
+        
+        # converts time (in "days from X" to numpy.datetime64) and subsets time from 2015 to 2100
+        bed = convert_and_subset_times(bed)
+        thickness = convert_and_subset_times(thickness)
+        mask = convert_and_subset_times(mask)
+        ground_mask = convert_and_subset_times(ground_mask)
+        length_time = len(thickness.time)
 
         
-        #! TODO: Ask about this -- idk if it really matters? x/y doesn't get used regardless
+        # Interpolate values for x & y, for formatting purposes only, does not get used
         if len(set(thickness.y.values)) != len(scalefac_model):
             bed['x'], bed['y'] = interpolate_values(bed)
             thickness['x'], thickness['y'] = interpolate_values(thickness)
@@ -278,10 +268,17 @@ class ProjectionProcessor:
             bed = bed.expand_dims(dim={'time': length_time})
             
         # flip around axes so the order is (x, y, time)
-        bed_data = np.transpose(bed.topg.values, (2,1,0))
-        thickness_data = np.transpose(thickness.lithk.values, (2,1,0))
-        mask_data = np.transpose(mask.sftgif.values, (2,1,0))
-        ground_mask_data = np.transpose(ground_mask.sftgrf.values, (2,1,0))
+        bed = bed.transpose('x', 'y', 'time', ...)
+        bed_data = bed.topg.values
+        
+        thickness = thickness.transpose('x', 'y', 'time', ...)
+        thickness_data = thickness.lithk.values
+        
+        mask = mask.transpose('x', 'y', 'time', ...)
+        mask_data = mask.sftgif.values
+        
+        ground_mask = ground_mask.transpose('x', 'y', 'time', ...)
+        ground_mask_data = ground_mask.sftgrf.values
         
         # for each time step, calculate ivaf
         ivaf = np.zeros(bed_data.shape)
@@ -313,42 +310,12 @@ class ProjectionProcessor:
         ivaf_nc = bed.copy()  # copy file structure and metadata for ivaf file
         if not ctrl_proj:
             #open control dataset
-            try:
-                ivaf_ctrl = xr.open_dataset(ctrl_path, )
-            except ValueError:
-                print('ValueError')
-                ivaf_ctrl = xr.open_dataset(ctrl_path, decode_times=False)
-            
-            # some include historical values (going back to 2005 for example), subset those out
-            if ivaf_ctrl.time.values.shape[0] > 87:
-                print("ivaf_ctrl.time.values.shape[0] > 87")
-                if isinstance(bed.time.values[0], cftime._cftime.DatetimeNoLeap):
-                    datetimeindex = ivaf_ctrl.indexes['time'].to_datetimeindex()
-                    ivaf_ctrl['time'] = datetimeindex
-                if isinstance(ivaf_ctrl.time.values[0], cftime._cftime.DatetimeNoLeap):
-                    datetimeindex = ivaf_ctrl.indexes['time'].to_datetimeindex()
-                    ivaf_ctrl['time'] = datetimeindex
-                # elif isinstance(bed.time.values[0])
-                ivaf_ctrl = ivaf_ctrl.sel(time=slice(np.datetime64('2015-01-01'), np.datetime64('2101-01-01')))
-            
-            # if the time lengths don't match (one goes for 87 years and the other 86) select only time frames that match
-            if ivaf_ctrl.time.values.shape[0] > ivaf.shape[2]:
-                print('ivaf_ctrl.time.values.shape[0] > ivaf.shape[2]')
-                ivaf_ctrl = ivaf_ctrl.isel(time=slice(0,ivaf.shape[2]))
-                ivaf_nc = ivaf_nc.drop_sel(time=ivaf_nc.time.values[:(ivaf.shape[2]-ivaf_ctrl.time.values.shape[0])]) # drop extra time steps
-            elif ivaf_ctrl.time.values.shape[0] < ivaf.shape[2]:
-                print("ivaf_ctrl.time.values.shape[0] < ivaf.shape[2]")
-                ivaf_nc = ivaf_nc.drop_sel(time=ivaf_nc.time.values[ivaf_ctrl.time.values.shape[0]-ivaf.shape[2]:]) # drop extra time steps
-                ivaf = ivaf[:,:, 0:ivaf_ctrl.time.values.shape[0]]
-                
-            else:
-                pass
-                
+            ivaf_ctrl = xr.open_dataset(ctrl_path, ).transpose('x', 'y', 'time', ...)
+
+            # subtract out control             
             ivaf = ivaf_ctrl.ivaf.values - ivaf
-        else:
-            pass
             
-        # save ivaf file
+        # save ivaf file (copied format from bed_data, change accordingly.)
         ivaf_nc['ivaf'] = (('x', 'y', 'time'), ivaf)
         ivaf_nc = ivaf_nc.drop_vars(['topg',])
         ivaf_nc['sle'] = ivaf_nc.ivaf / 1e9 / 362.5
@@ -373,6 +340,8 @@ def convert_and_subset_times(dataset,):
         
         if units == '2000-1-0': # VUB AISMPALEO
             units = '2000-1-1'
+        elif units == "day": # NCAR CISM exp7 - "day as %Y%m%d.%f"?
+            units = '2014-1-1'
             
         if units == 'seconds': # VUW PISM -- seconds since 1-1-1 00:00:00
             start_date = np.datetime64(datetime.strptime('0001-01-01 00:00:00', "%Y-%m-%d %H:%M:%S"))
@@ -386,7 +355,8 @@ def convert_and_subset_times(dataset,):
             dataset['time'] = np.array([start_date + np.timedelta64(int(x), 'D') for x in dataset.time.values])
     if len(dataset.time) > 86:
         # make sure the max date is 2100
-        dataset = dataset.sel(time=slice(np.datetime64('2014-07-01'), np.datetime64('2101-01-01')))
+        # dataset = dataset.sel(time=slice(np.datetime64('2014-01-01'), np.datetime64('2101-01-01')))
+        dataset = dataset.sel(time=slice('2014-01-01', '2101-01-01'))
         
         # if you still have more than 86, take the previous 86 values from 2100
         if len(dataset.time) > 86:
@@ -417,7 +387,7 @@ def get_model_densities(zenodo_directory: str, output_path: str=None):
                 file_path = os.path.join(root, file)
                 try:
                     # Open the NetCDF file using xarray
-                    dataset = xr.open_dataset(file_path, decode_times=False)
+                    dataset = xr.open_dataset(file_path, decode_times=False).transpose('x', 'y', 'time', ...)
 
                     # Extract values for rhoi and rhow
                     if 'rhoi' in dataset and 'rhow' in dataset:
@@ -501,7 +471,7 @@ def interpolate_values(data):
 
 
 class DimensionalityReducer:
-    def __init__(self, forcing_dir, projection_dir, output_dir):
+    def __init__(self, forcing_dir, projection_dir, output_dir, nan_mask=None):
         super().__init__()
         if forcing_dir is None:
             raise ValueError("Forcing directory must be specified.")
@@ -520,6 +490,22 @@ class DimensionalityReducer:
         
         all_projection_fps = get_all_filepaths(path=self.projection_dir, filetype='nc', contains='ivaf', not_contains='ctrl_proj')
         self.projection_paths = all_projection_fps
+        
+        if nan_mask is None:
+            warnings.warning('Could not find nan_mask, running generate_nan_mask()')
+            self.nan_mask = self.generate_nan_mask(paths=self.forcing_paths['all'].extend(self.projection_paths))
+        elif isinstance(nan_mask, str):
+            if nan_mask.endswith('.csv'):
+                self.nan_mask = pd.read_csv(nan_mask).to_numpy()
+            else:
+                raise NotImplementedError('Only supported nan_mask filetype is CSV.')
+        elif isinstance(nan_mask, np.array):
+            self.nan_mask = nan_mask
+        else:
+            raise TypeError('nan_mask can only be path (str), None (generate), or numpy array (np.array).')
+        
+        self.nan_mask_args = np.argwhere(self.nan_mask.flatten() == 0).squeeze() # nan_mask = 0 means no nan values found there
+                
         
     # def reduce_dimensionlity(self, forcing_dir: str=None, output_dir: str=None):
             # generate pca models
@@ -544,12 +530,12 @@ class DimensionalityReducer:
             os.mkdir(f"{self.output_dir}/pca_models/")
         self.pca_model_directory = f"{self.output_dir}/pca_models/"
         
-        # # Train PCA models for each atmospheric and oceanic forcing variable and save
+        # Train PCA models for each atmospheric and oceanic forcing variable and save
         # self._generate_atmosphere_pcas(self.forcing_paths['atmosphere'], self.pca_model_directory)
         # self._generate_ocean_pcas(self.forcing_paths['ocean'], self.pca_model_directory)
         
         # Train PCA model for SLE and save
-        sle_paths = get_all_filepaths(path=self.projection_dir, filetype='nc', contains='ivaf',)
+        sle_paths = get_all_filepaths(path=self.projection_dir, filetype='nc', contains='ivaf', not_contains='ctrl')
         self._generate_sle_pca(sle_paths, save_dir=self.pca_model_directory)
         
         return 0
@@ -591,7 +577,7 @@ class DimensionalityReducer:
         # for each atmospheric forcing file, convert each variable to PCA space with pretrained PCA model
         for i, path in enumerate(self.forcing_paths['atmosphere']):
             print(f"{i}/{len(self.forcing_paths['atmosphere'])} atmospheric forcing files converted to PCA space.")
-            dataset = xr.open_dataset(path, decode_times=False, engine='netcdf4')  # open the dataset
+            dataset = xr.open_dataset(path, decode_times=False, engine='netcdf4').transpose('x', 'y', 'time', ...)  # open the dataset
             forcing_name = path.replace('.nc', '').split('/')[-1]  # get metadata (model, ssp, etc.)
             
             # transform each variable in the dataset with their respective trained PCA model
@@ -632,7 +618,7 @@ class DimensionalityReducer:
             
             # get forcing array (requires mean value over z dimensions, see get_xarray_variable())
             forcing_array, _ = get_xarray_variable(path, var_name=var)
-            forcing_array = np.nan_to_num(forcing_array)  # deal with np.nans
+            # forcing_array = np.nan_to_num(forcing_array)  # deal with np.nans
             # forcing_array = forcing_array[:, ~(np.isnan(forcing_array).any(axis=0))]
             
             # transform each variable in the dataset with their respective trained PCA model
@@ -678,11 +664,11 @@ class DimensionalityReducer:
             
             # get forcing array (requires mean value over z dimensions, see get_xarray_variable())
             projection_array, _ = get_xarray_variable(path, var_name='ivaf')
-            nan_indices = np.argwhere(np.isnan(projection_array))
-            print(len(nan_indices))
-            continue
+            # nan_indices = np.argwhere(np.isnan(projection_array))
+            # print(len(nan_indices))
+            # continue
             
-            projection_array = np.nan_to_num(projection_array)  # deal with np.nans
+            # projection_array = np.nan_to_num(projection_array)  # deal with np.nans
             projection_array = projection_array / 1e9 / 362.5
             var = 'sle'  
             # projection_array = np.nan_to_num(projection_array)  # there shouldn't be nans...
@@ -730,7 +716,7 @@ class DimensionalityReducer:
                 variable_array[i, :, :] = data_flattened     
                 
             
-            # deal with np.nans (ask about later) -- since it's an anomaly, it should be fine to just replace with 0
+            # deal with np.nans (ask about later) -- since it's an anomaly, replace with 0
             variable_array = np.nan_to_num(variable_array)   
             
             # reshape variable_array (num_files, num_timestamps, num_gridpoints) --> (num_files*num_timestamps, num_gridpoints)
@@ -739,10 +725,10 @@ class DimensionalityReducer:
             # run PCA
             # if np.isnan(variable_array).any():
             #     continue
-            pca, pca_array = self._run_PCA(variable_array, num_pcs=300)
+            pca, _ = self._run_PCA(variable_array, num_pcs=300)
             
             # change back to (num_files, num_timestamps, num_pcs)
-            pca_array = pca_array.reshape(len(atmosphere_fps), len(dataset.time), -1)
+            # pca_array = pca_array.reshape(len(atmosphere_fps), len(dataset.time), -1)
             
             # get percent explained
             exp_var_pca = pca.explained_variance_ratio_
@@ -753,7 +739,6 @@ class DimensionalityReducer:
             # output pca object
             save_path = f"{save_dir}/pca_{var}_{arg_90}pcs.pkl"
             pkl.dump(pca, open(save_path,"wb"))
-            # np.save(f"{save_dir}/data/{var}_{arg_90}pcs.npy", pca_array)
             
         return 0
     
@@ -787,6 +772,10 @@ class DimensionalityReducer:
         for i, fp in enumerate(tempereature_fps):
             data_flattened, dataset = get_xarray_variable(fp, var_name='temperature')
             temperature_array[i, :, :] = data_flattened
+            
+        # thermal_forcing_array = thermal_forcing_array[~np.isnan(thermal_forcing_array)]
+        # salinity_array = salinity_array[~np.isnan(salinity_array)]
+        # temperature_array = temperature_array[~np.isnan(temperature_array)]
         
         # reshape variable_array (num_files, num_timestamps, num_gridpoints) --> (num_files*num_timestamps, num_gridpoints)
         thermal_forcing_array = thermal_forcing_array.reshape(len(thermal_forcing_fps)*len(dataset.time), 761*761)
@@ -801,10 +790,12 @@ class DimensionalityReducer:
         salinity_array = np.nan_to_num(salinity_array)
         temperature_array = np.nan_to_num(temperature_array)
         
+        
+        
         # run PCA
-        pca_tf, pca_tf_array = self._run_PCA(thermal_forcing_array, num_pcs=300)
-        pca_sal, pca_sal_array = self._run_PCA(salinity_array, num_pcs=300)
-        pca_temp, pca_temp_array = self._run_PCA(temperature_array, num_pcs=300)
+        pca_tf, _ = self._run_PCA(thermal_forcing_array, num_pcs=300)
+        pca_sal, _ = self._run_PCA(salinity_array, num_pcs=300)
+        pca_temp, _ = self._run_PCA(temperature_array, num_pcs=300)
         
         # get percent explained
         tf_exp_var_pca = pca_tf.explained_variance_ratio_
@@ -842,38 +833,52 @@ class DimensionalityReducer:
             int: 0 if PCA generation is successful, -1 otherwise.
         """
         
-        sle_array = np.zeros([len(sle_fps), 86, 761*761])
+        sle_array = np.zeros([4, 86, 761*761])
         
         # loop through each SLE (IVAF) projection file
         for i, fp in enumerate(sle_fps):
             
-            # get the variable you need (rather than the entire dataset)
+            # get the variable
+            try:
+                data_flattened, _ = get_xarray_variable(fp, var_name="sle")
+            except:
+                data_flattened, _ = get_xarray_variable(fp, var_name="ivaf")
+                data_flattened = data_flattened / 1e9 / 362.5
+                
             
-            data_flattened, dataset = get_xarray_variable(fp, var_name="ivaf")
-            if data_flattened.shape[0] > 86:
-                data_flattened = data_flattened[-86:,:]
+            # if data_flattened.shape[0] > 86:
+            #     data_flattened = data_flattened[-86:,:]
             
-            # store it in the total array and convert to sle
-            sle_array[i, :, :] = data_flattened / 1e9 / 362.5 
+            # store it in the total array
+            sle_array[i, :, :] = data_flattened 
             
             if i == 3:
-                break 
+                sle_fps = sle_fps[0:4]
+                break
+                
             
         
         # reshape variable_array (num_files, num_timestamps, num_gridpoints) --> (num_files*num_timestamps, num_gridpoints)
         sle_array = sle_array.reshape(len(sle_fps)*86, 761*761)
         
+        # only keep values within the mask
+        # sle_array = sle_array[:, self.nan_mask_args]
+        
+        
         # since the array is so large (350*85, 761*761) = (29750, 579121), randomly sample N rows and run PCA
-        sle_array = sle_array[np.random.choice(sle_array.shape[0], 10000, replace=False), :]
+        sle_array = sle_array[np.random.choice(sle_array.shape[0], 300, replace=False), :]
+        
         
         # deal with np.nans (ask about later)
-        sle_array = np.nan_to_num(sle_array) # ivaf anomaly?
+        sle_array = np.nan_to_num(sle_array) 
+        
+        # normalize sle
+        # sle_array = MinMaxScaler().fit_transform(sle_array)
+        # sle_array = (sle_array - np.min(sle_array)) / (np.max(sle_array) - np.min(sle_array))
         
         # run pca
-        pca, _ = self._run_PCA(sle_array, num_pcs=300, randomized=False)
+        pca, _ = self._run_PCA(sle_array, num_pcs=300,)
         
-        # change back to (num_files, num_timestamps, num_pcs)
-        # pca_array = pca_array.reshape(len(sle_fps), len(dataset.time), -1)
         
         # get percent explained
         exp_var_pca = pca.explained_variance_ratio_
@@ -905,7 +910,6 @@ class DimensionalityReducer:
         if not num_pcs:
             pca = PCA(svd_solver=solver)
         else:
-
             pca = PCA(n_components=num_pcs, svd_solver=solver)
 
         pca = pca.fit(variable_array)
@@ -969,6 +973,9 @@ class DimensionalityReducer:
             
         if len(x.shape) == 3:
             x = x.reshape(x.shape[0], -1)
+            
+        nan_mask = np.isnan(x)
+        x = np.nan_to_num(x)
         
         pca_models = self._load_pca_models(pca_model_directory, var_name=var_name)
         pca = pca_models[var_name]
@@ -1003,6 +1010,50 @@ class DimensionalityReducer:
         pca = pca_models[var_name]
         inverted = pca.inverse_transform(pca_x)
         return inverted
+    
+def generate_nan_mask(self, paths, output_dir=None):
+    # for each file, loop through data and find where nan values are
+    for i, fp in tqdm(enumerate(paths), total=len(paths)):
+        d = xr.open_dataset(fp, decode_times=True)
+        d = d.transpose('x', 'y', 'time', ...)
+        
+        # decide which variable to pull out based on file type
+        ocean = False
+        if 'Atmosphere' in fp:
+            var = 'smb_anomaly'
+
+        elif 'Ocean' in fp:
+            ocean = True
+            var = fp.split('/')[-1].split('_')[-4]
+            if var == 'forcing':
+                var = 'thermal_forcing'
+        else:
+            var = 'ivaf'
+        
+        # on the first file, first iteration, keep the first 761*761 as the mask
+        if i == 0:
+            if ocean:
+                mask = np.isnan(d[var][:, :, 0, 0]) * 1 # ocean data is [x, y, time, z]
+            else:
+                mask = np.isnan(d[var][:, :, 0]) * 1
+        
+        # loop through each sequential mask and only keep the minimum number of nan values
+        for j in range(len(d.time)):
+            if ocean:
+                nan_index_new = np.isnan(d[var][:, :, j, 0]) * 1
+            else:
+                nan_index_new = np.isnan(d[var][:, :, j]) * 1
+            # if an argument is np.nan for all data, the value of mask will stay 1, else 0
+            mask = np.multiply(nan_index_new, mask) 
+        
+        del d # delete old dataset before loading next
+    
+    if output_dir is not None:
+        np.savetxt(f"{output_dir}/nan_mask.csv", mask, delimiter=",")
+    else:
+        np.savetxt(f"nan_mask.csv", mask, delimiter=",")
+    
+    return mask
         
 
 
