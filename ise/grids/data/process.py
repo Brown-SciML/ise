@@ -471,7 +471,7 @@ def interpolate_values(data):
 
 
 class DimensionalityReducer:
-    def __init__(self, forcing_dir, projection_dir, output_dir, nan_mask=None):
+    def __init__(self, forcing_dir, projection_dir, output_dir, ):
         super().__init__()
         if forcing_dir is None:
             raise ValueError("Forcing directory must be specified.")
@@ -482,6 +482,7 @@ class DimensionalityReducer:
         self.output_dir = output_dir
         self.forcing_paths = {'all': None, 'atmosphere': None, 'ocean': None}
         self.pca_model_directory = None
+        self.scaler_directory = None
         
         all_forcing_fps = get_all_filepaths(path=self.forcing_dir, filetype='nc', contains='1995-2100', not_contains='Ice_Shelf_Fracture')
         self.forcing_paths['all'] = [x for x in all_forcing_fps if '8km' in x and 'v1' not in x]
@@ -490,21 +491,6 @@ class DimensionalityReducer:
         
         all_projection_fps = get_all_filepaths(path=self.projection_dir, filetype='nc', contains='ivaf', not_contains='ctrl_proj')
         self.projection_paths = all_projection_fps
-        
-        if nan_mask is None:
-            warnings.warning('Could not find nan_mask, running generate_nan_mask()')
-            self.nan_mask = self.generate_nan_mask(paths=self.forcing_paths['all'].extend(self.projection_paths))
-        elif isinstance(nan_mask, str):
-            if nan_mask.endswith('.csv'):
-                self.nan_mask = pd.read_csv(nan_mask).to_numpy()
-            else:
-                raise NotImplementedError('Only supported nan_mask filetype is CSV.')
-        elif isinstance(nan_mask, np.array):
-            self.nan_mask = nan_mask
-        else:
-            raise TypeError('nan_mask can only be path (str), None (generate), or numpy array (np.array).')
-        
-        self.nan_mask_args = np.argwhere(self.nan_mask.flatten() == 0).squeeze() # nan_mask = 0 means no nan values found there
                 
         
     # def reduce_dimensionlity(self, forcing_dir: str=None, output_dir: str=None):
@@ -529,14 +515,17 @@ class DimensionalityReducer:
         if not os.path.exists(f"{self.output_dir}/pca_models/"):
             os.mkdir(f"{self.output_dir}/pca_models/")
         self.pca_model_directory = f"{self.output_dir}/pca_models/"
+        if not os.path.exists(f"{self.output_dir}/scalers/"):
+            os.mkdir(f"{self.output_dir}/scalers/")
+        self.scaler_directory = f"{self.output_dir}/scalers/"
         
         # Train PCA models for each atmospheric and oceanic forcing variable and save
-        # self._generate_atmosphere_pcas(self.forcing_paths['atmosphere'], self.pca_model_directory)
-        # self._generate_ocean_pcas(self.forcing_paths['ocean'], self.pca_model_directory)
+        self._generate_atmosphere_pcas(self.forcing_paths['atmosphere'], self.pca_model_directory, scaler_dir=self.scaler_directory)
+        self._generate_ocean_pcas(self.forcing_paths['ocean'], self.pca_model_directory, scaler_dir=self.scaler_directory)
         
         # Train PCA model for SLE and save
         sle_paths = get_all_filepaths(path=self.projection_dir, filetype='nc', contains='ivaf', not_contains='ctrl')
-        self._generate_sle_pca(sle_paths, save_dir=self.pca_model_directory)
+        self._generate_sle_pca(sle_paths, save_dir=self.pca_model_directory, scaler_dir=self.scaler_directory)
         
         return 0
     
@@ -575,8 +564,11 @@ class DimensionalityReducer:
             os.mkdir(f"{output_dir}/forcings/")
         
         # for each atmospheric forcing file, convert each variable to PCA space with pretrained PCA model
-        for i, path in enumerate(self.forcing_paths['atmosphere']):
-            print(f"{i}/{len(self.forcing_paths['atmosphere'])} atmospheric forcing files converted to PCA space.")
+        atmospheric_paths_loop = tqdm(enumerate(self.forcing_paths['atmosphere']), total=len(self.forcing_paths['atmosphere']))
+        for i, path in atmospheric_paths_loop:
+            atmospheric_paths_loop.set_description(f"Converting atmospheric file #{i+1}/{len(self.forcing_paths['atmosphere'])}")
+            
+            
             dataset = xr.open_dataset(path, decode_times=False, engine='netcdf4').transpose('x', 'y', 'time', ...)  # open the dataset
             forcing_name = path.replace('.nc', '').split('/')[-1]  # get metadata (model, ssp, etc.)
             
@@ -604,11 +596,12 @@ class DimensionalityReducer:
         
         # OCEANIC FORCINGS
         
-        # for each atmospheric forcing file, convert each variable to PCA space with pretrained PCA model
-        for i, path in enumerate(self.forcing_paths['ocean']):
+        # for each ocean forcing file, convert each variable to PCA space with pretrained PCA model
+        ocean_fps_loop = tqdm(enumerate(self.forcing_paths['ocean']), total=len(self.forcing_paths['ocean']))
+        for i, path in ocean_fps_loop:
+            ocean_fps_loop.set_description(f"Converting oceanic file #{i+1}/{len(self.forcing_paths['ocean'])}")
             
             # open the dataset
-            print(f"{i}/{len(self.forcing_paths['ocean'])} oceanic forcing files converted to PCA space.")
             forcing_name = path.replace('.nc', '').split('/')[-1]  # get metadata (model, ssp, etc.)
             
             # get variable name by splitting the filepath name
@@ -659,7 +652,9 @@ class DimensionalityReducer:
             os.mkdir(f"{output_dir}/projections/")
             
         # for each projection file, convert ivaf to PCA space with pretrained PCA model
-        for i, path in enumerate(self.projection_paths):
+        projection_paths_loop = tqdm(enumerate(self.projection_paths), total=len(self.projection_paths))
+        for i, path in projection_paths_loop:
+            projection_paths_loop.set_description(f"Converting projection file #{i+1}/{len(self.projection_paths)}")
             print(f"{i}/{len(self.projection_paths)} projection files converted to PCA space.")
             
             # get forcing array (requires mean value over z dimensions, see get_xarray_variable())
@@ -688,7 +683,7 @@ class DimensionalityReducer:
     
     
 
-    def _generate_atmosphere_pcas(self, atmosphere_fps: list, save_dir: str):
+    def _generate_atmosphere_pcas(self, atmosphere_fps: list, save_dir: str, scaler_dir: str=None):
         """
         Generate principal component analysis (PCA) for atmospheric variables.
 
@@ -700,13 +695,19 @@ class DimensionalityReducer:
             int: 0 if successful.
         """
         
+        # if no separate directory for saving scalers is specified, use the pca save_dir
+        if scaler_dir is None:
+            scaler_dir = save_dir
+        
         # for each variable
+        
         var_names = ['pr_anomaly', 'evspsbl_anomaly', 'mrro_anomaly', 'smb_anomaly', 'ts_anomaly']
-        for i, var in enumerate(var_names):
-            print(f"{i}/{len(var_names)} atmospheric pca models created.")
+        var_names_loop = tqdm(enumerate(var_names), total=len(var_names))
+        for i, var in var_names_loop:
+            var_names_loop.set_description(f"Processing atmospheric PCA #{i+1}/{len(var_names)}")
             variable_array = np.zeros([len(atmosphere_fps), 106, 761*761])
             
-            # loop through each atmospheric CMIP file
+            # loop through each atmospheric CMIP file and combine them into one big array
             for i, fp in enumerate(atmosphere_fps):
                 
                 # get the variable you need (rather than the entire dataset)
@@ -715,20 +716,19 @@ class DimensionalityReducer:
                 # store it in the total array
                 variable_array[i, :, :] = data_flattened     
                 
-            
-            # deal with np.nans (ask about later) -- since it's an anomaly, replace with 0
+
+            # deal with np.nans -- since it's an anomaly, replace with 0
             variable_array = np.nan_to_num(variable_array)   
             
             # reshape variable_array (num_files, num_timestamps, num_gridpoints) --> (num_files*num_timestamps, num_gridpoints)
             variable_array = variable_array.reshape(len(atmosphere_fps)*len(dataset.time), 761*761)
             
-            # run PCA
-            # if np.isnan(variable_array).any():
-            #     continue
-            pca, _ = self._run_PCA(variable_array, num_pcs=300)
+            # scale data
+            variable_scaler = MinMaxScaler().fit(variable_array)
+            variable_array = variable_scaler.transform(variable_array)
             
-            # change back to (num_files, num_timestamps, num_pcs)
-            # pca_array = pca_array.reshape(len(atmosphere_fps), len(dataset.time), -1)
+            # run PCA
+            pca, _ = self._run_PCA(variable_array, num_pcs=300)
             
             # get percent explained
             exp_var_pca = pca.explained_variance_ratio_
@@ -739,10 +739,13 @@ class DimensionalityReducer:
             # output pca object
             save_path = f"{save_dir}/pca_{var}_{arg_90}pcs.pkl"
             pkl.dump(pca, open(save_path,"wb"))
+            # and scaler
+            save_path = f"{save_dir}/{var}_scaler.pkl"
+            pkl.dump(variable_scaler, open(save_path,"wb"))
             
         return 0
     
-    def _generate_ocean_pcas(self, ocean_fps: list, save_dir: str):
+    def _generate_ocean_pcas(self, ocean_fps: list, save_dir: str, scaler_dir: str=None):
         """
         Generate principal component analysis (PCA) for ocean variables.
 
@@ -754,6 +757,9 @@ class DimensionalityReducer:
             int: 0 if PCA generation is successful, -1 otherwise.
         """
         
+        if scaler_dir is None:
+            scaler_dir = save_dir
+        
         thermal_forcing_fps = [x for x in ocean_fps if 'thermal_forcing' in x]
         salinity_fps = [x for x in ocean_fps if 'salinity' in x]
         tempereature_fps = [x for x in ocean_fps if 'temperature' in x]
@@ -763,34 +769,36 @@ class DimensionalityReducer:
         temperature_array = np.zeros([len(tempereature_fps), 106, 761*761])
         
         # get the variables you need (rather than the entire dataset)
+        print('Processing thermal_forcing PCA model.')
         for i, fp in enumerate(thermal_forcing_fps):
             data_flattened, dataset = get_xarray_variable(fp, var_name='thermal_forcing')
             thermal_forcing_array[i, :, :] = data_flattened # store
+        print('Processing salinity PCA model.')
         for i, fp in enumerate(salinity_fps):
             data_flattened, dataset = get_xarray_variable(fp, var_name='salinity')
             salinity_array[i, :, :] = data_flattened # store
+        print('Processing temperature PCA model.')
         for i, fp in enumerate(tempereature_fps):
             data_flattened, dataset = get_xarray_variable(fp, var_name='temperature')
             temperature_array[i, :, :] = data_flattened
             
-        # thermal_forcing_array = thermal_forcing_array[~np.isnan(thermal_forcing_array)]
-        # salinity_array = salinity_array[~np.isnan(salinity_array)]
-        # temperature_array = temperature_array[~np.isnan(temperature_array)]
-        
         # reshape variable_array (num_files, num_timestamps, num_gridpoints) --> (num_files*num_timestamps, num_gridpoints)
         thermal_forcing_array = thermal_forcing_array.reshape(len(thermal_forcing_fps)*len(dataset.time), 761*761)
         salinity_array = salinity_array.reshape(len(salinity_fps)*len(dataset.time), 761*761)
         temperature_array = temperature_array.reshape(len(tempereature_fps)*len(dataset.time), 761*761)
         
         # remove nans
-        # thermal_forcing_array = thermal_forcing_array[:, ~(np.isnan(thermal_forcing_array).any(axis=0))]
-        # salinity_array = salinity_array[:, ~(np.isnan(salinity_array).any(axis=0))]
-        # temperature_array = temperature_array[:, ~(np.isnan(temperature_array).any(axis=0))]
         thermal_forcing_array = np.nan_to_num(thermal_forcing_array)
         salinity_array = np.nan_to_num(salinity_array)
         temperature_array = np.nan_to_num(temperature_array)
         
-        
+        # scale data
+        therm_scaler = MinMaxScaler().fit(thermal_forcing_array)
+        thermal_forcing_array = therm_scaler.transform(thermal_forcing_array)
+        salinity_scaler = MinMaxScaler().fit(salinity_array)
+        salinity_array = salinity_scaler.transform(salinity_array)
+        temp_scaler = MinMaxScaler().fit(temperature_array)
+        temperature_array = temp_scaler.transform(temperature_array)
         
         # run PCA
         pca_tf, _ = self._run_PCA(thermal_forcing_array, num_pcs=300)
@@ -803,25 +811,33 @@ class DimensionalityReducer:
         tf_arg_90 = np.argmax(tf_cum_sum_eigenvalues>0.90)+1
         save_path = f"{save_dir}/pca_thermal_forcing_{tf_arg_90}pcs.pkl"
         pkl.dump(pca_tf, open(save_path,"wb"))
-        # np.save(f"{save_dir}/data/thermal_forcing_{tf_arg_90}pcs.npy", pca_tf_array)
+
         
         sal_exp_var_pca = pca_sal.explained_variance_ratio_
         sal_cum_sum_eigenvalues = np.cumsum(sal_exp_var_pca)
         sal_arg_90 = np.argmax(sal_cum_sum_eigenvalues>0.90)+1
         save_path = f"{save_dir}/pca_salinity_{sal_arg_90}pcs.pkl"
         pkl.dump(pca_sal, open(save_path,"wb"))
-        # np.save(f"{save_dir}/data/salinity_{sal_arg_90}pcs.npy", pca_sal_array)
         
         temp_exp_var_pca = pca_temp.explained_variance_ratio_
         temp_cum_sum_eigenvalues = np.cumsum(temp_exp_var_pca)
         temp_arg_90 = np.argmax(temp_cum_sum_eigenvalues>0.90)+1
         save_path = f"{save_dir}/pca_temperature_{temp_arg_90}pcs.pkl"
         pkl.dump(pca_temp, open(save_path,"wb"))
-        # np.save(f"{save_dir}/data/temperature_{temp_arg_90}pcs.npy", pca_temp_array)
+        
+        # save scalers 
+        save_path = f"{scaler_dir}/thermal_forcing_scaler.pkl"
+        pkl.dump(therm_scaler, open(save_path,"wb"))
+        
+        save_path = f"{scaler_dir}/temperature_scaler.pkl"
+        pkl.dump(temp_scaler, open(save_path,"wb"))
+        
+        save_path = f"{scaler_dir}/salinity_scaler.pkl"
+        pkl.dump(salinity_scaler, open(save_path,"wb"))
         
         return 0
     
-    def _generate_sle_pca(self, sle_fps: list, save_dir: str):
+    def _generate_sle_pca(self, sle_fps: list, save_dir: str, scaler_dir=None):
         """
         Generate principal component analysis (PCA) for sea level equivalent (SLE) variables.
 
@@ -833,52 +849,40 @@ class DimensionalityReducer:
             int: 0 if PCA generation is successful, -1 otherwise.
         """
         
-        sle_array = np.zeros([4, 86, 761*761])
+        if scaler_dir is None:
+            scaler_dir = save_dir
+        
+        sle_array = np.zeros([len(sle_fps), 86, 761*761])
         
         # loop through each SLE (IVAF) projection file
-        for i, fp in enumerate(sle_fps):
-            
+        sle_fps_loop = tqdm(enumerate(sle_fps), total=len(sle_fps))
+        for i, fp in sle_fps_loop:
+            sle_fps_loop.set_description(f"Aggregating SLE file #{i+1}/{len(sle_fps)}")
             # get the variable
             try:
                 data_flattened, _ = get_xarray_variable(fp, var_name="sle")
             except:
                 data_flattened, _ = get_xarray_variable(fp, var_name="ivaf")
                 data_flattened = data_flattened / 1e9 / 362.5
-                
-            
-            # if data_flattened.shape[0] > 86:
-            #     data_flattened = data_flattened[-86:,:]
             
             # store it in the total array
             sle_array[i, :, :] = data_flattened 
-            
-            if i == 3:
-                sle_fps = sle_fps[0:4]
-                break
                 
-            
-        
         # reshape variable_array (num_files, num_timestamps, num_gridpoints) --> (num_files*num_timestamps, num_gridpoints)
         sle_array = sle_array.reshape(len(sle_fps)*86, 761*761)
         
-        # only keep values within the mask
-        # sle_array = sle_array[:, self.nan_mask_args]
-        
-        
         # since the array is so large (350*85, 761*761) = (29750, 579121), randomly sample N rows and run PCA
-        sle_array = sle_array[np.random.choice(sle_array.shape[0], 300, replace=False), :]
-        
+        sle_array = sle_array[np.random.choice(sle_array.shape[0], 10000, replace=False), :]
         
         # deal with np.nans (ask about later)
         sle_array = np.nan_to_num(sle_array) 
         
-        # normalize sle
-        # sle_array = MinMaxScaler().fit_transform(sle_array)
-        # sle_array = (sle_array - np.min(sle_array)) / (np.max(sle_array) - np.min(sle_array))
+        # scale sle
+        scaler = MinMaxScaler().fit(sle_array)
+        sle_array = scaler.transform(sle_array)
         
         # run pca
         pca, _ = self._run_PCA(sle_array, num_pcs=300,)
-        
         
         # get percent explained
         exp_var_pca = pca.explained_variance_ratio_
@@ -889,6 +893,10 @@ class DimensionalityReducer:
         # output pca object
         save_path = f"{save_dir}/pca_sle_{arg_90}pcs.pkl"
         pkl.dump(pca, open(save_path,"wb"))
+        
+        # and scaler
+        save_path = f"{save_dir}/sle_scaler.pkl"
+        pkl.dump(scaler, open(save_path,"wb"))
         
         
         return 0
@@ -936,6 +944,7 @@ class DimensionalityReducer:
             thermal_forcing_model = [x for x in pca_models_paths if 'thermal_forcing' in x][0]
             salinity_model = [x for x in pca_models_paths if 'salinity' in x][0]
             temperature_model = [x for x in pca_models_paths if 'temperature' in x][0]
+            sle_model = [x for x in pca_models_paths if 'sle' in x][0]
                 
             pca_models = dict(
                 evspsbl_anomaly=pkl.load(open(f"{self.pca_model_directory}/{evspsbl_model}", "rb")),
@@ -946,6 +955,7 @@ class DimensionalityReducer:
                 thermal_forcing=pkl.load(open(f"{self.pca_model_directory}/{thermal_forcing_model}", "rb")),
                 salinity=pkl.load(open(f"{self.pca_model_directory}/{salinity_model}", "rb")),
                 temperature=pkl.load(open(f"{self.pca_model_directory}/{temperature_model}", "rb")),
+                sle=pkl.load(open(f"{self.pca_model_directory}/{sle_model}", "rb")),
             )
         else:
             pca_models = {}
@@ -953,7 +963,50 @@ class DimensionalityReducer:
             pca_models[var_name] = pkl.load(open(f"{self.pca_model_directory}/{model_path}", "rb"))
         return pca_models
     
-    def transform(self, x, var_name, num_pcs=None, pca_model_directory=None):
+    def _load_scalers(self, scaler_directory, var_name='all'):
+        if self.scaler_directory is None and scaler_directory is None:
+            warnings.warn('self.scaler_directory is None, resorting to using self.pca_model_directory')
+            if self.pca_model_directory is None:
+                raise ValueError("Scaler directory must be specified, or DimensionalityReducer.generate_pca_models must be run first.")
+            self.scaler_directory = self.pca_model_directory
+        if scaler_directory is not None:
+            self.scaler_directory = scaler_directory
+        if var_name not in ['all', 'evspsbl_anomaly', 'mrro_anomaly', 'pr_anomaly', 'smb_anomaly', 'ts_anomaly', 'thermal_forcing', 'salinity', 'temperature', 'sle', None]:
+            raise ValueError(f"Variable name {var_name} not recognized.")
+            
+        scaler_paths = os.listdir(self.scaler_directory)
+        scaler_paths = [x for x in scaler_paths if 'pca' in x]
+        
+        if var_name == 'all' or var_name is None:
+            evspsbl_model = [x for x in scaler_paths if 'evspsbl' in x][0]
+            mrro_model = [x for x in scaler_paths if 'mrro' in x][0]
+            pr_model = [x for x in scaler_paths if 'pr' in x][0]
+            smb_model = [x for x in scaler_paths if 'smb' in x][0]
+            ts_model = [x for x in scaler_paths if 'ts' in x][0]
+            thermal_forcing_model = [x for x in scaler_paths if 'thermal_forcing' in x][0]
+            salinity_model = [x for x in scaler_paths if 'salinity' in x][0]
+            temperature_model = [x for x in scaler_paths if 'temperature' in x][0]
+            sle_model = [x for x in scaler_paths if 'sle' in x][0]
+                
+            scalers = dict(
+                evspsbl_anomaly=pkl.load(open(f"{self.scaler_directory}/{evspsbl_model}", "rb")),
+                mrro_anomaly=pkl.load(open(f"{self.scaler_directory}/{mrro_model}", "rb")),
+                pr_anomaly=pkl.load(open(f"{self.scaler_directory}/{pr_model}", "rb")),
+                smb_anomaly=pkl.load(open(f"{self.scaler_directory}/{smb_model}", "rb")),
+                ts_anomaly=pkl.load(open(f"{self.scaler_directory}/{ts_model}", "rb")),
+                thermal_forcing=pkl.load(open(f"{self.scaler_directory}/{thermal_forcing_model}", "rb")),
+                salinity=pkl.load(open(f"{self.scaler_directory}/{salinity_model}", "rb")),
+                temperature=pkl.load(open(f"{self.scaler_directory}/{temperature_model}", "rb")),
+                sle=pkl.load(open(f"{self.scaler_directory}/{sle_model}", "rb")),
+            )
+        else:
+            scalers = {}
+            scaler_path = [x for x in scaler_directory if var_name in x][0]
+            scalers[var_name] = pkl.load(open(f"{self.scaler_directory}/{scaler_path}", "rb"))
+        return scalers
+    
+    
+    def transform(self, x, var_name, num_pcs=None, pca_model_directory=None, scaler_directory=None):
         """
         Transform the given variable into PCA space.
 
@@ -970,16 +1023,21 @@ class DimensionalityReducer:
         
         if pca_model_directory is not None:
             self.pca_model_directory = pca_model_directory
+
+        if scaler_directory is None and self.scaler_directory is None:
+            raise ValueError("PCA model directory must be specified, or DimensionalityReducer.generate_pca_models must be run first.")
+        
+        if scaler_directory is not None:
+            self.scaler_directory = scaler_directory
             
         if len(x.shape) == 3:
             x = x.reshape(x.shape[0], -1)
-            
-        nan_mask = np.isnan(x)
-        x = np.nan_to_num(x)
         
         pca_models = self._load_pca_models(pca_model_directory, var_name=var_name)
+        scalers = self._load_scalers()
         pca = pca_models[var_name]
-        transformed = pca.transform(x)
+        scaler = scalers[var_name]
+        transformed = pca.transform(scaler.transform(x))
         
         if num_pcs.endswith('%'):
             exp_var_pca = pca.explained_variance_ratio_
@@ -1010,52 +1068,6 @@ class DimensionalityReducer:
         pca = pca_models[var_name]
         inverted = pca.inverse_transform(pca_x)
         return inverted
-    
-def generate_nan_mask(self, paths, output_dir=None):
-    # for each file, loop through data and find where nan values are
-    for i, fp in tqdm(enumerate(paths), total=len(paths)):
-        d = xr.open_dataset(fp, decode_times=True)
-        d = d.transpose('x', 'y', 'time', ...)
-        
-        # decide which variable to pull out based on file type
-        ocean = False
-        if 'Atmosphere' in fp:
-            var = 'smb_anomaly'
-
-        elif 'Ocean' in fp:
-            ocean = True
-            var = fp.split('/')[-1].split('_')[-4]
-            if var == 'forcing':
-                var = 'thermal_forcing'
-        else:
-            var = 'ivaf'
-        
-        # on the first file, first iteration, keep the first 761*761 as the mask
-        if i == 0:
-            if ocean:
-                mask = np.isnan(d[var][:, :, 0, 0]) * 1 # ocean data is [x, y, time, z]
-            else:
-                mask = np.isnan(d[var][:, :, 0]) * 1
-        
-        # loop through each sequential mask and only keep the minimum number of nan values
-        for j in range(len(d.time)):
-            if ocean:
-                nan_index_new = np.isnan(d[var][:, :, j, 0]) * 1
-            else:
-                nan_index_new = np.isnan(d[var][:, :, j]) * 1
-            # if an argument is np.nan for all data, the value of mask will stay 1, else 0
-            mask = np.multiply(nan_index_new, mask) 
-        
-        del d # delete old dataset before loading next
-    
-    if output_dir is not None:
-        np.savetxt(f"{output_dir}/nan_mask.csv", mask, delimiter=",")
-    else:
-        np.savetxt(f"nan_mask.csv", mask, delimiter=",")
-    
-    return mask
-        
-
 
     
             
