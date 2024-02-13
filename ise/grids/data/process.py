@@ -5,7 +5,7 @@ import numpy as np
 import warnings
 import cftime
 from sklearn.decomposition import PCA
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import pickle as pkl
 from ise.grids.utils import get_all_filepaths
 from datetime import date, timedelta, datetime
@@ -219,22 +219,22 @@ class ProjectionProcessor:
         # if -9999 instead of np.nan, replace (come back and optimize? couldn't figure out with xarray)
         if bed.topg[0,0,0] <= -9999. or bed.topg[0,0,0] >= 9999:
             topg = bed.topg.values
-            topg[(np.where(topg <= -9999.)) | (np.where(topg >= 9999))] = np.nan
+            topg[(np.where((topg <= -9999.) | (topg >= 9999)))] = np.nan
             bed['topg'].values = topg
             del topg
             
             lithk = thickness.lithk.values
-            lithk[(np.where(lithk <= -9999.)) | (np.where(lithk >= 9999))] = np.nan
+            lithk[(np.where((lithk <= -9999.) | (lithk >= 9999)))] = np.nan
             thickness['lithk'].values = lithk
             del lithk
             
             sftgif = mask.sftgif.values
-            sftgif[(np.where(sftgif <= -9999.)) | (np.where(sftgif >= 9999))] = np.nan
+            sftgif[(np.where((sftgif <= -9999.) | (sftgif >= 9999)))] = np.nan
             mask['sftgif'].values = sftgif
             del sftgif
             
             sftgrf = ground_mask.sftgrf.values
-            sftgrf[(np.where(sftgrf <= -9999.)) | (np.where(sftgrf >= 9999))] = np.nan
+            sftgrf[(np.where((sftgrf <= -9999.) | (sftgrf >= 9999)))] = np.nan
             ground_mask['sftgrf'].values = sftgrf
             del sftgrf
         
@@ -364,7 +364,8 @@ def convert_and_subset_times(dataset,):
             dataset = dataset.sel(time=slice(dataset.time.values[len(dataset.time) - 86], dataset.time.values[-1]))
         
     if len(dataset.time) != 86:
-        raise ValueError('Subsetting of NC file processed incorrectly, go back and check logs.')
+        warnings.warn('Subsetting of NC file processed incorrectly, go back and check logs.')
+        print(dataset.attrs)
             
     return dataset
 
@@ -481,8 +482,17 @@ class DimensionalityReducer:
         self.projection_dir = projection_dir
         self.output_dir = output_dir
         self.forcing_paths = {'all': None, 'atmosphere': None, 'ocean': None}
-        self.pca_model_directory = None
-        self.scaler_directory = None
+        
+        # check inputs
+        if os.path.exists(f"{self.output_dir}/pca_models/"):
+            self.pca_model_directory = f"{self.output_dir}/pca_models/"
+        else:
+            self.pca_model_directory = None
+            
+        if os.path.exists(f"{self.output_dir}/scalers/"):
+            self.scaler_directory = f"{self.output_dir}/scalers/"
+        else:
+            self.scaler_directory = None
         
         all_forcing_fps = get_all_filepaths(path=self.forcing_dir, filetype='nc', contains='1995-2100', not_contains='Ice_Shelf_Fracture')
         self.forcing_paths['all'] = [x for x in all_forcing_fps if '8km' in x and 'v1' not in x]
@@ -569,14 +579,18 @@ class DimensionalityReducer:
             atmospheric_paths_loop.set_description(f"Converting atmospheric file #{i+1}/{len(self.forcing_paths['atmosphere'])}")
             
             
-            dataset = xr.open_dataset(path, decode_times=False, engine='netcdf4').transpose('x', 'y', 'time', ...)  # open the dataset
+            dataset = xr.open_dataset(path, decode_times=False, engine='netcdf4').transpose('time', 'y', 'x', ...)  # open the dataset
+            if len(dataset.dims) > 3:
+                drop_dims = [x for x in list(dataset.dims) if x not in ('time', 'x', 'y')]
+                dataset = dataset.drop_dims(drop_dims)
+            # dataset = convert_and_subset_times(dataset)
             forcing_name = path.replace('.nc', '').split('/')[-1]  # get metadata (model, ssp, etc.)
             
             # transform each variable in the dataset with their respective trained PCA model
             transformed_data = {}
             for var in ['evspsbl_anomaly', 'mrro_anomaly', 'pr_anomaly', 'smb_anomaly', 'ts_anomaly']:
                 try:
-                    transformed = self.transform(dataset[var].values, var_name=var, num_pcs=num_pcs, pca_model_directory=self.pca_model_directory)
+                    transformed = self.transform(dataset[var].values, var_name=var, num_pcs=num_pcs, pca_model_directory=self.pca_model_directory, scaler_directory=self.scaler_directory)
                 except KeyError: # if a variable is missing (usually mrro_anomaly), skip it
                     continue
                 transformed_data[var] = transformed  # store in dict with structure {'var_name': transformed_var}
@@ -616,7 +630,7 @@ class DimensionalityReducer:
             
             # transform each variable in the dataset with their respective trained PCA model
             transformed_data = {}
-            transformed = self.transform(forcing_array, var_name=var, num_pcs=num_pcs, pca_model_directory=self.pca_model_directory)
+            transformed = self.transform(forcing_array, var_name=var, num_pcs=num_pcs, pca_model_directory=self.pca_model_directory, scaler_directory=self.scaler_directory)
             transformed_data[var] = transformed  # store in dict with structure {'var_name': transformed_var}
             
             # create a dataframe with rows corresponding to time (106 total) and columns corresponding to each variables principal components
@@ -658,20 +672,25 @@ class DimensionalityReducer:
             print(f"{i}/{len(self.projection_paths)} projection files converted to PCA space.")
             
             # get forcing array (requires mean value over z dimensions, see get_xarray_variable())
-            projection_array, _ = get_xarray_variable(path, var_name='ivaf')
+            try:
+                projection_array, _ = get_xarray_variable(path, var_name='sle')
+            except:
+                projection_array, _ = get_xarray_variable(path, var_name='ivaf')
+                projection_array = projection_array / 1e9 / 362.5
+                
+            
             # nan_indices = np.argwhere(np.isnan(projection_array))
             # print(len(nan_indices))
             # continue
             
             # projection_array = np.nan_to_num(projection_array)  # deal with np.nans
-            projection_array = projection_array / 1e9 / 362.5
-            var = 'sle'  
+            var = 'sle'
             # projection_array = np.nan_to_num(projection_array)  # there shouldn't be nans...
             projection_name = path.replace('.nc', '').split('/')[-1]  # get metadata (model, ssp, etc.)
             
             # transform each variable in the dataset with their respective trained PCA model
             transformed_data = {}
-            transformed = self.transform(projection_array, var_name=var, num_pcs=num_pcs, pca_model_directory=self.pca_model_directory)
+            transformed = self.transform(projection_array, var_name=var, num_pcs=num_pcs, pca_model_directory=self.pca_model_directory, scaler_directory=self.scaler_directory)
             transformed_data[var] = transformed  # store in dict with structure {'var_name': transformed_var}
             
             # create a dataframe with rows corresponding to time (106 total) and columns corresponding to each variables principal components
@@ -724,11 +743,12 @@ class DimensionalityReducer:
             variable_array = variable_array.reshape(len(atmosphere_fps)*len(dataset.time), 761*761)
             
             # scale data
-            variable_scaler = MinMaxScaler().fit(variable_array)
+            variable_scaler = StandardScaler()
+            variable_scaler.fit(variable_array)
             variable_array = variable_scaler.transform(variable_array)
             
             # run PCA
-            pca, _ = self._run_PCA(variable_array, num_pcs=300)
+            pca, _ = self._run_PCA(variable_array, num_pcs=1000)
             
             # get percent explained
             exp_var_pca = pca.explained_variance_ratio_
@@ -740,7 +760,7 @@ class DimensionalityReducer:
             save_path = f"{save_dir}/pca_{var}_{arg_90}pcs.pkl"
             pkl.dump(pca, open(save_path,"wb"))
             # and scaler
-            save_path = f"{save_dir}/{var}_scaler.pkl"
+            save_path = f"{scaler_dir}/{var}_scaler.pkl"
             pkl.dump(variable_scaler, open(save_path,"wb"))
             
         return 0
@@ -793,17 +813,22 @@ class DimensionalityReducer:
         temperature_array = np.nan_to_num(temperature_array)
         
         # scale data
-        therm_scaler = MinMaxScaler().fit(thermal_forcing_array)
+        therm_scaler = StandardScaler()
+        therm_scaler.fit(thermal_forcing_array)
         thermal_forcing_array = therm_scaler.transform(thermal_forcing_array)
-        salinity_scaler = MinMaxScaler().fit(salinity_array)
+        
+        salinity_scaler = StandardScaler()
+        salinity_scaler.fit(salinity_array)
         salinity_array = salinity_scaler.transform(salinity_array)
-        temp_scaler = MinMaxScaler().fit(temperature_array)
+        
+        temp_scaler = StandardScaler()
+        temp_scaler.fit(temperature_array)
         temperature_array = temp_scaler.transform(temperature_array)
         
         # run PCA
-        pca_tf, _ = self._run_PCA(thermal_forcing_array, num_pcs=300)
-        pca_sal, _ = self._run_PCA(salinity_array, num_pcs=300)
-        pca_temp, _ = self._run_PCA(temperature_array, num_pcs=300)
+        pca_tf, _ = self._run_PCA(thermal_forcing_array, num_pcs=1000)
+        pca_sal, _ = self._run_PCA(salinity_array, num_pcs=1000)
+        pca_temp, _ = self._run_PCA(temperature_array, num_pcs=1000)
         
         # get percent explained
         tf_exp_var_pca = pca_tf.explained_variance_ratio_
@@ -853,7 +878,8 @@ class DimensionalityReducer:
             scaler_dir = save_dir
         
         sle_array = np.zeros([len(sle_fps), 86, 761*761])
-        
+        # sle_array = np.zeros([4, 86, 761*761])
+        # sle_fps = sle_fps[0:4]
         # loop through each SLE (IVAF) projection file
         sle_fps_loop = tqdm(enumerate(sle_fps), total=len(sle_fps))
         for i, fp in sle_fps_loop:
@@ -872,17 +898,21 @@ class DimensionalityReducer:
         sle_array = sle_array.reshape(len(sle_fps)*86, 761*761)
         
         # since the array is so large (350*85, 761*761) = (29750, 579121), randomly sample N rows and run PCA
-        sle_array = sle_array[np.random.choice(sle_array.shape[0], 10000, replace=False), :]
+        sle_array = sle_array[np.random.choice(sle_array.shape[0], 1590, replace=False), :]
         
         # deal with np.nans (ask about later)
+        # nan_mask = np.array(pd.read_csv(r'/users/pvankatw/research/current/nan_mask.csv'))
+        # non_nan_args = np.argwhere(nan_mask == 0).squeeze()
+        # sle_array = sle_array[:, non_nan_args]
         sle_array = np.nan_to_num(sle_array) 
         
         # scale sle
-        scaler = MinMaxScaler().fit(sle_array)
+        scaler = StandardScaler()
+        scaler.fit(sle_array)
         sle_array = scaler.transform(sle_array)
         
         # run pca
-        pca, _ = self._run_PCA(sle_array, num_pcs=300,)
+        pca, _ = self._run_PCA(sle_array, num_pcs=1000,)
         
         # get percent explained
         exp_var_pca = pca.explained_variance_ratio_
@@ -895,7 +925,7 @@ class DimensionalityReducer:
         pkl.dump(pca, open(save_path,"wb"))
         
         # and scaler
-        save_path = f"{save_dir}/sle_scaler.pkl"
+        save_path = f"{scaler_dir}/sle_scaler.pkl"
         pkl.dump(scaler, open(save_path,"wb"))
         
         
@@ -973,9 +1003,10 @@ class DimensionalityReducer:
             self.scaler_directory = scaler_directory
         if var_name not in ['all', 'evspsbl_anomaly', 'mrro_anomaly', 'pr_anomaly', 'smb_anomaly', 'ts_anomaly', 'thermal_forcing', 'salinity', 'temperature', 'sle', None]:
             raise ValueError(f"Variable name {var_name} not recognized.")
-            
+        
+        
         scaler_paths = os.listdir(self.scaler_directory)
-        scaler_paths = [x for x in scaler_paths if 'pca' in x]
+        scaler_paths = [x for x in scaler_paths if 'scaler' in x]
         
         if var_name == 'all' or var_name is None:
             evspsbl_model = [x for x in scaler_paths if 'evspsbl' in x][0]
@@ -1033,16 +1064,24 @@ class DimensionalityReducer:
         if len(x.shape) == 3:
             x = x.reshape(x.shape[0], -1)
         
-        pca_models = self._load_pca_models(pca_model_directory, var_name=var_name)
-        scalers = self._load_scalers()
+        pca_models = self._load_pca_models(self.pca_model_directory, var_name=var_name)
+        scalers = self._load_scalers(self.scaler_directory)
         pca = pca_models[var_name]
         scaler = scalers[var_name]
-        transformed = pca.transform(scaler.transform(x))
+        x = np.nan_to_num(x)
+        scaled = scaler.transform(x)
+        transformed = pca.transform(scaled)
         
         if num_pcs.endswith('%'):
             exp_var_pca = pca.explained_variance_ratio_
             cum_sum_eigenvalues = np.cumsum(exp_var_pca)
-            num_pcs = np.argmax(cum_sum_eigenvalues>float(num_pcs.replace('%', ""))/100)+1
+            num_pcs_cutoff = cum_sum_eigenvalues>float(num_pcs.replace('%', ""))/100
+            if ~num_pcs_cutoff.any():
+                warnings.warn(f'Explained variance cutoff ({num_pcs}) not reached, using all PCs available ({len(cum_sum_eigenvalues)}).')
+                num_pcs = len(cum_sum_eigenvalues)
+                
+            else:
+                num_pcs = np.argmax(num_pcs_cutoff)+1
             
         return transformed[:, :num_pcs]
     
