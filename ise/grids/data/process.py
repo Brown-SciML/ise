@@ -11,7 +11,6 @@ from ise.grids.utils import get_all_filepaths
 from datetime import date, timedelta, datetime
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-# warnings.simplefilter("ignore") 
 
 
 
@@ -43,7 +42,7 @@ class ProjectionProcessor:
             self.ice_sheet = 'GIS'
         self.resolution = 5 if self.ice_sheet == 'GIS' else 8
     
-    def process(self, output_directory):
+    def process(self, ):
         """
         Process the ISMIP6 projections by calculating IVAF for both control 
         and experiments, subtracting out the control IVAF from experiments,
@@ -60,9 +59,6 @@ class ProjectionProcessor:
         """
         if self.projections_directory is None:
             raise ValueError("Projections path must be specified")
-        
-        if output_directory is None:
-            raise ValueError("Output directory must be specified")
         
         # if the last ivaf file is missing, assume none of them are and calculate and export all ivaf files
         if self.ice_sheet == "AIS": # and not os.path.exists(f"{self.projections_directory}/VUW/PISM/exp08/ivaf_GIS_VUW_PISM_exp08.nc"):
@@ -126,18 +122,20 @@ class ProjectionProcessor:
                     pass
         
 
+
+
         # first calculate ivaf for control projections
         for directory in ctrl_proj_dirs:
             self._calculate_ivaf_single_file(directory, densities, scalefac_model, ctrl_proj=True)
             
         # then, for each experiment, calculate ivaf and subtract out control
+        # exp_dirs = exp_dirs[65:]
         for directory in exp_dirs:
             self._calculate_ivaf_single_file(directory, densities, scalefac_model, ctrl_proj=False)
             
             
         return 1
         
-
     def _calculate_ivaf_single_file(self, directory, densities, scalefac_model, ctrl_proj=False):  
         """
         Calculate the Ice Volume Above Floatation (IVAF) for a single file.
@@ -154,8 +152,31 @@ class ProjectionProcessor:
             
         """
         
-        # directory = r"/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-AIS/ILTS_PIK/SICOPOLIS/exp05"
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/AWI/ISSM1/ctrl_proj
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/AWI/ISSM2/ctrl_proj
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/AWI/ISSM3/ctrl_proj
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/BGC/BISICLES/ctrl_proj
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/GSFC/ISSM/ctrl_proj
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/ILTS_PIK/SICOPOLIS1/ctrl_proj
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/ILTS_PIK/SICOPOLIS2/ctrl_proj
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/IMAU/IMAUICE1/ctrl_proj
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/IMAU/IMAUICE2/ctrl_proj
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/JPL/ISSM/ctrl_proj
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/JPL/ISSMPALEO/ctrl_proj
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/LSCE/GRISLI/ctrl_proj
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/MUN/GSM1/ctrl_proj
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/MUN/GSM2/ctrl_proj
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/NCAR/CISM/ctrl_proj
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/UAF/PISM1/ctrl_proj
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/UAF/PISM2/ctrl_proj
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/UCIJPL/ISSM1/ctrl_proj
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/UCIJPL/ISSM2/ctrl_proj
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/VUB/GISM/ctrl_proj
+        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/VUW/PISM/ctrl_proj
+        
+        # directory = r"/gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/AWI/ISSM1/exp09"
         # get metadata from path
+
         path = directory.split('/')
         exp = path[-1]
         model = path[-2]
@@ -208,12 +229,66 @@ class ProjectionProcessor:
             naming_convention = f'{self.ice_sheet}_{group}_{model}_{exp}.nc'
         
         # load data
-        bed = xr.open_dataset(os.path.join(directory, f'topg_{naming_convention}'), decode_times=False).transpose('x', 'y', 'time', ...)
-        thickness = xr.open_dataset(os.path.join(directory, f'lithk_{naming_convention}'), decode_times=False).transpose('x', 'y', 'time', ...)
-        mask = xr.open_dataset(os.path.join(directory, f'sftgif_{naming_convention}'), decode_times=False).transpose('x', 'y', 'time', ...)
-        ground_mask = xr.open_dataset(os.path.join(directory, f'sftgrf_{naming_convention}'), decode_times=False).transpose('x', 'y', 'time', ...)
+        _, bed = get_xarray_variable(os.path.join(directory, f'topg_{naming_convention}'), var_name='topg', ice_sheet=self.ice_sheet)
+        _, thickness = get_xarray_variable(os.path.join(directory, f'lithk_{naming_convention}'), var_name='lithk', ice_sheet=self.ice_sheet)
+        _, mask = get_xarray_variable(os.path.join(directory, f'sftgif_{naming_convention}'), var_name='sftgif', ice_sheet=self.ice_sheet)
+        _, ground_mask = get_xarray_variable(os.path.join(directory, f'sftgrf_{naming_convention}'), var_name='sftgrf', ice_sheet=self.ice_sheet)
+        
+        # bed = xr.open_dataset(os.path.join(directory, f'topg_{naming_convention}'), decode_times=False)
+        # thickness = xr.open_dataset(os.path.join(directory, f'lithk_{naming_convention}'), decode_times=False)
+        # mask = xr.open_dataset(os.path.join(directory, f'sftgif_{naming_convention}'), decode_times=False)
+        # ground_mask = xr.open_dataset(os.path.join(directory, f'sftgrf_{naming_convention}'), decode_times=False)
         length_time = len(thickness.time)
         # note on decode_times=False -- by doing so, it stays in "days from" rather than trying to infer a type. Makes handling much more predictable.
+        
+        
+        try:
+            bed = bed.transpose('x', 'y', 'time', ...)
+            thickness = thickness.transpose('x', 'y', 'time', ...)
+            mask = mask.transpose('x', 'y', 'time', ...)
+            ground_mask = ground_mask.transpose('x', 'y', 'time', ...)
+        except ValueError:
+            bed = bed.transpose('x', 'y', ...)
+            thickness = thickness.transpose('x', 'y', ...)
+            mask = mask.transpose('x', 'y', ...)
+            ground_mask = ground_mask.transpose('x', 'y', ...)
+            
+            
+        # if time is not a dimension, add copies for each time step
+        if 'time' not in bed.dims or bed.dims['time'] == 1:
+            try:
+                bed = bed.drop_vars(['time',])
+            except ValueError:
+                pass
+            bed = bed.expand_dims(dim={'time': length_time})
+            
+            if length_time == 86:
+                bed['time'] = thickness['time'] # most times just the bed file is missing the time index
+            elif length_time > 86:
+                if len(thickness.time.values) != len(set(thickness.time.values)): # has duplicates
+                    keep_indices = np.unique(thickness['time'], return_index=True)[1] # find non-duplicates
+                    bed = bed.isel(time=keep_indices) # only select non-duplicates
+                    thickness = thickness.isel(time=keep_indices)
+                    mask = mask.isel(time=keep_indices)
+                    ground_mask = ground_mask.isel(time=keep_indices)
+                else:
+                    warnings.warn(f"At least one file in {exp} does not have a time index formatted correctly. Attempting to fix.")
+                    start_idx = len(bed.time) - 86
+                    bed = bed.sel(time=slice(bed.time.values[start_idx], len(bed.time)))
+                    thickness = thickness.sel(time=slice(thickness.time[start_idx], thickness.time[-1]))
+                    mask = mask.sel(time=slice(mask.time[start_idx], mask.time[-1]))
+                    ground_mask = ground_mask.sel(time=slice(ground_mask.time[start_idx], ground_mask.time[-1]))
+                    
+                try:
+                    bed['time'] = thickness['time'].copy()
+                except ValueError:
+                    print(f'Cannot fix time index for {exp} due to duplicate index values. Skipped.')
+                    return -1
+                
+            else:
+                print(f"Only {len(bed.time)} time points for {exp}. Skipped.")
+                return -1
+            
 
 
         # if -9999 instead of np.nan, replace (come back and optimize? couldn't figure out with xarray)
@@ -239,6 +314,32 @@ class ProjectionProcessor:
             del sftgrf
         
         # converts time (in "days from X" to numpy.datetime64) and subsets time from 2015 to 2100
+        
+        
+        # a few datasets do not have the time index formatted correctly
+        if len(bed.time.attrs) == 0:
+            
+            if len(bed.time) == 86:
+                bed['time'] = thickness['time'] # most times just the bed file is missing the time index
+            elif len(bed.time) > 86:
+                # bed['time'] = thickness['time'].copy()
+                warnings.warn(f"At least one file in {exp} does not have a time index formatted correctly. Attempting to fix.")
+                start_idx = len(bed.time) - 86
+                bed = bed.sel(time=slice(bed.time.values[start_idx], len(bed.time)))
+                thickness = thickness.sel(time=slice(thickness.time[start_idx], thickness.time[-1]))
+                mask = mask.sel(time=slice(mask.time[start_idx], mask.time[-1]))
+                ground_mask = ground_mask.sel(time=slice(ground_mask.time[start_idx], ground_mask.time[-1]))
+                
+                try:
+                    bed['time'] = thickness['time']
+                except ValueError:
+                    print(f'Cannot fix time index for {exp} due to duplicate index values. Skipped.')
+                    return -1
+                
+            else:
+                print(f"Only {len(bed.time)} time points for {exp}. Skipped.")
+                return -1
+            
         bed = convert_and_subset_times(bed)
         thickness = convert_and_subset_times(thickness)
         mask = convert_and_subset_times(mask)
@@ -260,12 +361,12 @@ class ProjectionProcessor:
             ground_mask['sftgrf'] = np.clip(ground_mask.sftgrf, 0., 1.)
         
         # if time is not a dimension, add copies for each time step
-        if 'time' not in bed.dims or bed.dims['time'] == 1:
-            try:
-                bed = bed.drop_vars(['time',])
-            except ValueError:
-                pass
-            bed = bed.expand_dims(dim={'time': length_time})
+        # if 'time' not in bed.dims or bed.dims['time'] == 1:
+        #     try:
+        #         bed = bed.drop_vars(['time',])
+        #     except ValueError:
+        #         pass
+        #     bed = bed.expand_dims(dim={'time': length_time})
             
         # flip around axes so the order is (x, y, time)
         bed = bed.transpose('x', 'y', 'time', ...)
@@ -331,7 +432,14 @@ def convert_and_subset_times(dataset,):
     if isinstance(dataset.time.values[0], cftime._cftime.DatetimeNoLeap) or isinstance(dataset.time.values[0], cftime._cftime.Datetime360Day):
         datetimeindex = dataset.indexes['time'].to_datetimeindex()
         dataset['time'] = datetimeindex   
-    elif isinstance(dataset.time.values[0], np.float32) or isinstance(dataset.time.values[0], np.float64):
+        
+    # elif len(dataset.time.attrs) == 0:
+    #         if len(dataset.time) == 86:
+    #             pass
+    #         else:
+    #             raise ValueError(f"Time values are not recognized: {type(dataset.time.values[0])}")
+
+    elif isinstance(dataset.time.values[0], np.float32) or isinstance(dataset.time.values[0], np.float64) or isinstance(dataset.time.values[0], np.int32) or isinstance(dataset.time.values[0], np.int64):
         try:
             units = dataset.time.attrs['units']
         except KeyError:
@@ -346,6 +454,9 @@ def convert_and_subset_times(dataset,):
         if units == 'seconds': # VUW PISM -- seconds since 1-1-1 00:00:00
             start_date = np.datetime64(datetime.strptime('0001-01-01 00:00:00', "%Y-%m-%d %H:%M:%S"))
             dataset['time'] = np.array([start_date + np.timedelta64(int(x), 's') for x in dataset.time.values])
+        elif units == '2008-1-1' and dataset.time[-1] == 157785.0: # UAF?
+            # every 5 years but still len(time) == 86.. assume we keep them all for 2015-2100
+            dataset['time'] = np.array([np.datetime64(datetime.strptime(f'{x}-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")) for x in range(2015, 2101)])
         else:
             try:
                 start_date = np.datetime64(datetime.strptime(units.replace("days since ", ""), "%Y-%m-%d"))
@@ -353,6 +464,9 @@ def convert_and_subset_times(dataset,):
                 start_date = np.datetime64(datetime.strptime(units.replace("days since ", ""), "%d-%m-%Y"))
 
             dataset['time'] = np.array([start_date + np.timedelta64(int(x), 'D') for x in dataset.time.values])
+    else:
+        raise ValueError(f"Time values are not recognized: {type(dataset.time.values[0])}")
+    
     if len(dataset.time) > 86:
         # make sure the max date is 2100
         # dataset = dataset.sel(time=slice(np.datetime64('2014-01-01'), np.datetime64('2101-01-01')))
@@ -361,11 +475,15 @@ def convert_and_subset_times(dataset,):
         # if you still have more than 86, take the previous 86 values from 2100
         if len(dataset.time) > 86:
             # LSCE GRISLI has two 2015 measurements
-            dataset = dataset.sel(time=slice(dataset.time.values[len(dataset.time) - 86], dataset.time.values[-1]))
+            
+            # dataset = dataset.sel(time=slice(dataset.time.values[len(dataset.time) - 86], dataset.time.values[-1]))
+            start_idx = len(dataset.time) - 86
+            dataset = dataset.isel(time=slice(start_idx, len(dataset.time)))
         
     if len(dataset.time) != 86:
-        warnings.warn('Subsetting of NC file processed incorrectly, go back and check logs.')
-        print(dataset.attrs)
+        warnings.warn('After subsetting there are still not 86 time points. Go back and check logs.')
+        print(f"dataset_length={len(dataset.time)} -- {dataset.attrs}")
+        # VUW_PISM_ctrl_proj: Processing successful.
             
     return dataset
 
@@ -472,7 +590,7 @@ def interpolate_values(data):
 
 
 class DimensionalityReducer:
-    def __init__(self, forcing_dir, projection_dir, output_dir, ):
+    def __init__(self, forcing_dir, projection_dir, output_dir, ice_sheet=None):
         super().__init__()
         if forcing_dir is None:
             raise ValueError("Forcing directory must be specified.")
@@ -493,7 +611,18 @@ class DimensionalityReducer:
             self.scaler_directory = f"{self.output_dir}/scalers/"
         else:
             self.scaler_directory = None
+            
+        if ice_sheet not in ('AIS', 'GrIS'):
+            raise ValueError("Ice sheet must be specified and must be 'AIS' or 'GrIS'.")
+        else:
+            self.ice_sheet = ice_sheet
+            
         
+        if self.ice_sheet.lower() == 'gris':
+            atmospheric_files = get_all_filepaths(path=self.forcing_dir, filetype='nc', contains='Atmosphere_Forcing/aSMB_observed/v1', )
+            oceanic_files = get_all_filepaths(path=self.forcing_dir, filetype='nc', contains='Ocean_Forcing/Melt_Implementation/v4', )
+            
+            
         all_forcing_fps = get_all_filepaths(path=self.forcing_dir, filetype='nc', contains='1995-2100', not_contains='Ice_Shelf_Fracture')
         self.forcing_paths['all'] = [x for x in all_forcing_fps if '8km' in x and 'v1' not in x]
         self.forcing_paths['atmosphere'] = [x for x in self.forcing_paths['all'] if "Atmosphere_Forcing" in x]
@@ -501,6 +630,8 @@ class DimensionalityReducer:
         
         all_projection_fps = get_all_filepaths(path=self.projection_dir, filetype='nc', contains='ivaf', not_contains='ctrl_proj')
         self.projection_paths = all_projection_fps
+        
+
                 
         
     # def reduce_dimensionlity(self, forcing_dir: str=None, output_dir: str=None):
@@ -1110,7 +1241,7 @@ class DimensionalityReducer:
 
     
             
-def get_xarray_variable(dataset_fp, var_name):
+def get_xarray_variable(dataset_fp, var_name, ice_sheet='AIS'):
     """
     Retrieve a variable from an xarray dataset.
 
@@ -1124,39 +1255,63 @@ def get_xarray_variable(dataset_fp, var_name):
 
     """
     
+    dataset = xr.open_dataset(dataset_fp, decode_times=False, engine='netcdf4')
     try:
-        dataset = xr.open_dataset(dataset_fp, decode_times=True, engine='netcdf4')
-    except ValueError:
-        dataset = xr.open_dataset(dataset_fp, decode_times=False, engine='netcdf4')
+        dataset = dataset.transpose('time', 'y', 'x', ...)
+    except:
+        pass
     
     # try dropping dimensions for atmospheric data
     if 'ivaf' in dataset.variables:
         pass
+    
     else:
+        
+        # handle extra dimensions and variables
         try:
             dataset = dataset.drop_dims('nv4')
-            dataset = dataset.drop(['lat2d', 'lon2d'])
         except ValueError:
-            # if its oceanic data...
+            pass
+        
+        for var in ['z_bnds', 'lat', 'lon']:
             try:
-                dataset = dataset.drop(labels=["z_bnds", "lat", "lon"])
+                dataset = dataset.drop(labels = [var])
             except ValueError:
-                dataset = dataset.drop(labels=['z_bnds'])
-                
+                pass
+        if 'z' in dataset.dims:
             dataset = dataset.mean(dim='z', skipna=True)
+            
+            
+        # try:
+        #     dataset = dataset.drop_dims('nv4')
+        #     dataset = dataset.drop(['lat2d', 'lon2d'])
+        # except ValueError:
+        #     # if its oceanic data...
+        #     try:
+        #         dataset = dataset.drop(labels=["z_bnds", "lat", "lon"])
+        #     except ValueError:
+        #         dataset = dataset.drop(labels=['z_bnds'])
+                
+        #     dataset = dataset.mean(dim='z', skipna=True)
 
     try:
         data = dataset[var_name].values
     except KeyError:
         return np.nan, np.nan
     
-    if data.shape[1] == 761 and data.shape[2] == 761:
+    x_dim = 761 if ice_sheet.lower() == 'ais' else 337
+    y_dim = 761 if ice_sheet.lower() == 'ais' else 577
+    if 'time' not in dataset.dims or dataset.dims['time'] == 1 or (data.shape[1] == y_dim and data.shape[2] == x_dim):
         pass
     else:
-        grid_indices = np.array([0, 1, 2])[np.array(data.shape) == 761]
+        # TODO: fix this. this is just a weird way of tranposing, not sure if it even happens.
+        grid_indices = np.array([0, 1, 2])[(np.array(data.shape) == x_dim) | (np.array(data.shape) == y_dim)]
         data = np.moveaxis(data, list(grid_indices), [1, 2])
-        
-    data_flattened = data.reshape(len(dataset.time), -1)
+    
+    if 'time' not in dataset.dims:
+        data_flattened = data.reshape(-1,)
+    else:
+        data_flattened = data.reshape(len(dataset.time), -1)
     
     return data_flattened, dataset
 
@@ -1242,6 +1397,10 @@ class DatasetMerger:
         df.columns = ['file', 'cmip_model', 'pathway']
             
         return df
+    
+def combine_forcings_projections(forcing_dir,):
+    
+    return 0
 
             
     

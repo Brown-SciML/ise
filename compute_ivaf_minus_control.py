@@ -4,8 +4,6 @@ import pandas as pd
 import numpy as np
 import netCDF4 as nc
 import warnings
-warnings.simplefilter("ignore") 
-# warnings.simplefilter("ignore", category=SerializationWarning)
 
 # # Goelzer et al., 2020 -- https://doi.org/10.5194/tc-14-833-2020
 # thif = -(rhow/rhoi)*topg; where (thif<0) thif=0
