@@ -151,29 +151,7 @@ class ProjectionProcessor:
             
             
         """
-        
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/AWI/ISSM1/ctrl_proj
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/AWI/ISSM2/ctrl_proj
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/AWI/ISSM3/ctrl_proj
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/BGC/BISICLES/ctrl_proj
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/GSFC/ISSM/ctrl_proj
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/ILTS_PIK/SICOPOLIS1/ctrl_proj
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/ILTS_PIK/SICOPOLIS2/ctrl_proj
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/IMAU/IMAUICE1/ctrl_proj
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/IMAU/IMAUICE2/ctrl_proj
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/JPL/ISSM/ctrl_proj
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/JPL/ISSMPALEO/ctrl_proj
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/LSCE/GRISLI/ctrl_proj
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/MUN/GSM1/ctrl_proj
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/MUN/GSM2/ctrl_proj
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/NCAR/CISM/ctrl_proj
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/UAF/PISM1/ctrl_proj
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/UAF/PISM2/ctrl_proj
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/UCIJPL/ISSM1/ctrl_proj
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/UCIJPL/ISSM2/ctrl_proj
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/VUB/GISM/ctrl_proj
-        # /gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/VUW/PISM/ctrl_proj
-        
+
         # directory = r"/gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/AWI/ISSM1/exp09"
         # get metadata from path
 
@@ -229,10 +207,10 @@ class ProjectionProcessor:
             naming_convention = f'{self.ice_sheet}_{group}_{model}_{exp}.nc'
         
         # load data
-        _, bed = get_xarray_variable(os.path.join(directory, f'topg_{naming_convention}'), var_name='topg', ice_sheet=self.ice_sheet)
-        _, thickness = get_xarray_variable(os.path.join(directory, f'lithk_{naming_convention}'), var_name='lithk', ice_sheet=self.ice_sheet)
-        _, mask = get_xarray_variable(os.path.join(directory, f'sftgif_{naming_convention}'), var_name='sftgif', ice_sheet=self.ice_sheet)
-        _, ground_mask = get_xarray_variable(os.path.join(directory, f'sftgrf_{naming_convention}'), var_name='sftgrf', ice_sheet=self.ice_sheet)
+        bed = get_xarray_data(os.path.join(directory, f'topg_{naming_convention}'), ice_sheet=self.ice_sheet)
+        thickness = get_xarray_data(os.path.join(directory, f'lithk_{naming_convention}'), ice_sheet=self.ice_sheet )
+        mask = get_xarray_data(os.path.join(directory, f'sftgif_{naming_convention}'), ice_sheet=self.ice_sheet )
+        ground_mask = get_xarray_data(os.path.join(directory, f'sftgrf_{naming_convention}'), ice_sheet=self.ice_sheet )
         
         # bed = xr.open_dataset(os.path.join(directory, f'topg_{naming_convention}'), decode_times=False)
         # thickness = xr.open_dataset(os.path.join(directory, f'lithk_{naming_convention}'), decode_times=False)
@@ -432,12 +410,6 @@ def convert_and_subset_times(dataset,):
     if isinstance(dataset.time.values[0], cftime._cftime.DatetimeNoLeap) or isinstance(dataset.time.values[0], cftime._cftime.Datetime360Day):
         datetimeindex = dataset.indexes['time'].to_datetimeindex()
         dataset['time'] = datetimeindex   
-        
-    # elif len(dataset.time.attrs) == 0:
-    #         if len(dataset.time) == 86:
-    #             pass
-    #         else:
-    #             raise ValueError(f"Time values are not recognized: {type(dataset.time.values[0])}")
 
     elif isinstance(dataset.time.values[0], np.float32) or isinstance(dataset.time.values[0], np.float64) or isinstance(dataset.time.values[0], np.int32) or isinstance(dataset.time.values[0], np.int64):
         try:
@@ -470,7 +442,7 @@ def convert_and_subset_times(dataset,):
     if len(dataset.time) > 86:
         # make sure the max date is 2100
         # dataset = dataset.sel(time=slice(np.datetime64('2014-01-01'), np.datetime64('2101-01-01')))
-        dataset = dataset.sel(time=slice('2014-01-01', '2101-01-01'))
+        dataset = dataset.sel(time=slice('2012-01-01', '2101-01-01'))
         
         # if you still have more than 86, take the previous 86 values from 2100
         if len(dataset.time) > 86:
@@ -483,7 +455,6 @@ def convert_and_subset_times(dataset,):
     if len(dataset.time) != 86:
         warnings.warn('After subsetting there are still not 86 time points. Go back and check logs.')
         print(f"dataset_length={len(dataset.time)} -- {dataset.attrs}")
-        # VUW_PISM_ctrl_proj: Processing successful.
             
     return dataset
 
@@ -620,13 +591,23 @@ class DimensionalityReducer:
         
         if self.ice_sheet.lower() == 'gris':
             atmospheric_files = get_all_filepaths(path=self.forcing_dir, filetype='nc', contains='Atmosphere_Forcing/aSMB_observed/v1', )
+            atmospheric_files = [x for x in atmospheric_files if 'combined' in x]
+            
+            # files in atmopheric directory are separated by year, needs to be combined
+            if not atmospheric_files:
+                combine_gris_forcings(self.forcing_dir)
+                
             oceanic_files = get_all_filepaths(path=self.forcing_dir, filetype='nc', contains='Ocean_Forcing/Melt_Implementation/v4', )
+            self.forcing_paths['all'] = atmospheric_files + oceanic_files
+            self.forcing_paths['atmosphere'] = atmospheric_files
+            self.forcing_paths['ocean'] = oceanic_files
+        else:            
+            all_forcing_fps = get_all_filepaths(path=self.forcing_dir, filetype='nc', contains='1995-2100', not_contains='Ice_Shelf_Fracture')
+            self.forcing_paths['all'] = [x for x in all_forcing_fps if '8km' in x and 'v1' not in x]
+            self.forcing_paths['atmosphere'] = [x for x in self.forcing_paths['all'] if "Atmosphere_Forcing" in x]
+            self.forcing_paths['ocean'] = [x for x in self.forcing_paths['all'] if "Ocean_Forcing" in x]
             
-            
-        all_forcing_fps = get_all_filepaths(path=self.forcing_dir, filetype='nc', contains='1995-2100', not_contains='Ice_Shelf_Fracture')
-        self.forcing_paths['all'] = [x for x in all_forcing_fps if '8km' in x and 'v1' not in x]
-        self.forcing_paths['atmosphere'] = [x for x in self.forcing_paths['all'] if "Atmosphere_Forcing" in x]
-        self.forcing_paths['ocean'] = [x for x in self.forcing_paths['all'] if "Ocean_Forcing" in x]
+        
         
         all_projection_fps = get_all_filepaths(path=self.projection_dir, filetype='nc', contains='ivaf', not_contains='ctrl_proj')
         self.projection_paths = all_projection_fps
@@ -661,8 +642,12 @@ class DimensionalityReducer:
         self.scaler_directory = f"{self.output_dir}/scalers/"
         
         # Train PCA models for each atmospheric and oceanic forcing variable and save
-        self._generate_atmosphere_pcas(self.forcing_paths['atmosphere'], self.pca_model_directory, scaler_dir=self.scaler_directory)
-        self._generate_ocean_pcas(self.forcing_paths['ocean'], self.pca_model_directory, scaler_dir=self.scaler_directory)
+        if self.ice_sheet == 'AIS':
+            self._generate_ais_atmosphere_pcas(self.forcing_paths['atmosphere'], self.pca_model_directory, scaler_dir=self.scaler_directory)
+            self._generate_ais_ocean_pcas(self.forcing_paths['ocean'], self.pca_model_directory, scaler_dir=self.scaler_directory)
+        else:
+            self._generate_gris_atmosphere_pcas(self.forcing_paths['atmosphere'], self.pca_model_directory, scaler_dir=self.scaler_directory)
+            self._generate_gris_ocean_pcas(self.forcing_paths['ocean'], self.pca_model_directory, scaler_dir=self.scaler_directory)
         
         # Train PCA model for SLE and save
         sle_paths = get_all_filepaths(path=self.projection_dir, filetype='nc', contains='ivaf', not_contains='ctrl')
@@ -703,12 +688,12 @@ class DimensionalityReducer:
         
         if not os.path.exists(f"{output_dir}/forcings/"):
             os.mkdir(f"{output_dir}/forcings/")
+            
         
         # for each atmospheric forcing file, convert each variable to PCA space with pretrained PCA model
         atmospheric_paths_loop = tqdm(enumerate(self.forcing_paths['atmosphere']), total=len(self.forcing_paths['atmosphere']))
         for i, path in atmospheric_paths_loop:
             atmospheric_paths_loop.set_description(f"Converting atmospheric file #{i+1}/{len(self.forcing_paths['atmosphere'])}")
-            
             
             dataset = xr.open_dataset(path, decode_times=False, engine='netcdf4').transpose('time', 'y', 'x', ...)  # open the dataset
             if len(dataset.dims) > 3:
@@ -750,12 +735,21 @@ class DimensionalityReducer:
             forcing_name = path.replace('.nc', '').split('/')[-1]  # get metadata (model, ssp, etc.)
             
             # get variable name by splitting the filepath name
-            var = self.forcing_paths['ocean'][i].split('/')[-1].split('_')[-4]
+            if self.ice_sheet == 'AIS':
+                var = self.forcing_paths['ocean'][i].split('/')[-1].split('_')[-4]
+            else:
+                metadata = self.forcing_paths['ocean'][i].split('/')[-1].split('_')
+                if 'basinRunoff' in metadata:
+                    var = 'basin_runoff'
+                elif 'oceanThermalForcing' in metadata:
+                    var = 'thermal_forcing'
+                else:
+                    var = self.forcing_paths['ocean'][i].split('/')[-1].split('_')[-2]
             if var == 'forcing' or var == 'thermal':
                 var = 'thermal_forcing'
             
-            # get forcing array (requires mean value over z dimensions, see get_xarray_variable())
-            forcing_array, _ = get_xarray_variable(path, var_name=var)
+            # get forcing array (requires mean value over z dimensions, see get_xarray_data())
+            forcing_array = get_xarray_data(path, var_name=var, ice_sheet=self.ice_sheet)
             # forcing_array = np.nan_to_num(forcing_array)  # deal with np.nans
             # forcing_array = forcing_array[:, ~(np.isnan(forcing_array).any(axis=0))]
             
@@ -764,7 +758,7 @@ class DimensionalityReducer:
             transformed = self.transform(forcing_array, var_name=var, num_pcs=num_pcs, pca_model_directory=self.pca_model_directory, scaler_directory=self.scaler_directory)
             transformed_data[var] = transformed  # store in dict with structure {'var_name': transformed_var}
             
-            # create a dataframe with rows corresponding to time (106 total) and columns corresponding to each variables principal components
+            # create a dataframe with rows corresponding to time (86 total) and columns corresponding to each variables principal components
             variable_df = pd.DataFrame(transformed_data[var], columns=[f"{var}_pc{i+1}" for i in range(transformed_data[var].shape[1])])
             variable_df.to_csv(f"{output_dir}/forcings/PCA_{forcing_name}.csv", index=False)
             
@@ -776,8 +770,6 @@ class DimensionalityReducer:
         return 0
         
         
-            
-    # def convert_outputs()
     def convert_projections(self, num_pcs='99.99%', projection_files: list=None, pca_model_directory: str=None, output_dir: str=None):
         
         # check inputs for validity
@@ -800,13 +792,12 @@ class DimensionalityReducer:
         projection_paths_loop = tqdm(enumerate(self.projection_paths), total=len(self.projection_paths))
         for i, path in projection_paths_loop:
             projection_paths_loop.set_description(f"Converting projection file #{i+1}/{len(self.projection_paths)}")
-            print(f"{i}/{len(self.projection_paths)} projection files converted to PCA space.")
             
-            # get forcing array (requires mean value over z dimensions, see get_xarray_variable())
+            # get forcing array (requires mean value over z dimensions, see get_xarray_data())
             try:
-                projection_array, _ = get_xarray_variable(path, var_name='sle')
+                projection_array = get_xarray_data(path, var_name='sle', ice_sheet=self.ice_sheet)
             except:
-                projection_array, _ = get_xarray_variable(path, var_name='ivaf')
+                projection_array = get_xarray_data(path, var_name='ivaf', ice_sheet=self.ice_sheet)
                 projection_array = projection_array / 1e9 / 362.5
                 
             
@@ -824,7 +815,7 @@ class DimensionalityReducer:
             transformed = self.transform(projection_array, var_name=var, num_pcs=num_pcs, pca_model_directory=self.pca_model_directory, scaler_directory=self.scaler_directory)
             transformed_data[var] = transformed  # store in dict with structure {'var_name': transformed_var}
             
-            # create a dataframe with rows corresponding to time (106 total) and columns corresponding to each variables principal components
+            # create a dataframe with rows corresponding to time (86 total) and columns corresponding to each variables principal components
             variable_df = pd.DataFrame(transformed_data[var], columns=[f"{var}_pc{i+1}" for i in range(transformed_data[var].shape[1])])
             variable_df.to_csv(f"{output_dir}/projections/PCA_{projection_name}.csv", index=False)
         
@@ -833,7 +824,7 @@ class DimensionalityReducer:
     
     
 
-    def _generate_atmosphere_pcas(self, atmosphere_fps: list, save_dir: str, scaler_dir: str=None):
+    def _generate_ais_atmosphere_pcas(self, atmosphere_fps: list, save_dir: str, scaler_dir: str=None):
         """
         Generate principal component analysis (PCA) for atmospheric variables.
 
@@ -855,14 +846,18 @@ class DimensionalityReducer:
         var_names_loop = tqdm(enumerate(var_names), total=len(var_names))
         for i, var in var_names_loop:
             var_names_loop.set_description(f"Processing atmospheric PCA #{i+1}/{len(var_names)}")
-            variable_array = np.zeros([len(atmosphere_fps), 106, 761*761])
+            variable_array = np.zeros([len(atmosphere_fps), 86, 761*761])
             
             # loop through each atmospheric CMIP file and combine them into one big array
             for i, fp in enumerate(atmosphere_fps):
                 
                 # get the variable you need (rather than the entire dataset)
-                data_flattened, dataset = get_xarray_variable(fp, var)
-                
+                dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet)
+                data_array = convert_and_subset_times(dataset)
+                try:
+                    data_flattened = data_array[var].values.reshape(86, 761*761)
+                except KeyError:
+                    data_flattened = np.nan
                 # store it in the total array
                 variable_array[i, :, :] = data_flattened     
                 
@@ -871,7 +866,7 @@ class DimensionalityReducer:
             variable_array = np.nan_to_num(variable_array)   
             
             # reshape variable_array (num_files, num_timestamps, num_gridpoints) --> (num_files*num_timestamps, num_gridpoints)
-            variable_array = variable_array.reshape(len(atmosphere_fps)*len(dataset.time), 761*761)
+            variable_array = variable_array.reshape(len(atmosphere_fps)*86, 761*761)
             
             # scale data
             variable_scaler = StandardScaler()
@@ -888,15 +883,15 @@ class DimensionalityReducer:
             print(f"Variable {var} has {arg_90} PCs that explain 90% of the variance")
             
             # output pca object
-            save_path = f"{save_dir}/pca_{var}_{arg_90}pcs.pkl"
+            save_path = f"{save_dir}/AIS_pca_{var}_{arg_90}pcs.pkl"
             pkl.dump(pca, open(save_path,"wb"))
             # and scaler
-            save_path = f"{scaler_dir}/{var}_scaler.pkl"
+            save_path = f"{scaler_dir}/AIS_{var}_scaler.pkl"
             pkl.dump(variable_scaler, open(save_path,"wb"))
             
         return 0
     
-    def _generate_ocean_pcas(self, ocean_fps: list, save_dir: str, scaler_dir: str=None):
+    def _generate_ais_ocean_pcas(self, ocean_fps: list, save_dir: str, scaler_dir: str=None):
         """
         Generate principal component analysis (PCA) for ocean variables.
 
@@ -913,30 +908,36 @@ class DimensionalityReducer:
         
         thermal_forcing_fps = [x for x in ocean_fps if 'thermal_forcing' in x]
         salinity_fps = [x for x in ocean_fps if 'salinity' in x]
-        tempereature_fps = [x for x in ocean_fps if 'temperature' in x]
+        temperature_fps = [x for x in ocean_fps if 'temperature' in x]
         
-        thermal_forcing_array = np.zeros([len(thermal_forcing_fps), 106, 761*761])
-        salinity_array = np.zeros([len(salinity_fps), 106, 761*761])
-        temperature_array = np.zeros([len(tempereature_fps), 106, 761*761])
+        thermal_forcing_array = np.zeros([len(thermal_forcing_fps), 86, 761*761])
+        salinity_array = np.zeros([len(salinity_fps), 86, 761*761])
+        temperature_array = np.zeros([len(temperature_fps), 86, 761*761])
         
         # get the variables you need (rather than the entire dataset)
         print('Processing thermal_forcing PCA model.')
         for i, fp in enumerate(thermal_forcing_fps):
-            data_flattened, dataset = get_xarray_variable(fp, var_name='thermal_forcing')
+            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet)
+            data_array = convert_and_subset_times(dataset)
+            data_flattened = data_array['thermal_forcing'].values.reshape(86, 761*761)
             thermal_forcing_array[i, :, :] = data_flattened # store
         print('Processing salinity PCA model.')
         for i, fp in enumerate(salinity_fps):
-            data_flattened, dataset = get_xarray_variable(fp, var_name='salinity')
+            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet)
+            data_array = convert_and_subset_times(dataset)
+            data_flattened = data_array['salinity'].values.reshape(86, 761*761)
             salinity_array[i, :, :] = data_flattened # store
         print('Processing temperature PCA model.')
-        for i, fp in enumerate(tempereature_fps):
-            data_flattened, dataset = get_xarray_variable(fp, var_name='temperature')
+        for i, fp in enumerate(temperature_fps):
+            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet)
+            data_array = convert_and_subset_times(dataset)
+            data_flattened = data_array['temperature'].values.reshape(86, 761*761)
             temperature_array[i, :, :] = data_flattened
             
         # reshape variable_array (num_files, num_timestamps, num_gridpoints) --> (num_files*num_timestamps, num_gridpoints)
-        thermal_forcing_array = thermal_forcing_array.reshape(len(thermal_forcing_fps)*len(dataset.time), 761*761)
-        salinity_array = salinity_array.reshape(len(salinity_fps)*len(dataset.time), 761*761)
-        temperature_array = temperature_array.reshape(len(tempereature_fps)*len(dataset.time), 761*761)
+        thermal_forcing_array = thermal_forcing_array.reshape(len(thermal_forcing_fps)*86, 761*761)
+        salinity_array = salinity_array.reshape(len(salinity_fps)*86, 761*761)
+        temperature_array = temperature_array.reshape(len(temperature_fps)*86, 761*761)
         
         # remove nans
         thermal_forcing_array = np.nan_to_num(thermal_forcing_array)
@@ -965,32 +966,180 @@ class DimensionalityReducer:
         tf_exp_var_pca = pca_tf.explained_variance_ratio_
         tf_cum_sum_eigenvalues = np.cumsum(tf_exp_var_pca)
         tf_arg_90 = np.argmax(tf_cum_sum_eigenvalues>0.90)+1
-        save_path = f"{save_dir}/pca_thermal_forcing_{tf_arg_90}pcs.pkl"
+        save_path = f"{save_dir}/AIS_pca_thermal_forcing_{tf_arg_90}pcs.pkl"
         pkl.dump(pca_tf, open(save_path,"wb"))
 
         
         sal_exp_var_pca = pca_sal.explained_variance_ratio_
         sal_cum_sum_eigenvalues = np.cumsum(sal_exp_var_pca)
         sal_arg_90 = np.argmax(sal_cum_sum_eigenvalues>0.90)+1
-        save_path = f"{save_dir}/pca_salinity_{sal_arg_90}pcs.pkl"
+        save_path = f"{save_dir}/AIS_pca_salinity_{sal_arg_90}pcs.pkl"
         pkl.dump(pca_sal, open(save_path,"wb"))
         
         temp_exp_var_pca = pca_temp.explained_variance_ratio_
         temp_cum_sum_eigenvalues = np.cumsum(temp_exp_var_pca)
         temp_arg_90 = np.argmax(temp_cum_sum_eigenvalues>0.90)+1
-        save_path = f"{save_dir}/pca_temperature_{temp_arg_90}pcs.pkl"
+        save_path = f"{save_dir}/AIS_pca_temperature_{temp_arg_90}pcs.pkl"
         pkl.dump(pca_temp, open(save_path,"wb"))
         
         # save scalers 
-        save_path = f"{scaler_dir}/thermal_forcing_scaler.pkl"
+        save_path = f"{scaler_dir}/AIS_thermal_forcing_scaler.pkl"
         pkl.dump(therm_scaler, open(save_path,"wb"))
         
-        save_path = f"{scaler_dir}/temperature_scaler.pkl"
+        save_path = f"{scaler_dir}/AIS_temperature_scaler.pkl"
         pkl.dump(temp_scaler, open(save_path,"wb"))
         
-        save_path = f"{scaler_dir}/salinity_scaler.pkl"
+        save_path = f"{scaler_dir}/AIS_salinity_scaler.pkl"
         pkl.dump(salinity_scaler, open(save_path,"wb"))
         
+        return 0
+    
+    def _generate_gris_atmosphere_pcas(self, atmosphere_fps: list, save_dir: str, scaler_dir: str=None):
+        
+        # if no separate directory for saving scalers is specified, use the pca save_dir
+        if scaler_dir is None:
+            scaler_dir = save_dir
+            
+        aSMB_fps = [x for x in atmosphere_fps if 'aSMB-combined' in x]
+        aST_fps = [x for x in atmosphere_fps if 'aST-combined' in x]
+        
+        # for each variable
+        flattened_xy_dim = 337*577
+        smb_forcing_array = np.zeros([len(aSMB_fps), 86, flattened_xy_dim])
+        st_forcing_array = np.zeros([len(aST_fps), 86, flattened_xy_dim])
+        
+        # get the variables you need (rather than the entire dataset)
+        print('Processing aSMB PCA model.')
+        for i, fp in enumerate(aSMB_fps):
+            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet)
+            data_array = convert_and_subset_times(dataset)
+            data_flattened = data_array['aSMB'].values.reshape(86, flattened_xy_dim)
+            smb_forcing_array[i, :, :] = data_flattened # store
+        print('Processing aST PCA model.')
+        for i, fp in enumerate(aST_fps):
+            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet)
+            data_array = convert_and_subset_times(dataset)
+            data_flattened = data_array['aST'].values.reshape(86, flattened_xy_dim)
+            st_forcing_array[i, :, :] = data_flattened # store
+            
+        # reshape variable_array (num_files, num_timestamps, num_gridpoints) --> (num_files*num_timestamps, num_gridpoints)
+        smb_forcing_array = smb_forcing_array.reshape(len(aSMB_fps)*len(data_array.time), flattened_xy_dim)
+        st_forcing_array = st_forcing_array.reshape(len(aST_fps)*len(data_array.time), flattened_xy_dim)
+        
+        # remove nans
+        smb_forcing_array = np.nan_to_num(smb_forcing_array)
+        st_forcing_array = np.nan_to_num(st_forcing_array)
+        
+        # scale data
+        smb_scaler = StandardScaler()
+        smb_scaler.fit(smb_forcing_array)
+        smb_forcing_array = smb_scaler.transform(smb_forcing_array)
+        
+        st_scaler = StandardScaler()
+        st_scaler.fit(st_forcing_array)
+        st_forcing_array = st_scaler.transform(st_forcing_array)
+        
+        # run PCA
+        pca_smb, _ = self._run_PCA(smb_forcing_array, num_pcs=1000)
+        pca_st, _ = self._run_PCA(st_forcing_array, num_pcs=1000)
+        
+        # get percent explained
+        smb_exp_var_pca = pca_smb.explained_variance_ratio_
+        smb_cum_sum_eigenvalues = np.cumsum(smb_exp_var_pca)
+        smb_arg_90 = np.argmax(smb_cum_sum_eigenvalues>0.90)+1
+        save_path = f"{save_dir}/GrIS_pca_aSMB_{smb_arg_90}pcs.pkl"
+        pkl.dump(pca_smb, open(save_path,"wb"))
+
+        
+        st_exp_var_pca = pca_st.explained_variance_ratio_
+        st_cum_sum_eigenvalues = np.cumsum(st_exp_var_pca)
+        st_arg_90 = np.argmax(st_cum_sum_eigenvalues>0.90)+1
+        save_path = f"{save_dir}/GrIS_pca_aST_{st_arg_90}pcs.pkl"
+        pkl.dump(pca_st, open(save_path,"wb"))
+        
+        
+        # save scalers 
+        save_path = f"{scaler_dir}/GrIS_aSMB_scaler.pkl"
+        pkl.dump(smb_scaler, open(save_path,"wb"))
+        
+        save_path = f"{scaler_dir}/GrIS_aST_scaler.pkl"
+        pkl.dump(st_scaler, open(save_path,"wb"))
+        
+            
+        return 0
+    
+    def _generate_gris_ocean_pcas(self, ocean_fps: list, save_dir: str, scaler_dir: str=None):
+        
+        # if no separate directory for saving scalers is specified, use the pca save_dir
+        if scaler_dir is None:
+            scaler_dir = save_dir
+            
+        basin_runoff_fps = [x for x in ocean_fps if 'basinRunoff' in x]
+        thermal_forcing_fps = [x for x in ocean_fps if 'oceanThermalForcing' in x]
+        
+        # for each variable
+        flattened_xy_dim = 337*577
+        basin_runoff_array = np.zeros([len(basin_runoff_fps), 86, flattened_xy_dim])
+        thermal_forcing_array = np.zeros([len(thermal_forcing_fps), 86, flattened_xy_dim])
+        
+        # get the variables you need (rather than the entire dataset)
+        print('Processing basin_runoff PCA model.')
+        for i, fp in enumerate(basin_runoff_fps):
+            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet)
+            data_array = convert_and_subset_times(dataset)
+            data_flattened = data_array['basin_runoff'].values.reshape(86, flattened_xy_dim)
+            basin_runoff_array[i, :, :] = data_flattened # store
+        print('Processing thermal_forcing PCA model.')
+        for i, fp in enumerate(thermal_forcing_fps):
+            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet)
+            data_array = convert_and_subset_times(dataset)
+            data_flattened = data_array['thermal_forcing'].values.reshape(86, flattened_xy_dim)
+            thermal_forcing_array[i, :, :] = data_flattened # store
+            
+        # reshape variable_array (num_files, num_timestamps, num_gridpoints) --> (num_files*num_timestamps, num_gridpoints)
+        basin_runoff_array = basin_runoff_array.reshape(len(basin_runoff_fps)*len(data_array.time), flattened_xy_dim)
+        thermal_forcing_array = thermal_forcing_array.reshape(len(thermal_forcing_fps)*len(data_array.time), flattened_xy_dim)
+        
+        # remove nans
+        basin_runoff_array = np.nan_to_num(basin_runoff_array)
+        thermal_forcing_array = np.nan_to_num(thermal_forcing_array)
+        
+        # scale data
+        basin_runoff_scaler = StandardScaler()
+        basin_runoff_scaler.fit(basin_runoff_array)
+        basin_runoff_array = basin_runoff_scaler.transform(basin_runoff_array)
+        
+        thermal_forcing_scaler = StandardScaler()
+        thermal_forcing_scaler.fit(thermal_forcing_array)
+        thermal_forcing_array = thermal_forcing_scaler.transform(thermal_forcing_array)
+        
+        # run PCA
+        pca_br, _ = self._run_PCA(basin_runoff_array, num_pcs=1000)
+        pca_tf, _ = self._run_PCA(thermal_forcing_array, num_pcs=1000)
+        
+        # get percent explained
+        br_exp_var_pca = pca_br.explained_variance_ratio_
+        br_cum_sum_eigenvalues = np.cumsum(br_exp_var_pca)
+        br_arg_90 = np.argmax(br_cum_sum_eigenvalues>0.90)+1
+        save_path = f"{save_dir}/GrIS_pca_basin_runoff_{br_arg_90}pcs.pkl"
+        pkl.dump(pca_br, open(save_path,"wb"))
+
+        
+        tf_exp_var_pca = pca_tf.explained_variance_ratio_
+        tf_cum_sum_eigenvalues = np.cumsum(tf_exp_var_pca)
+        tf_arg_90 = np.argmax(tf_cum_sum_eigenvalues>0.90)+1
+        save_path = f"{save_dir}/GrIS_pca_thermal_forcing_{tf_arg_90}pcs.pkl"
+        pkl.dump(pca_tf, open(save_path,"wb"))
+        
+        
+        # save scalers 
+        save_path = f"{scaler_dir}/GrIS_basin_runoff_scaler.pkl"
+        pkl.dump(basin_runoff_scaler, open(save_path,"wb"))
+        
+        save_path = f"{scaler_dir}/GrIS_thermal_forcing_scaler.pkl"
+        pkl.dump(thermal_forcing_scaler, open(save_path,"wb"))
+        
+            
         return 0
     
     def _generate_sle_pca(self, sle_fps: list, save_dir: str, scaler_dir=None):
@@ -1007,8 +1156,13 @@ class DimensionalityReducer:
         
         if scaler_dir is None:
             scaler_dir = save_dir
+            
+        if self.ice_sheet == 'AIS':
+            flattened_xy_dim = 761*761
+        else:
+            flattened_xy_dim = 337*577
         
-        sle_array = np.zeros([len(sle_fps), 86, 761*761])
+        sle_array = np.zeros([len(sle_fps), 86, flattened_xy_dim])
         # sle_array = np.zeros([4, 86, 761*761])
         # sle_fps = sle_fps[0:4]
         # loop through each SLE (IVAF) projection file
@@ -1017,16 +1171,16 @@ class DimensionalityReducer:
             sle_fps_loop.set_description(f"Aggregating SLE file #{i+1}/{len(sle_fps)}")
             # get the variable
             try:
-                data_flattened, _ = get_xarray_variable(fp, var_name="sle")
+                data_flattened = get_xarray_data(fp, var_name="sle", ice_sheet=self.ice_sheet)
             except:
-                data_flattened, _ = get_xarray_variable(fp, var_name="ivaf")
+                data_flattened = get_xarray_data(fp, var_name="ivaf", ice_sheet=self.ice_sheet)
                 data_flattened = data_flattened / 1e9 / 362.5
             
             # store it in the total array
             sle_array[i, :, :] = data_flattened 
                 
         # reshape variable_array (num_files, num_timestamps, num_gridpoints) --> (num_files*num_timestamps, num_gridpoints)
-        sle_array = sle_array.reshape(len(sle_fps)*86, 761*761)
+        sle_array = sle_array.reshape(len(sle_fps)*86, flattened_xy_dim)
         
         # since the array is so large (350*85, 761*761) = (29750, 579121), randomly sample N rows and run PCA
         sle_array = sle_array[np.random.choice(sle_array.shape[0], 1590, replace=False), :]
@@ -1052,11 +1206,11 @@ class DimensionalityReducer:
         print(f"Variable SLE has {arg_90} PCs that explain 90% of the variance")
         
         # output pca object
-        save_path = f"{save_dir}/pca_sle_{arg_90}pcs.pkl"
+        save_path = f"{save_dir}/{self.ice_sheet}_pca_sle_{arg_90}pcs.pkl"
         pkl.dump(pca, open(save_path,"wb"))
         
         # and scaler
-        save_path = f"{scaler_dir}/sle_scaler.pkl"
+        save_path = f"{scaler_dir}/{self.ice_sheet}_sle_scaler.pkl"
         pkl.dump(scaler, open(save_path,"wb"))
         
         
@@ -1090,38 +1244,64 @@ class DimensionalityReducer:
             raise ValueError("PCA model directory must be specified, or DimensionalityReducer.generate_pca_models must be run first.")
         if pca_model_directory is not None:
             self.pca_model_directory = pca_model_directory
-        if var_name not in ['all', 'evspsbl_anomaly', 'mrro_anomaly', 'pr_anomaly', 'smb_anomaly', 'ts_anomaly', 'thermal_forcing', 'salinity', 'temperature', 'sle', None]:
-            raise ValueError(f"Variable name {var_name} not recognized.")
+        
             
         pca_models_paths = os.listdir(self.pca_model_directory)
-        pca_models_paths = [x for x in pca_models_paths if 'pca' in x]
+        pca_models_paths = [x for x in pca_models_paths if 'pca' in x and self.ice_sheet in x]
         
-        if var_name == 'all' or var_name is None:
-            evspsbl_model = [x for x in pca_models_paths if 'evspsbl' in x][0]
-            mrro_model = [x for x in pca_models_paths if 'mrro' in x][0]
-            pr_model = [x for x in pca_models_paths if 'pr' in x][0]
-            smb_model = [x for x in pca_models_paths if 'smb' in x][0]
-            ts_model = [x for x in pca_models_paths if 'ts' in x][0]
-            thermal_forcing_model = [x for x in pca_models_paths if 'thermal_forcing' in x][0]
-            salinity_model = [x for x in pca_models_paths if 'salinity' in x][0]
-            temperature_model = [x for x in pca_models_paths if 'temperature' in x][0]
-            sle_model = [x for x in pca_models_paths if 'sle' in x][0]
-                
-            pca_models = dict(
-                evspsbl_anomaly=pkl.load(open(f"{self.pca_model_directory}/{evspsbl_model}", "rb")),
-                mrro_anomaly=pkl.load(open(f"{self.pca_model_directory}/{mrro_model}", "rb")),
-                pr_anomaly=pkl.load(open(f"{self.pca_model_directory}/{pr_model}", "rb")),
-                smb_anomaly=pkl.load(open(f"{self.pca_model_directory}/{smb_model}", "rb")),
-                ts_anomaly=pkl.load(open(f"{self.pca_model_directory}/{ts_model}", "rb")),
-                thermal_forcing=pkl.load(open(f"{self.pca_model_directory}/{thermal_forcing_model}", "rb")),
-                salinity=pkl.load(open(f"{self.pca_model_directory}/{salinity_model}", "rb")),
-                temperature=pkl.load(open(f"{self.pca_model_directory}/{temperature_model}", "rb")),
-                sle=pkl.load(open(f"{self.pca_model_directory}/{sle_model}", "rb")),
-            )
+        if self.ice_sheet == 'AIS':
+            
+            if var_name not in ['all', 'evspsbl_anomaly', 'mrro_anomaly', 'pr_anomaly', 'smb_anomaly', 'ts_anomaly', 'thermal_forcing', 'salinity', 'temperature', 'sle', None]:
+                raise ValueError(f"Variable name {var_name} not recognized.")
+            
+            if var_name == 'all' or var_name is None:
+                evspsbl_model = [x for x in pca_models_paths if 'evspsbl' in x][0]
+                mrro_model = [x for x in pca_models_paths if 'mrro' in x][0]
+                pr_model = [x for x in pca_models_paths if 'pr' in x][0]
+                smb_model = [x for x in pca_models_paths if 'smb' in x][0]
+                ts_model = [x for x in pca_models_paths if 'ts' in x][0]
+                thermal_forcing_model = [x for x in pca_models_paths if 'thermal_forcing' in x][0]
+                salinity_model = [x for x in pca_models_paths if 'salinity' in x][0]
+                temperature_model = [x for x in pca_models_paths if 'temperature' in x][0]
+                sle_model = [x for x in pca_models_paths if 'sle' in x][0]
+                    
+                pca_models = dict(
+                    evspsbl_anomaly=pkl.load(open(f"{self.pca_model_directory}/{evspsbl_model}", "rb")),
+                    mrro_anomaly=pkl.load(open(f"{self.pca_model_directory}/{mrro_model}", "rb")),
+                    pr_anomaly=pkl.load(open(f"{self.pca_model_directory}/{pr_model}", "rb")),
+                    smb_anomaly=pkl.load(open(f"{self.pca_model_directory}/{smb_model}", "rb")),
+                    ts_anomaly=pkl.load(open(f"{self.pca_model_directory}/{ts_model}", "rb")),
+                    thermal_forcing=pkl.load(open(f"{self.pca_model_directory}/{thermal_forcing_model}", "rb")),
+                    salinity=pkl.load(open(f"{self.pca_model_directory}/{salinity_model}", "rb")),
+                    temperature=pkl.load(open(f"{self.pca_model_directory}/{temperature_model}", "rb")),
+                    sle=pkl.load(open(f"{self.pca_model_directory}/{sle_model}", "rb")),
+                )
+            else:
+                pca_models = {}
+                model_path = [x for x in pca_models_paths if var_name in x][0]
+                pca_models[var_name] = pkl.load(open(f"{self.pca_model_directory}/{model_path}", "rb"))
         else:
-            pca_models = {}
-            model_path = [x for x in pca_models_paths if var_name in x][0]
-            pca_models[var_name] = pkl.load(open(f"{self.pca_model_directory}/{model_path}", "rb"))
+            if var_name not in ['all', 'aST', 'aSMB', 'basin_runoff', 'thermal_forcing','sle', None]:
+                raise ValueError(f"Variable name {var_name} not recognized.")
+            
+            if var_name == 'all' or var_name is None:
+                aSMB_model = [x for x in pca_models_paths if 'aSMB' in x][0]
+                aST_model = [x for x in pca_models_paths if 'aST' in x][0]
+                basin_runoff_model = [x for x in pca_models_paths if 'basin_runoff' in x][0]
+                thermal_forcing_model = [x for x in pca_models_paths if 'thermal_forcing' in x][0]
+                    
+                pca_models = dict(
+                    aSMB=pkl.load(open(f"{self.pca_model_directory}/{aSMB_model}", "rb")),
+                    aST=pkl.load(open(f"{self.pca_model_directory}/{aST_model}", "rb")),
+                    basin_runoff=pkl.load(open(f"{self.pca_model_directory}/{basin_runoff_model}", "rb")),
+                    thermal_forcing=pkl.load(open(f"{self.pca_model_directory}/{thermal_forcing_model}", "rb")),
+                    sle=pkl.load(open(f"{self.pca_model_directory}/{sle_model}", "rb")),
+                )
+            else:
+                pca_models = {}
+                model_path = [x for x in pca_models_paths if var_name in x][0]
+                pca_models[var_name] = pkl.load(open(f"{self.pca_model_directory}/{model_path}", "rb"))
+            
         return pca_models
     
     def _load_scalers(self, scaler_directory, var_name='all'):
@@ -1132,39 +1312,65 @@ class DimensionalityReducer:
             self.scaler_directory = self.pca_model_directory
         if scaler_directory is not None:
             self.scaler_directory = scaler_directory
-        if var_name not in ['all', 'evspsbl_anomaly', 'mrro_anomaly', 'pr_anomaly', 'smb_anomaly', 'ts_anomaly', 'thermal_forcing', 'salinity', 'temperature', 'sle', None]:
-            raise ValueError(f"Variable name {var_name} not recognized.")
-        
         
         scaler_paths = os.listdir(self.scaler_directory)
-        scaler_paths = [x for x in scaler_paths if 'scaler' in x]
+        scaler_paths = [x for x in scaler_paths if 'scaler' in x and self.ice_sheet in x]
         
-        if var_name == 'all' or var_name is None:
-            evspsbl_model = [x for x in scaler_paths if 'evspsbl' in x][0]
-            mrro_model = [x for x in scaler_paths if 'mrro' in x][0]
-            pr_model = [x for x in scaler_paths if 'pr' in x][0]
-            smb_model = [x for x in scaler_paths if 'smb' in x][0]
-            ts_model = [x for x in scaler_paths if 'ts' in x][0]
-            thermal_forcing_model = [x for x in scaler_paths if 'thermal_forcing' in x][0]
-            salinity_model = [x for x in scaler_paths if 'salinity' in x][0]
-            temperature_model = [x for x in scaler_paths if 'temperature' in x][0]
-            sle_model = [x for x in scaler_paths if 'sle' in x][0]
-                
-            scalers = dict(
-                evspsbl_anomaly=pkl.load(open(f"{self.scaler_directory}/{evspsbl_model}", "rb")),
-                mrro_anomaly=pkl.load(open(f"{self.scaler_directory}/{mrro_model}", "rb")),
-                pr_anomaly=pkl.load(open(f"{self.scaler_directory}/{pr_model}", "rb")),
-                smb_anomaly=pkl.load(open(f"{self.scaler_directory}/{smb_model}", "rb")),
-                ts_anomaly=pkl.load(open(f"{self.scaler_directory}/{ts_model}", "rb")),
-                thermal_forcing=pkl.load(open(f"{self.scaler_directory}/{thermal_forcing_model}", "rb")),
-                salinity=pkl.load(open(f"{self.scaler_directory}/{salinity_model}", "rb")),
-                temperature=pkl.load(open(f"{self.scaler_directory}/{temperature_model}", "rb")),
-                sle=pkl.load(open(f"{self.scaler_directory}/{sle_model}", "rb")),
-            )
-        else:
-            scalers = {}
-            scaler_path = [x for x in scaler_directory if var_name in x][0]
-            scalers[var_name] = pkl.load(open(f"{self.scaler_directory}/{scaler_path}", "rb"))
+        if self.ice_sheet == 'AIS':
+            
+            if var_name not in ['all', 'evspsbl_anomaly', 'mrro_anomaly', 'pr_anomaly', 'smb_anomaly', 'ts_anomaly', 'thermal_forcing', 'salinity', 'temperature', 'sle', None]:
+                raise ValueError(f"Variable name {var_name} not recognized.")
+            
+            if var_name == 'all' or var_name is None:
+                evspsbl_model = [x for x in scaler_paths if 'evspsbl' in x][0]
+                mrro_model = [x for x in scaler_paths if 'mrro' in x][0]
+                pr_model = [x for x in scaler_paths if 'pr' in x][0]
+                smb_model = [x for x in scaler_paths if 'smb' in x][0]
+                ts_model = [x for x in scaler_paths if 'ts' in x][0]
+                thermal_forcing_model = [x for x in scaler_paths if 'thermal_forcing' in x][0]
+                salinity_model = [x for x in scaler_paths if 'salinity' in x][0]
+                temperature_model = [x for x in scaler_paths if 'temperature' in x][0]
+                sle_model = [x for x in scaler_paths if 'sle' in x][0]
+                    
+                scalers = dict(
+                    evspsbl_anomaly=pkl.load(open(f"{self.scaler_directory}/{evspsbl_model}", "rb")),
+                    mrro_anomaly=pkl.load(open(f"{self.scaler_directory}/{mrro_model}", "rb")),
+                    pr_anomaly=pkl.load(open(f"{self.scaler_directory}/{pr_model}", "rb")),
+                    smb_anomaly=pkl.load(open(f"{self.scaler_directory}/{smb_model}", "rb")),
+                    ts_anomaly=pkl.load(open(f"{self.scaler_directory}/{ts_model}", "rb")),
+                    thermal_forcing=pkl.load(open(f"{self.scaler_directory}/{thermal_forcing_model}", "rb")),
+                    salinity=pkl.load(open(f"{self.scaler_directory}/{salinity_model}", "rb")),
+                    temperature=pkl.load(open(f"{self.scaler_directory}/{temperature_model}", "rb")),
+                    sle=pkl.load(open(f"{self.scaler_directory}/{sle_model}", "rb")),
+                )
+            else:
+                scalers = {}
+                scaler_path = [x for x in scaler_paths if var_name in x][0]
+                scalers[var_name] = pkl.load(open(f"{self.scaler_directory}/{scaler_path}", "rb"))
+        
+        else: # GrIS
+            if var_name not in ['all', 'aST', 'aSMB', 'basin_runoff', 'thermal_forcing', 'sle', None]:
+                raise ValueError(f"Variable name {var_name} not recognized.")
+            
+            if var_name == 'all' or var_name is None:
+                aSMB_model = [x for x in scaler_paths if 'aSMB' in x][0]
+                aST_model = [x for x in scaler_paths if 'aST' in x][0]
+                basin_runoff_model = [x for x in scaler_paths if 'basin_runoff' in x][0]
+                thermal_forcing_model = [x for x in scaler_paths if 'thermal_forcing' in x][0]
+                sle_model = [x for x in scaler_paths if 'sle' in x][0]
+                    
+                scalers = dict(
+                    aSMB=pkl.load(open(f"{self.scaler_directory}/{aSMB_model}", "rb")),
+                    aST=pkl.load(open(f"{self.scaler_directory}/{aST_model}", "rb")),
+                    basin_runoff=pkl.load(open(f"{self.scaler_directory}/{basin_runoff_model}", "rb")),
+                    thermal_forcing=pkl.load(open(f"{self.scaler_directory}/{thermal_forcing_model}", "rb")),
+                    sle=pkl.load(open(f"{self.scaler_directory}/{sle_model}", "rb")),
+                )
+            else:
+                scalers = {}
+                scaler_path = [x for x in scaler_paths if var_name in x][0]
+                scalers[var_name] = pkl.load(open(f"{self.scaler_directory}/{scaler_path}", "rb"))
+    
         return scalers
     
     
@@ -1196,7 +1402,7 @@ class DimensionalityReducer:
             x = x.reshape(x.shape[0], -1)
         
         pca_models = self._load_pca_models(self.pca_model_directory, var_name=var_name)
-        scalers = self._load_scalers(self.scaler_directory)
+        scalers = self._load_scalers(self.scaler_directory, var_name=var_name)
         pca = pca_models[var_name]
         scaler = scalers[var_name]
         x = np.nan_to_num(x)
@@ -1241,7 +1447,7 @@ class DimensionalityReducer:
 
     
             
-def get_xarray_variable(dataset_fp, var_name, ice_sheet='AIS'):
+def get_xarray_data(dataset_fp, var_name=None, ice_sheet='AIS'):
     """
     Retrieve a variable from an xarray dataset.
 
@@ -1254,6 +1460,7 @@ def get_xarray_variable(dataset_fp, var_name, ice_sheet='AIS'):
     - dataset (xarray.Dataset): Original dataset.
 
     """
+    
     
     dataset = xr.open_dataset(dataset_fp, decode_times=False, engine='netcdf4')
     try:
@@ -1273,7 +1480,7 @@ def get_xarray_variable(dataset_fp, var_name, ice_sheet='AIS'):
         except ValueError:
             pass
         
-        for var in ['z_bnds', 'lat', 'lon']:
+        for var in ['z_bnds', 'lat', 'lon', 'mapping', 'time_bounds']:
             try:
                 dataset = dataset.drop(labels = [var])
             except ValueError:
@@ -1281,43 +1488,38 @@ def get_xarray_variable(dataset_fp, var_name, ice_sheet='AIS'):
         if 'z' in dataset.dims:
             dataset = dataset.mean(dim='z', skipna=True)
             
-            
-        # try:
-        #     dataset = dataset.drop_dims('nv4')
-        #     dataset = dataset.drop(['lat2d', 'lon2d'])
-        # except ValueError:
-        #     # if its oceanic data...
-        #     try:
-        #         dataset = dataset.drop(labels=["z_bnds", "lat", "lon"])
-        #     except ValueError:
-        #         dataset = dataset.drop(labels=['z_bnds'])
-                
-        #     dataset = dataset.mean(dim='z', skipna=True)
-
-    try:
-        data = dataset[var_name].values
-    except KeyError:
-        return np.nan, np.nan
     
-    x_dim = 761 if ice_sheet.lower() == 'ais' else 337
-    y_dim = 761 if ice_sheet.lower() == 'ais' else 577
-    if 'time' not in dataset.dims or dataset.dims['time'] == 1 or (data.shape[1] == y_dim and data.shape[2] == x_dim):
-        pass
-    else:
-        # TODO: fix this. this is just a weird way of tranposing, not sure if it even happens.
-        grid_indices = np.array([0, 1, 2])[(np.array(data.shape) == x_dim) | (np.array(data.shape) == y_dim)]
-        data = np.moveaxis(data, list(grid_indices), [1, 2])
+    if dataset.dims['x'] == 1681 and dataset.dims['y'] == 2881:
+        dataset = dataset.sel(x=dataset.x.values[::5], y=dataset.y.values[::5])
     
-    if 'time' not in dataset.dims:
-        data_flattened = data.reshape(-1,)
-    else:
-        data_flattened = data.reshape(len(dataset.time), -1)
     
-    return data_flattened, dataset
+    if var_name is not None:
+        try:
+            data = dataset[var_name].values
+        except KeyError:
+            return np.nan, np.nan
+        
+        x_dim = 761 if ice_sheet.lower() == 'ais' else 337
+        y_dim = 761 if ice_sheet.lower() == 'ais' else 577
+        if 'time' not in dataset.dims or dataset.dims['time'] == 1 or (data.shape[1] == y_dim and data.shape[2] == x_dim):
+            pass
+        else:
+            # TODO: fix this. this is just a weird way of tranposing, not sure if it even happens.
+            grid_indices = np.array([0, 1, 2])[(np.array(data.shape) == x_dim) | (np.array(data.shape) == y_dim)]
+            data = np.moveaxis(data, list(grid_indices), [1, 2])
+        
+        if 'time' not in dataset.dims:
+            data_flattened = data.reshape(-1,)
+        else:
+            data_flattened = data.reshape(len(dataset.time), -1)
+        return data_flattened
+    
+    return dataset
 
 
 class DatasetMerger:
-    def __init__(self, forcing_dir, projection_dir, experiment_file, output_dir):
+    def __init__(self, ice_sheet, forcing_dir, projection_dir, experiment_file, output_dir):
+        self.ice_sheet = ice_sheet
         self.forcing_dir = forcing_dir
         self.projection_dir = projection_dir
         self.experiment_file = experiment_file
@@ -1398,8 +1600,47 @@ class DatasetMerger:
             
         return df
     
-def combine_forcings_projections(forcing_dir,):
-    
+def combine_gris_forcings(forcing_dir,):
+    atmosphere_dir = f"{forcing_dir}/GrIS/Atmosphere_Forcing/aSMB_observed/v1/"
+    cmip_directories = next(os.walk(atmosphere_dir))[1]
+    cmip_loop = tqdm(cmip_directories, total=len(cmip_directories))
+    for cmip_dir in cmip_loop:
+        cmip_loop.set_description(f"Processing {cmip_dir}")
+        for var in [f"aSMB", f"aST"]:
+            files = os.listdir(f"{atmosphere_dir}/{cmip_dir}/{var}")
+            files = np.array([x for x in files if x.endswith('.nc')])
+            years = np.array([int(x.replace('.nc', "").split('-')[-1]) for x in files])
+            year_files = files[(years >= 2015) & (years <= 2100)]
+            
+
+            for i, file in enumerate(year_files,):
+                # first iteration, open dataset and store
+                if i == 0:
+                    dataset = xr.open_dataset(f"{atmosphere_dir}/{cmip_dir}/{var}/{file}")
+                    for dim in ['nv', 'nv4', 'mapping']:
+                            try:
+                                dataset = dataset.drop_dims(dim)
+                            except:
+                                pass
+                    dataset = dataset.drop('mapping')
+                    dataset = dataset.sel(x=dataset.x.values[::5], y=dataset.y.values[::5])
+                    continue
+                
+                # following iterations, open dataset and concatenate
+                data = xr.open_dataset(f"{atmosphere_dir}/{cmip_dir}/{var}/{file}")
+                for dim in ['nv', 'nv4', ]:
+                    try:
+                        data = data.drop_dims(dim)
+                    except:
+                        pass
+                data = data.drop('mapping')
+                data = data.sel(x=data.x.values[::5], y=data.y.values[::5])
+                # data['time'] = pd.to_datetime(year, format='%Y')
+                dataset = xr.concat([dataset, data], dim='time')
+
+            # Now you have the dataset with the files loaded and time dimension set
+            dataset.to_netcdf(os.path.join(atmosphere_dir, cmip_dir, f"GrIS-{cmip_dir}-{var}-combined.nc"))
+
     return 0
 
             
