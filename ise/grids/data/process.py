@@ -691,24 +691,31 @@ class DimensionalityReducer:
             
         
         # for each atmospheric forcing file, convert each variable to PCA space with pretrained PCA model
-        atmospheric_paths_loop = tqdm(enumerate(self.forcing_paths['atmosphere']), total=len(self.forcing_paths['atmosphere']))
-        for i, path in atmospheric_paths_loop:
-            atmospheric_paths_loop.set_description(f"Converting atmospheric file #{i+1}/{len(self.forcing_paths['atmosphere'])}")
-            
-            dataset = xr.open_dataset(path, decode_times=False, engine='netcdf4').transpose('time', 'y', 'x', ...)  # open the dataset
-            if len(dataset.dims) > 3:
-                drop_dims = [x for x in list(dataset.dims) if x not in ('time', 'x', 'y')]
-                dataset = dataset.drop_dims(drop_dims)
-            # dataset = convert_and_subset_times(dataset)
+        for i, path in tqdm(enumerate(self.forcing_paths['atmosphere']), total=len(self.forcing_paths['atmosphere']), desc="Converting atmospheric forcing files to PCA space:"):
+            # dataset = xr.open_dataset(path, decode_times=False, engine='netcdf4', ).transpose('time', 'y', 'x', ...)  # open the dataset
+            # if len(dataset.dims) > 3:
+            #     drop_dims = [x for x in list(dataset.dims) if x not in ('time', 'x', 'y')]
+            #     dataset = dataset.drop_dims(drop_dims)
+            dataset = get_xarray_data(path, ice_sheet=self.ice_sheet, convert_and_subset=True)
             forcing_name = path.replace('.nc', '').split('/')[-1]  # get metadata (model, ssp, etc.)
             
             # transform each variable in the dataset with their respective trained PCA model
             transformed_data = {}
-            for var in ['evspsbl_anomaly', 'mrro_anomaly', 'pr_anomaly', 'smb_anomaly', 'ts_anomaly']:
+            if self.ice_sheet == 'AIS':
+            
+                for var in ['evspsbl_anomaly', 'mrro_anomaly', 'pr_anomaly', 'smb_anomaly', 'ts_anomaly']:
+                    try:
+                        transformed = self.transform(dataset[var].values, var_name=var, num_pcs=num_pcs, pca_model_directory=self.pca_model_directory, scaler_directory=self.scaler_directory)
+                    except KeyError: # if a variable is missing (usually mrro_anomaly), skip it
+                        warnings.warn(f"Variable {var} not found in {forcing_name}. Skipped.")
+                        continue
+                    transformed_data[var] = transformed  # store in dict with structure {'var_name': transformed_var}
+            else:
+                var = path.split('_')[-2]
                 try:
                     transformed = self.transform(dataset[var].values, var_name=var, num_pcs=num_pcs, pca_model_directory=self.pca_model_directory, scaler_directory=self.scaler_directory)
-                except KeyError: # if a variable is missing (usually mrro_anomaly), skip it
-                    continue
+                except KeyError:
+                    warnings.warn(f"Variable {var} not found in {forcing_name}. Skipped.")
                 transformed_data[var] = transformed  # store in dict with structure {'var_name': transformed_var}
             
             # create a dataframe with rows corresponding to time (106 total) and columns corresponding to each variables principal components
@@ -727,9 +734,7 @@ class DimensionalityReducer:
         # OCEANIC FORCINGS
         
         # for each ocean forcing file, convert each variable to PCA space with pretrained PCA model
-        ocean_fps_loop = tqdm(enumerate(self.forcing_paths['ocean']), total=len(self.forcing_paths['ocean']))
-        for i, path in ocean_fps_loop:
-            ocean_fps_loop.set_description(f"Converting oceanic file #{i+1}/{len(self.forcing_paths['ocean'])}")
+        for i, path in tqdm(enumerate(self.forcing_paths['ocean']), total=len(self.forcing_paths['ocean']), desc="Converting oceanic forcing files:"):
             
             # open the dataset
             forcing_name = path.replace('.nc', '').split('/')[-1]  # get metadata (model, ssp, etc.)
@@ -749,9 +754,7 @@ class DimensionalityReducer:
                 var = 'thermal_forcing'
             
             # get forcing array (requires mean value over z dimensions, see get_xarray_data())
-            forcing_array = get_xarray_data(path, var_name=var, ice_sheet=self.ice_sheet)
-            # forcing_array = np.nan_to_num(forcing_array)  # deal with np.nans
-            # forcing_array = forcing_array[:, ~(np.isnan(forcing_array).any(axis=0))]
+            forcing_array = get_xarray_data(path, var_name=var, ice_sheet=self.ice_sheet, convert_and_subset=True)
             
             # transform each variable in the dataset with their respective trained PCA model
             transformed_data = {}
@@ -789,10 +792,7 @@ class DimensionalityReducer:
             os.mkdir(f"{output_dir}/projections/")
             
         # for each projection file, convert ivaf to PCA space with pretrained PCA model
-        projection_paths_loop = tqdm(enumerate(self.projection_paths), total=len(self.projection_paths))
-        for i, path in projection_paths_loop:
-            projection_paths_loop.set_description(f"Converting projection file #{i+1}/{len(self.projection_paths)}")
-            
+        for i, path in tqdm(enumerate(self.projection_paths), total=len(self.projection_paths), desc="Converting projection files to PCA space:"):
             # get forcing array (requires mean value over z dimensions, see get_xarray_data())
             try:
                 projection_array = get_xarray_data(path, var_name='sle', ice_sheet=self.ice_sheet)
@@ -843,19 +843,17 @@ class DimensionalityReducer:
         # for each variable
         
         var_names = ['pr_anomaly', 'evspsbl_anomaly', 'mrro_anomaly', 'smb_anomaly', 'ts_anomaly']
-        var_names_loop = tqdm(enumerate(var_names), total=len(var_names))
-        for i, var in var_names_loop:
-            var_names_loop.set_description(f"Processing atmospheric PCA #{i+1}/{len(var_names)}")
+        for i, var in tqdm(enumerate(var_names), total=len(var_names), desc="Processing atmospheric PCA:"):
             variable_array = np.zeros([len(atmosphere_fps), 86, 761*761])
             
             # loop through each atmospheric CMIP file and combine them into one big array
             for i, fp in enumerate(atmosphere_fps):
                 
                 # get the variable you need (rather than the entire dataset)
-                dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet)
-                data_array = convert_and_subset_times(dataset)
+                dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet, convert_and_subset=True)
+                # data_array = convert_and_subset_times(dataset)
                 try:
-                    data_flattened = data_array[var].values.reshape(86, 761*761)
+                    data_flattened = dataset[var].values.reshape(86, 761*761)
                 except KeyError:
                     data_flattened = np.nan
                 # store it in the total array
@@ -917,22 +915,19 @@ class DimensionalityReducer:
         # get the variables you need (rather than the entire dataset)
         print('Processing thermal_forcing PCA model.')
         for i, fp in enumerate(thermal_forcing_fps):
-            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet)
-            data_array = convert_and_subset_times(dataset)
-            data_flattened = data_array['thermal_forcing'].values.reshape(86, 761*761)
-            thermal_forcing_array[i, :, :] = data_flattened # store
+            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet, convert_and_subset=True)
+            # data_array = convert_and_subset_times(dataset)
+            thermal_forcing_array[i, :, :] = dataset['thermal_forcing'].values.reshape(86, 761*761) # store
         print('Processing salinity PCA model.')
         for i, fp in enumerate(salinity_fps):
-            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet)
-            data_array = convert_and_subset_times(dataset)
-            data_flattened = data_array['salinity'].values.reshape(86, 761*761)
-            salinity_array[i, :, :] = data_flattened # store
+            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet, convert_and_subset=True)
+            # data_array = convert_and_subset_times(dataset)
+            salinity_array[i, :, :] = dataset['salinity'].values.reshape(86, 761*761) # store
         print('Processing temperature PCA model.')
         for i, fp in enumerate(temperature_fps):
-            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet)
-            data_array = convert_and_subset_times(dataset)
-            data_flattened = data_array['temperature'].values.reshape(86, 761*761)
-            temperature_array[i, :, :] = data_flattened
+            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet, convert_and_subset=True)
+            # data_array = convert_and_subset_times(dataset)
+            temperature_array[i, :, :] = dataset['temperature'].values.reshape(86, 761*761)
             
         # reshape variable_array (num_files, num_timestamps, num_gridpoints) --> (num_files*num_timestamps, num_gridpoints)
         thermal_forcing_array = thermal_forcing_array.reshape(len(thermal_forcing_fps)*86, 761*761)
@@ -1000,8 +995,8 @@ class DimensionalityReducer:
         if scaler_dir is None:
             scaler_dir = save_dir
             
-        aSMB_fps = [x for x in atmosphere_fps if 'aSMB-combined' in x]
-        aST_fps = [x for x in atmosphere_fps if 'aST-combined' in x]
+        aSMB_fps = [x for x in atmosphere_fps if 'aSMB_combined' in x]
+        aST_fps = [x for x in atmosphere_fps if 'aST_combined' in x]
         
         # for each variable
         flattened_xy_dim = 337*577
@@ -1011,20 +1006,16 @@ class DimensionalityReducer:
         # get the variables you need (rather than the entire dataset)
         print('Processing aSMB PCA model.')
         for i, fp in enumerate(aSMB_fps):
-            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet)
-            data_array = convert_and_subset_times(dataset)
-            data_flattened = data_array['aSMB'].values.reshape(86, flattened_xy_dim)
-            smb_forcing_array[i, :, :] = data_flattened # store
+            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet, convert_and_subset=True)
+            smb_forcing_array[i, :, :] = dataset['aSMB'].values.reshape(86, flattened_xy_dim) # store
         print('Processing aST PCA model.')
         for i, fp in enumerate(aST_fps):
-            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet)
-            data_array = convert_and_subset_times(dataset)
-            data_flattened = data_array['aST'].values.reshape(86, flattened_xy_dim)
-            st_forcing_array[i, :, :] = data_flattened # store
+            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet, convert_and_subset=True)
+            st_forcing_array[i, :, :] = dataset['aST'].values.reshape(86, flattened_xy_dim) # store
             
         # reshape variable_array (num_files, num_timestamps, num_gridpoints) --> (num_files*num_timestamps, num_gridpoints)
-        smb_forcing_array = smb_forcing_array.reshape(len(aSMB_fps)*len(data_array.time), flattened_xy_dim)
-        st_forcing_array = st_forcing_array.reshape(len(aST_fps)*len(data_array.time), flattened_xy_dim)
+        smb_forcing_array = smb_forcing_array.reshape(len(aSMB_fps)*len(dataset.time), flattened_xy_dim)
+        st_forcing_array = st_forcing_array.reshape(len(aST_fps)*len(dataset.time), flattened_xy_dim)
         
         # remove nans
         smb_forcing_array = np.nan_to_num(smb_forcing_array)
@@ -1085,20 +1076,16 @@ class DimensionalityReducer:
         # get the variables you need (rather than the entire dataset)
         print('Processing basin_runoff PCA model.')
         for i, fp in enumerate(basin_runoff_fps):
-            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet)
-            data_array = convert_and_subset_times(dataset)
-            data_flattened = data_array['basin_runoff'].values.reshape(86, flattened_xy_dim)
-            basin_runoff_array[i, :, :] = data_flattened # store
+            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet, convert_and_subset=True)
+            basin_runoff_array[i, :, :] = dataset['basin_runoff'].values.reshape(86, flattened_xy_dim)
         print('Processing thermal_forcing PCA model.')
         for i, fp in enumerate(thermal_forcing_fps):
-            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet)
-            data_array = convert_and_subset_times(dataset)
-            data_flattened = data_array['thermal_forcing'].values.reshape(86, flattened_xy_dim)
-            thermal_forcing_array[i, :, :] = data_flattened # store
+            dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet, convert_and_subset=True)
+            thermal_forcing_array[i, :, :] = dataset['thermal_forcing'].values.reshape(86, flattened_xy_dim) 
             
         # reshape variable_array (num_files, num_timestamps, num_gridpoints) --> (num_files*num_timestamps, num_gridpoints)
-        basin_runoff_array = basin_runoff_array.reshape(len(basin_runoff_fps)*len(data_array.time), flattened_xy_dim)
-        thermal_forcing_array = thermal_forcing_array.reshape(len(thermal_forcing_fps)*len(data_array.time), flattened_xy_dim)
+        basin_runoff_array = basin_runoff_array.reshape(len(basin_runoff_fps)*len(dataset.time), flattened_xy_dim)
+        thermal_forcing_array = thermal_forcing_array.reshape(len(thermal_forcing_fps)*len(dataset.time), flattened_xy_dim)
         
         # remove nans
         basin_runoff_array = np.nan_to_num(basin_runoff_array)
@@ -1163,12 +1150,9 @@ class DimensionalityReducer:
             flattened_xy_dim = 337*577
         
         sle_array = np.zeros([len(sle_fps), 86, flattened_xy_dim])
-        # sle_array = np.zeros([4, 86, 761*761])
-        # sle_fps = sle_fps[0:4]
+        
         # loop through each SLE (IVAF) projection file
-        sle_fps_loop = tqdm(enumerate(sle_fps), total=len(sle_fps))
-        for i, fp in sle_fps_loop:
-            sle_fps_loop.set_description(f"Aggregating SLE file #{i+1}/{len(sle_fps)}")
+        for i, fp in tqdm(enumerate(sle_fps), total=len(sle_fps), desc="Aggregating SLE files:"):
             # get the variable
             try:
                 data_flattened = get_xarray_data(fp, var_name="sle", ice_sheet=self.ice_sheet)
@@ -1447,7 +1431,7 @@ class DimensionalityReducer:
 
     
             
-def get_xarray_data(dataset_fp, var_name=None, ice_sheet='AIS'):
+def get_xarray_data(dataset_fp, var_name=None, ice_sheet='AIS', convert_and_subset=False):
     """
     Retrieve a variable from an xarray dataset.
 
@@ -1462,7 +1446,7 @@ def get_xarray_data(dataset_fp, var_name=None, ice_sheet='AIS'):
     """
     
     
-    dataset = xr.open_dataset(dataset_fp, decode_times=False, engine='netcdf4')
+    dataset = xr.open_dataset(dataset_fp, decode_times=False, engine='netcdf4', )
     try:
         dataset = dataset.transpose('time', 'y', 'x', ...)
     except:
@@ -1492,6 +1476,8 @@ def get_xarray_data(dataset_fp, var_name=None, ice_sheet='AIS'):
     if dataset.dims['x'] == 1681 and dataset.dims['y'] == 2881:
         dataset = dataset.sel(x=dataset.x.values[::5], y=dataset.y.values[::5])
     
+    if convert_and_subset:
+        dataset = convert_and_subset_times(dataset)
     
     if var_name is not None:
         try:
@@ -1527,6 +1513,7 @@ class DatasetMerger:
         
         if self.experiment_file.endswith('.csv'):
             self.experiments = pd.read_csv(experiment_file)
+            self.experiments.ice_sheet = self.experiments.ice_sheet.apply(lambda x: x.lower())
         elif self.experiment_file.endswith('.json'):
             self.experiments = pd.read_json(experiment_file).T
         else:
@@ -1537,31 +1524,54 @@ class DatasetMerger:
         self.forcing_metadata = self._get_forcing_metadata()
         
 
-    def merge_dataset(self, ):
+    def merge_dataset(self, split_dataset=True, train_prop=0.7, val_prop=0.15, test_prop=0.15):
         full_dataset = pd.DataFrame()
-        for projection in self.projection_paths:
+        self.experiments['exp'] = self.experiments['exp'].apply(lambda x: x.lower())
+        
+        for i, projection in enumerate(tqdm(self.projection_paths, total=len(self.projection_paths), desc="Merging forcing & projection files:")):
             # get experiment from projection filepath
             exp = projection.replace('.csv', '').split('/')[-1].split('_')[-1]
             
             # make sure cases match when doing table lookup
-            self.experiments['exp'] = self.experiments['exp'].apply(lambda x: x.lower())
             
             # get AOGCM value from table lookup
-            aogcm = self.experiments.loc[self.experiments.exp == exp.lower()]['AOGCM'].values[0]
+            try:
+                aogcm = self.experiments.loc[(self.experiments.exp == exp.lower()) & (self.experiments.ice_sheet ==self.ice_sheet.lower())]['AOGCM'].values[0]
+            except IndexError:
+                aogcm = self.experiments.loc[self.experiments.exp == exp.lower()]['AOGCM'].values[0]
             proj_cmip_model = aogcm.split('_')[0]
             proj_pathway = aogcm.split('_')[-1]
             
+            
+            
+            # names of CMIP models are slightly different, adjust based on AIS/GrIS directories
+            if self.ice_sheet == 'AIS':
+                if proj_cmip_model == 'csiro-mk3.6':
+                    proj_cmip_model = 'csiro-mk3-6-0'
+                elif proj_cmip_model == 'ipsl-cm5-mr':
+                    proj_cmip_model = 'ipsl-cm5a-mr'
+                elif proj_cmip_model == 'cnrm-esm2' or proj_cmip_model == 'cnrm-cm6':
+                    proj_cmip_model = f'{proj_cmip_model}-1'
+                
             # get forcing file from table lookup that matches projection
-            try:
-                forcing_file = self.forcing_metadata.file.loc[(self.forcing_metadata.cmip_model == proj_cmip_model) & (self.forcing_metadata.pathway == proj_pathway)].values[0]
-            except IndexError:
+            forcing_files = self.forcing_metadata.file.loc[(self.forcing_metadata.cmip_model == proj_cmip_model) & (self.forcing_metadata.pathway == proj_pathway)]
+            
+            if forcing_files.empty:
                 raise IndexError(f"Could not find forcing file for {aogcm}. Check formatting of experiment file.")
+
+            if len(forcing_files) > 1:
+                forcings = pd.DataFrame()
+                for file in forcing_files.values:
+                    forcings = pd.concat([forcings, pd.read_csv(f"{self.forcing_dir}/{file}.csv")], axis=1)
+            else:
+                forcing_file = forcing_files.values[0]
+                forcings = pd.read_csv(f"{self.forcing_dir}/{forcing_file}.csv")
+                
             
             # load forcing and projection datasets
-            forcings = pd.read_csv(f"{self.forcing_dir}/{forcing_file}.csv")
             projections = pd.read_csv(projection)
             # if forcings are longer than projections, cut off the beginning of the forcings
-            if len(forcings > len(projections)):
+            if len(forcings) > len(projections):
                 forcings = forcings.iloc[-len(projections):].reset_index(drop=True)
                 
             # add forcings and projections together and add some metadata
@@ -1569,12 +1579,20 @@ class DatasetMerger:
             merged_dataset['cmip_model'] = proj_cmip_model
             merged_dataset['pathway'] = proj_pathway
             merged_dataset['exp'] = exp
+            merged_dataset['id'] = i
+
             
             # now add to dataset with all forcing/projection pairs
             full_dataset = pd.concat([full_dataset, merged_dataset]) 
             
         # save the full dataset
         full_dataset.to_csv(f"{self.output_dir}/dataset.csv", index=False)
+        
+        if split_dataset:
+            train, val, test = split_training_data(full_dataset, train_prop, val_prop, test_prop)
+            train.to_csv(f"{self.output_dir}/train.csv", index=False)
+            val.to_csv(f"{self.output_dir}/val.csv", index=False)
+            test.to_csv(f"{self.output_dir}/test.csv", index=False)
         
         return 0
     
@@ -1583,13 +1601,28 @@ class DatasetMerger:
         pairs = {}
         # loop through forcings, looking for cmip model and pathway
         for forcing in self.forcing_paths:
+            if forcing == r'/oscar/home/pvankatw/scratch/pca/AIS/forcings/PCA_IPSL-CM5A-MR_RCP26_salinity_8km_x_60m.csv':
+                stop = 'stop'
             forcing = forcing.replace('.csv', '').split('/')[-1]
             cmip_model = forcing.split('_')[1]
             
-            if 'rcp' in forcing or 'ssp' in forcing.lower():
-                for substring in forcing.split('_'):
+            # GrIS has MAR3.9 in name, ignore
+            if cmip_model == 'MAR3.9':
+                cmip_model = forcing.split('_')[2]
+            elif cmip_model.lower() == 'gris':
+                cmip_model = forcing.split('_')[2]
+            
+            if 'rcp' in forcing.lower() or 'ssp' in forcing.lower():
+                for substring in forcing.lower().split('_'):
                     if 'rcp' in substring or 'ssp' in substring:
                         pathway = substring.lower()
+                        if len(pathway.split('-')) > 1 and ('rcp' in pathway.split('-')[-1] or 'ssp' in pathway.split('-')[-1]):
+                            if len(pathway.split('-')) > 2:
+                                cmip_model = "-".join(pathway.split('-')[0:2])
+                                pathway = pathway.split('-')[-1]
+                            else:
+                                cmip_model = pathway.split('-')[0]
+                                pathway = pathway.split('-')[-1]
                         break
             else:
                 pathway = 'rcp85'
@@ -1600,12 +1633,32 @@ class DatasetMerger:
             
         return df
     
+
+def split_training_data(data, train_prop, val_prop, test_prop=None, random_state=42):
+    if isinstance(data, str):
+        data = pd.read_csv(data)
+    elif not isinstance(data, pd.DataFrame):
+        raise ValueError("data must be a path (str) or a pandas DataFrame")
+    
+    if not len(data) % 86 == 0:
+        raise ValueError("Length of data must be divisible by 86, if not there are incomplete projections.")
+    
+    if 'id' not in data.columns:
+        raise ValueError("data must have a column named 'id'")
+    
+    total_ids = data['id'].unique()
+    shuffled_ids = np.random.shuffle(total_ids)
+    train_ids = shuffled_ids[:int(len(total_ids)*train_prop)]
+    val_ids = shuffled_ids[int(len(total_ids)*train_prop):int(len(total_ids)*(train_prop+val_prop))]
+    test_ids = shuffled_ids[int(len(total_ids)*(train_prop+val_prop)):]
+    
+    return data[data['id'].isin(train_ids)], data[data['id'].isin(val_ids)], data[data['id'].isin(test_ids)]
+    
+    
 def combine_gris_forcings(forcing_dir,):
     atmosphere_dir = f"{forcing_dir}/GrIS/Atmosphere_Forcing/aSMB_observed/v1/"
     cmip_directories = next(os.walk(atmosphere_dir))[1]
-    cmip_loop = tqdm(cmip_directories, total=len(cmip_directories))
-    for cmip_dir in cmip_loop:
-        cmip_loop.set_description(f"Processing {cmip_dir}")
+    for cmip_dir in tqdm(cmip_directories, total=len(cmip_directories), desc="Processing CMIP directories:"):
         for var in [f"aSMB", f"aST"]:
             files = os.listdir(f"{atmosphere_dir}/{cmip_dir}/{var}")
             files = np.array([x for x in files if x.endswith('.nc')])
@@ -1639,7 +1692,7 @@ def combine_gris_forcings(forcing_dir,):
                 dataset = xr.concat([dataset, data], dim='time')
 
             # Now you have the dataset with the files loaded and time dimension set
-            dataset.to_netcdf(os.path.join(atmosphere_dir, cmip_dir, f"GrIS-{cmip_dir}-{var}-combined.nc"))
+            dataset.to_netcdf(os.path.join(atmosphere_dir, cmip_dir, f"GrIS_{cmip_dir}_{var}_combined.nc"))
 
     return 0
 

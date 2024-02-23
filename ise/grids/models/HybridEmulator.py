@@ -19,6 +19,14 @@ def spatial_loss(true, predicted, smoothness_weight=0.2):
     tvr = total_variation_regularization(predicted,)
     return pixelwise_mse + smoothness_weight*tvr
 
+
+def combined_loss(true, predicted, x, y, flow, predictor_weight=0.5, nf_weight=0.5,):
+    if predictor_weight + nf_weight != 1:
+        raise ValueError("The sum of predictor_weight and nf_weight must be 1")
+    predictor_loss = spatial_loss(true, predicted, smoothness_weight=0.2)
+    nf_loss = -flow.log_prob(inputs=y, context=x)
+    return predictor_weight*predictor_loss + nf_weight*nf_loss
+
 class PCAModel:
     def __init__(self, pca_model):
         if isinstance(pca_model, str):
@@ -176,8 +184,8 @@ class NormalizingFlow(nn.Module):
                 self.optimizer.step()
         self.trained = True
         
-    def get_latent(self, X, y):
-        return self.flow.t(y, context=X)
+    def get_latent(self, x, latent_constant=0.0):
+        return self.flow.t(0, context=x)
     
     def aleatoric(self, inputs, context, num_samples):
         samples = self.flow.sample(num_samples, context)
