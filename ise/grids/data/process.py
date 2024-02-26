@@ -620,7 +620,7 @@ class DimensionalityReducer:
             # convert each forcing file to pca space
         
         
-    def generate_pca_models(self, ):
+    def generate_pca_models(self, num_forcing_pcs, num_projection_pcs):
         """
         Generate principal component analysis (PCA) models for atmosphere and ocean variables. 
         
@@ -643,15 +643,15 @@ class DimensionalityReducer:
         
         # Train PCA models for each atmospheric and oceanic forcing variable and save
         if self.ice_sheet == 'AIS':
-            self._generate_ais_atmosphere_pcas(self.forcing_paths['atmosphere'], self.pca_model_directory, scaler_dir=self.scaler_directory)
-            self._generate_ais_ocean_pcas(self.forcing_paths['ocean'], self.pca_model_directory, scaler_dir=self.scaler_directory)
+            self._generate_ais_atmosphere_pcas(self.forcing_paths['atmosphere'], self.pca_model_directory, num_pcs=num_forcing_pcs, scaler_dir=self.scaler_directory)
+            self._generate_ais_ocean_pcas(self.forcing_paths['ocean'], self.pca_model_directory, num_pcs=num_forcing_pcs, scaler_dir=self.scaler_directory)
         else:
-            self._generate_gris_atmosphere_pcas(self.forcing_paths['atmosphere'], self.pca_model_directory, scaler_dir=self.scaler_directory)
-            self._generate_gris_ocean_pcas(self.forcing_paths['ocean'], self.pca_model_directory, scaler_dir=self.scaler_directory)
+            self._generate_gris_atmosphere_pcas(self.forcing_paths['atmosphere'], self.pca_model_directory, num_pcs=num_forcing_pcs, scaler_dir=self.scaler_directory)
+            self._generate_gris_ocean_pcas(self.forcing_paths['ocean'], self.pca_model_directory, num_pcs=num_forcing_pcs, scaler_dir=self.scaler_directory)
         
         # Train PCA model for SLE and save
         sle_paths = get_all_filepaths(path=self.projection_dir, filetype='nc', contains='ivaf', not_contains='ctrl')
-        self._generate_sle_pca(sle_paths, save_dir=self.pca_model_directory, scaler_dir=self.scaler_directory)
+        self._generate_sle_pca(sle_paths, save_dir=self.pca_model_directory, num_pcs=num_projection_pcs, scaler_dir=self.scaler_directory)
         
         return 0
     
@@ -824,7 +824,7 @@ class DimensionalityReducer:
     
     
 
-    def _generate_ais_atmosphere_pcas(self, atmosphere_fps: list, save_dir: str, scaler_dir: str=None):
+    def _generate_ais_atmosphere_pcas(self,  atmosphere_fps: list, save_dir: str, num_pcs='95%', scaler_dir: str=None):
         """
         Generate principal component analysis (PCA) for atmospheric variables.
 
@@ -872,7 +872,7 @@ class DimensionalityReducer:
             variable_array = variable_scaler.transform(variable_array)
             
             # run PCA
-            pca, _ = self._run_PCA(variable_array, num_pcs=1000)
+            pca, _ = self._run_PCA(variable_array, num_pcs=num_pcs)
             
             # get percent explained
             exp_var_pca = pca.explained_variance_ratio_
@@ -889,7 +889,7 @@ class DimensionalityReducer:
             
         return 0
     
-    def _generate_ais_ocean_pcas(self, ocean_fps: list, save_dir: str, scaler_dir: str=None):
+    def _generate_ais_ocean_pcas(self, ocean_fps: list, save_dir: str, num_pcs='95%', scaler_dir: str=None):
         """
         Generate principal component analysis (PCA) for ocean variables.
 
@@ -953,9 +953,9 @@ class DimensionalityReducer:
         temperature_array = temp_scaler.transform(temperature_array)
         
         # run PCA
-        pca_tf, _ = self._run_PCA(thermal_forcing_array, num_pcs=1000)
-        pca_sal, _ = self._run_PCA(salinity_array, num_pcs=1000)
-        pca_temp, _ = self._run_PCA(temperature_array, num_pcs=1000)
+        pca_tf, _ = self._run_PCA(thermal_forcing_array, num_pcs=num_pcs)
+        pca_sal, _ = self._run_PCA(salinity_array, num_pcs=num_pcs)
+        pca_temp, _ = self._run_PCA(temperature_array, num_pcs=num_pcs)
         
         # get percent explained
         tf_exp_var_pca = pca_tf.explained_variance_ratio_
@@ -989,7 +989,7 @@ class DimensionalityReducer:
         
         return 0
     
-    def _generate_gris_atmosphere_pcas(self, atmosphere_fps: list, save_dir: str, scaler_dir: str=None):
+    def _generate_gris_atmosphere_pcas(self, atmosphere_fps: list, save_dir: str, num_pcs='95%', scaler_dir: str=None):
         
         # if no separate directory for saving scalers is specified, use the pca save_dir
         if scaler_dir is None:
@@ -1031,8 +1031,8 @@ class DimensionalityReducer:
         st_forcing_array = st_scaler.transform(st_forcing_array)
         
         # run PCA
-        pca_smb, _ = self._run_PCA(smb_forcing_array, num_pcs=1000)
-        pca_st, _ = self._run_PCA(st_forcing_array, num_pcs=1000)
+        pca_smb, _ = self._run_PCA(smb_forcing_array, num_pcs=num_pcs)
+        pca_st, _ = self._run_PCA(st_forcing_array, num_pcs=num_pcs)
         
         # get percent explained
         smb_exp_var_pca = pca_smb.explained_variance_ratio_
@@ -1059,7 +1059,7 @@ class DimensionalityReducer:
             
         return 0
     
-    def _generate_gris_ocean_pcas(self, ocean_fps: list, save_dir: str, scaler_dir: str=None):
+    def _generate_gris_ocean_pcas(self, ocean_fps: list, save_dir: str, num_pcs='95%', scaler_dir: str=None):
         
         # if no separate directory for saving scalers is specified, use the pca save_dir
         if scaler_dir is None:
@@ -1101,8 +1101,8 @@ class DimensionalityReducer:
         thermal_forcing_array = thermal_forcing_scaler.transform(thermal_forcing_array)
         
         # run PCA
-        pca_br, _ = self._run_PCA(basin_runoff_array, num_pcs=1000)
-        pca_tf, _ = self._run_PCA(thermal_forcing_array, num_pcs=1000)
+        pca_br, _ = self._run_PCA(basin_runoff_array, num_pcs=num_pcs)
+        pca_tf, _ = self._run_PCA(thermal_forcing_array, num_pcs=num_pcs)
         
         # get percent explained
         br_exp_var_pca = pca_br.explained_variance_ratio_
@@ -1129,7 +1129,7 @@ class DimensionalityReducer:
             
         return 0
     
-    def _generate_sle_pca(self, sle_fps: list, save_dir: str, scaler_dir=None):
+    def _generate_sle_pca(self, sle_fps: list, save_dir: str, num_pcs='99%', scaler_dir=None):
         """
         Generate principal component analysis (PCA) for sea level equivalent (SLE) variables.
 
@@ -1181,7 +1181,7 @@ class DimensionalityReducer:
         sle_array = scaler.transform(sle_array)
         
         # run pca
-        pca, _ = self._run_PCA(sle_array, num_pcs=1000,)
+        pca, _ = self._run_PCA(sle_array, num_pcs=num_pcs,)
         
         # get percent explained
         exp_var_pca = pca.explained_variance_ratio_
@@ -1213,6 +1213,12 @@ class DimensionalityReducer:
             tuple: A tuple containing the fitted PCA model and the transformed array.
 
         """
+        if num_pcs is not None and num_pcs.endswith('%'):
+            num_pcs = float(num_pcs.replace('%', ""))
+            if num_pcs > 1:
+                num_pcs /= 100
+
+        
         solver = 'randomized' if randomized else 'auto'
         if not num_pcs:
             pca = PCA(svd_solver=solver)
@@ -1393,7 +1399,7 @@ class DimensionalityReducer:
         scaled = scaler.transform(x)
         transformed = pca.transform(scaled)
         
-        if num_pcs.endswith('%'):
+        if num_pcs is not None and num_pcs.endswith('%'):
             exp_var_pca = pca.explained_variance_ratio_
             cum_sum_eigenvalues = np.cumsum(exp_var_pca)
             num_pcs_cutoff = cum_sum_eigenvalues>float(num_pcs.replace('%', ""))/100
@@ -1406,7 +1412,7 @@ class DimensionalityReducer:
             
         return transformed[:, :num_pcs]
     
-    def invert(self, pca_x, var_name, pca_model_directory=None):
+    def invert(self, pca_x, var_name, pca_model_directory=None, scaler_directory=None):
         """
         Invert the given variable from PCA space.
 
@@ -1427,7 +1433,11 @@ class DimensionalityReducer:
         pca_models = self._load_pca_models(pca_model_directory, var_name=var_name)
         pca = pca_models[var_name]
         inverted = pca.inverse_transform(pca_x)
-        return inverted
+        
+        scalers = self._load_scalers(scaler_directory, var_name=var_name)
+        scaler = scalers[var_name]
+        unscaled = scaler.inverse_transform(inverted)
+        return unscaled
 
     
             
@@ -1524,7 +1534,7 @@ class DatasetMerger:
         self.forcing_metadata = self._get_forcing_metadata()
         
 
-    def merge_dataset(self, split_dataset=True, train_prop=0.7, val_prop=0.15, test_prop=0.15):
+    def merge_dataset(self, split_dataset=True, train_size=0.7, val_size=0.15, test_size=0.15):
         full_dataset = pd.DataFrame()
         self.experiments['exp'] = self.experiments['exp'].apply(lambda x: x.lower())
         
@@ -1589,7 +1599,7 @@ class DatasetMerger:
         full_dataset.to_csv(f"{self.output_dir}/dataset.csv", index=False)
         
         if split_dataset:
-            train, val, test = split_training_data(full_dataset, train_prop, val_prop, test_prop)
+            train, val, test = split_training_data(full_dataset, train_size, val_size, test_size)
             train.to_csv(f"{self.output_dir}/train.csv", index=False)
             val.to_csv(f"{self.output_dir}/val.csv", index=False)
             test.to_csv(f"{self.output_dir}/test.csv", index=False)
@@ -1634,7 +1644,7 @@ class DatasetMerger:
         return df
     
 
-def split_training_data(data, train_prop, val_prop, test_prop=None, random_state=42):
+def split_training_data(data, train_size, val_size, test_size=None, output_directory=None, random_state=42):
     if isinstance(data, str):
         data = pd.read_csv(data)
     elif not isinstance(data, pd.DataFrame):
@@ -1647,12 +1657,21 @@ def split_training_data(data, train_prop, val_prop, test_prop=None, random_state
         raise ValueError("data must have a column named 'id'")
     
     total_ids = data['id'].unique()
-    shuffled_ids = np.random.shuffle(total_ids)
-    train_ids = shuffled_ids[:int(len(total_ids)*train_prop)]
-    val_ids = shuffled_ids[int(len(total_ids)*train_prop):int(len(total_ids)*(train_prop+val_prop))]
-    test_ids = shuffled_ids[int(len(total_ids)*(train_prop+val_prop)):]
+    np.random.shuffle(total_ids)
+    train_ids = total_ids[:int(len(total_ids)*train_size)]
+    val_ids = total_ids[int(len(total_ids)*train_size):int(len(total_ids)*(train_size+val_size))]
+    test_ids = total_ids[int(len(total_ids)*(train_size+val_size)):]
     
-    return data[data['id'].isin(train_ids)], data[data['id'].isin(val_ids)], data[data['id'].isin(test_ids)]
+    train = data[data['id'].isin(train_ids)]
+    val = data[data['id'].isin(val_ids)]
+    test = data[data['id'].isin(test_ids)]
+    
+    if output_directory is not None:
+        train.to_csv(f"{output_directory}/train.csv", index=False)
+        val.to_csv(f"{output_directory}/val.csv", index=False)
+        test.to_csv(f"{output_directory}/test.csv", index=False)
+    
+    return train, val, test
     
     
 def combine_gris_forcings(forcing_dir,):

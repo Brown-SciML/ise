@@ -6,6 +6,11 @@ from sklearn.decomposition import PCA
 import pickle as pkl
 from ise.grids.data.EmulatorDataset import EmulatorDataset
 import warnings
+import pandas as pd
+import os
+from ise.grids.data.process import DimensionalityReducer
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 
 def total_variation_regularization(grid, ):
     # Calculate the sum of horizontal and vertical differences
@@ -26,45 +31,84 @@ def combined_loss(true, predicted, x, y, flow, predictor_weight=0.5, nf_weight=0
     predictor_loss = spatial_loss(true, predicted, smoothness_weight=0.2)
     nf_loss = -flow.log_prob(inputs=y, context=x)
     return predictor_weight*predictor_loss + nf_weight*nf_loss
+        
+class ScalerModel:
+    def __init__(self, scaler_model):
+        if isinstance(scaler_model, str):
+            self.model = self.load_model(scaler_model)
+        elif isinstance(scaler_model, StandardScaler):
+            self.model = scaler_model
+        else:
+            raise ValueError("scaler_model must be a path (str) or a StandardScaler instance")
+        
+    def load_model(self, path, ):
+        return pkl.load(open(path, "rb"))
+    
+    def invert(self, data):
+        return self.model.inverse_transform(data)
 
 class PCAModel:
-    def __init__(self, pca_model):
+    def __init__(self, pca_model, scaler_path,):
         if isinstance(pca_model, str):
-            self.model = pkl.load(open(pca_model, "rb"))
+            self.model = self.load_model(pca_model)
         elif isinstance(pca_model, PCA):
             self.model = pca_model
         else:
             raise ValueError("pca_model must be a path (str) or a PCA instance")
+        self.scaler = ScalerModel(scaler_path)
+        
+    def load_model(self, path, ):
+        return pkl.load(open(path, "rb"))
+        
+    def invert(self, pcs):
+        inverted = self.model.inverse_transform(pcs)
+        unscaled = self.scaler.invert(inverted)
+        return unscaled
+    
         
 
 class WeakPredictor(nn.Module):
-    def __init__(self, lstm_num_layers, lstm_hidden_size,):
+    def __init__(self, input_size, lstm_num_layers, lstm_hidden_size, output_size, pca_model, scaler_path=None):
         super(WeakPredictor, self).__init__()
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.to(self.device)
+        self.lstm_num_layers = lstm_num_layers
+        self.lstm_num_hidden = lstm_hidden_size
+        
         self.lstm = nn.LSTM(
-            input_size=1,
+            input_size=input_size,
             hidden_size=lstm_hidden_size,
             batch_first=True,
             num_layers=lstm_num_layers,
         )
         self.relu = nn.ReLU()
-        self.linear1 = nn.Linear(in_features=256, out_features=128)
-        self.linear2 = nn.Linear(in_features=128, out_features=32)
-        self.linear_out = nn.Linear(in_features=32, out_features=1)
+        self.linear1 = nn.Linear(in_features=lstm_hidden_size, out_features=512)
+        self.linear2 = nn.Linear(in_features=512, out_features=256)
+        self.linear_out = nn.Linear(in_features=256, out_features=output_size)
         
         self.optimizer = optim.Adam(self.parameters())
         self.criterion = spatial_loss
         self.trained = False
         
+        if isinstance(pca_model, PCAModel):
+            self.pca_model = pca_model
+        elif isinstance(pca_model, str) and scaler_path is None:
+            raise ValueError("If pca_model is a path, scaler_path must be provided")
+        elif isinstance(pca_model, str) and scaler_path is not None:
+            self.pca_model = PCAModel(pca_model, scaler_path)
+        else:
+            raise ValueError("pca_model must be a PCAModel instance or a path (str)")
+        
 
     def forward(self, x):
         batch_size = x.shape[0]
         h0 = (
-            torch.zeros(self.num_rnn_layers, batch_size, self.num_rnn_hidden)
+            torch.zeros(self.lstm_num_layers, batch_size, self.lstm_num_hidden)
             .requires_grad_()
             .to(self.device)
         )
         c0 = (
-            torch.zeros(self.num_rnn_layers, batch_size, self.num_rnn_hidden)
+            torch.zeros(self.lstm_num_layers, batch_size, self.lstm_num_hidden)
             .requires_grad_()
             .to(self.device)
         )
@@ -80,16 +124,24 @@ class WeakPredictor(nn.Module):
         
         return x
     
-    def fit(self, X, y, epochs=100, batch_size=64):
+    def fit(self, X, y, epochs=100, sequence_length=3, batch_size=64):
         
-        dataset = EmulatorDataset(X, y, sequence_length=3)
+        if isinstance(X, pd.DataFrame):
+            X = X.values
+        if isinstance(y, pd.DataFrame):
+            y = y.values
+            
+        dataset = EmulatorDataset(X, y, sequence_length=sequence_length)
         data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
         self.train()
         
         for epoch in range(1, epochs+1):
+            print(f"Epoch: {epoch}")
             for i, (x, y) in enumerate(data_loader):
                 self.optimizer.zero_grad()
                 y_pred = self.forward(x)
+                y_pred = self.pca_model.invert(y_pred)
+                y = self.pca_model.invert(y)
                 loss = self.criterion(y, y_pred)
                 loss.backward()
                 self.optimizer.step()
