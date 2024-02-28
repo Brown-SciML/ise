@@ -4,9 +4,10 @@ import pandas as pd
 import numpy as np
 import warnings
 import cftime
-from sklearn.decomposition import PCA
+# from sklearn.decomposition import PCA
+from ise.grids.models.PCA import PCA
+from ise.grids.models.Scaler import Scaler
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-import pickle as pkl
 from ise.grids.utils import get_all_filepaths
 from datetime import date, timedelta, datetime
 from tqdm import tqdm
@@ -655,7 +656,7 @@ class DimensionalityReducer:
         
         return 0
     
-    def convert_forcings(self, num_pcs='99%', forcing_files: list=None, pca_model_directory: str=None, output_dir: str=None):
+    def convert_forcings(self, forcing_files: list=None, pca_model_directory: str=None, output_dir: str=None):
         """
         Converts atmospheric and oceanic forcing files to PCA space using pretrained PCA models.
         
@@ -705,7 +706,7 @@ class DimensionalityReducer:
             
                 for var in ['evspsbl_anomaly', 'mrro_anomaly', 'pr_anomaly', 'smb_anomaly', 'ts_anomaly']:
                     try:
-                        transformed = self.transform(dataset[var].values, var_name=var, num_pcs=num_pcs, pca_model_directory=self.pca_model_directory, scaler_directory=self.scaler_directory)
+                        transformed = self.transform(dataset[var].values, var_name=var, pca_model_directory=self.pca_model_directory, scaler_directory=self.scaler_directory)
                     except KeyError: # if a variable is missing (usually mrro_anomaly), skip it
                         warnings.warn(f"Variable {var} not found in {forcing_name}. Skipped.")
                         continue
@@ -713,7 +714,7 @@ class DimensionalityReducer:
             else:
                 var = path.split('_')[-2]
                 try:
-                    transformed = self.transform(dataset[var].values, var_name=var, num_pcs=num_pcs, pca_model_directory=self.pca_model_directory, scaler_directory=self.scaler_directory)
+                    transformed = self.transform(dataset[var].values, var_name=var, pca_model_directory=self.pca_model_directory, scaler_directory=self.scaler_directory)
                 except KeyError:
                     warnings.warn(f"Variable {var} not found in {forcing_name}. Skipped.")
                 transformed_data[var] = transformed  # store in dict with structure {'var_name': transformed_var}
@@ -758,7 +759,7 @@ class DimensionalityReducer:
             
             # transform each variable in the dataset with their respective trained PCA model
             transformed_data = {}
-            transformed = self.transform(forcing_array, var_name=var, num_pcs=num_pcs, pca_model_directory=self.pca_model_directory, scaler_directory=self.scaler_directory)
+            transformed = self.transform(forcing_array, var_name=var, pca_model_directory=self.pca_model_directory, scaler_directory=self.scaler_directory)
             transformed_data[var] = transformed  # store in dict with structure {'var_name': transformed_var}
             
             # create a dataframe with rows corresponding to time (86 total) and columns corresponding to each variables principal components
@@ -773,7 +774,7 @@ class DimensionalityReducer:
         return 0
         
         
-    def convert_projections(self, num_pcs='99.99%', projection_files: list=None, pca_model_directory: str=None, output_dir: str=None):
+    def convert_projections(self, projection_files: list=None, pca_model_directory: str=None, output_dir: str=None):
         
         # check inputs for validity
         output_dir = self.output_dir if output_dir is None else output_dir
@@ -812,7 +813,7 @@ class DimensionalityReducer:
             
             # transform each variable in the dataset with their respective trained PCA model
             transformed_data = {}
-            transformed = self.transform(projection_array, var_name=var, num_pcs=num_pcs, pca_model_directory=self.pca_model_directory, scaler_directory=self.scaler_directory)
+            transformed = self.transform(projection_array, var_name=var, pca_model_directory=self.pca_model_directory, scaler_directory=self.scaler_directory)
             transformed_data[var] = transformed  # store in dict with structure {'var_name': transformed_var}
             
             # create a dataframe with rows corresponding to time (86 total) and columns corresponding to each variables principal components
@@ -867,25 +868,20 @@ class DimensionalityReducer:
             variable_array = variable_array.reshape(len(atmosphere_fps)*86, 761*761)
             
             # scale data
-            variable_scaler = StandardScaler()
+            variable_scaler = Scaler()
             variable_scaler.fit(variable_array)
             variable_array = variable_scaler.transform(variable_array)
             
             # run PCA
             pca, _ = self._run_PCA(variable_array, num_pcs=num_pcs)
             
-            # get percent explained
-            exp_var_pca = pca.explained_variance_ratio_
-            cum_sum_eigenvalues = np.cumsum(exp_var_pca)
-            arg_90 = np.argmax(cum_sum_eigenvalues>0.90)+1
-            print(f"Variable {var} has {arg_90} PCs that explain 90% of the variance")
             
             # output pca object
-            save_path = f"{save_dir}/AIS_pca_{var}_{arg_90}pcs.pkl"
-            pkl.dump(pca, open(save_path,"wb"))
+            save_path = f"{save_dir}/AIS_pca_{var}.pth"
+            pca.save(save_path)
             # and scaler
-            save_path = f"{scaler_dir}/AIS_{var}_scaler.pkl"
-            pkl.dump(variable_scaler, open(save_path,"wb"))
+            save_path = f"{scaler_dir}/AIS_{var}_scaler.pth"
+            variable_scaler.save(save_path)
             
         return 0
     
@@ -940,15 +936,15 @@ class DimensionalityReducer:
         temperature_array = np.nan_to_num(temperature_array)
         
         # scale data
-        therm_scaler = StandardScaler()
+        therm_scaler = Scaler()
         therm_scaler.fit(thermal_forcing_array)
         thermal_forcing_array = therm_scaler.transform(thermal_forcing_array)
         
-        salinity_scaler = StandardScaler()
+        salinity_scaler = Scaler()
         salinity_scaler.fit(salinity_array)
         salinity_array = salinity_scaler.transform(salinity_array)
         
-        temp_scaler = StandardScaler()
+        temp_scaler = Scaler()
         temp_scaler.fit(temperature_array)
         temperature_array = temp_scaler.transform(temperature_array)
         
@@ -958,34 +954,24 @@ class DimensionalityReducer:
         pca_temp, _ = self._run_PCA(temperature_array, num_pcs=num_pcs)
         
         # get percent explained
-        tf_exp_var_pca = pca_tf.explained_variance_ratio_
-        tf_cum_sum_eigenvalues = np.cumsum(tf_exp_var_pca)
-        tf_arg_90 = np.argmax(tf_cum_sum_eigenvalues>0.90)+1
-        save_path = f"{save_dir}/AIS_pca_thermal_forcing_{tf_arg_90}pcs.pkl"
-        pkl.dump(pca_tf, open(save_path,"wb"))
-
+        save_path = f"{save_dir}/AIS_pca_thermal_forcing.pth"
+        pca_tf.save(save_path)
         
-        sal_exp_var_pca = pca_sal.explained_variance_ratio_
-        sal_cum_sum_eigenvalues = np.cumsum(sal_exp_var_pca)
-        sal_arg_90 = np.argmax(sal_cum_sum_eigenvalues>0.90)+1
-        save_path = f"{save_dir}/AIS_pca_salinity_{sal_arg_90}pcs.pkl"
-        pkl.dump(pca_sal, open(save_path,"wb"))
-        
-        temp_exp_var_pca = pca_temp.explained_variance_ratio_
-        temp_cum_sum_eigenvalues = np.cumsum(temp_exp_var_pca)
-        temp_arg_90 = np.argmax(temp_cum_sum_eigenvalues>0.90)+1
-        save_path = f"{save_dir}/AIS_pca_temperature_{temp_arg_90}pcs.pkl"
-        pkl.dump(pca_temp, open(save_path,"wb"))
+        save_path = f"{save_dir}/AIS_pca_salinity.pth"
+        pca_sal.save(save_path)
+                
+        save_path = f"{save_dir}/AIS_pca_temperature.pth"
+        pca_temp.save(save_path)
         
         # save scalers 
-        save_path = f"{scaler_dir}/AIS_thermal_forcing_scaler.pkl"
-        pkl.dump(therm_scaler, open(save_path,"wb"))
+        save_path = f"{scaler_dir}/AIS_scaler_thermal_forcing.pth"
+        therm_scaler.save(save_path)
         
-        save_path = f"{scaler_dir}/AIS_temperature_scaler.pkl"
-        pkl.dump(temp_scaler, open(save_path,"wb"))
+        save_path = f"{scaler_dir}/AIS_scaler_temperature.pth"
+        temp_scaler.save(save_path)
         
-        save_path = f"{scaler_dir}/AIS_salinity_scaler.pkl"
-        pkl.dump(salinity_scaler, open(save_path,"wb"))
+        save_path = f"{scaler_dir}/AIS_scaler_salinity.pth"
+        salinity_scaler.save(save_path)
         
         return 0
     
@@ -1022,11 +1008,11 @@ class DimensionalityReducer:
         st_forcing_array = np.nan_to_num(st_forcing_array)
         
         # scale data
-        smb_scaler = StandardScaler()
+        smb_scaler = Scaler()
         smb_scaler.fit(smb_forcing_array)
         smb_forcing_array = smb_scaler.transform(smb_forcing_array)
         
-        st_scaler = StandardScaler()
+        st_scaler = Scaler()
         st_scaler.fit(st_forcing_array)
         st_forcing_array = st_scaler.transform(st_forcing_array)
         
@@ -1035,26 +1021,18 @@ class DimensionalityReducer:
         pca_st, _ = self._run_PCA(st_forcing_array, num_pcs=num_pcs)
         
         # get percent explained
-        smb_exp_var_pca = pca_smb.explained_variance_ratio_
-        smb_cum_sum_eigenvalues = np.cumsum(smb_exp_var_pca)
-        smb_arg_90 = np.argmax(smb_cum_sum_eigenvalues>0.90)+1
-        save_path = f"{save_dir}/GrIS_pca_aSMB_{smb_arg_90}pcs.pkl"
-        pkl.dump(pca_smb, open(save_path,"wb"))
+        save_path = f"{save_dir}/GrIS_pca_aSMB.pth"
+        pca_smb.save(save_path)
 
-        
-        st_exp_var_pca = pca_st.explained_variance_ratio_
-        st_cum_sum_eigenvalues = np.cumsum(st_exp_var_pca)
-        st_arg_90 = np.argmax(st_cum_sum_eigenvalues>0.90)+1
-        save_path = f"{save_dir}/GrIS_pca_aST_{st_arg_90}pcs.pkl"
-        pkl.dump(pca_st, open(save_path,"wb"))
-        
+        save_path = f"{save_dir}/GrIS_pca_aST.pth"
+        pca_st.save(save_path)
         
         # save scalers 
-        save_path = f"{scaler_dir}/GrIS_aSMB_scaler.pkl"
-        pkl.dump(smb_scaler, open(save_path,"wb"))
+        save_path = f"{scaler_dir}/GrIS_aSMB_scaler.pth"
+        smb_scaler.save(save_path)
         
-        save_path = f"{scaler_dir}/GrIS_aST_scaler.pkl"
-        pkl.dump(st_scaler, open(save_path,"wb"))
+        save_path = f"{scaler_dir}/GrIS_aST_scaler.pth"
+        st_scaler.save(save_path)
         
             
         return 0
@@ -1092,11 +1070,11 @@ class DimensionalityReducer:
         thermal_forcing_array = np.nan_to_num(thermal_forcing_array)
         
         # scale data
-        basin_runoff_scaler = StandardScaler()
+        basin_runoff_scaler = Scaler()
         basin_runoff_scaler.fit(basin_runoff_array)
         basin_runoff_array = basin_runoff_scaler.transform(basin_runoff_array)
         
-        thermal_forcing_scaler = StandardScaler()
+        thermal_forcing_scaler = Scaler()
         thermal_forcing_scaler.fit(thermal_forcing_array)
         thermal_forcing_array = thermal_forcing_scaler.transform(thermal_forcing_array)
         
@@ -1104,27 +1082,20 @@ class DimensionalityReducer:
         pca_br, _ = self._run_PCA(basin_runoff_array, num_pcs=num_pcs)
         pca_tf, _ = self._run_PCA(thermal_forcing_array, num_pcs=num_pcs)
         
-        # get percent explained
-        br_exp_var_pca = pca_br.explained_variance_ratio_
-        br_cum_sum_eigenvalues = np.cumsum(br_exp_var_pca)
-        br_arg_90 = np.argmax(br_cum_sum_eigenvalues>0.90)+1
-        save_path = f"{save_dir}/GrIS_pca_basin_runoff_{br_arg_90}pcs.pkl"
-        pkl.dump(pca_br, open(save_path,"wb"))
+        # save PCA
+        save_path = f"{save_dir}/GrIS_pca_basin_runoff.pth"
+        pca_br.save(save_path)
 
-        
-        tf_exp_var_pca = pca_tf.explained_variance_ratio_
-        tf_cum_sum_eigenvalues = np.cumsum(tf_exp_var_pca)
-        tf_arg_90 = np.argmax(tf_cum_sum_eigenvalues>0.90)+1
-        save_path = f"{save_dir}/GrIS_pca_thermal_forcing_{tf_arg_90}pcs.pkl"
-        pkl.dump(pca_tf, open(save_path,"wb"))
+        save_path = f"{save_dir}/GrIS_pca_thermal_forcing.pth"
+        pca_tf.save(save_path)
         
         
         # save scalers 
-        save_path = f"{scaler_dir}/GrIS_basin_runoff_scaler.pkl"
-        pkl.dump(basin_runoff_scaler, open(save_path,"wb"))
+        save_path = f"{scaler_dir}/GrIS_basin_runoff_scaler.pth"
+        basin_runoff_scaler.save(save_path)
         
-        save_path = f"{scaler_dir}/GrIS_thermal_forcing_scaler.pkl"
-        pkl.dump(thermal_forcing_scaler, open(save_path,"wb"))
+        save_path = f"{scaler_dir}/GrIS_thermal_forcing_scaler.pth"
+        thermal_forcing_scaler.save(save_path)
         
             
         return 0
@@ -1176,31 +1147,26 @@ class DimensionalityReducer:
         sle_array = np.nan_to_num(sle_array) 
         
         # scale sle
-        scaler = StandardScaler()
+        scaler = Scaler()
         scaler.fit(sle_array)
         sle_array = scaler.transform(sle_array)
         
         # run pca
         pca, _ = self._run_PCA(sle_array, num_pcs=num_pcs,)
-        
-        # get percent explained
-        exp_var_pca = pca.explained_variance_ratio_
-        cum_sum_eigenvalues = np.cumsum(exp_var_pca)
-        arg_90 = np.argmax(cum_sum_eigenvalues>0.90)+1
-        print(f"Variable SLE has {arg_90} PCs that explain 90% of the variance")
+    
         
         # output pca object
-        save_path = f"{save_dir}/{self.ice_sheet}_pca_sle_{arg_90}pcs.pkl"
-        pkl.dump(pca, open(save_path,"wb"))
-        
+        save_path = f"{save_dir}/{self.ice_sheet}_pca_sle.pth"
+        pca.save(save_path) 
+               
         # and scaler
-        save_path = f"{scaler_dir}/{self.ice_sheet}_sle_scaler.pkl"
-        pkl.dump(scaler, open(save_path,"wb"))
+        save_path = f"{scaler_dir}/{self.ice_sheet}_scaler_sle.pth"
+        scaler.save(save_path)
         
         
         return 0
     
-    def _run_PCA(self, variable_array, num_pcs=None, randomized=False):
+    def _run_PCA(self, variable_array, num_pcs, ):
         """
         Runs Principal Component Analysis (PCA) on the given variable array.
 
@@ -1213,17 +1179,15 @@ class DimensionalityReducer:
             tuple: A tuple containing the fitted PCA model and the transformed array.
 
         """
-        if num_pcs is not None and num_pcs.endswith('%'):
+        if isinstance(num_pcs, str) and not num_pcs.endswith('%'):
+            raise ValueError("num_pcs must be an integer, float, or string ending with '%'")
+        
+        if isinstance(num_pcs, str) and num_pcs.endswith('%'):
             num_pcs = float(num_pcs.replace('%', ""))
             if num_pcs > 1:
                 num_pcs /= 100
 
-        
-        solver = 'randomized' if randomized else 'auto'
-        if not num_pcs:
-            pca = PCA(svd_solver=solver)
-        else:
-            pca = PCA(n_components=num_pcs, svd_solver=solver)
+        pca = PCA(n_components=num_pcs,)
 
         pca = pca.fit(variable_array)
         pca_array = pca.transform(variable_array)
@@ -1256,20 +1220,20 @@ class DimensionalityReducer:
                 sle_model = [x for x in pca_models_paths if 'sle' in x][0]
                     
                 pca_models = dict(
-                    evspsbl_anomaly=pkl.load(open(f"{self.pca_model_directory}/{evspsbl_model}", "rb")),
-                    mrro_anomaly=pkl.load(open(f"{self.pca_model_directory}/{mrro_model}", "rb")),
-                    pr_anomaly=pkl.load(open(f"{self.pca_model_directory}/{pr_model}", "rb")),
-                    smb_anomaly=pkl.load(open(f"{self.pca_model_directory}/{smb_model}", "rb")),
-                    ts_anomaly=pkl.load(open(f"{self.pca_model_directory}/{ts_model}", "rb")),
-                    thermal_forcing=pkl.load(open(f"{self.pca_model_directory}/{thermal_forcing_model}", "rb")),
-                    salinity=pkl.load(open(f"{self.pca_model_directory}/{salinity_model}", "rb")),
-                    temperature=pkl.load(open(f"{self.pca_model_directory}/{temperature_model}", "rb")),
-                    sle=pkl.load(open(f"{self.pca_model_directory}/{sle_model}", "rb")),
+                    evspsbl_anomaly=PCA.load(f"{self.pca_model_directory}/{evspsbl_model}"),
+                    mrro_anomaly=PCA.load(f"{self.pca_model_directory}/{mrro_model}"),
+                    pr_anomaly=PCA.load(f"{self.pca_model_directory}/{pr_model}"),
+                    smb_anomaly=PCA.load(f"{self.pca_model_directory}/{smb_model}"),
+                    ts_anomaly=PCA.load(f"{self.pca_model_directory}/{ts_model}"),
+                    thermal_forcing=PCA.load(f"{self.pca_model_directory}/{thermal_forcing_model}"),
+                    salinity=PCA.load(f"{self.pca_model_directory}/{salinity_model}"),
+                    temperature=PCA.load(f"{self.pca_model_directory}/{temperature_model}"),
+                    sle=PCA.load(f"{self.pca_model_directory}/{sle_model}"),
                 )
             else:
                 pca_models = {}
                 model_path = [x for x in pca_models_paths if var_name in x][0]
-                pca_models[var_name] = pkl.load(open(f"{self.pca_model_directory}/{model_path}", "rb"))
+                pca_models[var_name] = PCA.load(f"{self.pca_model_directory}/{model_path}",)
         else:
             if var_name not in ['all', 'aST', 'aSMB', 'basin_runoff', 'thermal_forcing','sle', None]:
                 raise ValueError(f"Variable name {var_name} not recognized.")
@@ -1281,16 +1245,16 @@ class DimensionalityReducer:
                 thermal_forcing_model = [x for x in pca_models_paths if 'thermal_forcing' in x][0]
                     
                 pca_models = dict(
-                    aSMB=pkl.load(open(f"{self.pca_model_directory}/{aSMB_model}", "rb")),
-                    aST=pkl.load(open(f"{self.pca_model_directory}/{aST_model}", "rb")),
-                    basin_runoff=pkl.load(open(f"{self.pca_model_directory}/{basin_runoff_model}", "rb")),
-                    thermal_forcing=pkl.load(open(f"{self.pca_model_directory}/{thermal_forcing_model}", "rb")),
-                    sle=pkl.load(open(f"{self.pca_model_directory}/{sle_model}", "rb")),
+                    aSMB=PCA.load(f"{self.pca_model_directory}/{aSMB_model}"),
+                    aST=PCA.load(f"{self.pca_model_directory}/{aST_model}"),
+                    basin_runoff=PCA.load(f"{self.pca_model_directory}/{basin_runoff_model}"),
+                    thermal_forcing=PCA.load(f"{self.pca_model_directory}/{thermal_forcing_model}"),
+                    sle=PCA.load(f"{self.pca_model_directory}/{sle_model}"),
                 )
             else:
                 pca_models = {}
                 model_path = [x for x in pca_models_paths if var_name in x][0]
-                pca_models[var_name] = pkl.load(open(f"{self.pca_model_directory}/{model_path}", "rb"))
+                pca_models[var_name] = PCA.load(f"{self.pca_model_directory}/{model_path}")
             
         return pca_models
     
@@ -1323,20 +1287,20 @@ class DimensionalityReducer:
                 sle_model = [x for x in scaler_paths if 'sle' in x][0]
                     
                 scalers = dict(
-                    evspsbl_anomaly=pkl.load(open(f"{self.scaler_directory}/{evspsbl_model}", "rb")),
-                    mrro_anomaly=pkl.load(open(f"{self.scaler_directory}/{mrro_model}", "rb")),
-                    pr_anomaly=pkl.load(open(f"{self.scaler_directory}/{pr_model}", "rb")),
-                    smb_anomaly=pkl.load(open(f"{self.scaler_directory}/{smb_model}", "rb")),
-                    ts_anomaly=pkl.load(open(f"{self.scaler_directory}/{ts_model}", "rb")),
-                    thermal_forcing=pkl.load(open(f"{self.scaler_directory}/{thermal_forcing_model}", "rb")),
-                    salinity=pkl.load(open(f"{self.scaler_directory}/{salinity_model}", "rb")),
-                    temperature=pkl.load(open(f"{self.scaler_directory}/{temperature_model}", "rb")),
-                    sle=pkl.load(open(f"{self.scaler_directory}/{sle_model}", "rb")),
+                    evspsbl_anomaly=Scaler.load(f"{self.scaler_directory}/{evspsbl_model}"),
+                    mrro_anomaly=Scaler.load(f"{self.scaler_directory}/{mrro_model}"),
+                    pr_anomaly=Scaler.load(f"{self.scaler_directory}/{pr_model}"),
+                    smb_anomaly=Scaler.load(f"{self.scaler_directory}/{smb_model}"),
+                    ts_anomaly=Scaler.load(f"{self.scaler_directory}/{ts_model}"),
+                    thermal_forcing=Scaler.load(f"{self.scaler_directory}/{thermal_forcing_model}"),
+                    salinity=Scaler.load(f"{self.scaler_directory}/{salinity_model}"),
+                    temperature=Scaler.load(f"{self.scaler_directory}/{temperature_model}"),
+                    sle=Scaler.load(f"{self.scaler_directory}/{sle_model}"),
                 )
             else:
                 scalers = {}
                 scaler_path = [x for x in scaler_paths if var_name in x][0]
-                scalers[var_name] = pkl.load(open(f"{self.scaler_directory}/{scaler_path}", "rb"))
+                scalers[var_name] = Scaler.load(f"{self.scaler_directory}/{scaler_path}")
         
         else: # GrIS
             if var_name not in ['all', 'aST', 'aSMB', 'basin_runoff', 'thermal_forcing', 'sle', None]:
@@ -1350,16 +1314,16 @@ class DimensionalityReducer:
                 sle_model = [x for x in scaler_paths if 'sle' in x][0]
                     
                 scalers = dict(
-                    aSMB=pkl.load(open(f"{self.scaler_directory}/{aSMB_model}", "rb")),
-                    aST=pkl.load(open(f"{self.scaler_directory}/{aST_model}", "rb")),
-                    basin_runoff=pkl.load(open(f"{self.scaler_directory}/{basin_runoff_model}", "rb")),
-                    thermal_forcing=pkl.load(open(f"{self.scaler_directory}/{thermal_forcing_model}", "rb")),
-                    sle=pkl.load(open(f"{self.scaler_directory}/{sle_model}", "rb")),
+                    aSMB=Scaler.load(f"{self.scaler_directory}/{aSMB_model}",),
+                    aST=Scaler.load(f"{self.scaler_directory}/{aST_model}",),
+                    basin_runoff=Scaler.load(f"{self.scaler_directory}/{basin_runoff_model}",),
+                    thermal_forcing=Scaler.load(f"{self.scaler_directory}/{thermal_forcing_model}",),
+                    sle=Scaler.load(f"{self.scaler_directory}/{sle_model}",),
                 )
             else:
                 scalers = {}
                 scaler_path = [x for x in scaler_paths if var_name in x][0]
-                scalers[var_name] = pkl.load(open(f"{self.scaler_directory}/{scaler_path}", "rb"))
+                scalers[var_name] = Scaler.load(f"{self.scaler_directory}/{scaler_path}")
     
         return scalers
     
@@ -1562,10 +1526,20 @@ class DatasetMerger:
                     proj_cmip_model = 'ipsl-cm5a-mr'
                 elif proj_cmip_model == 'cnrm-esm2' or proj_cmip_model == 'cnrm-cm6':
                     proj_cmip_model = f'{proj_cmip_model}-1'
+            elif self.ice_sheet == 'GrIS':
+                if proj_cmip_model.lower() == 'noresm1-m':
+                    proj_cmip_model = 'noresm1'
+                elif proj_cmip_model.lower() == 'ipsl-cm5-mr':
+                    proj_cmip_model = 'ipsl-cm5'
+                elif proj_cmip_model.lower() == 'access1-3':
+                    proj_cmip_model = 'access1.3'
+                elif proj_cmip_model.lower() == 'ukesm1-0-ll':
+                    proj_cmip_model = 'ukesm1-cm6'
+                
                 
             # get forcing file from table lookup that matches projection
             forcing_files = self.forcing_metadata.file.loc[(self.forcing_metadata.cmip_model == proj_cmip_model) & (self.forcing_metadata.pathway == proj_pathway)]
-            
+
             if forcing_files.empty:
                 raise IndexError(f"Could not find forcing file for {aogcm}. Check formatting of experiment file.")
 
@@ -1593,16 +1567,12 @@ class DatasetMerger:
 
             
             # now add to dataset with all forcing/projection pairs
-            full_dataset = pd.concat([full_dataset, merged_dataset]) 
+            full_dataset = pd.concat([full_dataset, merged_dataset])
             
         # save the full dataset
         full_dataset.to_csv(f"{self.output_dir}/dataset.csv", index=False)
         
-        if split_dataset:
-            train, val, test = split_training_data(full_dataset, train_size, val_size, test_size)
-            train.to_csv(f"{self.output_dir}/train.csv", index=False)
-            val.to_csv(f"{self.output_dir}/val.csv", index=False)
-            test.to_csv(f"{self.output_dir}/test.csv", index=False)
+
         
         return 0
     
@@ -1622,6 +1592,8 @@ class DatasetMerger:
             elif cmip_model.lower() == 'gris':
                 cmip_model = forcing.split('_')[2]
             
+            
+            
             if 'rcp' in forcing.lower() or 'ssp' in forcing.lower():
                 for substring in forcing.lower().split('_'):
                     if 'rcp' in substring or 'ssp' in substring:
@@ -1636,6 +1608,16 @@ class DatasetMerger:
                         break
             else:
                 pathway = 'rcp85'
+            if self.ice_sheet == 'GrIS':
+                if cmip_model.lower() == 'noresm1-m':
+                    cmip_model = 'noresm1'
+                elif cmip_model.lower() == 'ipsl-cm5-mr':
+                    cmip_model = 'ipsl-cm5'
+                elif cmip_model.lower() == 'access1-3':
+                    cmip_model = 'access1.3'
+                elif cmip_model.lower() == 'ukesm1-0-ll':
+                    cmip_model = 'ukesm1-cm6'
+                
             pairs[forcing] = [cmip_model.lower(), pathway.lower()]
         df = pd.DataFrame(pairs).T
         df = pd.DataFrame(pairs).T.reset_index()
@@ -1644,34 +1626,7 @@ class DatasetMerger:
         return df
     
 
-def split_training_data(data, train_size, val_size, test_size=None, output_directory=None, random_state=42):
-    if isinstance(data, str):
-        data = pd.read_csv(data)
-    elif not isinstance(data, pd.DataFrame):
-        raise ValueError("data must be a path (str) or a pandas DataFrame")
-    
-    if not len(data) % 86 == 0:
-        raise ValueError("Length of data must be divisible by 86, if not there are incomplete projections.")
-    
-    if 'id' not in data.columns:
-        raise ValueError("data must have a column named 'id'")
-    
-    total_ids = data['id'].unique()
-    np.random.shuffle(total_ids)
-    train_ids = total_ids[:int(len(total_ids)*train_size)]
-    val_ids = total_ids[int(len(total_ids)*train_size):int(len(total_ids)*(train_size+val_size))]
-    test_ids = total_ids[int(len(total_ids)*(train_size+val_size)):]
-    
-    train = data[data['id'].isin(train_ids)]
-    val = data[data['id'].isin(val_ids)]
-    test = data[data['id'].isin(test_ids)]
-    
-    if output_directory is not None:
-        train.to_csv(f"{output_directory}/train.csv", index=False)
-        val.to_csv(f"{output_directory}/val.csv", index=False)
-        test.to_csv(f"{output_directory}/test.csv", index=False)
-    
-    return train, val, test
+
     
     
 def combine_gris_forcings(forcing_dir,):
