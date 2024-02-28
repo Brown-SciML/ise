@@ -692,7 +692,7 @@ class DimensionalityReducer:
             
         
         # for each atmospheric forcing file, convert each variable to PCA space with pretrained PCA model
-        for i, path in tqdm(enumerate(self.forcing_paths['atmosphere']), total=len(self.forcing_paths['atmosphere']), desc="Converting atmospheric forcing files to PCA space:"):
+        for i, path in tqdm(enumerate(self.forcing_paths['atmosphere']), total=len(self.forcing_paths['atmosphere']), desc="Converting atmospheric forcing files to PCA space"):
             # dataset = xr.open_dataset(path, decode_times=False, engine='netcdf4', ).transpose('time', 'y', 'x', ...)  # open the dataset
             # if len(dataset.dims) > 3:
             #     drop_dims = [x for x in list(dataset.dims) if x not in ('time', 'x', 'y')]
@@ -735,7 +735,7 @@ class DimensionalityReducer:
         # OCEANIC FORCINGS
         
         # for each ocean forcing file, convert each variable to PCA space with pretrained PCA model
-        for i, path in tqdm(enumerate(self.forcing_paths['ocean']), total=len(self.forcing_paths['ocean']), desc="Converting oceanic forcing files:"):
+        for i, path in tqdm(enumerate(self.forcing_paths['ocean']), total=len(self.forcing_paths['ocean']), desc="Converting oceanic forcing files"):
             
             # open the dataset
             forcing_name = path.replace('.nc', '').split('/')[-1]  # get metadata (model, ssp, etc.)
@@ -793,7 +793,7 @@ class DimensionalityReducer:
             os.mkdir(f"{output_dir}/projections/")
             
         # for each projection file, convert ivaf to PCA space with pretrained PCA model
-        for i, path in tqdm(enumerate(self.projection_paths), total=len(self.projection_paths), desc="Converting projection files to PCA space:"):
+        for i, path in tqdm(enumerate(self.projection_paths), total=len(self.projection_paths), desc="Converting projection files to PCA space"):
             # get forcing array (requires mean value over z dimensions, see get_xarray_data())
             try:
                 projection_array = get_xarray_data(path, var_name='sle', ice_sheet=self.ice_sheet)
@@ -844,7 +844,7 @@ class DimensionalityReducer:
         # for each variable
         
         var_names = ['pr_anomaly', 'evspsbl_anomaly', 'mrro_anomaly', 'smb_anomaly', 'ts_anomaly']
-        for i, var in tqdm(enumerate(var_names), total=len(var_names), desc="Processing atmospheric PCA:"):
+        for i, var in tqdm(enumerate(var_names), total=len(var_names), desc="Processing atmospheric PCA"):
             variable_array = np.zeros([len(atmosphere_fps), 86, 761*761])
             
             # loop through each atmospheric CMIP file and combine them into one big array
@@ -1123,7 +1123,7 @@ class DimensionalityReducer:
         sle_array = np.zeros([len(sle_fps), 86, flattened_xy_dim])
         
         # loop through each SLE (IVAF) projection file
-        for i, fp in tqdm(enumerate(sle_fps), total=len(sle_fps), desc="Aggregating SLE files:"):
+        for i, fp in tqdm(enumerate(sle_fps), total=len(sle_fps), desc="Aggregating SLE files"):
             # get the variable
             try:
                 data_flattened = get_xarray_data(fp, var_name="sle", ice_sheet=self.ice_sheet)
@@ -1502,7 +1502,7 @@ class DatasetMerger:
         full_dataset = pd.DataFrame()
         self.experiments['exp'] = self.experiments['exp'].apply(lambda x: x.lower())
         
-        for i, projection in enumerate(tqdm(self.projection_paths, total=len(self.projection_paths), desc="Merging forcing & projection files:")):
+        for i, projection in enumerate(tqdm(self.projection_paths, total=len(self.projection_paths), desc="Merging forcing & projection files")):
             # get experiment from projection filepath
             exp = projection.replace('.csv', '').split('/')[-1].split('_')[-1]
             
@@ -1632,7 +1632,7 @@ class DatasetMerger:
 def combine_gris_forcings(forcing_dir,):
     atmosphere_dir = f"{forcing_dir}/GrIS/Atmosphere_Forcing/aSMB_observed/v1/"
     cmip_directories = next(os.walk(atmosphere_dir))[1]
-    for cmip_dir in tqdm(cmip_directories, total=len(cmip_directories), desc="Processing CMIP directories:"):
+    for cmip_dir in tqdm(cmip_directories, total=len(cmip_directories), desc="Processing CMIP directories"):
         for var in [f"aSMB", f"aST"]:
             files = os.listdir(f"{atmosphere_dir}/{cmip_dir}/{var}")
             files = np.array([x for x in files if x.endswith('.nc')])

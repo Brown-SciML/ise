@@ -2,32 +2,34 @@ import pickle as pkl
 import numpy as np
 import matplotlib.pyplot as plt
 from ise.grids.models.PCA import PCA
+import os
 
-var = 'salinity'
-# pca_path = "/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/pca/pca_models/pca_smb_anomaly_94pcs.pkl"
-pca_path = f"/oscar/scratch/pvankatw/pca_pytorch/AIS/pca_models/AIS_pca_{var}.pth"
-# pca_path = "/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/pca/pca_models/pca_smb_anomaly_68pcs.pkl"
-# pca = pkl.load(open(pca_path, "rb"))
-pca = PCA.load(pca_path)
-pca.components = pca.components.T
-first_component_number = 3
-second_component_number = 4
-pca_1 = pca.components[first_component_number-1, :].reshape(761, 761)
-pca_2 = pca.components[second_component_number-1, :].reshape(761, 761)
+ice_sheet = 'AIS'
+pca_dir = f"/oscar/scratch/pvankatw/pca/{ice_sheet}/pca_models/"
+out_dir = r"/users/pvankatw/research/current/supplemental/pca_results/"
+num_components = 10
+pca_models = os.listdir(pca_dir)
 
-exp_var_pca = pca.explained_variance_ratio
-cum_sum_eigenvalues = np.cumsum(exp_var_pca)
-
-plt.figure()
-plt.imshow(pca_1)
-plt.title(f"PC{first_component_number}, {cum_sum_eigenvalues[0]*100:0.2f}% Var Explained")
-plt.savefig(f'pca{first_component_number}_{var}_pytorch.png')
-plt.show()
-
-plt.figure()
-plt.imshow(pca_2)
-plt.title(f"PC{second_component_number}, {(cum_sum_eigenvalues[second_component_number-1]*100) - (cum_sum_eigenvalues[second_component_number-2]*100):0.2f}% Var Explained")
-plt.savefig(f'pca{second_component_number}_{var}_pytorch.png')
-plt.show()
+for model_path in pca_models:
+    pca = PCA.load(f"{pca_dir}/{model_path}")
+    pca.components = pca.components.T
+    
+    exp_var_pca = pca.explained_variance_ratio
+    cum_sum_eigenvalues = np.cumsum(exp_var_pca)
+    var = model_path.split('_')[-1].split('.')[0]
+    
+    if not os.path.exists(f"{out_dir}/{var}"):
+        os.makedirs(f"{out_dir}/{var}")
+    
+    if var == 'sle':
+        stop = ''
+    
+    for i in range(1, num_components+1):
+        pca_1 = pca.components[i-1, :].reshape(761, 761)
+        plt.figure()
+        plt.imshow(pca_1)
+        plt.title(f"PC{i}, {exp_var_pca[i-1]*100:0.2f}% Var Explained")
+        plt.savefig(f'{out_dir}/{var}/pca{i}_{var}_pytorch.png')
+        plt.show()
 
 stop = ''

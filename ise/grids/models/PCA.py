@@ -18,7 +18,7 @@ class PCA:
         X_centered = X - self.mean
 
         # Compute low-rank PCA
-        U, S, V = torch.pca_lowrank(X_centered)
+        U, S, V = torch.pca_lowrank(X_centered, q=301)
         
         # Compute total variance
         total_variance = S.pow(2).sum()
@@ -49,7 +49,7 @@ class PCA:
         X_centered = X - self.mean
         return torch.mm(X_centered, self.components)
 
-    def inverse_transform(self, X, unscale=False):
+    def inverse_transform(self, X,):
         X = self._to_tensor(X)
         if self.mean is None or self.components is None:
             raise RuntimeError("PCA model has not been fitted yet.")
