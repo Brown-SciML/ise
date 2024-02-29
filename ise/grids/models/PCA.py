@@ -1,8 +1,9 @@
 import torch
 import pandas as pd
 import numpy as np
+from torch import nn
 
-class PCA:
+class PCA(nn.Module):
     def __init__(self, n_components):
         
         """
@@ -18,12 +19,15 @@ class PCA:
             explained_variance (torch.Tensor): The amount of variance explained by each of the selected components. Calculated during fit.
             explained_variance_ratio (torch.Tensor): Percentage of variance explained by each of the selected components. Calculated during fit.
         """
+        super(PCA, self).__init__()
         self.n_components = n_components
         self.mean = None
         self.components = None
         self.singular_values = None
         self.explained_variance = None
         self.explained_variance_ratio = None
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.to(self.device)
 
     def fit(self, X):
         """
