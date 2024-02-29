@@ -11,7 +11,9 @@ class Scaler:
         X = self._to_tensor(X)
         self.mean_ = torch.mean(X, dim=0)
         self.scale_ = torch.std(X, dim=0, unbiased=False)
-        # self.scale_ = torch.where(self.scale_ == 0, torch.ones_like(self.scale_) * self.eps, self.scale_)  # Avoid division by zero
+        self.eps = 1e-8 # to avoid divide by zero
+        self.scale_ = torch.where(self.scale_ == 0, torch.ones_like(self.scale_) * self.eps, self.scale_)  # Avoid division by zero
+
 
     def transform(self, X):
         X = self._to_tensor(X)

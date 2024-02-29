@@ -634,7 +634,7 @@ class DimensionalityReducer:
             int: 0 if successful.
         """
         
-        # check inputs
+        # check inputs and make directories for outputted models
         if not os.path.exists(f"{self.output_dir}/pca_models/"):
             os.mkdir(f"{self.output_dir}/pca_models/")
         self.pca_model_directory = f"{self.output_dir}/pca_models/"
@@ -718,6 +718,9 @@ class DimensionalityReducer:
                 except KeyError:
                     warnings.warn(f"Variable {var} not found in {forcing_name}. Skipped.")
                 transformed_data[var] = transformed  # store in dict with structure {'var_name': transformed_var}
+            
+                if transformed.isnan().any() or transformed.isinf().any():
+                    warnings.warn(f"NaN or inf values found in converted {forcing_name}.")
             
             # create a dataframe with rows corresponding to time (106 total) and columns corresponding to each variables principal components
             compiled_transformed_forcings = pd.DataFrame()
@@ -980,16 +983,18 @@ class DimensionalityReducer:
         # if no separate directory for saving scalers is specified, use the pca save_dir
         if scaler_dir is None:
             scaler_dir = save_dir
-            
-        aSMB_fps = [x for x in atmosphere_fps if 'aSMB_combined' in x]
-        aST_fps = [x for x in atmosphere_fps if 'aST_combined' in x]
         
-        # for each variable
+        # get SMB and ST paths
+        test_num = 5
+        aSMB_fps = [x for x in atmosphere_fps if 'aSMB_combined' in x][0:test_num]
+        aST_fps = [x for x in atmosphere_fps if 'aST_combined' in x][0:test_num]
+        
+        # allocate memory
         flattened_xy_dim = 337*577
+        
         smb_forcing_array = np.zeros([len(aSMB_fps), 86, flattened_xy_dim])
         st_forcing_array = np.zeros([len(aST_fps), 86, flattened_xy_dim])
-        
-        # get the variables you need (rather than the entire dataset)
+        # get xarray dataset, format it, and put it in preallocated array
         print('Processing aSMB PCA model.')
         for i, fp in enumerate(aSMB_fps):
             dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet, convert_and_subset=True)
@@ -1020,7 +1025,7 @@ class DimensionalityReducer:
         pca_smb, _ = self._run_PCA(smb_forcing_array, num_pcs=num_pcs)
         pca_st, _ = self._run_PCA(st_forcing_array, num_pcs=num_pcs)
         
-        # get percent explained
+        # save pca models
         save_path = f"{save_dir}/GrIS_pca_aSMB.pth"
         pca_smb.save(save_path)
 
@@ -1046,12 +1051,12 @@ class DimensionalityReducer:
         basin_runoff_fps = [x for x in ocean_fps if 'basinRunoff' in x]
         thermal_forcing_fps = [x for x in ocean_fps if 'oceanThermalForcing' in x]
         
-        # for each variable
+        # allocate memory
         flattened_xy_dim = 337*577
         basin_runoff_array = np.zeros([len(basin_runoff_fps), 86, flattened_xy_dim])
         thermal_forcing_array = np.zeros([len(thermal_forcing_fps), 86, flattened_xy_dim])
         
-        # get the variables you need (rather than the entire dataset)
+        # get xarray dataset, format it, and put it in preallocated array
         print('Processing basin_runoff PCA model.')
         for i, fp in enumerate(basin_runoff_fps):
             dataset = get_xarray_data(fp, ice_sheet=self.ice_sheet, convert_and_subset=True)
@@ -1115,11 +1120,13 @@ class DimensionalityReducer:
         if scaler_dir is None:
             scaler_dir = save_dir
             
+        # get the flattened xy dimension
         if self.ice_sheet == 'AIS':
             flattened_xy_dim = 761*761
         else:
             flattened_xy_dim = 337*577
         
+        # allocate memory
         sle_array = np.zeros([len(sle_fps), 86, flattened_xy_dim])
         
         # loop through each SLE (IVAF) projection file
@@ -1140,10 +1147,7 @@ class DimensionalityReducer:
         # since the array is so large (350*85, 761*761) = (29750, 579121), randomly sample N rows and run PCA
         sle_array = sle_array[np.random.choice(sle_array.shape[0], 1590, replace=False), :]
         
-        # deal with np.nans (ask about later)
-        # nan_mask = np.array(pd.read_csv(r'/users/pvankatw/research/current/nan_mask.csv'))
-        # non_nan_args = np.argwhere(nan_mask == 0).squeeze()
-        # sle_array = sle_array[:, non_nan_args]
+        # deal with np.nans
         sle_array = np.nan_to_num(sle_array) 
         
         # scale sle
@@ -1154,7 +1158,6 @@ class DimensionalityReducer:
         # run pca
         pca, _ = self._run_PCA(sle_array, num_pcs=num_pcs,)
     
-        
         # output pca object
         save_path = f"{save_dir}/{self.ice_sheet}_pca_sle.pth"
         pca.save(save_path) 
@@ -1182,13 +1185,16 @@ class DimensionalityReducer:
         if isinstance(num_pcs, str) and not num_pcs.endswith('%'):
             raise ValueError("num_pcs must be an integer, float, or string ending with '%'")
         
+        # if num_pcs is a string, convert it to a float
         if isinstance(num_pcs, str) and num_pcs.endswith('%'):
             num_pcs = float(num_pcs.replace('%', ""))
             if num_pcs > 1:
                 num_pcs /= 100
 
+        # run PCA
         pca = PCA(n_components=num_pcs,)
 
+        # fit and transform the variable array
         pca = pca.fit(variable_array)
         pca_array = pca.transform(variable_array)
         return pca, pca_array
@@ -1199,12 +1205,13 @@ class DimensionalityReducer:
         if pca_model_directory is not None:
             self.pca_model_directory = pca_model_directory
         
-            
+        # get all pca model paths
         pca_models_paths = os.listdir(self.pca_model_directory)
         pca_models_paths = [x for x in pca_models_paths if 'pca' in x and self.ice_sheet in x]
         
+        # load pca models
         if self.ice_sheet == 'AIS':
-            
+
             if var_name not in ['all', 'evspsbl_anomaly', 'mrro_anomaly', 'pr_anomaly', 'smb_anomaly', 'ts_anomaly', 'thermal_forcing', 'salinity', 'temperature', 'sle', None]:
                 raise ValueError(f"Variable name {var_name} not recognized.")
             
@@ -1267,9 +1274,11 @@ class DimensionalityReducer:
         if scaler_directory is not None:
             self.scaler_directory = scaler_directory
         
+        # get all scaler model paths
         scaler_paths = os.listdir(self.scaler_directory)
         scaler_paths = [x for x in scaler_paths if 'scaler' in x and self.ice_sheet in x]
         
+        # load scaler models
         if self.ice_sheet == 'AIS':
             
             if var_name not in ['all', 'evspsbl_anomaly', 'mrro_anomaly', 'pr_anomaly', 'smb_anomaly', 'ts_anomaly', 'thermal_forcing', 'salinity', 'temperature', 'sle', None]:
@@ -1340,6 +1349,7 @@ class DimensionalityReducer:
         Returns:
             array-like: The transformed array.
         """
+        # 
         if pca_model_directory is None and self.pca_model_directory is None:
             raise ValueError("PCA model directory must be specified, or DimensionalityReducer.generate_pca_models must be run first.")
         
@@ -1355,14 +1365,18 @@ class DimensionalityReducer:
         if len(x.shape) == 3:
             x = x.reshape(x.shape[0], -1)
         
+        # load pca and scaler models
         pca_models = self._load_pca_models(self.pca_model_directory, var_name=var_name)
         scalers = self._load_scalers(self.scaler_directory, var_name=var_name)
         pca = pca_models[var_name]
         scaler = scalers[var_name]
         x = np.nan_to_num(x)
+        
+        # scale and transform
         scaled = scaler.transform(x)
         transformed = pca.transform(scaled)
         
+        # if num_pcs is a string, convert it to a float
         if num_pcs is not None and num_pcs.endswith('%'):
             exp_var_pca = pca.explained_variance_ratio_
             cum_sum_eigenvalues = np.cumsum(exp_var_pca)
@@ -1370,7 +1384,6 @@ class DimensionalityReducer:
             if ~num_pcs_cutoff.any():
                 warnings.warn(f'Explained variance cutoff ({num_pcs}) not reached, using all PCs available ({len(cum_sum_eigenvalues)}).')
                 num_pcs = len(cum_sum_eigenvalues)
-                
             else:
                 num_pcs = np.argmax(num_pcs_cutoff)+1
             
@@ -1393,11 +1406,13 @@ class DimensionalityReducer:
         
         if pca_model_directory is not None:
             self.pca_model_directory = pca_model_directory
-            
+        
+        # load pca and calculate inverse
         pca_models = self._load_pca_models(pca_model_directory, var_name=var_name)
         pca = pca_models[var_name]
         inverted = pca.inverse_transform(pca_x)
         
+        # unscale pca inverse
         scalers = self._load_scalers(scaler_directory, var_name=var_name)
         scaler = scalers[var_name]
         unscaled = scaler.inverse_transform(inverted)
@@ -1407,26 +1422,24 @@ class DimensionalityReducer:
             
 def get_xarray_data(dataset_fp, var_name=None, ice_sheet='AIS', convert_and_subset=False):
     """
-    Retrieve a variable from an xarray dataset.
+    Retrieves data from an xarray dataset.
 
-    Parameters:
-    - dataset_fp (str): Filepath of the xarray dataset.
-    - var_name (str): Name of the variable to retrieve.
+    Args:
+        dataset_fp (str): The file path to the xarray dataset.
+        var_name (str, optional): The name of the variable to retrieve from the dataset. Defaults to None.
+        ice_sheet (str, optional): The ice sheet type. Defaults to 'AIS'.
+        convert_and_subset (bool, optional): Flag indicating whether to convert and subset the dataset. Defaults to False.
 
     Returns:
-    - data_flattened (ndarray): Flattened array of the variable values.
-    - dataset (xarray.Dataset): Original dataset.
-
+        np.ndarray or xr.Dataset: The retrieved data from the dataset.
     """
-    
     
     dataset = xr.open_dataset(dataset_fp, decode_times=False, engine='netcdf4', )
     try:
-        dataset = dataset.transpose('time', 'y', 'x', ...)
+        dataset = dataset.transpose('time', 'x', 'y', ...)
     except:
         pass
     
-    # try dropping dimensions for atmospheric data
     if 'ivaf' in dataset.variables:
         pass
     
@@ -1446,10 +1459,11 @@ def get_xarray_data(dataset_fp, var_name=None, ice_sheet='AIS', convert_and_subs
         if 'z' in dataset.dims:
             dataset = dataset.mean(dim='z', skipna=True)
             
-    
+    # subset the dataset for 5km resolution (GrIS)
     if dataset.dims['x'] == 1681 and dataset.dims['y'] == 2881:
         dataset = dataset.sel(x=dataset.x.values[::5], y=dataset.y.values[::5])
     
+
     if convert_and_subset:
         dataset = convert_and_subset_times(dataset)
     
@@ -1478,7 +1492,21 @@ def get_xarray_data(dataset_fp, var_name=None, ice_sheet='AIS', convert_and_subs
 
 
 class DatasetMerger:
+    """
+    A class for merging datasets from forcing and projection files.
+    """
+
     def __init__(self, ice_sheet, forcing_dir, projection_dir, experiment_file, output_dir):
+        """
+        Initializes a DatasetMerger object.
+
+        Args:
+            ice_sheet (str): The ice sheet name.
+            forcing_dir (str): The directory path for forcing files.
+            projection_dir (str): The directory path for projection files.
+            experiment_file (str): The path to the experiment file (CSV or JSON).
+            output_dir (str): The directory path to save the merged dataset.
+        """
         self.ice_sheet = ice_sheet
         self.forcing_dir = forcing_dir
         self.projection_dir = projection_dir
@@ -1498,16 +1526,22 @@ class DatasetMerger:
         self.forcing_metadata = self._get_forcing_metadata()
         
 
-    def merge_dataset(self, split_dataset=True, train_size=0.7, val_size=0.15, test_size=0.15):
+    def merge_dataset(self):
+        """
+        Merges the forcing and projection files and creates a dataset.
+
+        Returns:
+            int: Returns 0 after successfully merging and saving the dataset.
+        """
         full_dataset = pd.DataFrame()
         self.experiments['exp'] = self.experiments['exp'].apply(lambda x: x.lower())
-        
+
         for i, projection in enumerate(tqdm(self.projection_paths, total=len(self.projection_paths), desc="Merging forcing & projection files")):
             # get experiment from projection filepath
             exp = projection.replace('.csv', '').split('/')[-1].split('_')[-1]
-            
+
             # make sure cases match when doing table lookup
-            
+
             # get AOGCM value from table lookup
             try:
                 aogcm = self.experiments.loc[(self.experiments.exp == exp.lower()) & (self.experiments.ice_sheet ==self.ice_sheet.lower())]['AOGCM'].values[0]
@@ -1515,9 +1549,7 @@ class DatasetMerger:
                 aogcm = self.experiments.loc[self.experiments.exp == exp.lower()]['AOGCM'].values[0]
             proj_cmip_model = aogcm.split('_')[0]
             proj_pathway = aogcm.split('_')[-1]
-            
-            
-            
+
             # names of CMIP models are slightly different, adjust based on AIS/GrIS directories
             if self.ice_sheet == 'AIS':
                 if proj_cmip_model == 'csiro-mk3.6':
@@ -1577,7 +1609,14 @@ class DatasetMerger:
         return 0
     
 
-    def _get_forcing_metadata(self, ):
+    def _get_forcing_metadata(self):
+        """
+        Retrieves the metadata for the forcing files.
+
+        Returns:
+            df (pandas.DataFrame): DataFrame containing the metadata for the forcing files.
+                The DataFrame has three columns: 'file', 'cmip_model', and 'pathway'.
+        """
         pairs = {}
         # loop through forcings, looking for cmip model and pathway
         for forcing in self.forcing_paths:
@@ -1585,15 +1624,13 @@ class DatasetMerger:
                 stop = 'stop'
             forcing = forcing.replace('.csv', '').split('/')[-1]
             cmip_model = forcing.split('_')[1]
-            
+
             # GrIS has MAR3.9 in name, ignore
             if cmip_model == 'MAR3.9':
                 cmip_model = forcing.split('_')[2]
             elif cmip_model.lower() == 'gris':
                 cmip_model = forcing.split('_')[2]
-            
-            
-            
+
             if 'rcp' in forcing.lower() or 'ssp' in forcing.lower():
                 for substring in forcing.lower().split('_'):
                     if 'rcp' in substring or 'ssp' in substring:
@@ -1617,19 +1654,29 @@ class DatasetMerger:
                     cmip_model = 'access1.3'
                 elif cmip_model.lower() == 'ukesm1-0-ll':
                     cmip_model = 'ukesm1-cm6'
-                
+
             pairs[forcing] = [cmip_model.lower(), pathway.lower()]
         df = pd.DataFrame(pairs).T
         df = pd.DataFrame(pairs).T.reset_index()
         df.columns = ['file', 'cmip_model', 'pathway']
-            
+
         return df
     
 
 
     
     
-def combine_gris_forcings(forcing_dir,):
+def combine_gris_forcings(forcing_dir):
+    """
+    Combine GrIS forcings from multiple CMIP directories into a single NetCDF file.
+
+    Parameters:
+    - forcing_dir (str): The directory containing the GrIS forcings.
+
+    Returns:
+    - int: 0 indicating successful completion of the function.
+    """
+    
     atmosphere_dir = f"{forcing_dir}/GrIS/Atmosphere_Forcing/aSMB_observed/v1/"
     cmip_directories = next(os.walk(atmosphere_dir))[1]
     for cmip_dir in tqdm(cmip_directories, total=len(cmip_directories), desc="Processing CMIP directories"):
@@ -1640,7 +1687,7 @@ def combine_gris_forcings(forcing_dir,):
             year_files = files[(years >= 2015) & (years <= 2100)]
             
 
-            for i, file in enumerate(year_files,):
+            for i, file in enumerate(year_files):
                 # first iteration, open dataset and store
                 if i == 0:
                     dataset = xr.open_dataset(f"{atmosphere_dir}/{cmip_dir}/{var}/{file}")
@@ -1655,7 +1702,7 @@ def combine_gris_forcings(forcing_dir,):
                 
                 # following iterations, open dataset and concatenate
                 data = xr.open_dataset(f"{atmosphere_dir}/{cmip_dir}/{var}/{file}")
-                for dim in ['nv', 'nv4', ]:
+                for dim in ['nv', 'nv4']:
                     try:
                         data = data.drop_dims(dim)
                     except:
