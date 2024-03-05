@@ -1,10 +1,8 @@
 import numpy as np
+import pickle
 import pandas as pd
-
-
-import pandas as pd
-
-import pandas as pd
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
+from tqdm import tqdm
 
 class FeatureEngineer:
     """
@@ -27,11 +25,19 @@ class FeatureEngineer:
         self.test_size = test_size
         self.output_directory = output_directory
         
+
+        self.scaler_X_path = None
+        self.scaler_y_path = None
+        self.scaler_X = None
+        self.scaler_y = None
+        
         if fill_mrro_nans:
             self.data = self.fill_mrro_nans(method='zero')
         
         if split_dataset:
             self.train, self.val, self.test = self.split_data(data, train_size, val_size, test_size, output_directory, random_state=42)
+            
+        
             
         self.train = None
         self.val = None
@@ -80,6 +86,210 @@ class FeatureEngineer:
         self.data = fill_mrro_nans(self.data, method)
     
         return self.data
+    
+    def scale_data(self, X=None, y=None, method='standard', save_dir=None):
+        # X = self.data.drop(columns=[x for x in data.columns if 'sle' in x] + ['cmip_model', 'pathway', 'exp', 'id'])
+        if X is not None:
+            self.X = X
+        else:
+            self.X = self.data.drop(columns=[x for x in self.data.columns if 'sle' in x] + ['cmip_model', 'pathway', 'exp',])
+        
+        if y is not None:
+            self.y = y 
+        else:
+            self.y = self.data[[x for x in self.data.columns if 'sle' in x]]
+
+        if self.scaler_X_path is not None and self.scaler_y_path is not None:
+            scaler_X = pickle.load(open(self.scaler_X_path, 'rb'))
+            scaler_y = pickle.load(open(self.scaler_y_path, 'rb'))
+            
+            return scaler_X.transform(self.X), scaler_y.transform(self.y)
+        elif self.scaler_X is not None and self.scaler_y is not None:
+            return self.scaler_X.transform(self.X), self.scaler_y.transform(self.y)
+        
+        
+        if (self.X is None and X is None) or (self.y is None and y is None):
+            raise ValueError("X and y must be provided if they are not already stored in the class instance.")
+        
+        # Initialize the scalers based on the method
+        if method == 'standard':
+            scaler_X = StandardScaler()
+            scaler_y = StandardScaler()
+        elif method == 'minmax':
+            scaler_X = MinMaxScaler()
+            scaler_y = MinMaxScaler()
+        elif method == 'robust':
+            scaler_X = RobustScaler()
+            scaler_y = RobustScaler()
+        else:
+            raise ValueError("method must be 'standard', 'minmax', or 'robust'")
+        
+        # Store scalers in the class instance for potential future use
+        self.scaler_X, self.scaler_y = scaler_X, scaler_y
+
+        # Fit and transform X
+        if isinstance(self.X, pd.DataFrame):
+            X_data = self.X.values
+        elif isinstance(self.X, np.ndarray):
+            X_data = self.X
+        else:
+            raise TypeError("X must be either a pandas DataFrame or a NumPy array.")
+        
+        scaler_X.fit(X_data)
+        X_scaled = scaler_X.transform(X_data)
+        
+        # Fit and transform X
+        if isinstance(self.y, pd.DataFrame):
+            y_data = self.y.values
+        elif isinstance(self.y, np.ndarray):
+            y_data = self.y
+        else:
+            raise TypeError("X must be either a pandas DataFrame or a NumPy array.")
+        
+        scaler_y.fit(y_data)
+        y_scaled = scaler_y.transform(y_data)
+        self.scaler_X, self.scaler_y = scaler_X, scaler_y
+
+        # Optionally save the scalers
+        if save_dir is not None:
+            self.scaler_X_path = f"{save_dir}/scaler_X.pkl"
+            self.scaler_y_path = f"{save_dir}/scaler_y.pkl"
+            with open(self.scaler_X_path, 'wb') as f:
+                pickle.dump(scaler_X, f)
+            with open(self.scaler_y_path, 'wb') as f:
+                pickle.dump(scaler_y, f)
+        
+        self.data = pd.concat([pd.DataFrame(X_scaled, columns=self.X.columns, index=self.X.index), pd.DataFrame(y_scaled, columns=self.y.columns, index=self.y.index)], axis=1)
+                
+
+        return X_scaled, y_scaled
+    
+    def unscale_data(self, X=None, y=None, scaler_X_path=None, scaler_y_path=None):
+        
+        if scaler_X_path is not None:
+            self.scaler_X_path = scaler_X_path
+        if scaler_y_path is not None:
+            self.scaler_y_path = scaler_y_path
+        
+        # Load scaler for X
+        if X is not None:
+            if self.scaler_X_path is None:
+                raise ValueError("scaler_X_path must be provided if X is not None.")
+            with open(self.scaler_X_path, 'rb') as f:
+                scaler_X = pickle.load(f)
+            X_unscaled = scaler_X.inverse_transform(X)
+            if isinstance(X, pd.DataFrame):
+                X_unscaled = pd.DataFrame(X_unscaled, columns=X.columns, index=X.index)
+        else:
+            X_unscaled = None
+
+        # Load scaler for y
+        if y is not None:
+            if self.scaler_y_path is None:
+                raise ValueError("scaler_y_path must be provided if y is not None.")
+            with open(self.scaler_y_path, 'rb') as f:
+                scaler_y = pickle.load(f)
+            y_unscaled = scaler_y.inverse_transform(y)
+            if isinstance(y, pd.DataFrame):
+                y_unscaled = pd.DataFrame(y_unscaled, columns=y.columns, index=y.index)
+        else:
+            y_unscaled = None
+
+        return X_unscaled, y_unscaled
+    
+    def add_lag_variables(self, lag, data=None):
+        if data is not None:
+            self.data = data
+        self.data = add_lag_variables(self.data, lag)
+        return self
+    
+    def backfill_outliers(self, percentile=99.999, data=None):
+        if data is not None:
+            self.data = data
+        self.data = backfill_outliers(self.data, percentile=percentile)
+        return self
+        
+        
+def backfill_outliers(data, percentile=99.999):
+    """
+    Replaces extreme values in y-values (above the specified percentile and below the 1-percentile across all y-values) 
+    with the value from the previous row.
+
+    Args:
+        percentile (float): The percentile to use for defining upper extreme values across all y-values. Defaults to 99.999.
+    """
+    # Assuming y-values are in columns named with 'sle' as mentioned in other methods
+    y_columns = [col for col in data.columns if 'sle' in col]
+    
+    # Concatenate all y-values to compute the overall upper and lower percentile thresholds
+    all_y_values = pd.concat([data[col].dropna() for col in y_columns])
+    upper_threshold = np.percentile(all_y_values, percentile)
+    lower_threshold = np.percentile(all_y_values, 100 - percentile)
+    
+    # Iterate over each y-column to backfill outliers based on the overall upper and lower thresholds
+    for col in y_columns:
+        upper_extreme_value_mask = data[col] > upper_threshold
+        lower_extreme_value_mask = data[col] < lower_threshold
+        
+        # Temporarily replace upper and lower extreme values with NaN
+        data.loc[upper_extreme_value_mask, col] = np.nan
+        data.loc[lower_extreme_value_mask, col] = np.nan
+        
+        # Use backfill method to fill NaN values
+        data[col] = data[col].fillna(method='bfill')
+        
+    return data
+
+
+    
+def add_lag_variables(data: pd.DataFrame, lag: int) -> pd.DataFrame:
+    """
+    Adds lag variables to the input DataFrame.
+
+    Args:
+        data (pd.DataFrame): The input DataFrame.
+        lag (int): The number of time steps to lag the variables.
+
+    Returns:
+        pd.DataFrame: The DataFrame with lag variables added.
+    """
+    
+    # Separate columns that won't be lagged and shouldn't be dropped
+    cols_to_exclude = ['id', 'cmip_model', 'pathway', 'exp']
+    non_lagged_cols = ['time'] + [x for x in data.columns if 'sle' in x or x in cols_to_exclude]
+    projection_length = 86
+
+    # Initialize a list to collect the processed DataFrames
+    processed_segments = []
+
+    # Calculate the number of segments
+    num_segments = len(data) // projection_length
+
+    for segment_idx in tqdm(range(num_segments), total=num_segments, desc='Adding lag variables'):
+        # Extract the segment
+        segment_start = segment_idx * projection_length
+        segment_end = (segment_idx + 1) * projection_length
+        segment = data.iloc[segment_start:segment_end, :]
+
+        # Separate the segment into lagged and non-lagged parts
+        non_lagged_data = segment[non_lagged_cols]
+        lagged_data = segment.drop(columns=non_lagged_cols)
+        
+        # Generate lagged variables for the segment
+        for shift in range(1, lag + 1):
+            lagged_segment = lagged_data.shift(shift).add_suffix(f'.lag{shift}')
+            # Fill missing values caused by shifting
+            lagged_segment.fillna(method='bfill', inplace=True)
+            non_lagged_data = pd.concat([non_lagged_data.reset_index(drop=True), lagged_segment.reset_index(drop=True)], axis=1)
+        
+        # Store the processed segment
+        processed_segments.append(non_lagged_data)
+
+    # Concatenate all processed segments into a single DataFrame
+    final_data = pd.concat(processed_segments, axis=0)
+
+    return final_data
+
 
 def fill_mrro_nans(data: pd.DataFrame, method) -> pd.DataFrame:
     """

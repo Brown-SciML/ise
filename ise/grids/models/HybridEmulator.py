@@ -7,30 +7,8 @@ import warnings
 import pandas as pd
 from ise.grids.models.PCA import PCA
 from ise.grids.models.Scaler import Scaler 
+from ise.grids.models.loss import WeightedGridLoss, GridCriterion, WeightedMSELoss, WeightedMSELossWithSignPenalty, WeightedPCALoss, WeightedMSEPCALoss
 
-class Criterion(nn.Module):
-    def __init__(self,):
-        super(Criterion, self).__init__()
-        
-    def total_variation_regularization(self, grid, ):
-        # Calculate the sum of horizontal and vertical differences
-        horizontal_diff = torch.abs(torch.diff(grid, axis=2))
-        vertical_diff = torch.abs(torch.diff(grid, axis=1))
-        total_variation = torch.sum(horizontal_diff, axis=(1,2)) + torch.sum(vertical_diff, axis=(1,2))
-        return torch.mean(total_variation)
-
-    def spatial_loss(self, true, predicted, smoothness_weight=0.001):
-        pixelwise_mse = torch.mean(torch.abs(true - predicted)**2,) # loss for each image in the batch (batch_size,)
-        tvr = self.total_variation_regularization(predicted,)
-        return pixelwise_mse + smoothness_weight * tvr
-
-
-    def forward(self, true, predicted, x, y, flow, predictor_weight=0.5, nf_weight=0.5,):
-        if predictor_weight + nf_weight != 1:
-            raise ValueError("The sum of predictor_weight and nf_weight must be 1")
-        predictor_loss = self.spatial_loss(true, predicted, smoothness_weight=0.2)
-        nf_loss = -flow.log_prob(inputs=y, context=x)
-        return predictor_weight*predictor_loss + nf_weight*nf_loss
         
 
 class DimensionProcessor(nn.Module):
@@ -67,7 +45,7 @@ class DimensionProcessor(nn.Module):
         scaled = self.scaler.transform(data) # scale
         return self.pca.transform(scaled) # convert to pca
         
-    def to_grid(self, pcs):
+    def to_grid(self, pcs, unscale=True):
         if not isinstance(pcs, torch.Tensor):
             pcs = torch.tensor(pcs, dtype=torch.float32).to(self.device)
         else:
@@ -78,10 +56,13 @@ class DimensionProcessor(nn.Module):
         # Now, the operation should not cause a device mismatch error
         scaled_grid = torch.mm(pcs, components.t()) + pca_mean
         
-        scale = self.scaler.scale_.to(self.device)
-        scaler_mean = self.scaler.mean_.to(self.device)
-        unscaled_grid = scaled_grid * scale + scaler_mean
-        return unscaled_grid
+        if unscale:
+            scale = self.scaler.scale_.to(self.device)
+            scaler_mean = self.scaler.mean_.to(self.device)
+            unscaled_grid = scaled_grid * scale + scaler_mean
+            return unscaled_grid
+        
+        return scaled_grid
         
 
 class WeakPredictor(nn.Module):
@@ -105,12 +86,20 @@ class WeakPredictor(nn.Module):
             num_layers=lstm_num_layers,
         )
         self.relu = nn.ReLU()
-        self.linear1 = nn.Linear(in_features=lstm_hidden_size, out_features=128)
-        # self.linear2 = nn.Linear(in_features=128, out_features=64)
-        self.linear_out = nn.Linear(in_features=128, out_features=output_size)
+        self.linear1 = nn.Linear(in_features=lstm_hidden_size, out_features=512)
+        self.linear2 = nn.Linear(in_features=512, out_features=256)
+        self.linear_out = nn.Linear(in_features=256, out_features=output_size)
         
-        self.optimizer = optim.Adam(self.parameters())
-        self.criterion = Criterion().to(self.device)
+        self.optimizer = optim.Adam(self.parameters(),)
+        self.criterion = None
+        # self.criterion = nn.MSELoss().to(self.device)
+        # self.criterion = WeightedGridLoss().to(self.device)
+        # self.criterion = nn.HuberLoss().to(self.device)
+        # self.criterion = GridCriterion().to(self.device)
+        
+        
+        # self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=20, gamma=0.1)
+        
         self.trained = False
         
         if isinstance(dim_processor, DimensionProcessor):
@@ -139,16 +128,44 @@ class WeakPredictor(nn.Module):
         
         out, (hn, cn) = self.lstm(x, (h0, c0))
         x = hn[-1, :, :] # last layer of the hidden state
-        x = self.relu(x)
+        
+        # # Shape: (num_layers, batch_size, hidden_dim)
+        # h0 = torch.zeros(self.lstm_num_layers, x.size(0), self.lstm_num_hidden).to(x.device)
+        
+        # # Initialize cell state
+        # c0 = torch.zeros(self.lstm_num_layers, x.size(0), self.lstm_num_hidden).to(x.device)
+        
+        # # Passing in the input and hidden state into the model and obtaining outputs
+        # out, _ = self.lstm(x, (h0, c0))
+        
+        # # Reshaping the outputs such that it can be fit into the fully connected layer
+        # # out[:, -1, :] just selects the last time step's outputs
+        
+        
+        # x = self.linear1(out[:, -1, :])
         x = self.linear1(x)
         x = self.relu(x)
-        # x = self.linear2(x)
-        # x = self.relu(x)
+        x = self.linear2(x)
+        x = self.relu(x)
         x = self.linear_out(x)
         
         return x
     
-    def fit(self, X, y, epochs=100, sequence_length=3, batch_size=64):
+    def fit(self, X, y, epochs=100, sequence_length=3, batch_size=64, loss=None):
+        # self.criterion = WeightedMSELoss(y.mean().mean(), y.values.flatten().std(),).to(self.device)
+        # self.criterion = WeightedMSELossWithSignPenalty(y.mean().mean(), y.values.flatten().std(),
+        #                                                 weight_factor=2.0, sign_penalty_factor=0.2).to(self.device)
+        
+        if loss is not None:
+            self.criterion = loss
+        elif loss is None and self.criterion is None:
+            raise ValueError("loss must be provided if no criterion is set.")
+        
+        component_weights = np.ones(len(y.columns))
+        component_weights[0:10] = [100, 50, 30, 20, 10, 10, 10, 5, 5, 5]
+        component_weights[-50:] = 0.1*np.ones(50)
+        # self.criterion = WeightedPCALoss(component_weights=component_weights,).to(self.device)
+        self.criterion = WeightedMSEPCALoss(y.mean().mean(), y.values.flatten().std(), component_weights).to(self.device)
         
         if isinstance(X, pd.DataFrame):
             X = X.values
@@ -159,24 +176,34 @@ class WeakPredictor(nn.Module):
         data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
         self.train()
         self.to(self.device)
-        
+        print(f"Training on {self.device}")
         for epoch in range(1, epochs+1):
-            print(f"Epoch: {epoch}")
+            batch_losses = []
             for i, (x, y) in enumerate(data_loader):
                 x = x.to(self.device)
                 y = y.to(self.device)
                 batch_size = x.shape[0]
                 self.optimizer.zero_grad()
                 y_pred = self.forward(x)
-                y_pred = self.dim_processor.to_grid(y_pred).reshape(batch_size, self.ice_sheet_dim[0], self.ice_sheet_dim[1])
-                y_true = self.dim_processor.to_grid(y).reshape(batch_size, self.ice_sheet_dim[0], self.ice_sheet_dim[1])
                 
-                # yp = y_pred[0, :, :], yt = y_true[0, :, :]
-                loss = self.criterion.spatial_loss(y_true, y_pred, smoothness_weight=0.0)
+                # idk if the grid loss is working...
+                # y_pred = self.dim_processor.to_grid(y_pred, unscale=False).reshape(batch_size, self.ice_sheet_dim[0], self.ice_sheet_dim[1])
+                # y_true = self.dim_processor.to_grid(y, unscale=False).reshape(batch_size, self.ice_sheet_dim[0], self.ice_sheet_dim[1])
+                
+                # loss = self.criterion(y_true, y_pred, smoothness_weight=0, extreme_value_threshold=1e-6)
+                loss = self.criterion(y_pred, y)
                 loss.backward()
                 self.optimizer.step()
-                if i % 10 == 0:
-                    print(f"Epoch: {epoch}, Batch: {i}, Loss: {loss.item()}")
+                batch_losses.append(loss.item())
+                
+                # if i % 10 == 0:
+                #     print(f"Epoch: {epoch}, Batch: {i}, Loss: {loss.item()}")
+            
+            # self.scheduler.step()
+            
+            average_batch_loss = sum(batch_losses) / len(batch_losses)
+            print(f"Average Batch Loss: {average_batch_loss}")
+            
         self.trained = True
         
     def predict(self, X, sequence_length=3, batch_size=64):
@@ -195,7 +222,7 @@ class WeakPredictor(nn.Module):
             self.eval()
             X_test_batch = X_test_batch.to(self.device)
             y_pred = self.forward(X_test_batch)
-            y_pred = self.dim_processor.to_grid(y_pred)
+            # y_pred = self.dim_processor.to_grid(y_pred)
             preds = torch.cat((preds, y_pred), 0)
         
         return preds

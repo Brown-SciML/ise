@@ -1592,6 +1592,7 @@ class DatasetMerger:
                 
             # add forcings and projections together and add some metadata
             merged_dataset = pd.concat([forcings, projections], axis=1)
+            merged_dataset['time'] = np.arange(1, len(merged_dataset)+1)
             merged_dataset['cmip_model'] = proj_cmip_model
             merged_dataset['pathway'] = proj_pathway
             merged_dataset['exp'] = exp
@@ -1607,6 +1608,90 @@ class DatasetMerger:
 
         
         return 0
+    
+    # def merge(self, inputs='pca', outputs='sectors', save_dir=None):
+    #     if save_dir is None:
+    #         save_dir = self.output_dir
+            
+    #     full_dataset = pd.DataFrame()
+    #     self.experiments['exp'] = self.experiments['exp'].apply(lambda x: x.lower())
+        
+    #     if outputs.lower() == 'average' or outputs.lower() == 'sectors':
+    #         paths = get_all_filepaths(path=self.projection_dir, filetype='nc', contains='rm', not_contains='historical')
+    #         paths = [x for x in paths if 'ctrl' not in x]
+
+    #     for i, projection in enumerate(tqdm(paths, total=len(paths), desc="Merging forcing & projection files")):
+    #         # get experiment from projection filepath
+            
+    #         exp = projection.replace('.nc', '').replace('.csv', '').split('/')[-1].split('_')[-1]
+
+    #         # make sure cases match when doing table lookup
+
+    #         # get AOGCM value from table lookup
+    #         try:
+    #             aogcm = self.experiments.loc[(self.experiments.exp == exp.lower()) & (self.experiments.ice_sheet ==self.ice_sheet.lower())]['AOGCM'].values[0]
+    #         except IndexError:
+    #             aogcm = self.experiments.loc[self.experiments.exp == exp.lower()]['AOGCM'].values[0]
+    #         proj_cmip_model = aogcm.split('_')[0]
+    #         proj_pathway = aogcm.split('_')[-1]
+
+    #         # names of CMIP models are slightly different, adjust based on AIS/GrIS directories
+    #         if self.ice_sheet == 'AIS':
+    #             if proj_cmip_model == 'csiro-mk3.6':
+    #                 proj_cmip_model = 'csiro-mk3-6-0'
+    #             elif proj_cmip_model == 'ipsl-cm5-mr':
+    #                 proj_cmip_model = 'ipsl-cm5a-mr'
+    #             elif proj_cmip_model == 'cnrm-esm2' or proj_cmip_model == 'cnrm-cm6':
+    #                 proj_cmip_model = f'{proj_cmip_model}-1'
+    #         elif self.ice_sheet == 'GrIS':
+    #             if proj_cmip_model.lower() == 'noresm1-m':
+    #                 proj_cmip_model = 'noresm1'
+    #             elif proj_cmip_model.lower() == 'ipsl-cm5-mr':
+    #                 proj_cmip_model = 'ipsl-cm5'
+    #             elif proj_cmip_model.lower() == 'access1-3':
+    #                 proj_cmip_model = 'access1'
+                    
+    #                     # get forcing file from table lookup that matches projection
+    #         forcing_files = self.forcing_metadata.file.loc[(self.forcing_metadata.cmip_model == proj_cmip_model) & (self.forcing_metadata.pathway == proj_pathway)]
+
+    #         if forcing_files.empty:
+    #             raise IndexError(f"Could not find forcing file for {aogcm}. Check formatting of experiment file.")
+
+    #         if len(forcing_files) > 1:
+    #             forcings = pd.DataFrame()
+    #             for file in forcing_files.values:
+    #                 forcings = pd.concat([forcings, pd.read_csv(f"{self.forcing_dir}/{file}.csv")], axis=1)
+    #         else:
+    #             forcing_file = forcing_files.values[0]
+    #             forcings = pd.read_csv(f"{self.forcing_dir}/{forcing_file}.csv")
+                
+            
+    #         # load forcing and projection datasets
+    #         if 'nc' in projection:
+    #             projections = xr.open_dataset(projection)
+    #             projections = projections.to_dataframe()
+    #             projections = projections[[x for x in projections.columns if 'ivaf' in x]]
+    #             projections = projections / 1e9 / 362.5
+    #         else:
+    #             projections = pd.read_csv(projection)
+           
+    #         # if forcings are longer than projections, cut off the beginning of the forcings
+    #         if len(forcings) > len(projections):
+    #             forcings = forcings.iloc[-len(projections):].reset_index(drop=True)
+            
+    #          # add forcings and projections together and add some metadata
+    #         merged_dataset = pd.concat([forcings, projections], axis=1)
+    #         merged_dataset['cmip_model'] = proj_cmip_model
+    #         merged_dataset['pathway'] = proj_pathway
+    #         merged_dataset['exp'] = exp
+    #         merged_dataset['id'] = i
+
+            
+    #         # now add to dataset with all forcing/projection pairs
+    #         full_dataset = pd.concat([full_dataset, merged_dataset])
+            
+    #     # save the full dataset
+    #     full_dataset.to_csv(f"{self.output_dir}/dataset.csv", index=False)
     
 
     def _get_forcing_metadata(self):

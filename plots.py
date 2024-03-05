@@ -5,7 +5,7 @@ import os
 
 import matplotlib.pyplot as plt
 
-ice_sheet = 'GrIS'
+ice_sheet = 'AIS'
 pca_dir = f"/oscar/scratch/pvankatw/pca/{ice_sheet}/pca_models/"
 out_dir = f"/users/pvankatw/research/current/supplemental/pca_results/{ice_sheet}/"
 num_components = 8
@@ -21,6 +21,9 @@ for model_path in pca_models:
     exp_var_pca = pca.explained_variance_ratio
     cum_sum_eigenvalues = np.cumsum(exp_var_pca)
     var = model_path.split('_')[-1].split('.')[0]
+    if var == 'anomaly':
+        var = '_'.join(model_path.split('_')[-2:]).replace('.pth', '')
+        
     
     if not os.path.exists(f"{out_dir}/{var}"):
         os.makedirs(f"{out_dir}/{var}")
