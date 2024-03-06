@@ -122,6 +122,7 @@ def process_single_file(path: str) -> pd.DataFrame:
 
     # TODO: Need to figure out what this (and other lines of code in this function) is doing and comment
     var = list(compress(variables, [v in path for v in variables]))
+    var = variables[np.argwhere([v in path for v in variables])[0][0]]
 
     # ! Fix this: getting confused with "smb" vs "smbgr" using "in" operator
     if len(var) > 1:

@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import torch
 import numpy as np
 from ise.grids.visualization.evaluation import EvaluationPlotter
-from ise.grids.models.loss import WeightedMSELoss, WeightedMSEPCALoss, WeightedPCALoss
+from ise.grids.models.loss import WeightedMSELoss, WeightedMSEPCALoss, WeightedPCALoss, WeightedMSELossWithSignPenalty
 
 
 ice_sheet = 'AIS'
@@ -33,11 +33,12 @@ for lag in [None, 3, 5]:
     component_weights[0:10] = [100, 50, 30, 20, 10, 10, 10, 5, 5, 5]
     component_weights[-50:] = 0.1*np.ones(50)
 
-    losses = dict(WeightedMSELoss=WeightedMSELoss(y.mean().mean(), y.values.flatten().std(),).to(device), 
-                WeightedMSEPCALoss=WeightedMSEPCALoss(y.mean().mean(), y.values.flatten().std(), component_weights).to(device),
-                WeightedPCALoss=WeightedPCALoss(component_weights).to(device),
+    losses = dict(WeightedMSELoss=WeightedMSELoss(y.mean().mean(), y.values.flatten().std(),), 
+                WeightedMSEPCALoss=WeightedMSEPCALoss(y.mean().mean(), y.values.flatten().std(), component_weights),
+                WeightedPCALoss=WeightedPCALoss(component_weights),
                 HuberLoss=torch.nn.HuberLoss(),
                 MSELoss=torch.nn.MSELoss(),
+                WeightedMSELossWithSignPenalty=WeightedMSELossWithSignPenalty(y.mean().mean(), y.values.flatten().std(), weight_factor=1.0, sign_penalty_factor=0.01),
                 )
 
 
@@ -56,8 +57,12 @@ for lag in [None, 3, 5]:
         )
     
     for loss_name, loss in losses.items():
+        data = fe.train
+        X = data.drop(columns=[x for x in data.columns if 'sle' in x] + ['cmip_model', 'pathway', 'exp', 'id'])
+        y = data[[x for x in data.columns if 'sle' in x]]
+        print('Loss:', loss_name)
         experiment_description = f'lag{lag}_{loss_name}'
-        
+        loss = loss.to(device)
         model.fit(X, y, epochs=100, sequence_length=3, batch_size=128, loss=loss)
         torch.save(model.state_dict(), f"{dir_}/WeakPredictorModel_lag{lag}_{loss_name}.pth")
         # model.load_state_dict(torch.load(f"{dir_}/WeakPredictorModel_lag{lag}_{loss_name}.pth", map_location=torch.device('cpu')), )
@@ -66,11 +71,9 @@ for lag in [None, 3, 5]:
         data = fe.val
 
 
-        for i in [10, 20, 35]:
+        for i in [10, 20, 28, 35, 40]:
             X = data.drop(columns=[x for x in data.columns if 'sle' in x] + ['cmip_model', 'pathway', 'exp', 'id'])
-            # X = data.drop(columns=[x for x in data.columns if 'sle' in x] + ['id'])
             y = data[[x for x in data.columns if 'sle' in x]]
-            i = 20
             x = X.iloc[i*86:i*86+86, :].values
             y = y.iloc[i*86:i*86+86, :].values
             y_pred = model.predict(x)
@@ -79,7 +82,7 @@ for lag in [None, 3, 5]:
             y_pred = dim_processor.to_grid(y_pred, unscale=True).squeeze().reshape(86, 761, 761)
             y_true = dim_processor.to_grid(y, unscale=True).squeeze().reshape(86, 761, 761)
 
-            plotter = EvaluationPlotter(save_dir='/users/pvankatw/research/current/supplemental/training_experiments')
+            plotter = EvaluationPlotter(save_dir='/users/pvankatw/research/current/supplemental/loss_testing_loop/')
             plotter.spatial_side_by_side(y_true.cpu(), y_pred.cpu(), timestep=86, save_path=f'{experiment_description}_{i}.png', cmap=plt.cm.viridis, video=False)
 
     stop = ''

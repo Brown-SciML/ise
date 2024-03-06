@@ -29,13 +29,13 @@ def process_data(
         outputs.
     """
 
-    process_forcings(
-        forcing_directory,
-        grids_directory,
-        export_directory,
-        to_process="all",
-        verbose=False,
-    )
+    # process_forcings(
+    #     forcing_directory,
+    #     grids_directory,
+    #     export_directory,
+    #     to_process="all",
+    #     verbose=False,
+    # )
     process_ismip6_outputs(ismip6_output_directory, export_directory)
     master, inputs, outputs = merge_datasets(
         export_directory, export_directory, export_directory, include_icecollapse=False

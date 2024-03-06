@@ -130,6 +130,7 @@ class GridSectors:
         if filetype.lower() == "nc":
             self.path = self.grids_dir + f"sectors_{grid_size}km.nc"
             self.data = xr.open_dataset(self.path, decode_times=False)
+            self.nc_data = xr.open_dataset(self.path, decode_times=False)
             self._to_dataframe()
             if format_index:
                 self._format_index()

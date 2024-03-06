@@ -3,6 +3,8 @@ import torch
 class WeightedGridLoss(torch.nn.Module):
     def __init__(self):
         super(WeightedGridLoss, self).__init__()
+        self.to(self.device)
+        
         
     def total_variation_regularization(self, grid):
         # Calculate the sum of horizontal and vertical differences
@@ -20,6 +22,9 @@ class WeightedGridLoss(torch.nn.Module):
         return torch.mean(weighted_error)
     
     def forward(self, true, predicted, smoothness_weight=0.001, extreme_value_threshold=1e-6):
+        true = torch.tensor(true, dtype=torch.float32, device=self.device)
+        predicted = torch.tensor(predicted, dtype=torch.float32, device=self.device)
+        
         # Determine weights based on extreme values
         if extreme_value_threshold is not None:
             # Identify extreme values in the true data
@@ -48,9 +53,11 @@ class WeightedMSELoss(torch.nn.Module):
                                    the penalty on extremes. Default is 1.0.
         """
         super(WeightedMSELoss, self).__init__()
-        self.data_mean = data_mean
-        self.data_std = data_std
-        self.weight_factor = weight_factor
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.data_mean = torch.tensor(data_mean, dtype=torch.float32, device=self.device)
+        self.data_std = torch.tensor(data_std, dtype=torch.float32, device=self.device)
+        self.weight_factor = torch.tensor(weight_factor, dtype=torch.float32, device=self.device)
+        self.to(self.device)
     
     def forward(self, input, target):
         """
@@ -63,12 +70,20 @@ class WeightedMSELoss(torch.nn.Module):
         Returns:
             Tensor: Computed loss.
         """
+        # Ensure data_mean, data_std, and weight_factor are on the same device as input
+        input = input.to(self.device)
+        target = target.to(self.device)
+
         # Calculate the deviation of each target value from the mean
         deviation = torch.abs(target - self.data_mean)
         
         # Scale deviations by the standard deviation to normalize them
+        # normalized_deviation = torch.tensor(deviation / self.data_std, dtype=torch.float32, device=self.device)
         normalized_deviation = deviation / self.data_std
         
+        
+        # print(type(self.weight_factor), self.weight_factor.device)
+        # print(type(normalized_deviation), normalized_deviation.device)
         # Compute weights: increase penalty for extreme values
         weights = 1 + (normalized_deviation * self.weight_factor)
         
@@ -94,10 +109,14 @@ class WeightedMSEPCALoss(torch.nn.Module):
             custom_weights (torch.Tensor, optional): A tensor of weights corresponding to each y-value in the batch. Default is None.
         """
         super(WeightedMSEPCALoss, self).__init__()
-        self.data_mean = data_mean
-        self.data_std = data_std
-        self.weight_factor = weight_factor
-        self.custom_weights = custom_weights
+        
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.to(self.device)
+
+        self.data_mean = torch.tensor(data_mean, dtype=torch.float32, device=self.device)
+        self.data_std = torch.tensor(data_std, dtype=torch.float32, device=self.device)
+        self.weight_factor = torch.tensor(weight_factor, dtype=torch.float32, device=self.device)
+        self.custom_weights = torch.tensor(custom_weights, dtype=torch.float32, device=self.device) if custom_weights is not None else None
     
     def forward(self, input, target):
         """
@@ -110,6 +129,10 @@ class WeightedMSEPCALoss(torch.nn.Module):
         Returns:
             Tensor: Computed loss.
         """
+        
+        input = input.to(self.device)
+        target = target.to(self.device)
+
         # Ensure input and target are of the same shape
         if input.shape != target.shape:
             raise ValueError("Input and target must have the same shape.")
@@ -157,10 +180,12 @@ class WeightedMSELossWithSignPenalty(torch.nn.Module):
                                          Higher values increase the penalty. Default is 1.0.
         """
         super(WeightedMSELossWithSignPenalty, self).__init__()
-        self.data_mean = data_mean
-        self.data_std = data_std
-        self.weight_factor = weight_factor
-        self.sign_penalty_factor = sign_penalty_factor
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.data_mean = torch.tensor(data_mean, dtype=torch.float32, device=self.device)
+        self.data_std = torch.tensor(data_std, dtype=torch.float32, device=self.device)
+        self.weight_factor = torch.tensor(weight_factor, dtype=torch.float32, device=self.device)
+        self.sign_penalty_factor = torch.tensor(sign_penalty_factor, dtype=torch.float32, device=self.device)
+        self.to(self.device)
     
     def forward(self, input, target):
         """
@@ -233,10 +258,12 @@ class WeightedPCALoss(torch.nn.Module):
             reduction (str): Specifies the reduction to apply to the output: 'none' | 'mean' | 'sum'.
         """
         super(WeightedPCALoss, self).__init__()
-        self.component_weights = torch.tensor(component_weights)
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.component_weights = torch.tensor(component_weights, dtype=torch.float32, device=self.device)
         if len(self.component_weights.size()) == 1:
             self.component_weights = self.component_weights.unsqueeze(0)  # Make it a row vector
         self.reduction = reduction
+        self.to(self.device)
     
     def forward(self, input, target):
         """
@@ -249,6 +276,10 @@ class WeightedPCALoss(torch.nn.Module):
         Returns:
             Tensor: Computed Weighted PCA Loss.
         """
+        
+        input = input.to(self.device)
+        target = target.to(self.device)
+
         # Ensure input and target are of the same shape
         if input.shape != target.shape:
             raise ValueError("Input and target must have the same shape")

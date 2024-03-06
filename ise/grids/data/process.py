@@ -12,6 +12,7 @@ from ise.grids.utils import get_all_filepaths
 from datetime import date, timedelta, datetime
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+import time
 
 
 
@@ -1803,5 +1804,155 @@ def combine_gris_forcings(forcing_dir):
     return 0
 
             
+
+def process_atmospheric_sectors(forcing_directory, grid_file):
     
+    start_time = time.time()
+    af_directory = f"{forcing_directory}/Atmosphere_Forcing/" if not forcing_directory.endswith('Atmosphere_Forcing/') else forcing_directory
+    filepaths = get_all_filepaths(path=af_directory, filetype="nc")
+    filepaths = [f for f in filepaths if "1995-2100" in f]
+    filepaths = [f for f in filepaths if "8km" in f]
+    
+
+    sectors = _format_grid_file(grid_file)
+    unique_sectors = np.unique(sectors)
+    all_data = []
+    for i, fp in enumerate(filepaths):
+        print("")
+        print(f"File {i+1} / {len(filepaths)}")
+        print(f'File: {fp.split("/")[-1]}')
+        print(f"Time since start: {(time.time()-start_time) // 60} minutes")
         
+        dataset = xr.open_dataset(fp, decode_times=False)
+        dataset = convert_and_subset_times(dataset)
+        
+                
+        # handle extra dimensions and variables
+        try:
+            dataset = dataset.drop_dims('nv4')
+        except ValueError:
+            pass
+        
+        for var in ['z_bnds', 'lat', 'lon', 'mapping', 'time_bounds', 'lat2d', 'lon2d']:
+            try:
+                dataset = dataset.drop(labels = [var])
+            except ValueError:
+                pass
+        if 'z' in dataset.dims:
+            dataset = dataset.mean(dim='z', skipna=True)
+        
+        dataset['sector'] = sectors
+        
+        aogcm_data = []
+        for sector in unique_sectors:
+            mask = dataset.sector == sector
+            sector_averages = dataset.where(mask, drop=True).mean(dim=['x', 'y'])
+            sector_averages = sector_averages.to_dataframe()
+            sector_averages['aogcm'] = fp.split('/')[-3].lower()
+            sector_averages['year'] = np.arange(1,87)
+            sector_averages = sector_averages.reset_index(drop=True)
+            aogcm_data.append(sector_averages)
+
+        all_data.append(pd.concat(aogcm_data))
+    return pd.concat(all_data)
+
+def process_oceanic_sectors(forcing_directory, grid_file):
+
+    start_time = time.time()
+    directory = f"{forcing_directory}/Ocean_Forcing/" if not forcing_directory.endswith('Ocean_Forcing/') else forcing_directory
+    # Get all NC files that contain data from 1995-2100
+    filepaths = get_all_filepaths(path=directory, filetype="nc")
+    filepaths = [f for f in filepaths if "1995-2100" in f]
+    filepaths = [f for f in filepaths if "8km" in f]
+
+    # In the case of ocean forcings, use the filepaths of the files to determine
+    # which directories need to be used for OceanForcing processing. Change to
+    # those directories rather than individual files.
+    aogcms = list(set([f.split("/")[-3] for f in filepaths]))
+    filepaths = [f"{directory}/{aogcm}/" for aogcm in aogcms]
+
+    # Useful progress prints
+    print("Files to be processed...")
+    print([f.split("/")[-2] for f in filepaths])
+    
+    sectors = _format_grid_file(grid_file)
+    unique_sectors = np.unique(sectors)
+    all_data = []
+    for i, directory in enumerate(filepaths):
+        print("")
+        print(f"File {i+1} / {len(filepaths)}")
+        print(f'File: {directory.split("/")[-1]}')
+        print(f"Time since start: {(time.time()-start_time) // 60} minutes")
+        
+        files = os.listdir(f"{directory}/1995-2100/")
+        if len(files) != 3:
+            warnings.warn(f"Directory {directory} does not contain 3 files.")
+        
+        thermal_forcing_file = [f for f in files if 'thermal_forcing' in f][0]
+        salinity_file = [f for f in files if 'salinity' in f][0]
+        temperature_file = [f for f in files if 'temperature' in f][0]
+        
+        thermal_forcing = xr.open_dataset(f"{directory}/1995-2100/{thermal_forcing_file}", decode_times=False)
+        salinity = xr.open_dataset(f"{directory}/1995-2100/{salinity_file}", decode_times=False)
+        temperature = xr.open_dataset(f"{directory}/1995-2100/{temperature_file}", decode_times=False)
+        
+        thermal_forcing = convert_and_subset_times(thermal_forcing)
+        salinity = convert_and_subset_times(salinity)
+        temperature = convert_and_subset_times(temperature)
+        
+        data = {'thermal_forcing': thermal_forcing, 'salinity': salinity, 'temperature': temperature}
+        aogcm_data = {'thermal_forcing' : [], 'salinity' : [], 'temperature' : []}
+        for name, dataset in data.items():
+            # handle extra dimensions and variables
+            try:
+                dataset = dataset.drop_dims('nv4')
+            except ValueError:
+                pass
+            
+            for var in ['z_bnds', 'lat', 'lon', 'mapping', 'time_bounds', 'lat2d', 'lon2d']:
+                try:
+                    dataset = dataset.drop(labels = [var])
+                except ValueError:
+                    pass
+            if 'z' in dataset.dims:
+                dataset = dataset.mean(dim='z', skipna=True)
+            
+            dataset['sector'] = sectors
+        
+            for sector in unique_sectors:
+                mask = dataset.sector == sector
+                sector_averages = dataset.where(mask, drop=True).mean(dim=['x', 'y'])
+                sector_averages = sector_averages.to_dataframe()
+                sector_averages['aogcm'] = directory.split('/')[-2].lower()
+                sector_averages['year'] = np.arange(1,87)
+                sector_averages = sector_averages.reset_index(drop=True)
+                aogcm_data[name].append(sector_averages)
+        df = pd.concat([pd.concat(aogcm_data['thermal_forcing']), pd.concat(aogcm_data['salinity']), pd.concat(aogcm_data['temperature'])], axis=1)
+        df = df.loc[:,~df.columns.duplicated()]
+        all_data.append(df)
+    return pd.concat(all_data)
+    
+def process_sector_forcings(forcing_directory, grid_file, export_directory=None):    
+    
+    atmospheric_df = process_atmospheric_sectors(forcing_directory, grid_file)
+    oceanic_df = process_oceanic_sectors(forcing_directory, grid_file)
+    
+    forcings = pd.concat([atmospheric_df, oceanic_df], axis=1)
+    
+    if export_directory is not None:
+        forcings.to_csv(f"{export_directory}/forcings.csv", index=False)
+    
+    stop = ''
+    
+def _format_grid_file(grid_file):
+    if isinstance(grid_file, str):
+        grids = xr.open_dataset(grid_file)
+    elif isinstance(grid_file, xr.Dataset):
+        pass
+    else:
+        raise ValueError("grid_file must be a string or an xarray Dataset.")
+    
+    grids = grids.expand_dims(dim={'time': 86})
+    sectors = grids['sectors']
+    
+    return sectors

@@ -157,9 +157,11 @@ class WeakPredictor(nn.Module):
         #                                                 weight_factor=2.0, sign_penalty_factor=0.2).to(self.device)
         
         if loss is not None:
-            self.criterion = loss
+            self.criterion = loss.to(self.device)
         elif loss is None and self.criterion is None:
             raise ValueError("loss must be provided if no criterion is set.")
+        
+        self.criterion = self.criterion.to(self.device)
         
         component_weights = np.ones(len(y.columns))
         component_weights[0:10] = [100, 50, 30, 20, 10, 10, 10, 5, 5, 5]
@@ -202,7 +204,7 @@ class WeakPredictor(nn.Module):
             # self.scheduler.step()
             
             average_batch_loss = sum(batch_losses) / len(batch_losses)
-            print(f"Average Batch Loss: {average_batch_loss}")
+            print(f"Epoch {epoch}, Average Batch Loss: {average_batch_loss}")
             
         self.trained = True
         
