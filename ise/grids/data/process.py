@@ -1452,7 +1452,7 @@ def get_xarray_data(dataset_fp, var_name=None, ice_sheet='AIS', convert_and_subs
         except ValueError:
             pass
         
-        for var in ['z_bnds', 'lat', 'lon', 'mapping', 'time_bounds']:
+        for var in ['z_bnds', 'lat', 'lon', 'mapping', 'time_bounds', 'lat2d', 'lon2d', 'polar_stereographic']:
             try:
                 dataset = dataset.drop(labels = [var])
             except ValueError:
@@ -1497,7 +1497,7 @@ class DatasetMerger:
     A class for merging datasets from forcing and projection files.
     """
 
-    def __init__(self, ice_sheet, forcing_dir, projection_dir, experiment_file, output_dir):
+    def __init__(self, ice_sheet, forcings, projections, experiment_file, output_dir):
         """
         Initializes a DatasetMerger object.
 
@@ -1509,8 +1509,8 @@ class DatasetMerger:
             output_dir (str): The directory path to save the merged dataset.
         """
         self.ice_sheet = ice_sheet
-        self.forcing_dir = forcing_dir
-        self.projection_dir = projection_dir
+        self.forcings = forcings
+        self.projections = projections
         self.experiment_file = experiment_file
         self.output_dir = output_dir
         
@@ -1522,8 +1522,8 @@ class DatasetMerger:
         else:
             raise ValueError("Experiment file must be a CSV or JSON file.")
         
-        self.forcing_paths = get_all_filepaths(path=self.forcing_dir, filetype='csv',)
-        self.projection_paths = get_all_filepaths(path=self.projection_dir, filetype='csv',)
+        self.forcing_paths = get_all_filepaths(path=self.forcings, filetype='csv',)
+        self.projection_paths = get_all_filepaths(path=self.projections, filetype='csv',)
         self.forcing_metadata = self._get_forcing_metadata()
         
 
@@ -1579,10 +1579,10 @@ class DatasetMerger:
             if len(forcing_files) > 1:
                 forcings = pd.DataFrame()
                 for file in forcing_files.values:
-                    forcings = pd.concat([forcings, pd.read_csv(f"{self.forcing_dir}/{file}.csv")], axis=1)
+                    forcings = pd.concat([forcings, pd.read_csv(f"{self.forcings}/{file}.csv")], axis=1)
             else:
                 forcing_file = forcing_files.values[0]
-                forcings = pd.read_csv(f"{self.forcing_dir}/{forcing_file}.csv")
+                forcings = pd.read_csv(f"{self.forcings}/{forcing_file}.csv")
                 
             
             # load forcing and projection datasets
@@ -1609,6 +1609,10 @@ class DatasetMerger:
 
         
         return 0
+    
+    def merge_sectors(self, forcings_file=None, projections_file=None, save_dir=None):
+        
+        pass
     
     # def merge(self, inputs='pca', outputs='sectors', save_dir=None):
     #     if save_dir is None:
@@ -1803,15 +1807,104 @@ def combine_gris_forcings(forcing_dir):
 
     return 0
 
-            
 
-def process_atmospheric_sectors(forcing_directory, grid_file):
+def process_GrIS_atmospheric_sectors(forcing_directory, grid_file):
     
     start_time = time.time()
-    af_directory = f"{forcing_directory}/Atmosphere_Forcing/" if not forcing_directory.endswith('Atmosphere_Forcing/') else forcing_directory
-    filepaths = get_all_filepaths(path=af_directory, filetype="nc")
-    filepaths = [f for f in filepaths if "1995-2100" in f]
-    filepaths = [f for f in filepaths if "8km" in f]
+    path_to_forcings = f"Atmosphere_Forcing/aSMB_observed/v1/"
+    af_directory = f"{forcing_directory}/{path_to_forcings}" if not forcing_directory.endswith(path_to_forcings) else forcing_directory
+    
+    # check to see if GrIS forcings have been combined
+    filepaths = get_all_filepaths(path=af_directory, contains='combined', filetype="nc")
+    if not filepaths:
+        combine_gris_forcings(af_directory)
+        filepaths = get_all_filepaths(path=af_directory, contains='combined', filetype="nc")
+        if not filepaths:
+            raise ValueError("No combined files found. Check combine_gris_forcings function.")
+    
+    aogcm_directories = os.listdir(af_directory)
+    aogcm_directories = [x for x in aogcm_directories if 'DS_Store' not in x and 'README' not in x]
+    
+
+    sectors = _format_grid_file(grid_file)
+    unique_sectors = np.unique(sectors)
+    all_data = []
+    for i, fp in enumerate(aogcm_directories):
+        print("")
+        print(f"Directory {i+1} / {len(aogcm_directories)}")
+        print(f'Directory: {fp.split("/")[-1]}')
+        print(f"Time since start: {(time.time()-start_time) // 60} minutes")
+        
+        files = get_all_filepaths(path=f"{af_directory}/{fp}", contains='combined', filetype="nc")
+        if len(files) != 2:
+            raise ValueError(f"There should only be 2 combined files in each firectory, see {fp}.")
+        
+        st_and_smb = []
+        for file in files:
+            dataset = xr.open_dataset(file, decode_times=False)
+            dataset = convert_and_subset_times(dataset)
+            
+                    
+            # handle extra dimensions and variables
+            try:
+                dataset = dataset.drop_dims('nv4')
+            except ValueError:
+                pass
+            
+            for var in ['z_bnds', 'lat', 'lon', 'mapping', 'time_bounds', 'lat2d', 'lon2d', 'polar_stereographic']:
+                try:
+                    dataset = dataset.drop(labels = [var])
+                except ValueError:
+                    pass
+            if 'z' in dataset.dims:
+                dataset = dataset.mean(dim='z', skipna=True)
+            
+            dataset['sector'] = sectors
+            
+            formatted_aogcm = fp.rsplit('-', 1)
+            formatted_aogcm = '_'.join(formatted_aogcm).lower()
+            
+            aogcm_data = []
+            for sector in unique_sectors:
+                mask = dataset.sector == sector
+                sector_averages = dataset.where(mask, drop=True).mean(dim=['x', 'y'])
+                sector_averages = sector_averages.to_dataframe()
+                sector_averages['aogcm'] = formatted_aogcm
+                sector_averages['year'] = np.arange(1,87)
+                sector_averages = sector_averages.reset_index(drop=True)
+                aogcm_data.append(sector_averages)
+            st_and_smb.append(pd.concat(aogcm_data))
+
+        all_data.append(pd.concat(st_and_smb, axis=1))
+
+    return pd.concat(all_data)
+
+            
+
+def process_AIS_atmospheric_sectors(forcing_directory, grid_file):
+    
+    ice_sheet = 'AIS' if 'ais' in forcing_directory.lower() else 'GrIS'
+    
+    start_time = time.time()
+    path_to_forcings = f"Atmosphere_Forcing/aSMB_observed/v1/" if ice_sheet == 'GrIS' else "Atmosphere_Forcing/"
+    af_directory = f"{forcing_directory}/{path_to_forcings}" if not forcing_directory.endswith(path_to_forcings) else forcing_directory
+    
+    if ice_sheet == 'AIS':
+        filepaths = get_all_filepaths(path=af_directory, filetype="nc")
+        filepaths = [f for f in filepaths if "1995-2100" in f]
+        filepaths = [f for f in filepaths if "8km" in f]
+    else:
+        filepaths = os.listdir(af_directory)
+ 
+    
+    # check to see if GrIS forcings have been combined
+    if ice_sheet == 'GrIS':
+        filepaths = get_all_filepaths(path=af_directory, contains='combined', filetype="nc")
+        if not filepaths:
+            combine_gris_forcings(af_directory)
+            filepaths = get_all_filepaths(path=af_directory, contains='combined', filetype="nc")
+            if not filepaths:
+                raise ValueError("No combined files found. Check combine_gris_forcings function.")
     
 
     sectors = _format_grid_file(grid_file)
@@ -1822,6 +1915,7 @@ def process_atmospheric_sectors(forcing_directory, grid_file):
         print(f"File {i+1} / {len(filepaths)}")
         print(f'File: {fp.split("/")[-1]}')
         print(f"Time since start: {(time.time()-start_time) // 60} minutes")
+        
         
         dataset = xr.open_dataset(fp, decode_times=False)
         dataset = convert_and_subset_times(dataset)
@@ -1854,9 +1948,11 @@ def process_atmospheric_sectors(forcing_directory, grid_file):
             aogcm_data.append(sector_averages)
 
         all_data.append(pd.concat(aogcm_data))
-    return pd.concat(all_data)
+    atmospheric_df = pd.concat(all_data)
+    atmospheric_df = atmospheric_df.loc[:,~atmospheric_df.columns.duplicated()]
+    return atmospheric_df
 
-def process_oceanic_sectors(forcing_directory, grid_file):
+def process_AIS_oceanic_sectors(forcing_directory, grid_file):
 
     start_time = time.time()
     directory = f"{forcing_directory}/Ocean_Forcing/" if not forcing_directory.endswith('Ocean_Forcing/') else forcing_directory
@@ -1909,7 +2005,7 @@ def process_oceanic_sectors(forcing_directory, grid_file):
             except ValueError:
                 pass
             
-            for var in ['z_bnds', 'lat', 'lon', 'mapping', 'time_bounds', 'lat2d', 'lon2d']:
+            for var in ['z_bnds', 'lat', 'lon', 'mapping', 'time_bounds', 'lat2d', 'lon2d', 'polar_stereographic']:
                 try:
                     dataset = dataset.drop(labels = [var])
                 except ValueError:
@@ -1917,13 +2013,18 @@ def process_oceanic_sectors(forcing_directory, grid_file):
             if 'z' in dataset.dims:
                 dataset = dataset.mean(dim='z', skipna=True)
             
-            dataset['sector'] = sectors
+            try:
+                dataset['sector'] = sectors
+            except ValueError:
+                dataset['time'] = np.arange(1,87)
+                dataset['sector'] = sectors
+                
         
             for sector in unique_sectors:
                 mask = dataset.sector == sector
                 sector_averages = dataset.where(mask, drop=True).mean(dim=['x', 'y'])
                 sector_averages = sector_averages.to_dataframe()
-                sector_averages['aogcm'] = directory.split('/')[-2].lower()
+                sector_averages['aogcm'] = _format_AIS_ocean_aogcm_name(directory.split('/')[-2].lower())
                 sector_averages['year'] = np.arange(1,87)
                 sector_averages = sector_averages.reset_index(drop=True)
                 aogcm_data[name].append(sector_averages)
@@ -1931,28 +2032,282 @@ def process_oceanic_sectors(forcing_directory, grid_file):
         df = df.loc[:,~df.columns.duplicated()]
         all_data.append(df)
     return pd.concat(all_data)
+
+def process_GrIS_oceanic_sectors(forcing_directory, grid_file):
+
+    start_time = time.time()
+    path_to_forcing = "Ocean_Forcing/Melt_Implementation/v4/"
+    forcing_directory = f"{forcing_directory}/{path_to_forcing}" if not forcing_directory.endswith(path_to_forcing) else forcing_directory
     
-def process_sector_forcings(forcing_directory, grid_file, export_directory=None):    
+    aogcm_directories = os.listdir(forcing_directory)
+    aogcm_directories = [x for x in aogcm_directories if 'DS_Store' not in x and 'README' not in x]
+
+    sectors = _format_grid_file(grid_file)
+    unique_sectors = np.unique(sectors)
+    all_data = []
+    for i, directory in enumerate(aogcm_directories):
+        print("")
+        print(f"Directory {i+1} / {len(aogcm_directories)}")
+        print(f'Directory: {directory.split("/")[-1]}')
+        print(f"Time since start: {(time.time()-start_time) // 60} minutes")
+        
+        files = os.listdir(f"{forcing_directory}/{directory}")
+        if len(files) != 2:
+            warnings.warn(f"Directory {directory} does not contain 2 files.")
+        
+        thermal_forcing_file = [f for f in files if 'thermalforcing' in f.lower()][0]
+        basin_runoff_file = [f for f in files if 'basinrunoff' in f.lower()][0]
+        
+        thermal_forcing = xr.open_dataset(f"{forcing_directory}/{directory}/{thermal_forcing_file}", decode_times=False)
+        basin_runoff = xr.open_dataset(f"{forcing_directory}/{directory}/{basin_runoff_file}", decode_times=False)
+        
+        # subset the dataset for 5km resolution (GrIS)
+        if thermal_forcing.dims['x'] == 1681 and thermal_forcing.dims['y'] == 2881:
+            thermal_forcing = thermal_forcing.sel(x=thermal_forcing.x.values[::5], y=thermal_forcing.y.values[::5])
+            basin_runoff = basin_runoff.sel(x=basin_runoff.x.values[::5], y=basin_runoff.y.values[::5])
+        
+        thermal_forcing = convert_and_subset_times(thermal_forcing)
+        basin_runoff = convert_and_subset_times(basin_runoff)
+
+        
+        data = {'thermal_forcing': thermal_forcing, 'basin_runoff': basin_runoff, }
+        aogcm_data = {'thermal_forcing' : [], 'basin_runoff' : [], }
+        for name, dataset in data.items():
+            # handle extra dimensions and variables
+            try:
+                dataset = dataset.drop_dims('nv4')
+            except ValueError:
+                pass
+            
+            for var in ['z_bnds', 'lat', 'lon', 'mapping', 'time_bounds', 'lat2d', 'lon2d', 'polar_stereographic']:
+                try:
+                    dataset = dataset.drop(labels = [var])
+                except ValueError:
+                    pass
+            if 'z' in dataset.dims:
+                dataset = dataset.mean(dim='z', skipna=True)
+            
+            try:
+                dataset['sector'] = sectors
+            except ValueError:
+                dataset['time'] = np.arange(1,87)
+                dataset['sector'] = sectors
+                
+        
+            for sector in unique_sectors:
+                mask = dataset.sector == sector
+                sector_averages = dataset.where(mask, drop=True).mean(dim=['x', 'y'])
+                sector_averages = sector_averages.to_dataframe()
+                sector_averages['aogcm'] = _format_GrIS_ocean_aogcm_name(directory)
+                sector_averages['year'] = np.arange(1,87)
+                sector_averages = sector_averages.reset_index(drop=True)
+                aogcm_data[name].append(sector_averages)
+        df = pd.concat([pd.concat(aogcm_data['thermal_forcing']), pd.concat(aogcm_data['basin_runoff']),], axis=1)
+        df = df.loc[:,~df.columns.duplicated()]
+        all_data.append(df)
+    return pd.concat(all_data)
     
-    atmospheric_df = process_atmospheric_sectors(forcing_directory, grid_file)
-    oceanic_df = process_oceanic_sectors(forcing_directory, grid_file)
-    
-    forcings = pd.concat([atmospheric_df, oceanic_df], axis=1)
-    
-    if export_directory is not None:
-        forcings.to_csv(f"{export_directory}/forcings.csv", index=False)
-    
-    stop = ''
     
 def _format_grid_file(grid_file):
     if isinstance(grid_file, str):
         grids = xr.open_dataset(grid_file)
+        sector_name = 'sectors' if 'ais' in grid_file.lower() else 'ID'
     elif isinstance(grid_file, xr.Dataset):
-        pass
+        sector_name = 'ID' if 'Rignot' in grids.Description else 'sectors'
     else:
         raise ValueError("grid_file must be a string or an xarray Dataset.")
     
     grids = grids.expand_dims(dim={'time': 86})
-    sectors = grids['sectors']
+    sectors = grids[sector_name]
     
     return sectors
+
+def process_AIS_outputs(zenodo_directory, ):
+
+    directory = f"{zenodo_directory}/ComputedScalarsPaper/" if not zenodo_directory.endswith('ComputedScalarsPaper') else zenodo_directory
+    groups = os.listdir(directory)
+    files = get_all_filepaths(directory, contains='ivaf_minus_ctrl_proj', filetype='nc')
+    count= 0
+
+    all_files_data = []
+    for f in files:
+        exp = f.replace('.nc', '').split('/')[-1].split('_')[-1]
+        
+        dataset = xr.open_dataset(f, decode_times=False)
+        
+        if len(dataset.time) == 85:
+            count += 1
+            warnings.warn(f"{f.split('/')[-1]} does not contain 86 years. Inserting a copy into the first year.")
+
+            # Copy the first entry
+            first_entry = dataset.isel({'time': 0})
+            # Assuming numeric coordinates, create a new coordinate value
+            new_coord_value = first_entry['time'].values - 1  # Adjust this calculation based on your coordinate system
+            # Set the new coordinate value for the copied entry
+            first_entry['time'] = new_coord_value
+            # Concatenate the new entry with the original dataset
+            dataset = xr.concat([first_entry, dataset], dim='time')
+            
+        # dataset = convert_and_subset_times(dataset)
+        all_sectors = []
+        for sector in range(1, 19):
+            sector_x_data = dataset[f"ivaf_sector_{sector}"].to_dataframe().reset_index(drop=True)
+            sector_x_data.rename(columns={f"ivaf_sector_{sector}": "ivaf"}, inplace=True)
+            sector_x_data['sector'] = sector
+            sector_x_data['year'] = np.arange(1,87)               
+            
+            all_sectors.append(sector_x_data)
+        full_dataset = pd.concat(all_sectors, axis=0)
+        full_dataset['exp'] = exp
+        all_files_data.append(full_dataset)
+    outputs = pd.concat(all_files_data)
+    outputs['sle'] = outputs['ivaf'] / 362.5 / 1e9
+    
+    return outputs
+
+def merge_datasets(forcings, projections, experiments_file, ice_sheet='AIS', export_directory=None):
+    
+    if isinstance(experiments_file, str):
+        experiments = pd.read_csv(experiments_file)
+    elif isinstance(experiments_file, pd.DataFrame):
+        experiments = experiments_file
+    else:
+        raise ValueError("experiments_file must be a string or a pandas DataFrame.")
+    
+    experiments = experiments[experiments.ice_sheet == ice_sheet]
+    projections = pd.merge(projections, experiments, on='exp', how='inner')
+    formatting_function = _format_AIS_forcings_aogcm_name if ice_sheet == 'AIS' else _format_GrIS_forcings_aogcm_name
+    forcings['aogcm'] = forcings['aogcm'].apply(formatting_function)
+    projections.rename(columns={'AOGCM': 'aogcm'}, inplace=True)
+    dataset = pd.merge(forcings, projections, on=['aogcm', 'year', 'sector'], how='inner')
+    
+    return dataset
+
+def process_GrIS_outputs(zenodo_directory, ):
+
+    directory = f"{zenodo_directory}/v7_CMIP5_pub/" if not zenodo_directory.endswith('v7_CMIP5_pub') else zenodo_directory
+    files = get_all_filepaths(directory, contains='rm', not_contains='ctrl_proj', filetype='nc')
+    files = [f for f in files if 'historical' not in f]
+    count= 0
+
+    all_files_data = []
+    for f in files:
+        exp = f.replace('.nc', '').split('/')[-1].split('_')[-1]
+        exp = exp.replace('_05', "")
+        dataset = xr.open_dataset(f, decode_times=False)
+        
+        if len(dataset.time) == 85:
+            count += 1
+            warnings.warn(f"{f.split('/')[-1]} does not contain 86 years. Inserting a copy into the first year.")
+
+            # Copy the first entry
+            first_entry = dataset.isel({'time': 0})
+            # Assuming numeric coordinates, create a new coordinate value
+            new_coord_value = first_entry['time'].values - 1  # Adjust this calculation based on your coordinate system
+            # Set the new coordinate value for the copied entry
+            first_entry['time'] = new_coord_value
+            # Concatenate the new entry with the original dataset
+            dataset = xr.concat([first_entry, dataset], dim='time')
+            
+        sector_mapping = {'1':'no', '2':'ne', '3':'se', '4':'sw', '5':'cw', '6':'nw'}
+        # dataset = convert_and_subset_times(dataset)
+        all_sectors = []
+        for sector in range(1, 7):
+            var_name = f"ivaf_{sector_mapping[str(sector)]}"
+            sector_x_data = dataset[var_name].to_dataframe().reset_index(drop=True)
+            sector_x_data.rename(columns={var_name: "ivaf"}, inplace=True)
+            sector_x_data['sector'] = sector
+            sector_x_data['year'] = np.arange(1,87)               
+            
+            all_sectors.append(sector_x_data)
+        full_dataset = pd.concat(all_sectors, axis=0)
+        full_dataset['exp'] = exp
+        all_files_data.append(full_dataset)
+    outputs = pd.concat(all_files_data)
+    outputs['sle'] = outputs['ivaf'] / 362.5 / 1e9
+    
+    return outputs
+
+
+
+def process_sectors(ice_sheet, forcing_directory, grid_file, zenodo_directory, experiments_file, export_directory=None, overwrite=False):    
+    
+
+    forcing_exists = os.path.exists(f"{export_directory}/forcings.csv")
+    if not forcing_exists or (forcing_exists and overwrite):
+        atmospheric_df = process_AIS_atmospheric_sectors(forcing_directory, grid_file) if ice_sheet == 'AIS' else process_GrIS_atmospheric_sectors(forcing_directory, grid_file)
+        oceanic_df = process_AIS_oceanic_sectors(forcing_directory, grid_file) if ice_sheet == 'AIS' else process_GrIS_oceanic_sectors(forcing_directory, grid_file)
+        forcings = pd.merge(atmospheric_df, oceanic_df, on=['aogcm', 'year', 'sector',], how='inner')
+        forcings.to_csv(f"{export_directory}/forcings.csv", index=False)
+    else:
+        forcings = pd.read_csv(f"{export_directory}/forcings.csv")
+    
+    projections_exists = os.path.exists(f"{export_directory}/projections.csv")
+    if not projections_exists or (projections_exists and overwrite):
+        projections = process_AIS_outputs(zenodo_directory, ) if ice_sheet == 'AIS' else process_GrIS_outputs(zenodo_directory, )
+        projections.to_csv(f"{export_directory}/projections.csv", index=False)
+    else:
+        projections = pd.read_csv(f"{export_directory}/projections.csv")
+    
+    dataset = merge_datasets(forcings, projections, experiments_file, ice_sheet,)
+    
+    if export_directory is not None:
+        dataset.to_csv(f"{export_directory}/dataset.csv", index=False)
+        
+    return dataset
+
+def _format_AIS_ocean_aogcm_name(aogcm):
+    aogcm = aogcm.lower()
+    if aogcm == 'ipsl-cm5a-mr_rcp2.6' or aogcm == 'ipsl-cm5a-mr_rcp8.5' or aogcm == 'hadgem2-es_rcp8.5' or aogcm == 'csiro-mk3-6-0_rcp8.5':
+        aogcm = aogcm.replace('.', '')
+    elif aogcm == 'cnrm-cm6-1_ssp585' or aogcm == 'cnrm-esm2-1_ssp585' or aogcm == 'cnrm-cm6-1_ssp126':
+        aogcm = aogcm.replace('-1', '')
+        aogcm = aogcm.replace('-', '_')
+    elif aogcm == 'ukesm1-0-ll_ssp585':
+        aogcm = 'ukesm1-0-ll'
+    else:
+        pass
+    return aogcm
+
+def _format_AIS_forcings_aogcm_name(aogcm):
+    aogcm = aogcm.lower()
+    if aogcm == 'noresm1-m_rcp2.6' or aogcm == 'noresm1-m_rcp8.5' or aogcm == 'miroc-esm-chem_rcp8.5' or aogcm == 'ccsm4_rcp8.5':
+        aogcm = aogcm.replace('.', '')
+    elif aogcm == 'csiro-mk3-6-0_rcp85':
+        aogcm = 'csiro-mk3.6_rcp85'
+    elif aogcm == 'ipsl-cm5a-mr_rcp26' or aogcm == 'ipsl-cm5a-mr_rcp85':
+        aogcm = aogcm.replace('a', '')
+    else:
+        pass
+    return aogcm
+
+
+def _format_GrIS_forcings_aogcm_name(aogcm):
+    aogcm = aogcm.lower()
+    if aogcm == 'noresm1_rcp85':
+        aogcm = 'noresm1-m_rcp85'
+    elif aogcm == 'ukesm1-cm6_ssp585':
+        aogcm = 'ukesm1-0-ll_ssp585'
+    else:
+        pass
+    return aogcm
+
+def format_GrIS_atmospheric_aogcm_name(aogcm):
+    modified_string = aogcm.rsplit('-', 1)
+    return '_'.join(modified_string).lower()
+
+def _format_GrIS_ocean_aogcm_name(aogcm):
+    aogcm = aogcm.lower()
+    if aogcm == 'access1-3_rcp8.5':
+        aogcm = 'access1.3_rcp85'
+    elif aogcm == 'csiro-mk3.6_rcp8.5':
+        aogcm = aogcm.replace('8.5', '85')
+    elif aogcm in ('hadgem2-es_rcp8.5', 'ipsl-cm5-mr_rcp8.5', 'miroc5_rcp2.6', 'miroc5_rcp8.5', 'miroc5_rcp8.5', ):
+        aogcm = aogcm.replace('.', '')
+    elif aogcm == 'noresm1-m_rcp8.5':
+        aogcm = 'noresm1_rcp85'
+    elif aogcm == 'ukesm1-0-ll_ssp585':
+        aogcm = 'ukesm1-cm6_ssp585'
+    else:
+        pass
+    return aogcm

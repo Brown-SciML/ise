@@ -88,7 +88,6 @@ class FeatureEngineer:
         return self.data
     
     def scale_data(self, X=None, y=None, method='standard', save_dir=None):
-        # X = self.data.drop(columns=[x for x in data.columns if 'sle' in x] + ['cmip_model', 'pathway', 'exp', 'id'])
         if X is not None:
             self.X = X
         else:

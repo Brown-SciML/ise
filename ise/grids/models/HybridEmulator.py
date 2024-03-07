@@ -92,13 +92,6 @@ class WeakPredictor(nn.Module):
         
         self.optimizer = optim.Adam(self.parameters(),)
         self.criterion = None
-        # self.criterion = nn.MSELoss().to(self.device)
-        # self.criterion = WeightedGridLoss().to(self.device)
-        # self.criterion = nn.HuberLoss().to(self.device)
-        # self.criterion = GridCriterion().to(self.device)
-        
-        
-        # self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=20, gamma=0.1)
         
         self.trained = False
         
@@ -163,11 +156,11 @@ class WeakPredictor(nn.Module):
         
         self.criterion = self.criterion.to(self.device)
         
-        component_weights = np.ones(len(y.columns))
-        component_weights[0:10] = [100, 50, 30, 20, 10, 10, 10, 5, 5, 5]
-        component_weights[-50:] = 0.1*np.ones(50)
-        # self.criterion = WeightedPCALoss(component_weights=component_weights,).to(self.device)
-        self.criterion = WeightedMSEPCALoss(y.mean().mean(), y.values.flatten().std(), component_weights).to(self.device)
+        # component_weights = np.ones(len(y.columns))
+        # component_weights[0:10] = [100, 50, 30, 20, 10, 10, 10, 5, 5, 5]
+        # component_weights[-50:] = 0.1*np.ones(50)
+        # # self.criterion = WeightedPCALoss(component_weights=component_weights,).to(self.device)
+        # self.criterion = WeightedMSEPCALoss(y.mean().mean(), y.values.flatten().std(), component_weights).to(self.device)
         
         if isinstance(X, pd.DataFrame):
             X = X.values
