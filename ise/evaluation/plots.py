@@ -4,9 +4,9 @@ import imageio
 import warnings
 from tqdm import tqdm
 import xarray as xr
-from ise.evaluation.metrics import sum_by_sector, mean_squared_error_sector
+from ise.evaluation.metrics import js_divergence, kl_divergence, sum_by_sector, mean_squared_error_sector
 from ise.evaluation.plots import UncertaintyBounds, plot_ensemble, plot_ensemble_mean, plot_distributions, plot_histograms, plot_test_series, plot_callibration
-from ise.utils.functions import group_by_run, get_uncertainty_bands, create_distribution, kl_divergence, js_divergence, load_ml_data
+from ise.utils.functions import group_by_run, get_uncertainty_bands, create_distribution, load_ml_data
 import ise
 import pandas as pd
 import seaborn as sns

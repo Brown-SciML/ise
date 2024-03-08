@@ -3,12 +3,13 @@ import pandas as pd
 import numpy as np
 
 import pandas as pd
+from ise.evaluation.metrics import kl_divergence
+from ise.evaluation.metrics import js_divergence
 from ise.utils.functions import _structure_emulatordata_args
 from ise.data import EmulatorData
 from itertools import product
 import numpy as np
 from scipy.stats import gaussian_kde
-from scipy.spatial.distance import jensenshannon
 from sklearn.preprocessing import MinMaxScaler
 from typing import List
 
@@ -337,7 +338,7 @@ def get_uncertainty_bands(
     confidence interval calculation as well as a quantile-based approach.
 
     Args:
-        data (pd.DataFrame): Dataframe or array of NXM, typically from ise.utils.data.group_by_run.
+        data (pd.DataFrame): Dataframe or array of NXM, typically from ise.utils.functions.group_by_run.
         confidence (str, optional): Confidence level, must be in [95, 99]. Defaults to '95'.
         quantiles (list[float], optional): Quantiles of uncertainty bands. Defaults to [0.05, 0.95].
 
@@ -373,37 +374,6 @@ def create_distribution(year: int, dataset: np.ndarray):
     support = np.arange(-30, 20, 0.001)
     density = kde(support)
     return density, support
-
-
-def kl_divergence(p: np.ndarray, q: np.ndarray):
-    """Calculates the Kullback-Leibler Divergence between two distributions. Q is typically a
-    'known' distirubtion and should be the true values, whereas P is typcically the test distribution,
-    or the predicted distribution. Note the the KL divergence is assymetric, and near-zero values for
-    p with a non-near zero values for q cause the KL divergence to inflate [citation].
-
-    Args:
-        p (np.ndarray): Test distribution
-        q (np.ndarray): Known distribution
-
-    Returns:
-        float: KL Divergence
-    """
-    return np.sum(np.where(p != 0, p * np.log(p / q), 0))
-
-
-def js_divergence(p: np.ndarray, q: np.ndarray):
-    """Calculates the Jensen-Shannon Divergence between two distributions. Q is typically a
-    'known' distirubtion and should be the true values, whereas P is typcically the test distribution,
-    or the predicted distribution. Note the the JS divergence, unlike the KL divergence, is symetric.
-
-    Args:
-        p (np.ndarray): Test distribution
-        q (np.ndarray): Known distribution
-
-    Returns:
-        float: JS Divergence
-    """
-    return jensenshannon(p, q)
 
 
 def calculate_distribution_metrics(
