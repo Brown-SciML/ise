@@ -47,6 +47,8 @@ class DimensionProcessor(nn.Module):
         
     def to_grid(self, pcs, unscale=True):
         if not isinstance(pcs, torch.Tensor):
+            if isinstance(pcs, pd.DataFrame):
+                pcs = pcs.values
             pcs = torch.tensor(pcs, dtype=torch.float32).to(self.device)
         else:
             pcs = pcs.to(self.device)
@@ -149,6 +151,7 @@ class WeakPredictor(nn.Module):
         # self.criterion = WeightedMSELossWithSignPenalty(y.mean().mean(), y.values.flatten().std(),
         #                                                 weight_factor=2.0, sign_penalty_factor=0.2).to(self.device)
         
+        print(f'Training with {loss}')
         if loss is not None:
             self.criterion = loss.to(self.device)
         elif loss is None and self.criterion is None:
@@ -208,7 +211,7 @@ class WeakPredictor(nn.Module):
             X = X.values
         
         dataset = EmulatorDataset(X, y=None, sequence_length=sequence_length)
-        data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
+        data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False)
 
         X = torch.tensor(X).to(self.device)
         

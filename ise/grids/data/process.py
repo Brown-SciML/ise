@@ -2125,13 +2125,13 @@ def _format_grid_file(grid_file):
 def process_AIS_outputs(zenodo_directory, ):
 
     directory = f"{zenodo_directory}/ComputedScalarsPaper/" if not zenodo_directory.endswith('ComputedScalarsPaper') else zenodo_directory
-    groups = os.listdir(directory)
     files = get_all_filepaths(directory, contains='ivaf_minus_ctrl_proj', filetype='nc')
     count= 0
 
     all_files_data = []
-    for f in files:
+    for i, f in enumerate(files):
         exp = f.replace('.nc', '').split('/')[-1].split('_')[-1]
+        model = f"{f.replace('.nc', '').split('/')[-1].split('_')[-3]}_{f.replace('.nc', '').split('/')[-1].split('_')[-2]}"
         
         dataset = xr.open_dataset(f, decode_times=False)
         
@@ -2154,11 +2154,13 @@ def process_AIS_outputs(zenodo_directory, ):
             sector_x_data = dataset[f"ivaf_sector_{sector}"].to_dataframe().reset_index(drop=True)
             sector_x_data.rename(columns={f"ivaf_sector_{sector}": "ivaf"}, inplace=True)
             sector_x_data['sector'] = sector
-            sector_x_data['year'] = np.arange(1,87)               
+            sector_x_data['year'] = np.arange(1,87)  
+            sector_x_data['id'] = f"{model}_sector{sector}"
             
             all_sectors.append(sector_x_data)
         full_dataset = pd.concat(all_sectors, axis=0)
         full_dataset['exp'] = exp
+        full_dataset['model'] = model
         all_files_data.append(full_dataset)
     outputs = pd.concat(all_files_data)
     outputs['sle'] = outputs['ivaf'] / 362.5 / 1e9
@@ -2194,6 +2196,7 @@ def process_GrIS_outputs(zenodo_directory, ):
     for f in files:
         exp = f.replace('.nc', '').split('/')[-1].split('_')[-1]
         exp = exp.replace('_05', "")
+        model = f"{f.replace('.nc', '').split('/')[-1].split('_')[-3]}_{f.replace('.nc', '').split('/')[-1].split('_')[-2]}"
         dataset = xr.open_dataset(f, decode_times=False)
         
         if len(dataset.time) == 85:
@@ -2217,11 +2220,13 @@ def process_GrIS_outputs(zenodo_directory, ):
             sector_x_data = dataset[var_name].to_dataframe().reset_index(drop=True)
             sector_x_data.rename(columns={var_name: "ivaf"}, inplace=True)
             sector_x_data['sector'] = sector
-            sector_x_data['year'] = np.arange(1,87)               
+            sector_x_data['year'] = np.arange(1,87)  
+            sector_x_data['id'] = f"{model}_{exp}_sector{sector}"             
             
             all_sectors.append(sector_x_data)
         full_dataset = pd.concat(all_sectors, axis=0)
         full_dataset['exp'] = exp
+        full_dataset['model'] = model
         all_files_data.append(full_dataset)
     outputs = pd.concat(all_files_data)
     outputs['sle'] = outputs['ivaf'] / 362.5 / 1e9
@@ -2235,8 +2240,18 @@ def process_sectors(ice_sheet, forcing_directory, grid_file, zenodo_directory, e
 
     forcing_exists = os.path.exists(f"{export_directory}/forcings.csv")
     if not forcing_exists or (forcing_exists and overwrite):
-        atmospheric_df = process_AIS_atmospheric_sectors(forcing_directory, grid_file) if ice_sheet == 'AIS' else process_GrIS_atmospheric_sectors(forcing_directory, grid_file)
-        oceanic_df = process_AIS_oceanic_sectors(forcing_directory, grid_file) if ice_sheet == 'AIS' else process_GrIS_oceanic_sectors(forcing_directory, grid_file)
+        # atmospheric_df = process_AIS_atmospheric_sectors(forcing_directory, grid_file) if ice_sheet == 'AIS' else process_GrIS_atmospheric_sectors(forcing_directory, grid_file)
+        # oceanic_df = process_AIS_oceanic_sectors(forcing_directory, grid_file) if ice_sheet == 'AIS' else process_GrIS_oceanic_sectors(forcing_directory, grid_file)
+        # atmospheric_df.to_csv(f"{export_directory}/{ice_sheet}_atmospheric.csv", index=False)
+        # oceanic_df.to_csv(f"{export_directory}/{ice_sheet}_oceanic.csv", index=False)
+        
+        atmospheric_df = pd.read_csv(f"{export_directory}/{ice_sheet}_atmospheric.csv")
+        oceanic_df = pd.read_csv(f"{export_directory}/{ice_sheet}_oceanic.csv")
+        # atmospheric_df = atmospheric_df[[x for x in atmospheric_df.columns if '.1' not in x]]
+        # oceanic_df = oceanic_df[[x for x in oceanic_df.columns if '.1' not in x]]
+        
+        atmospheric_df = atmospheric_df.loc[:,~atmospheric_df.columns.duplicated()]
+        oceanic_df = oceanic_df.loc[:,~oceanic_df.columns.duplicated()]
         forcings = pd.merge(atmospheric_df, oceanic_df, on=['aogcm', 'year', 'sector',], how='inner')
         forcings.to_csv(f"{export_directory}/forcings.csv", index=False)
     else:
@@ -2249,7 +2264,9 @@ def process_sectors(ice_sheet, forcing_directory, grid_file, zenodo_directory, e
     else:
         projections = pd.read_csv(f"{export_directory}/projections.csv")
     
+    projections = projections.loc[:,~projections.columns.duplicated()]
     dataset = merge_datasets(forcings, projections, experiments_file, ice_sheet,)
+    dataset = dataset[[x for x in dataset.columns if '.1' not in x]]
     
     if export_directory is not None:
         dataset.to_csv(f"{export_directory}/dataset.csv", index=False)
