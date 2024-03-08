@@ -1,13 +1,14 @@
 """Pipeline for feature engineering. After data has been processed from the raw NC files using 
 ise.pipelines.processing, this module will get data ready for modeling."""
+import pandas as pd
+
 from ise.data._EmulatorData import EmulatorData
 from ise.utils.functions import _structure_emulatordata_args
-import pandas as pd
 
 
 def feature_engineer(
     data_directory: str,
-    spatial_grouping: str = 'sectors',
+    spatial_grouping: str = "sectors",
     time_series: bool = True,
     export_directory: str = None,
     emulator_data_args: dict = None,
@@ -41,12 +42,8 @@ def feature_engineer(
 
     if export_directory:
         export_flag = "ts" if time_series else "traditional"
-        train_features.to_csv(
-            f"{export_directory}/{export_flag}_train_features.csv", index=False
-        )
-        test_features.to_csv(
-            f"{export_directory}/{export_flag}_test_features.csv", index=False
-        )
+        train_features.to_csv(f"{export_directory}/{export_flag}_train_features.csv", index=False)
+        test_features.to_csv(f"{export_directory}/{export_flag}_test_features.csv", index=False)
         pd.Series(train_labels, name="sle").to_csv(
             f"{export_directory}/{export_flag}_train_labels.csv", index=False
         )

@@ -1,25 +1,42 @@
-import numpy as np
 import os
-import imageio
+import random
 import warnings
-from tqdm import tqdm
-import xarray as xr
-from ise.evaluation.metrics import js_divergence, kl_divergence, sum_by_sector, mean_squared_error_sector
-from ise.evaluation.plots import UncertaintyBounds, plot_ensemble, plot_ensemble_mean, plot_distributions, plot_histograms, plot_test_series, plot_callibration
-from ise.utils.functions import group_by_run, get_uncertainty_bands, create_distribution, load_ml_data
-import ise
+
+import imageio
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
-import random
 import torch
-import matplotlib.pyplot as plt
-        
+import xarray as xr
+from tqdm import tqdm
+
+import ise
+from ise.evaluation.metrics import (
+    js_divergence,
+    kl_divergence,
+    mean_squared_error_sector,
+    sum_by_sector,
+)
+from ise.evaluation.plots import (
+    UncertaintyBounds,
+    plot_callibration,
+    plot_distributions,
+    plot_ensemble,
+    plot_ensemble_mean,
+    plot_histograms,
+    plot_test_series,
+)
+from ise.utils.functions import (
+    create_distribution,
+    get_uncertainty_bands,
+    group_by_run,
+    load_ml_data,
+)
 
 
 class SectorPlotter:
-    def __init__(
-        self, results_dataset, column=None, condition=None, save_directory=None
-    ):
+    def __init__(self, results_dataset, column=None, condition=None, save_directory=None):
         super().__init__()
         self.dataset = results_dataset
         self.save_directory = save_directory
@@ -34,9 +51,7 @@ class SectorPlotter:
             "true_bounds": self.true_bounds,
             "pred_bounds": self.pred_bounds,
         }
-        self.true_distribution, self.support = create_distribution(
-            year=2100, dataset=self.trues
-        )
+        self.true_distribution, self.support = create_distribution(year=2100, dataset=self.trues)
         self.pred_distribution, _ = create_distribution(year=2100, dataset=self.preds)
         self.distribution_metrics = {
             "kl": kl_divergence(self.pred_distribution, self.true_distribution),
@@ -139,9 +154,7 @@ class SectorPlotter:
             save_directory=save_directory,
         )
 
-    def plot_callibration(
-        self, color_by=None, alpha=0.2, column=None, condition=None, save=None
-    ):
+    def plot_callibration(self, color_by=None, alpha=0.2, column=None, condition=None, save=None):
         return plot_callibration(
             dataset=self.dataset,
             column=column,
@@ -153,27 +166,29 @@ class SectorPlotter:
 
 
 class EvaluationPlotter:
-    def __init__(self,  save_dir='.'):
-    
+    def __init__(self, save_dir="."):
+
         self.save_dir = save_dir
         self.video = False
-    
-    def spatial_side_by_side(self, y_true, y_pred, timestep=None, save_path=None, cmap=plt.cm.RdBu, video=False):
-        
+
+    def spatial_side_by_side(
+        self, y_true, y_pred, timestep=None, save_path=None, cmap=plt.cm.RdBu, video=False
+    ):
+
         if video and timestep:
             warnings.warn("Video will be generated, ignoring timestep argument.")
         # Create a custom colormap for masked values (white)
-        
+
         if video:
             self.video = True
             self._generate_side_by_side_video(y_true, y_pred, fps=3)
             return self
-        
+
         if len(y_true.shape) == 3 and len(y_pred.shape) == 3 and timestep is None:
             raise ValueError("timestep must be specified for 3D arrays")
         elif len(y_true.shape) == 3 and len(y_pred.shape) == 3 and timestep is not None:
-            self.y_true = y_true[timestep-1, :, :]
-            self.y_pred = y_pred[timestep-1, :, :]
+            self.y_true = y_true[timestep - 1, :, :]
+            self.y_pred = y_pred[timestep - 1, :, :]
         else:
             self.y_true = y_true
             self.y_pred = y_pred
@@ -183,66 +198,90 @@ class EvaluationPlotter:
         masked_difference = np.ma.masked_equal(difference, 0)
         global_min = min(masked_y_true.min(), masked_y_pred.min())
         global_max = max(masked_y_true.max(), masked_y_pred.max())
-        
+
         global_extreme = max(abs(global_min), abs(global_max))
-        cmap.set_bad(color='white')
+        cmap.set_bad(color="white")
 
         # Create subplots
         fig, axs = plt.subplots(1, 3, figsize=(18, 6))
 
         # Plot y_true with mask, align color scale
-        cax1 = axs[0].imshow(masked_y_true, cmap=cmap, vmin=global_extreme*-1, vmax=global_extreme)
-        fig.colorbar(cax1, ax=axs[0], orientation='vertical')
-        axs[0].set_title('True Y')
+        cax1 = axs[0].imshow(
+            masked_y_true, cmap=cmap, vmin=global_extreme * -1, vmax=global_extreme
+        )
+        fig.colorbar(cax1, ax=axs[0], orientation="vertical")
+        axs[0].set_title("True Y")
 
         # Plot y_pred with mask, align color scale
-        cax2 = axs[1].imshow(masked_y_pred, cmap=cmap, vmin=global_extreme*-1, vmax=global_extreme)
-        fig.colorbar(cax2, ax=axs[1], orientation='vertical')
-        axs[1].set_title('Predicted Y')
+        cax2 = axs[1].imshow(
+            masked_y_pred, cmap=cmap, vmin=global_extreme * -1, vmax=global_extreme
+        )
+        fig.colorbar(cax2, ax=axs[1], orientation="vertical")
+        axs[1].set_title("Predicted Y")
 
         # Plot absolute difference with mask, using 'Reds' colormap
-        cax3 = axs[2].imshow(masked_difference, cmap='Reds')
-        fig.colorbar(cax3, ax=axs[2], orientation='vertical')
-        axs[2].set_title('Absolute Difference |Y_pred - Y_true|')
+        cax3 = axs[2].imshow(masked_difference, cmap="Reds")
+        fig.colorbar(cax3, ax=axs[2], orientation="vertical")
+        axs[2].set_title("Absolute Difference |Y_pred - Y_true|")
 
         # Show plot
         plt.tight_layout()
         if save_path is not None:
             if self.video:
-                plt.savefig(f"{self.save_dir}/{save_path}", )
+                plt.savefig(
+                    f"{self.save_dir}/{save_path}",
+                )
             else:
                 plt.savefig(f"{self.save_dir}/{save_path}", dpi=600)
-            
-        plt.close('all')
-        
+
+        plt.close("all")
+
     def _generate_side_by_side_video(self, y_true, y_pred, fps=3):
         if not (len(y_true.shape) == 3 and len(y_pred.shape) == 3):
-            raise ValueError("y_true and y_pred must be 3D arrays with shape (timesteps, height, width)")
+            raise ValueError(
+                "y_true and y_pred must be 3D arrays with shape (timesteps, height, width)"
+            )
 
         timesteps = y_true.shape[0]
 
         for timestep in tqdm(range(timesteps), total=timesteps, desc="Generating video"):
             save_path = f"timestep_{timestep}.png"  # Save each frame with timestep
-            self.spatial_side_by_side(y_true, y_pred, timestep, save_path, cmap=plt.cm.viridis, video=False)
+            self.spatial_side_by_side(
+                y_true, y_pred, timestep, save_path, cmap=plt.cm.viridis, video=False
+            )
 
         images = []
         # Improved sorting function that handles unexpected filenames more gracefully
         try:
-            files = sorted(os.listdir(self.save_dir), key=lambda x: int(x.replace("timestep_", "").split(".")[0]))
+            files = sorted(
+                os.listdir(self.save_dir),
+                key=lambda x: int(x.replace("timestep_", "").split(".")[0]),
+            )
         except ValueError:
-            raise ValueError("Unexpected filenames found in save directory. Expected format: 'timestep_#.png'")
+            raise ValueError(
+                "Unexpected filenames found in save directory. Expected format: 'timestep_#.png'"
+            )
         for filename in files:
             if filename.endswith(".png"):
                 image_path = os.path.join(self.save_dir, filename)
                 images.append(imageio.imread(image_path))
 
         # Create a video from the images
-        video_path = f'{self.save_dir}/plot_video.mp4'
-        imageio.mimwrite(video_path, images, fps=fps, codec='libx264')  # fps is frames per second
+        video_path = f"{self.save_dir}/plot_video.mp4"
+        imageio.mimwrite(video_path, images, fps=fps, codec="libx264")  # fps is frames per second
 
-    
-    def sector_side_by_side(self, y_true, y_pred, grid_file, outline_array_true=None, outline_array_pred=None, timestep=None, save_path=None, cmap=plt.cm.RdBu,):
-    
+    def sector_side_by_side(
+        self,
+        y_true,
+        y_pred,
+        grid_file,
+        outline_array_true=None,
+        outline_array_pred=None,
+        timestep=None,
+        save_path=None,
+        cmap=plt.cm.RdBu,
+    ):
+
         if y_true.shape != y_pred.shape:
             raise ValueError("y_true and y_pred must have the same shape.")
         if y_pred.shape[1] != 18 and y_pred.shape[1] != 6:
@@ -251,32 +290,32 @@ class EvaluationPlotter:
         if len(y_true.shape) == 2 and len(y_pred.shape) == 2 and timestep is None:
             raise ValueError("timestep must be specified for 2D arrays")
         elif len(y_true.shape) == 2 and len(y_pred.shape) == 2 and timestep is not None:
-            self.y_true = y_true[timestep-1, :]
-            self.y_pred = y_pred[timestep-1, :]
-            outline_array_pred = outline_array_pred[timestep-1, :]
-            outline_array_true = outline_array_true[timestep-1, :]
+            self.y_true = y_true[timestep - 1, :]
+            self.y_pred = y_pred[timestep - 1, :]
+            outline_array_pred = outline_array_pred[timestep - 1, :]
+            outline_array_true = outline_array_true[timestep - 1, :]
         else:
             self.y_true = y_true
             self.y_pred = y_pred
-            
+
         if isinstance(grid_file, str):
-            grids = xr.open_dataset(grid_file).transpose('x', 'y', ...)
-            sector_name = 'sectors' if 'ais' in grid_file.lower() else 'ID'
+            grids = xr.open_dataset(grid_file).transpose("x", "y", ...)
+            sector_name = "sectors" if "ais" in grid_file.lower() else "ID"
         elif isinstance(grid_file, xr.Dataset):
-            sector_name = 'ID' if 'Rignot' in grids.Description else 'sectors'
+            sector_name = "ID" if "Rignot" in grids.Description else "sectors"
         else:
             raise ValueError("grid_file must be a string or an xarray Dataset.")
-        
+
         sectors = grids[sector_name].values
         true_plot_data = np.zeros_like(sectors)
         pred_plot_data = np.zeros_like(sectors)
-        
-        num_sectors = 18 if sector_name == 'sectors' else 6
 
-        for sector in range(1, num_sectors+1):
-            true_plot_data[sectors == sector] = self.y_true[sector-1]
-            pred_plot_data[sectors == sector] = self.y_pred[sector-1]
-            
+        num_sectors = 18 if sector_name == "sectors" else 6
+
+        for sector in range(1, num_sectors + 1):
+            true_plot_data[sectors == sector] = self.y_true[sector - 1]
+            pred_plot_data[sectors == sector] = self.y_pred[sector - 1]
+
         # Convert outline arrays to binary masks
         outline_mask_true = np.where(outline_array_true != 0, 1, 0)
         outline_mask_pred = np.where(outline_array_pred != 0, 1, 0)
@@ -286,40 +325,49 @@ class EvaluationPlotter:
         vmax = max(true_plot_data.max(), pred_plot_data.max())
 
         # Create a figure and a set of subplots
-        fig, axs = plt.subplots(1, 2, figsize=(12, 5), gridspec_kw={'wspace': 0.5})
+        fig, axs = plt.subplots(1, 2, figsize=(12, 5), gridspec_kw={"wspace": 0.5})
 
         # Plot the modified outline array for the true matrix (black for non-zero values, white elsewhere)
-        axs[0].imshow(np.flipud(outline_mask_true.T), cmap='Greys', interpolation='nearest')
+        axs[0].imshow(np.flipud(outline_mask_true.T), cmap="Greys", interpolation="nearest")
         # Plot the true matrix with slight transparency
-        cax1 = axs[0].imshow(np.flipud(true_plot_data.T), cmap='Reds', interpolation='nearest', vmin=vmin, vmax=vmax, alpha=0.90)
+        cax1 = axs[0].imshow(
+            np.flipud(true_plot_data.T),
+            cmap="Reds",
+            interpolation="nearest",
+            vmin=vmin,
+            vmax=vmax,
+            alpha=0.90,
+        )
         fig.colorbar(cax1, ax=axs[0], fraction=0.046, pad=0.04)
-        axs[0].set_title('True')
+        axs[0].set_title("True")
 
         # Plot the modified outline array for the predicted matrix (black for non-zero values, white elsewhere)
-        axs[1].imshow(np.flipud(outline_mask_pred.T), cmap='Greys', interpolation='nearest')
+        axs[1].imshow(np.flipud(outline_mask_pred.T), cmap="Greys", interpolation="nearest")
         # Plot the predicted matrix with slight transparency
-        cax2 = axs[1].imshow(np.flipud(pred_plot_data.T), cmap='Reds', interpolation='nearest', vmin=vmin, vmax=vmax, alpha=0.90)
+        cax2 = axs[1].imshow(
+            np.flipud(pred_plot_data.T),
+            cmap="Reds",
+            interpolation="nearest",
+            vmin=vmin,
+            vmax=vmax,
+            alpha=0.90,
+        )
         fig.colorbar(cax2, ax=axs[1], fraction=0.046, pad=0.04)
-        axs[1].set_title('Predicted')
-        
+        axs[1].set_title("Predicted")
+
         sum_by_sector_true = sum_by_sector(self.y_true, grid_file)
         sum_by_sector_pred = sum_by_sector(self.y_pred, grid_file)
-        
+
         mse = mean_squared_error_sector(sum_by_sector_true, sum_by_sector_pred)
         plt.suptitle(f"Mean Squared Error: {mse:0.2f}")
         # plt.tight_layout()
-        
-        
+
         if save_path is not None:
             plt.savefig(f"{self.save_dir}/{save_path}", dpi=600)
-            
-            
-        plt.close('all')
-        
-        
-        stop = ''
-        
 
+        plt.close("all")
+
+        stop = ""
 
 
 class UncertaintyBounds:
@@ -358,9 +406,7 @@ def plot_ensemble(
     """
 
     if cache is None:
-        all_trues, all_preds, _ = group_by_run(
-            dataset, column=column, condition=condition
-        )
+        all_trues, all_preds, _ = group_by_run(dataset, column=column, condition=condition)
         (
             mean_true,
             _,
@@ -412,15 +458,11 @@ def plot_ensemble(
     if uncertainty and uncertainty.lower() == "confidence":
         axs[0].plot(true_upper_ci, "b--", linewidth=3, label="5/95% Confidence (True)")
         axs[0].plot(true_lower_ci, "b--", linewidth=3)
-        axs[1].plot(
-            pred_upper_ci, "b--", linewidth=3, label="5/95% Confidence (Predicted)"
-        )
+        axs[1].plot(pred_upper_ci, "b--", linewidth=3, label="5/95% Confidence (Predicted)")
         axs[1].plot(pred_lower_ci, "b--", linewidth=3)
 
     elif uncertainty and uncertainty.lower() == "quantiles":
-        axs[0].plot(
-            pred_upper_q, "b--", linewidth=3, label="5/95% Percentile (Predicted)"
-        )
+        axs[0].plot(pred_upper_q, "b--", linewidth=3, label="5/95% Percentile (Predicted)")
         axs[0].plot(pred_lower_q, "b--", linewidth=3)
         axs[1].plot(true_upper_q, "b--", linewidth=3, label="5/95% Percentile (True)")
         axs[1].plot(true_lower_q, "b--", linewidth=3)
@@ -428,13 +470,9 @@ def plot_ensemble(
     elif uncertainty and uncertainty.lower() == "both":
         axs[0].plot(true_upper_ci, "r--", linewidth=2, label="5/95% Confidence (True)")
         axs[0].plot(true_lower_ci, "r--", linewidth=2)
-        axs[1].plot(
-            pred_upper_ci, "b--", linewidth=2, label="5/95% Confidence (Predicted)"
-        )
+        axs[1].plot(pred_upper_ci, "b--", linewidth=2, label="5/95% Confidence (Predicted)")
         axs[1].plot(pred_lower_ci, "b--", linewidth=2)
-        axs[1].plot(
-            pred_upper_q, "o--", linewidth=2, label="5/95% Percentile (Predicted)"
-        )
+        axs[1].plot(pred_upper_q, "o--", linewidth=2, label="5/95% Percentile (Predicted)")
         axs[1].plot(pred_lower_q, "o--", linewidth=2)
         axs[0].plot(true_upper_q, "k--", linewidth=2, label="5/95% Percentile (True)")
         axs[0].plot(true_lower_q, "k--", linewidth=2)
@@ -480,9 +518,7 @@ def plot_ensemble_mean(
     """
 
     if cache is None:
-        all_trues, all_preds, _ = group_by_run(
-            dataset, column=column, condition=condition
-        )
+        all_trues, all_preds, _ = group_by_run(dataset, column=column, condition=condition)
         (
             mean_true,
             _,
@@ -530,9 +566,7 @@ def plot_ensemble_mean(
     if uncertainty and uncertainty.lower() == "confidence":
         plt.plot(true_upper_ci, "r--", linewidth=2, label="5/95% Percentile (True)")
         plt.plot(true_lower_ci, "r--", linewidth=2)
-        plt.plot(
-            pred_upper_ci, "b--", linewidth=2, label="5/95% Percentile (Predicted)"
-        )
+        plt.plot(pred_upper_ci, "b--", linewidth=2, label="5/95% Percentile (Predicted)")
         plt.plot(pred_lower_ci, "b--", linewidth=2)
 
     elif uncertainty and uncertainty.lower() == "quantiles":
@@ -544,9 +578,7 @@ def plot_ensemble_mean(
     elif uncertainty and uncertainty.lower() == "both":
         plt.plot(true_upper_ci, "r--", linewidth=2, label="5/95% Percentile (True)")
         plt.plot(true_lower_ci, "r--", linewidth=2)
-        plt.plot(
-            pred_upper_ci, "b--", linewidth=2, label="5/95% Percentile (Predicted)"
-        )
+        plt.plot(pred_upper_ci, "b--", linewidth=2, label="5/95% Percentile (Predicted)")
         plt.plot(pred_lower_ci, "b--", linewidth=2)
         plt.plot(pred_upper_q, "o--", linewidth=2, label="5/95% Confidence (Predicted)")
         plt.plot(pred_lower_q, "o--", linewidth=2)
@@ -593,9 +625,7 @@ def plot_distributions(
     """
 
     if cache is None:
-        all_trues, all_preds, _ = group_by_run(
-            dataset, column=column, condition=condition
-        )
+        all_trues, all_preds, _ = group_by_run(dataset, column=column, condition=condition)
     else:
         all_trues = cache["true_sle_runs"]
         all_preds = cache["pred_sle_runs"]
@@ -634,9 +664,7 @@ def plot_histograms(
         cache (dict, optional): Cached results from previous calculation, used internally in [ise.visualization.Plotter](https://brown-sciml.github.io/ise/ise/sectors/visualization/Plotter.html#Plotter). Defaults to None.
     """
     if cache is None:
-        all_trues, all_preds, _ = group_by_run(
-            dataset, column=column, condition=condition
-        )
+        all_trues, all_preds, _ = group_by_run(dataset, column=column, condition=condition)
 
     else:
         all_trues = cache["true_sle_runs"]
@@ -656,16 +684,13 @@ def plot_histograms(
     )
     plt.legend()
     plt.subplot(1, 2, 2, sharex=ax1, sharey=ax1)
-    sns.histplot(
-        all_trues[:, year - 2101], label="True Distribution", color="red", alpha=0.3
-    )
+    sns.histplot(all_trues[:, year - 2101], label="True Distribution", color="red", alpha=0.3)
     plt.suptitle(f"Histograms of Predicted vs True SLE at year {year}")
     plt.ylabel("")
     plt.legend()
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
     if save:
         plt.savefig(save)
-        
 
 
 def plot_test_series(
@@ -723,10 +748,10 @@ def plot_test_series(
             mc_iterations=mc_iterations,
             confidence=confidence,
         )  # TODO: this doesn't work with traditional
-        
+
         quantiles = np.quantile(preds, [0.05, 0.95], axis=0)
-        lower_ci = means - 1.96*sd
-        upper_ci = means + 1.96*sd
+        lower_ci = means - 1.96 * sd
+        upper_ci = means + 1.96 * sd
         upper_q = quantiles[1, :]
         lower_q = quantiles[0, :]
 
@@ -736,9 +761,7 @@ def plot_test_series(
             plt.plot(preds, "b-", label="Predicted")
             plt.xlabel("Time (years since 2015)")
             plt.ylabel("SLE (mm)")
-            plt.title(
-                f"Model={test_model}, Exp={test_exp}, sector={sectors.index(test_sector)+1}"
-            )
+            plt.title(f"Model={test_model}, Exp={test_exp}, sector={sectors.index(test_sector)+1}")
             plt.legend()
             if save_directory:
                 plt.savefig(f"{save_directory}/{test_model}_{test_exp}_test_sector.png")
@@ -765,9 +788,7 @@ def plot_test_series(
 
             plt.xlabel("Time (years since 2015)")
             plt.ylabel("SLE (mm)")
-            plt.title(
-                f"Model={test_model}, Exp={test_exp}, sector={sectors.index(test_sector)+1}"
-            )
+            plt.title(f"Model={test_model}, Exp={test_exp}, sector={sectors.index(test_sector)+1}")
             plt.legend()
             if save_directory:
                 plt.savefig(
@@ -775,9 +796,7 @@ def plot_test_series(
                 )
 
 
-def plot_callibration(
-    dataset, column=None, condition=None, color_by=None, alpha=0.2, save=None
-):
+def plot_callibration(dataset, column=None, condition=None, color_by=None, alpha=0.2, save=None):
 
     # TODO: Add ability to subset multiple columns and conditions. Not needed now so saving for later...
     if column is None and condition is None:
@@ -811,5 +830,3 @@ def plot_callibration(
 
     if save:
         plt.savefig(save)
-
-

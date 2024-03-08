@@ -1,14 +1,16 @@
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+import time
+from datetime import datetime
+
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
-from torch import optim, nn
-from ise.data.dataclasses import PyTorchDataset, TSDataset
-from torch.utils.data import DataLoader
-import time
 import pandas as pd
+import torch
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from torch import nn, optim
+from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from datetime import datetime
+
+from ise.data.dataclasses import PyTorchDataset, TSDataset
 
 np.random.seed(10)
 
@@ -173,7 +175,7 @@ class Trainer:
             nodes (list, optional): List of integers denoting the number of nodes in num_linear_layers. Len(nodes) must equal num_linear_layers. Defaults to None.
             save_model (bool, optional): Flag determining whether the trained model should be saved. Defaults to False.
             performance_optimized (bool, optional): Flag determining whether the training loop should be optimized for fast training. Defaults to False.
-        
+
         Returns:
             self (Trainer): Trainer object
         """
@@ -212,10 +214,10 @@ class Trainer:
 
             total_loss = 0
             total_mae = 0
-            
+
             # for each batch in train_loader
             for X_train_batch, y_train_batch in self.train_loader:
-                
+
                 # send to gpu if available
                 X_train_batch = X_train_batch.to(self.device)
                 y_train_batch = y_train_batch.to(self.device)
@@ -226,7 +228,7 @@ class Trainer:
                 # get prediction and calculate loss
                 pred = self.model(X_train_batch)
                 loss = criterion(pred, y_train_batch.unsqueeze(1))
-                
+
                 # calculate dloss/dx for every parameter x (gradients) and advance optimizer
                 loss.backward()
                 optimizer.step()
@@ -248,24 +250,23 @@ class Trainer:
 
             training_end = time.time()
 
-
             # If it isn't performance_optimized, run a validation process as well
             if not performance_optimized:
                 self.model.eval()
                 test_total_loss = 0
                 test_total_mae = 0
-                
+
                 # for each batch in the test_loader
                 for X_test_batch, y_test_batch in self.test_loader:
-                    
+
                     # send to gpu if available
                     X_test_batch = X_test_batch.to(self.device)
                     y_test_batch = y_test_batch.to(self.device)
-                    
+
                     # get prediction and calculate loss
                     test_pred = self.model(X_test_batch)
                     loss = criterion(test_pred, y_test_batch.unsqueeze(1))
-                    
+
                     # add losses to total epoch loss
                     test_total_loss += loss.item()
                     test_total_mae += mae(test_pred, y_test_batch.unsqueeze(1)).item()
@@ -295,7 +296,6 @@ class Trainer:
                     tb.add_scalar("Validation RMSE", np.sqrt(test_mse), epoch)
                     tb.add_scalar("Validation MAE", test_mae, epoch)
                     tb.add_scalar("R^2", r2, epoch)
-
 
             # if verbose, do all the print statements that are calculated
             if verbose:
@@ -367,9 +367,7 @@ class Trainer:
         self.model.eval()
         preds = torch.tensor([]).to(self.device)
         for X_test_batch, y_test_batch in self.test_loader:
-            X_test_batch, y_test_batch = X_test_batch.to(self.device), y_test_batch.to(
-                self.device
-            )
+            X_test_batch, y_test_batch = X_test_batch.to(self.device), y_test_batch.to(self.device)
             test_pred = self.model(X_test_batch)
             preds = torch.cat((preds, test_pred), 0)
 

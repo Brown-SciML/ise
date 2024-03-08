@@ -1,1 +1,8 @@
-from ise.data.process import ProjectionProcessor, DimensionalityReducer, get_model_densities, interpolate_values, get_xarray_data, DatasetMerger
+from ise.data.process import (
+    DatasetMerger,
+    DimensionalityReducer,
+    ProjectionProcessor,
+    get_model_densities,
+    get_xarray_data,
+    interpolate_values,
+)

@@ -1,24 +1,21 @@
 import os
-import pandas as pd
-import numpy as np
-
-import pandas as pd
-from ise.evaluation.metrics import kl_divergence
-from ise.evaluation.metrics import js_divergence
-from ise.utils.functions import _structure_emulatordata_args
-from ise.data import EmulatorData
 from itertools import product
-import numpy as np
-from scipy.stats import gaussian_kde
-from sklearn.preprocessing import MinMaxScaler
 from typing import List
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import torch
+from netCDF4 import Dataset
+from scipy.stats import gaussian_kde
+from sklearn.preprocessing import MinMaxScaler
+
+from ise.data import EmulatorData
+from ise.evaluation.metrics import js_divergence, kl_divergence
+from ise.utils.functions import _structure_emulatordata_args
 
 
-def load_model(
-    model_path, model_class, architecture, mc_dropout=False, dropout_prob=0.1
-):
+def load_model(model_path, model_class, architecture, mc_dropout=False, dropout_prob=0.1):
     """Loads PyTorch model from saved state_dict.
 
     Args:
@@ -37,7 +34,9 @@ def load_model(
     return model.to(device)
 
 
-def get_all_filepaths(path: str, filetype: str = None, contains: str = None, not_contains: str = None):
+def get_all_filepaths(
+    path: str, filetype: str = None, contains: str = None, not_contains: str = None
+):
     """Retrieves all filepaths for files within a directory. Supports subsetting based on filetype
     and substring search.
 
@@ -60,13 +59,12 @@ def get_all_filepaths(path: str, filetype: str = None, contains: str = None, not
 
     if contains:
         all_files = [file for file in all_files if contains in file]
-        
+
     if not_contains:
         all_files = [file for file in all_files if not_contains not in file]
-    
+
     return all_files
 
-from netCDF4 import Dataset
 
 def add_variable_to_nc(source_file_path, target_file_path, variable_name):
     """
@@ -80,34 +78,39 @@ def add_variable_to_nc(source_file_path, target_file_path, variable_name):
     Both files are assumed to have matching dimensions for the variable.
     """
     # Open the source NetCDF file in read mode
-    with Dataset(source_file_path, 'r') as src_nc:
+    with Dataset(source_file_path, "r") as src_nc:
         # Check if the variable exists in the source file
         if variable_name in src_nc.variables:
             # Read the variable data and attributes
             variable_data = src_nc.variables[variable_name][:]
             variable_attributes = src_nc.variables[variable_name].ncattrs()
-            
+
             # Open the target NetCDF file in append mode
-            with Dataset(target_file_path, 'a') as target_nc:
+            with Dataset(target_file_path, "a") as target_nc:
                 # Create or overwrite the variable in the target file
                 if variable_name in target_nc.variables:
-                    print(f"The '{variable_name}' variable already exists in the target file. Overwriting data.")
+                    print(
+                        f"The '{variable_name}' variable already exists in the target file. Overwriting data."
+                    )
                     target_nc.variables[variable_name][:] = variable_data
                 else:
                     # Create the variable with the same datatype and dimensions
-                    variable = target_nc.createVariable(variable_name, src_nc.variables[variable_name].datatype, src_nc.variables[variable_name].dimensions)
-                    
+                    variable = target_nc.createVariable(
+                        variable_name,
+                        src_nc.variables[variable_name].datatype,
+                        src_nc.variables[variable_name].dimensions,
+                    )
+
                     # Copy the variable attributes
                     for attr_name in variable_attributes:
-                        variable.setncattr(attr_name, src_nc.variables[variable_name].getncattr(attr_name))
-                    
+                        variable.setncattr(
+                            attr_name, src_nc.variables[variable_name].getncattr(attr_name)
+                        )
+
                     # Assign the data to the new variable
                     variable[:] = variable_data
         else:
             print(f"'{variable_name}' variable not found in the source file.")
-
-
-
 
 
 def load_ml_data(data_directory: str, time_series: bool = True):
@@ -128,9 +131,7 @@ def load_ml_data(data_directory: str, time_series: bool = True):
             train_features = pd.read_csv(f"{data_directory}/ts_train_features.csv")
             test_labels = pd.read_csv(f"{data_directory}/ts_test_labels.csv")
             train_labels = pd.read_csv(f"{data_directory}/ts_train_labels.csv")
-            test_scenarios = pd.read_csv(
-                f"{data_directory}/ts_test_scenarios.csv"
-            ).values.tolist()
+            test_scenarios = pd.read_csv(f"{data_directory}/ts_test_scenarios.csv").values.tolist()
         except FileNotFoundError:
             try:
                 test_features = pd.read_csv(f"{data_directory}/val_features.csv")
@@ -138,20 +139,16 @@ def load_ml_data(data_directory: str, time_series: bool = True):
                 test_labels = pd.read_csv(f"{data_directory}/val_labels.csv")
                 train_labels = pd.read_csv(f"{data_directory}/train_labels.csv")
                 test_scenarios = pd.read_csv(
-                f"{data_directory}/ts_test_scenarios.csv"
-            ).values.tolist()
+                    f"{data_directory}/ts_test_scenarios.csv"
+                ).values.tolist()
             except:
                 raise FileNotFoundError(
                     f'Files not found at {data_directory}. Format must be in format "ts_train_features.csv"'
                 )
     else:
         try:
-            test_features = pd.read_csv(
-                f"{data_directory}/traditional_test_features.csv"
-            )
-            train_features = pd.read_csv(
-                f"{data_directory}/traditional_train_features.csv"
-            )
+            test_features = pd.read_csv(f"{data_directory}/traditional_test_features.csv")
+            train_features = pd.read_csv(f"{data_directory}/traditional_train_features.csv")
             test_labels = pd.read_csv(f"{data_directory}/traditional_test_labels.csv")
             train_labels = pd.read_csv(f"{data_directory}/traditional_train_labels.csv")
             test_scenarios = pd.read_csv(
@@ -182,9 +179,7 @@ def undummify(df: pd.DataFrame, prefix_sep: str = "-"):
     Returns:
         _type_: _description_
     """
-    cols2collapse = {
-        item.split(prefix_sep)[0]: (prefix_sep in item) for item in df.columns
-    }
+    cols2collapse = {item.split(prefix_sep)[0]: (prefix_sep in item) for item in df.columns}
 
     series_list = []
     for col, needs_to_collapse in cols2collapse.items():
@@ -204,9 +199,9 @@ def undummify(df: pd.DataFrame, prefix_sep: str = "-"):
 
 def combine_testing_results(
     data_directory: str,
-    preds: np.ndarray, #|pd.Series|str,
-    sd: dict = None, #|pd.DataFrame = None,
-    gp_data: dict = None, #|pd.DataFrame = None,
+    preds: np.ndarray,  # |pd.Series|str,
+    sd: dict = None,  # |pd.DataFrame = None,
+    gp_data: dict = None,  # |pd.DataFrame = None,
     time_series: bool = True,
     save_directory: str = None,
 ):
@@ -233,7 +228,6 @@ def combine_testing_results(
         test_scenarios,
     ) = load_ml_data(data_directory, time_series=time_series)
 
-
     X_test = pd.DataFrame(test_features)
     if isinstance(test_labels, pd.Series):
         y_test = test_labels
@@ -247,21 +241,20 @@ def combine_testing_results(
     test["pred"] = np.array(pd.read_csv(preds)) if isinstance(preds, str) else preds
     test["mse"] = (test.true - test.pred) ** 2
     test["mae"] = abs(test.true - test.pred)
-    
+
     if gp_data:
         test["gp_preds"] = gp_data["preds"]
         test["gp_std"] = gp_data["std"]
-        test['gp_upper_bound'] = test.gp_preds + 1.96 * test.gp_std
-        test['gp_lower_bound'] = test.gp_preds - 1.96 * test.gp_std
-        
+        test["gp_upper_bound"] = test.gp_preds + 1.96 * test.gp_std
+        test["gp_lower_bound"] = test.gp_preds - 1.96 * test.gp_std
 
     test = undummify(test)
-    test = unscale_column(test, column=['year', 'sector'])
+    test = unscale_column(test, column=["year", "sector"])
 
     if sd is not None:
-        test['sd'] = sd
-        test['upper_bound'] = preds + 1.96 * sd
-        test['lower_bound'] = preds - 1.96 * sd
+        test["sd"] = sd
+        test["upper_bound"] = preds + 1.96 * sd
+        test["lower_bound"] = preds - 1.96 * sd
 
     if save_directory:
         if isinstance(save_directory, str):
@@ -426,9 +419,7 @@ def unscale_column(dataset: pd.DataFrame, column: str = "year"):
 
     if "year" in column:
         year_scaler = MinMaxScaler().fit(np.arange(2016, 2101).reshape(-1, 1))
-        dataset["year"] = year_scaler.inverse_transform(
-            np.array(dataset.year).reshape(-1, 1)
-        )
+        dataset["year"] = year_scaler.inverse_transform(np.array(dataset.year).reshape(-1, 1))
         dataset["year"] = round(dataset.year).astype(int)
 
     return dataset
@@ -436,14 +427,6 @@ def unscale_column(dataset: pd.DataFrame, column: str = "year"):
 
 """Utility functions for handling various parts of the package, including argument checking and
 formatting and file traversal."""
-
-import os
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
-from typing import List
-
-np.random.seed(10)
 
 
 file_dir = os.path.dirname(os.path.realpath(__file__))
@@ -466,7 +449,9 @@ def check_input(input: str, options: List[str], argname: str = None):
         raise ValueError(f"input must be in {options}, received {input}")
 
 
-def get_all_filepaths(path: str, filetype: str = None, contains: str = None, not_contains: str = None):
+def get_all_filepaths(
+    path: str, filetype: str = None, contains: str = None, not_contains: str = None
+):
     """Retrieves all filepaths for files within a directory. Supports subsetting based on filetype
     and substring search.
 
@@ -489,7 +474,7 @@ def get_all_filepaths(path: str, filetype: str = None, contains: str = None, not
 
     if contains:
         all_files = [file for file in all_files if contains in file]
-        
+
     if not_contains:
         all_files = [file for file in all_files if not_contains not in file]
 
@@ -548,8 +533,7 @@ def _structure_architecture_args(architecture, time_series):
 
     # Check to make sure inappropriate args are not used
     if not time_series and (
-        "num_rnn_layers" in architecture.keys()
-        or "num_rnn_hidden" in architecture.keys()
+        "num_rnn_layers" in architecture.keys() or "num_rnn_hidden" in architecture.keys()
     ):
         raise AttributeError(
             f"Time series architecture args must be in [num_linear_layers, nodes], received {architecture}"
@@ -575,4 +559,3 @@ def _structure_architecture_args(architecture, time_series):
     else:
         return architecture
     return architecture
-

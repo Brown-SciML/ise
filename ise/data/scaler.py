@@ -1,7 +1,8 @@
-import torch
-import pandas as pd
 import numpy as np
+import pandas as pd
+import torch
 from torch import nn
+
 
 class Scaler(nn.Module):
     """
@@ -25,7 +26,9 @@ class Scaler(nn.Module):
 
     """
 
-    def __init__(self,):
+    def __init__(
+        self,
+    ):
         super(Scaler, self).__init__()
         self.mean_ = None
         self.scale_ = None
@@ -43,8 +46,10 @@ class Scaler(nn.Module):
         X = self._to_tensor(X)
         self.mean_ = torch.mean(X, dim=0)
         self.scale_ = torch.std(X, dim=0, unbiased=False)
-        self.eps = 1e-8 # to avoid divide by zero
-        self.scale_ = torch.where(self.scale_ == 0, torch.ones_like(self.scale_) * self.eps, self.scale_)  # Avoid division by zero
+        self.eps = 1e-8  # to avoid divide by zero
+        self.scale_ = torch.where(
+            self.scale_ == 0, torch.ones_like(self.scale_) * self.eps, self.scale_
+        )  # Avoid division by zero
 
     def transform(self, X):
         """
@@ -64,12 +69,12 @@ class Scaler(nn.Module):
         if self.mean_ is None or self.scale_ is None:
             raise RuntimeError("This Scaler instance is not fitted yet.")
         transformed = (X - self.mean_) / self.scale_
-        
+
         # handle NAN (i.e. divide by zero)
         # could also use epsilon value and divide by epsilon instead...
         if torch.isnan(transformed).any():
             transformed = torch.nan_to_num(transformed)
-            
+
         return transformed
 
     def inverse_transform(self, X):
@@ -99,11 +104,14 @@ class Scaler(nn.Module):
             path (str): The path to save the file.
 
         """
-        torch.save({
-            'mean_': self.mean_,
-            'scale_': self.scale_,
-        }, path)
-        
+        torch.save(
+            {
+                "mean_": self.mean_,
+                "scale_": self.scale_,
+            },
+            path,
+        )
+
     def _to_tensor(self, x):
         """
         Converts input data to a PyTorch tensor of type float.
@@ -144,6 +152,6 @@ class Scaler(nn.Module):
         """
         checkpoint = torch.load(path)
         scaler = Scaler()
-        scaler.mean_ = checkpoint['mean_']
-        scaler.scale_ = checkpoint['scale_']
+        scaler.mean_ = checkpoint["mean_"]
+        scaler.scale_ = checkpoint["scale_"]
         return scaler

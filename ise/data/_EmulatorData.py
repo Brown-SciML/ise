@@ -1,8 +1,9 @@
 """Module containing EmulatorData class with all associated methods and attributes. Primarily carries out data loading, feature engineering & processing of formatted data."""
-import pandas as pd
-import numpy as np
-from sklearn import preprocessing as sp
 from typing import List
+
+import numpy as np
+import pandas as pd
+from sklearn import preprocessing as sp
 
 np.random.seed(10)
 
@@ -18,15 +19,13 @@ class EmulatorData:
         Args:
             directory (str): Directory containing processed files from ise.data.processors functions. Should contain master.csv.
             spatial_grouping (str, optional): Spatial grouping to be used for data aggregation. Must be in [sectors, regions]. Defaults to 'sectors'.
-            
+
         """
 
         self.directory = directory
-        
+
         if spatial_grouping not in ["sectors", "regions"]:
-            raise ValueError(
-                "spatial_grouping must be in ['sectors', 'regions']."
-            )
+            raise ValueError("spatial_grouping must be in ['sectors', 'regions'].")
         self.spatial_grouping = spatial_grouping
 
         try:
@@ -35,7 +34,7 @@ class EmulatorData:
             try:
                 self.inputs = pd.read_csv(f"{self.directory}/inputs.csv")
                 self.outputs = pd.read_csv(f"{self.directory}/outputs.csv")
-                
+
                 # TODO: merge self.inputs and self.ouputs to make self.data
             except FileNotFoundError:
                 raise FileNotFoundError(
@@ -43,9 +42,7 @@ class EmulatorData:
                 )
 
         # convert to SLE
-        self.data["sle"] = (
-            self.data.ivaf / 1e9 / 362.5
-        )  # m^3 / 1e9 / 362.5 = Gt / 1 mm --> mm SLE
+        self.data["sle"] = self.data.ivaf / 1e9 / 362.5  # m^3 / 1e9 / 362.5 = Gt / 1 mm --> mm SLE
         self.data["modelname"] = self.data.groupname + "_" + self.data.modelname
 
         # Save data on initial conditions for use in data splitting
@@ -140,15 +137,17 @@ class EmulatorData:
             for df in separated_dfs:
                 for shift in range(1, lag + 1):
                     for column in time_dependent_columns:
-                        df[f"{column}.lag{shift}"] = df[column].shift(
-                            shift, fill_value=np.nan
-                        ).fillna(method='bfill')
+                        df[f"{column}.lag{shift}"] = (
+                            df[column].shift(shift, fill_value=np.nan).fillna(method="bfill")
+                        )
 
             self.data = pd.concat(separated_dfs)
 
         if drop_columns:
             if drop_columns is True:
-                secondary_spatial_grouping = 'regions' if self.spatial_grouping == 'sectors' else 'sectors'
+                secondary_spatial_grouping = (
+                    "regions" if self.spatial_grouping == "sectors" else "sectors"
+                )
                 self.drop_columns(
                     columns=["experiment", "exp_id", "groupname", secondary_spatial_grouping]
                 )
@@ -158,32 +157,26 @@ class EmulatorData:
                 raise ValueError(
                     f"drop_columns argument must be of type boolean|list, received {type(drop_columns)}"
                 )
-        print('drop_missing')
+        print("drop_missing")
         if drop_missing:
             self = self.drop_missing()
-            
-        if self.spatial_grouping == 'regions':
+
+        if self.spatial_grouping == "regions":
             self = self.group_by_region()
 
         if boolean_indices:
             self = self.create_boolean_indices()
 
-        print('drop_outliers')
+        print("drop_outliers")
         if drop_outliers:
             if drop_outliers.lower() == "quantile":
-                self = self.drop_outliers(
-                    method=drop_outliers, quantiles=drop_expression
-                )
+                self = self.drop_outliers(method=drop_outliers, quantiles=drop_expression)
             elif drop_outliers.lower() == "explicit":
-                self = self.drop_outliers(
-                    method=drop_outliers, expression=drop_expression
-                )
+                self = self.drop_outliers(method=drop_outliers, expression=drop_expression)
             else:
-                raise ValueError(
-                    "drop_outliers argument must be in [quantile, explicit]"
-                )
+                raise ValueError("drop_outliers argument must be in [quantile, explicit]")
 
-        print('split_data')
+        print("split_data")
         self = self.split_data(target_column=target_column)
 
         if scale:
@@ -193,7 +186,7 @@ class EmulatorData:
             else:
                 self.y = self.scale(self.y, "outputs", scaler="MinMaxScaler")
 
-        print('train_test_split')
+        print("train_test_split")
         self = self.train_test_split(split_type=split_type)
 
         return (
@@ -230,9 +223,7 @@ class EmulatorData:
 
         if method.lower() == "quantile":
             if quantiles is None:
-                raise AttributeError(
-                    "If method == quantile, quantiles argument cannot be None"
-                )
+                raise AttributeError("If method == quantile, quantiles argument cannot be None")
             lower_sle, upper_sle = np.quantile(np.array(self.data.sle), quantiles)
             outlier_data = self.data[
                 (self.data["sle"] <= lower_sle) | (self.data["sle"] >= upper_sle)
@@ -240,12 +231,8 @@ class EmulatorData:
         elif method.lower() == "explicit":
 
             if expression is None:
-                raise AttributeError(
-                    "If method == explicit, expression argument cannot be None"
-                )
-            elif not isinstance(expression, list) or not isinstance(
-                expression[0], tuple
-            ):
+                raise AttributeError("If method == explicit, expression argument cannot be None")
+            elif not isinstance(expression, list) or not isinstance(expression[0], tuple):
                 raise AttributeError(
                     'Expression argument must be a list of tuples, e.g. [("sle", ">", 20), ("sle", "<", -20)]'
                 )
@@ -269,7 +256,7 @@ class EmulatorData:
 
         if outlier_data.empty:
             return self
-        
+
         cols = outlier_data.columns
         nonzero_columns = outlier_data.apply(lambda x: x > 0).apply(
             lambda x: list(cols[x.values]), axis=1
@@ -297,24 +284,25 @@ class EmulatorData:
             )
 
         return self
-    
 
     def group_by_region(self):
         # self.data = self.data.groupby(by=[self.data.regions, self.data.modelname, self.data.exp_id, self.data.year]).mean()
         agg_dict = {}
-        cols = [x for x in self.data.columns if self.data[x].dtype not in ['object', 'str']]
+        cols = [x for x in self.data.columns if self.data[x].dtype not in ["object", "str"]]
         for x in cols:
-            if x == 'sle':
-                agg_dict['sle'] = 'sum'
-            elif x in ('regions', 'modelname', 'exp_id', 'year'):
+            if x == "sle":
+                agg_dict["sle"] = "sum"
+            elif x in ("regions", "modelname", "exp_id", "year"):
                 pass
             else:
-                agg_dict[x] = 'mean'
-        
-        self.data = self.data.groupby(by=[self.data.regions, self.data.modelname, self.data.exp_id, self.data.year]).agg(agg_dict)
+                agg_dict[x] = "mean"
+
+        self.data = self.data.groupby(
+            by=[self.data.regions, self.data.modelname, self.data.exp_id, self.data.year]
+        ).agg(agg_dict)
 
         self.data = self.data.reset_index()
-        self.data = self.data.drop(columns=['sectors'])
+        self.data = self.data.drop(columns=["sectors"])
         return self
 
     def split_data(
@@ -380,7 +368,7 @@ class EmulatorData:
             # Keep this running until you have enough samples
             np.random.seed(10)
             while len(test_scenarios) < num_test_batches:
-                print(len(test_scenarios), '/', num_test_batches, end='\r')
+                print(len(test_scenarios), "/", num_test_batches, end="\r")
                 # Get a random
                 random_model = np.random.choice(all_modelnames)
                 random_sector = np.random.choice(all_sectors)
@@ -462,9 +450,7 @@ class EmulatorData:
 
         return self
 
-    def scale(
-        self, values: pd.DataFrame, values_type: str, scaler: str = "MinMaxScaler"
-    ):
+    def scale(self, values: pd.DataFrame, values_type: str, scaler: str = "MinMaxScaler"):
         """Scales dataframe and saves scaler for future use in unscaling. Sklearn's scaling API is
         used. MinMaxScaler is recommended but StandardScaler is also supported.
 
@@ -477,9 +463,7 @@ class EmulatorData:
             pd.DataFrame: scaled dataset with self.scaler_X and self.scaler_y as attributes in the EmulatorData class.
         """
         if self.X is None and self.y is None:
-            raise AttributeError(
-                "Data must be split before scaling using model.split_data method."
-            )
+            raise AttributeError("Data must be split before scaling using model.split_data method.")
 
         if "minmax" in scaler.lower():
             if "input" in values_type.lower():
@@ -523,9 +507,7 @@ class EmulatorData:
         """
 
         if "input" in values_type.lower():
-            return pd.DataFrame(
-                self.scaler_X.inverse_transform(values), columns=self.input_columns
-            )
+            return pd.DataFrame(self.scaler_X.inverse_transform(values), columns=self.input_columns)
 
         elif "output" in values_type.lower():
             return self.scaler_y.inverse_transform(values.reshape(-1, 1))

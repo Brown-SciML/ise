@@ -1,20 +1,20 @@
 """"Pipeline functions for training various kinds of emulators, including traditional and time-based
 neural networks as well as a gaussian process-based emulator."""
-from ise.models.train import Trainer
-from ise.models.sector import ExploratoryModel, TimeSeriesEmulator
-from ise.models.gp import GP
-from torch import nn
-import pandas as pd
 import os
+from typing import List
+
+import numpy as np
+import pandas as pd
+from sklearn.decomposition import PCA
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
-import numpy as np
-
-from ise.utils.functions import unscale_column
-
 from sklearn.metrics import r2_score
-from sklearn.decomposition import PCA
-from typing import List
+from torch import nn
+
+from ise.models.gp import GP
+from ise.models.sector import ExploratoryModel, TimeSeriesEmulator
+from ise.models.train import Trainer
+from ise.utils.functions import unscale_column
 
 
 def train_timeseries_network(
@@ -61,13 +61,9 @@ def train_timeseries_network(
         train_features = pd.read_csv(f"{data_directory}/ts_train_features.csv")
         test_labels = pd.read_csv(f"{data_directory}/ts_test_labels.csv")
         train_labels = pd.read_csv(f"{data_directory}/ts_train_labels.csv")
-        scenarios = pd.read_csv(
-            f"{data_directory}/ts_test_scenarios.csv"
-        ).values.tolist()
+        scenarios = pd.read_csv(f"{data_directory}/ts_test_scenarios.csv").values.tolist()
     except FileNotFoundError:
-        raise FileNotFoundError(
-            'Files not found. Format must be in format "ts_train_features.csv"'
-        )
+        raise FileNotFoundError('Files not found. Format must be in format "ts_train_features.csv"')
 
     data_dict = {
         "train_features": train_features,
@@ -154,9 +150,7 @@ def train_traditional_network(
         train_features = pd.read_csv(f"{data_directory}/traditional_train_features.csv")
         test_labels = pd.read_csv(f"{data_directory}/traditional_test_labels.csv")
         train_labels = pd.read_csv(f"{data_directory}/traditional_train_labels.csv")
-        scenarios = pd.read_csv(
-            f"{data_directory}/traditional_test_scenarios.csv"
-        ).values.tolist()
+        scenarios = pd.read_csv(f"{data_directory}/traditional_test_scenarios.csv").values.tolist()
     except FileNotFoundError:
         raise FileNotFoundError(
             'Files not found. Format must be in format "traditional_train_features.csv"'
@@ -205,9 +199,14 @@ def train_traditional_network(
     metrics, test_preds = trainer.evaluate(verbose=verbose)
     return model, metrics, test_preds
 
+
 def train_independent_gp(
     data_directory: str,
-    features: List[str] = ['ts_anomaly', 'salinity','temperature',],
+    features: List[str] = [
+        "ts_anomaly",
+        "salinity",
+        "temperature",
+    ],
     kernel=None,
     verbose: bool = False,
     save_directory: str = None,
@@ -229,7 +228,11 @@ def train_independent_gp(
 def train_gaussian_process(
     data_directory: str,
     n: int,
-    features: List[str] = ['ts_anomaly', 'salinity','temperature',],
+    features: List[str] = [
+        "ts_anomaly",
+        "salinity",
+        "temperature",
+    ],
     sampling_method: str = "first_n",
     kernel=None,
     verbose: bool = False,
@@ -259,26 +262,20 @@ def train_gaussian_process(
         train_features = pd.read_csv(f"{data_directory}/traditional_train_features.csv")
         test_labels = pd.read_csv(f"{data_directory}/traditional_test_labels.csv")
         train_labels = pd.read_csv(f"{data_directory}/traditional_train_labels.csv")
-        scenarios = pd.read_csv(
-            f"{data_directory}/traditional_test_scenarios.csv"
-        ).values.tolist()
+        scenarios = pd.read_csv(f"{data_directory}/traditional_test_scenarios.csv").values.tolist()
     except FileNotFoundError:
         test_features = pd.read_csv(f"{data_directory}/ts_test_features.csv")
         train_features = pd.read_csv(f"{data_directory}/ts_train_features.csv")
         test_labels = pd.read_csv(f"{data_directory}/ts_test_labels.csv")
         train_labels = pd.read_csv(f"{data_directory}/ts_train_labels.csv")
-        scenarios = pd.read_csv(
-            f"{data_directory}/ts_test_scenarios.csv"
-        ).values.tolist()
+        scenarios = pd.read_csv(f"{data_directory}/ts_test_scenarios.csv").values.tolist()
 
     if not isinstance(features, list):
         raise ValueError(f"features argument must be a list, received {type(features)}")
 
     # type check features
     if not isinstance(features, list):
-        raise AttributeError(
-            f"features argument must be of type list, received {type(features)}"
-        )
+        raise AttributeError(f"features argument must be of type list, received {type(features)}")
 
     # See if features argument contain columns or principal components
     features_are_pcs = all([f.lower().startswith("pc") for f in features])
@@ -343,9 +340,7 @@ def train_gaussian_process(
         print("3/3: Evaluating Model")
 
     # evaluate on test
-    preds, std_prediction, metrics = gaussian_process.test(
-        gp_test_features, test_labels
-    )
+    preds, std_prediction, metrics = gaussian_process.test(gp_test_features, test_labels)
 
     if save_directory:
         if isinstance(save_directory, str):
@@ -362,11 +357,13 @@ def train_gaussian_process(
     return preds, std_prediction, metrics
 
 
-
 def train_multiyear_gaussian_process(
     data_directory: str,
     n: int,
-    features: List[str] = ['temperature', 'salinity',],
+    features: List[str] = [
+        "temperature",
+        "salinity",
+    ],
     kernel=None,
     save_directory: str = None,
 ):
@@ -387,13 +384,13 @@ def train_multiyear_gaussian_process(
     """
     gp = GP(kernel=kernel)
 
-    train_features = pd.read_csv(f'{data_directory}/ts_train_features.csv')
-    train_labels = pd.read_csv(f'{data_directory}/ts_train_labels.csv')
-    test_features = pd.read_csv(f'{data_directory}/ts_test_features.csv')
-    test_labels = pd.read_csv(f'{data_directory}/ts_test_labels.csv')
+    train_features = pd.read_csv(f"{data_directory}/ts_train_features.csv")
+    train_labels = pd.read_csv(f"{data_directory}/ts_train_labels.csv")
+    test_features = pd.read_csv(f"{data_directory}/ts_test_features.csv")
+    test_labels = pd.read_csv(f"{data_directory}/ts_test_labels.csv")
 
-    train_features = unscale_column(train_features, column=['year', 'sectors'])
-    test_features = unscale_column(test_features, column=['year', 'sectors'])
+    train_features = unscale_column(train_features, column=["year", "sectors"])
+    test_features = unscale_column(test_features, column=["year", "sectors"])
 
     all_preds = []
     all_std = []
@@ -409,17 +406,17 @@ def train_multiyear_gaussian_process(
         test_features_year = test_features_year[features]
         gp.fit(np.array(train_features_year)[:n], np.array(train_labels_year)[:n])
         preds, std_prediction, metrics = gp.test(test_features_year, test_labels_year)
-        
+
         all_preds.append(preds)
         all_std.append(std_prediction)
         all_metrics.append(metrics)
-        
+
     preds = pd.concat(all_preds).sort_index()
     std = pd.concat(all_std).sort_index()
-    
+
     gp_results = pd.Series(pd.concat(all_preds).sort_index(), name="preds")
-    gp_results['std'] = pd.concat(all_std).sort_index()
-    
+    gp_results["std"] = pd.concat(all_std).sort_index()
+
     if save_directory:
         if isinstance(save_directory, str):
             preds_path = f"{save_directory}/gp_preds.csv"
@@ -428,10 +425,8 @@ def train_multiyear_gaussian_process(
         elif isinstance(save_directory, bool):
             preds_path = f"gp_preds.csv"
             uq_path = f"gp_std.csv"
-        
+
         pd.Series(preds, name="gp_preds").to_csv(preds_path, index=False)
         pd.Series(std, name="gp_std").to_csv(uq_path, index=False)
-        
 
-    
     return preds, std

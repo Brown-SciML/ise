@@ -1,10 +1,16 @@
-from ise.data._EmulatorData import EmulatorData
-from ise.models.train import Trainer
-from ise.models.sector import TimeSeriesEmulator, ExploratoryModel
-from ise.utils.functions import _structure_emulatordata_args, _structure_architecture_args, load_ml_data
 from datetime import datetime
-from torch import nn
 from typing import List
+
+from torch import nn
+
+from ise.data._EmulatorData import EmulatorData
+from ise.models.sector import ExploratoryModel, TimeSeriesEmulator
+from ise.models.train import Trainer
+from ise.utils.functions import (
+    _structure_architecture_args,
+    _structure_emulatordata_args,
+    load_ml_data,
+)
 
 
 def lag_sequence_test(
@@ -24,9 +30,7 @@ def lag_sequence_test(
     if verbose:
         print("1/3: Loading processed data...")
 
-    emulator_data_args = _structure_emulatordata_args(
-        emulator_data_args, time_series=True
-    )
+    emulator_data_args = _structure_emulatordata_args(emulator_data_args, time_series=True)
     architecture = _structure_architecture_args(architecture, time_series=True)
 
     count = 0

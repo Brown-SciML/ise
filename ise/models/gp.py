@@ -1,12 +1,11 @@
 """Gaussian process model architecture, containing training and testing capabilities."""
 
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.metrics import r2_score
 import numpy as np
 from joblib import dump, load
-from sklearn.gaussian_process.kernels import RBF, _check_length_scale, WhiteKernel
-from scipy.spatial.distance import pdist, cdist, squareform
-import numpy as np
+from scipy.spatial.distance import cdist, pdist, squareform
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF, WhiteKernel, _check_length_scale
+from sklearn.metrics import r2_score
 
 
 class PowerExponentialKernel(RBF):
@@ -79,9 +78,9 @@ class PowerExponentialKernel(RBF):
                 return K, K_gradient
             elif self.anisotropic:
                 # We need to recompute the pairwise dimension-wise distances
-                K_gradient = (
-                    X[:, np.newaxis, :] - X[np.newaxis, :, :]
-                ) ** self.exponential / (length_scale**2)
+                K_gradient = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** self.exponential / (
+                    length_scale**2
+                )
                 K_gradient *= K[..., np.newaxis]
                 return K, K_gradient
         else:
@@ -91,7 +90,6 @@ class PowerExponentialKernel(RBF):
 class NuggetKernel(WhiteKernel):
     def __init__(self, noise_level=1.0, noise_level_bounds=(1e-5, 1e5)):
         super().__init__(noise_level=noise_level, noise_level_bounds=noise_level_bounds)
-
 
 
 class GP(GaussianProcessRegressor):
@@ -134,19 +132,16 @@ RMSE: {rmse:0.6f}
 R2: {r2:0.6f}"""
             )
         return preds, std_prediction, metrics
-    
 
     def save(self, path):
         """Save model to path."""
-        if not path.endswith('.joblib'):
-            raise ValueError('Path must end with .joblib')
-        dump(self, path) 
-    
+        if not path.endswith(".joblib"):
+            raise ValueError("Path must end with .joblib")
+        dump(self, path)
+
     def load(self, path):
         """Load model from path."""
-        if not path.endswith('.joblib'):
-            raise ValueError('Path must end with .joblib')
+        if not path.endswith(".joblib"):
+            raise ValueError("Path must end with .joblib")
         self = load(path)
         return self
-        
-        

@@ -1,16 +1,10 @@
-from torch import nn
-
+import numpy as np
 import pandas as pd
 import torch
-
-
-import torch
-from ise.data.dataclasses import PyTorchDataset, TSDataset
+from torch import nn
 from torch.utils.data import DataLoader
-import numpy as np
 
-
-
+from ise.data.dataclasses import PyTorchDataset, TSDataset
 
 
 class ExploratoryModel(torch.nn.Module):
@@ -49,6 +43,7 @@ class ExploratoryModel(torch.nn.Module):
     def forward(self, x):
         return self.model(x)
 
+
 class TimeSeriesEmulator(torch.nn.Module):
     def __init__(self, architecture, mc_dropout=False, dropout_prob=None):
         super().__init__()
@@ -57,9 +52,7 @@ class TimeSeriesEmulator(torch.nn.Module):
         self.num_rnn_layers = architecture["num_rnn_layers"]
         self.num_rnn_hidden = architecture["num_rnn_hidden"]
         self.time_series = True
-        self.device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu"
-        )
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.mc_dropout = mc_dropout
 
         if not all(
@@ -81,7 +74,7 @@ class TimeSeriesEmulator(torch.nn.Module):
                 hidden_size=self.num_rnn_hidden,
                 batch_first=True,
                 num_layers=self.num_rnn_layers,
-                dropout=dropout_prob if self.num_rnn_layers>1 else 0,
+                dropout=dropout_prob if self.num_rnn_layers > 1 else 0,
             )
         else:
             self.rnn = nn.LSTM(
@@ -117,13 +110,20 @@ class TimeSeriesEmulator(torch.nn.Module):
         x = self.linear1(x)
         x = self.relu(x)
         if self.mc_dropout:
-            x = self.dropout(x) # fc dropout
+            x = self.dropout(x)  # fc dropout
         x = self.linear_out(x)
-        
+
         return x
 
-    def predict(self, x, approx_dist=None, mc_iterations=None, quantile_range=[0.025, 0.975], confidence="95"):
-        
+    def predict(
+        self,
+        x,
+        approx_dist=None,
+        mc_iterations=None,
+        quantile_range=[0.025, 0.975],
+        confidence="95",
+    ):
+
         approx_dist = self.mc_dropout if approx_dist is None else approx_dist
         if approx_dist and mc_iterations is None:
             raise ValueError(
@@ -132,9 +132,7 @@ class TimeSeriesEmulator(torch.nn.Module):
 
         self.eval()
         if isinstance(x, np.ndarray):
-            dataset = TSDataset(
-                X=torch.from_numpy(x).float(), y=None, sequence_length=5
-            )
+            dataset = TSDataset(X=torch.from_numpy(x).float(), y=None, sequence_length=5)
         elif isinstance(x, torch.FloatTensor) or isinstance(x, torch.Tensor):
             dataset = TSDataset(X=x.float(), y=None, sequence_length=5)
         elif isinstance(x, pd.DataFrame):
@@ -172,7 +170,7 @@ class TimeSeriesEmulator(torch.nn.Module):
 
         if 1 in out_preds.shape:
             out_preds = out_preds.squeeze()
-            
+
         means = out_preds.mean(axis=0)
         sd = out_preds.std(axis=0)
 
@@ -187,7 +185,6 @@ class TimeSeriesEmulator(torch.nn.Module):
                 layer.train()
 
 
-
 class TimeIndependentEmulator(torch.nn.Module):
     def __init__(self, architecture, mc_dropout=False, dropout_prob=None):
         super().__init__()
@@ -195,9 +192,7 @@ class TimeIndependentEmulator(torch.nn.Module):
         self.input_layer_size = architecture["input_layer_size"]
         self.num_linear_layers = architecture["num_linear_layers"]
         self.num_nodes_hidden = architecture["num_nodes_hidden"]
-        self.device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu"
-        )
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.mc_dropout = mc_dropout
 
         if not all(
@@ -212,9 +207,13 @@ class TimeIndependentEmulator(torch.nn.Module):
 
         if mc_dropout and dropout_prob is None:
             raise ValueError("If mc_dropout, dropout_prob cannot be None.")
-            
-        self.linear_in = nn.Linear(in_features=self.input_layer_size, out_features=self.num_nodes_hidden)
-        self.linear_hidden = nn.Linear(in_features=self.num_nodes_hidden, out_features=self.num_nodes_hidden)
+
+        self.linear_in = nn.Linear(
+            in_features=self.input_layer_size, out_features=self.num_nodes_hidden
+        )
+        self.linear_hidden = nn.Linear(
+            in_features=self.num_nodes_hidden, out_features=self.num_nodes_hidden
+        )
         self.relu = nn.ReLU()
         if self.mc_dropout:
             self.dropout = nn.Dropout(p=dropout_prob)
@@ -224,7 +223,7 @@ class TimeIndependentEmulator(torch.nn.Module):
     def forward(self, x):
         batch_size = x.shape[0]
         x = self.linear_in(x)
-        
+
         if self.num_linear_layers > 1:
             for _ in range(self.num_linear_layers):
                 x = self.linear_hidden(x)
@@ -233,13 +232,20 @@ class TimeIndependentEmulator(torch.nn.Module):
         x = self.linear1(x)
         x = self.relu(x)
         if self.mc_dropout:
-            x = self.dropout(x) 
+            x = self.dropout(x)
         x = self.linear_out(x)
-        
+
         return x
 
-    def predict(self, x, approx_dist=None, mc_iterations=None, quantile_range=[0.025, 0.975], confidence="95"):
-        
+    def predict(
+        self,
+        x,
+        approx_dist=None,
+        mc_iterations=None,
+        quantile_range=[0.025, 0.975],
+        confidence="95",
+    ):
+
         approx_dist = self.mc_dropout if approx_dist is None else approx_dist
         if approx_dist and mc_iterations is None:
             raise ValueError(
@@ -249,15 +255,18 @@ class TimeIndependentEmulator(torch.nn.Module):
         self.eval()
         if isinstance(x, np.ndarray):
             dataset = PyTorchDataset(
-                X=torch.from_numpy(x).float(), y=None, 
+                X=torch.from_numpy(x).float(),
+                y=None,
             )
         elif isinstance(x, torch.FloatTensor) or isinstance(x, torch.Tensor):
-            dataset = PyTorchDataset(X=x.float(), y=None, )
+            dataset = PyTorchDataset(
+                X=x.float(),
+                y=None,
+            )
         elif isinstance(x, pd.DataFrame):
             dataset = PyTorchDataset(
                 X=torch.from_numpy(np.array(x, dtype=np.float64)).float(),
                 y=None,
-               
             )
         else:
             raise ValueError(
@@ -288,10 +297,9 @@ class TimeIndependentEmulator(torch.nn.Module):
 
         if 1 in out_preds.shape:
             out_preds = out_preds.squeeze()
-            
+
         means = out_preds.mean(axis=0)
         sd = out_preds.std(axis=0)
-
 
         return out_preds, means, sd
 
