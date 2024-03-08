@@ -1,8 +1,8 @@
 import sys
 sys.path.append("../..")
 
-from ise.sectors.pipelines import processing, feature_engineering, training
-from ise.sectors.models.gp import kernels
+from ise.pipelines import processing, feature_engineering, training
+from ise.models.gp import kernels
 
 FORCING_DIRECTORY = r"/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/"
 ISMIP6_OUTPUT_DIRECTORY = r"/users/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS/Zenodo_Outputs/"

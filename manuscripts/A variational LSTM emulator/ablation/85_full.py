@@ -1,5 +1,5 @@
-from ise.sectors.models.training.dataclasses import PyTorchDataset
-from ise.sectors.utils.data import load_ml_data
+from ise.models.training.dataclasses import PyTorchDataset
+from ise.utils.data import load_ml_data
 from torch.utils.data import DataLoader
 import numpy as np
 import pandas as pd

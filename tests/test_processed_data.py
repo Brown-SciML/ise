@@ -4,7 +4,7 @@ from paths import PROCESSED_FORCING_OUTPUTS
 
 # Test Processed Data
 def test_processed_data_exists():
-    assert os.path.exists(PROCESSED_FORCING_OUTPUTS), "Processed forcings directory doesn't exist. Run the processing pipelines found in ise.sectors.pipelines.processing."
+    assert os.path.exists(PROCESSED_FORCING_OUTPUTS), "Processed forcings directory doesn't exist. Run the processing pipelines found in ise.pipelines.processing."
     
 def test_processed_correct_files():
     assert all([sub in os.listdir(PROCESSED_FORCING_OUTPUTS) for sub in ['thermal_forcing.csv', 'salinity.csv', 'temperature.csv', 'master.csv', 'ice_collapse.csv', 'atmospheric_forcing.csv']]), "Forcing Directory does not contain the correct subdirectories."

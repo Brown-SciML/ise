@@ -4,7 +4,7 @@ from paths import RESULTS_DATASET
 
 # Test Results Data
 def test_results_data_exists():
-    assert os.path.exists(RESULTS_DATASET), "Results dataset doesn't exist. Run the testing procedure to generate using ise.sectors.utils.data.combine_testing_results."
+    assert os.path.exists(RESULTS_DATASET), "Results dataset doesn't exist. Run the testing procedure to generate using ise.utils.data.combine_testing_results."
     
 results = pd.read_csv(RESULTS_DATASET)
     

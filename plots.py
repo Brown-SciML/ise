@@ -1,6 +1,6 @@
 import pickle as pkl
 import numpy as np
-from ise.grids.models.PCA import PCA
+from ise.models.PCA import PCA
 import os
 
 import matplotlib.pyplot as plt

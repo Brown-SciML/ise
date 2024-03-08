@@ -1,12 +1,12 @@
 
-from ise.grids.models.HybridEmulator import WeakPredictor, DimensionProcessor
-from ise.grids.data.feature_engineer import FeatureEngineer
+from ise.models.grid import WeakPredictor, DimensionProcessor
+from ise.data.feature_engineer import FeatureEngineer
 import pandas as pd
 import matplotlib.pyplot as plt
 import torch
 import numpy as np
-from ise.grids.visualization.evaluation import EvaluationPlotter
-from ise.grids.models.loss import WeightedMSELoss, WeightedMSEPCALoss, WeightedPCALoss, WeightedMSELossWithSignPenalty
+from ise.evaluation.plots import EvaluationPlotter
+from ise.models.loss import WeightedMSELoss, WeightedMSEPCALoss, WeightedPCALoss, WeightedMSELossWithSignPenalty
 
 
 ice_sheet = 'AIS'

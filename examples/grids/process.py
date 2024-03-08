@@ -1,7 +1,7 @@
 import sys
 sys.path.append("../..")
-from ise.grids.data.process import DimensionalityReducer, DatasetMerger, ProjectionProcessor
-from ise.grids.models.HybridEmulator import PCAModel, WeakPredictor
+from ise.data.process import DimensionalityReducer, DatasetMerger, ProjectionProcessor
+from ise.models.HybridEmulator import PCAModel, WeakPredictor
 
 ice_sheet = 'AIS'
 print(f'ice sheet: {ice_sheet}')

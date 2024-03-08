@@ -1,8 +1,8 @@
 import pandas as pd
 import sys
 sys.path.append("../..")
-from ise.sectors.models.timeseries import TimeSeriesEmulator
-from ise.sectors.pipelines.testing import analyze_model
+from ise.models.timeseries import TimeSeriesEmulator
+from ise.pipelines.testing import analyze_model
 
 
 DATA_DIRECTORY = r"/users/pvankatw/emulator/untracked_folder/ml_data_directory"
