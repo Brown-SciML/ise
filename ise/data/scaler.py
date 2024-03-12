@@ -129,8 +129,6 @@ class StandardScaler(nn.Module):
         scaler.mean_ = checkpoint["mean_"]
         scaler.scale_ = checkpoint["scale_"]
         return scaler
-    
-    
 
 
 class RobustScaler(nn.Module):
@@ -160,10 +158,13 @@ class RobustScaler(nn.Module):
         return X * (self.iqr_ + 1e-8) + self.median_
 
     def save(self, path):
-        torch.save({
-            "median_": self.median_,
-            "iqr_": self.iqr_,
-        }, path)
+        torch.save(
+            {
+                "median_": self.median_,
+                "iqr_": self.iqr_,
+            },
+            path,
+        )
 
     @staticmethod
     def load(path):
@@ -172,7 +173,6 @@ class RobustScaler(nn.Module):
         scaler.median_ = checkpoint["median_"]
         scaler.iqr_ = checkpoint["iqr_"]
         return scaler
-    
 
 
 class LogScaler(nn.Module):
@@ -194,9 +194,12 @@ class LogScaler(nn.Module):
         return torch.exp(X) - self.epsilon
 
     def save(self, path):
-        torch.save({
-            "epsilon": self.epsilon,
-        }, path)
+        torch.save(
+            {
+                "epsilon": self.epsilon,
+            },
+            path,
+        )
 
     @staticmethod
     def load(path):

@@ -82,8 +82,6 @@ class WeightedMSELoss(torch.nn.Module):
         # normalized_deviation = torch.tensor(deviation / self.data_std, dtype=torch.float32, device=self.device)
         normalized_deviation = deviation / self.data_std
 
-        # print(type(self.weight_factor), self.weight_factor.device)
-        # print(type(normalized_deviation), normalized_deviation.device)
         # Compute weights: increase penalty for extreme values
         weights = 1 + (normalized_deviation * self.weight_factor)
 

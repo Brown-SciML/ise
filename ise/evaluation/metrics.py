@@ -68,3 +68,44 @@ def js_divergence(p: np.ndarray, q: np.ndarray):
         float: JS Divergence
     """
     return jensenshannon(p, q)
+
+
+def mape(y_true, y_pred):
+    """
+    Calculate Mean Absolute Percentage Error (MAPE).
+
+    Args:
+    - y_true: numpy array or a list of actual numbers
+    - y_pred: numpy array or a list of predicted numbers
+
+    Returns:
+    - mape: Mean Absolute Percentage Error
+    """
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
+    # Avoid division by zero
+    non_zero_mask = y_true != 0
+    if not np.any(non_zero_mask):
+        return np.inf
+    mape = (
+        np.mean(np.abs((y_true[non_zero_mask] - y_pred[non_zero_mask]) / y_true[non_zero_mask]))
+        * 100
+    )
+    return mape
+
+
+def relative_squared_error(y_true, y_pred):
+    """
+    Calculate Relative Squared Error (RSE).
+
+    Args:
+    - y_true: numpy array or a list of actual numbers
+    - y_pred: numpy array or a list of predicted numbers
+
+    Returns:
+    - rse: Relative Squared Error
+    """
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
+    ss_res = np.sum((y_true - y_pred) ** 2)
+    ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
+    rse = ss_res / ss_tot
+    return rse

@@ -350,11 +350,14 @@ class WeakPredictor(nn.Module):
 
         return x
 
-    def fit(self, X, y, epochs=100, sequence_length=3, batch_size=64, loss=None):
-        # self.criterion = WeightedMSELoss(y.mean().mean(), y.values.flatten().std(),).to(self.device)
-        # self.criterion = WeightedMSELossWithSignPenalty(y.mean().mean(), y.values.flatten().std(),
-        #                                                 weight_factor=2.0, sign_penalty_factor=0.2).to(self.device)
+    def fit(
+        self, X, y, epochs=100, sequence_length=3, batch_size=64, loss=None, val_X=None, val_y=None
+    ):
 
+        if not val_X.empty and not val_y.empty:
+            validate = True
+        else:
+            validate = False
         print(f"Training with {loss}")
         if loss is not None:
             self.criterion = loss.to(self.device)
@@ -374,6 +377,7 @@ class WeakPredictor(nn.Module):
         self.to(self.device)
         print(f"Training on {self.device}")
         for epoch in range(1, epochs + 1):
+            self.train()
             batch_losses = []
             for i, (x, y) in enumerate(data_loader):
                 x = x.to(self.device)
@@ -396,9 +400,20 @@ class WeakPredictor(nn.Module):
                 #     print(f"Epoch: {epoch}, Batch: {i}, Loss: {loss.item()}")
 
             # self.scheduler.step()
+            if validate:
+                val_preds = self.predict(
+                    val_X, sequence_length=sequence_length, batch_size=batch_size
+                ).to(self.device)
+                val_loss = self.criterion(
+                    val_preds, torch.tensor(val_y.to_numpy(), device=self.device)
+                )
+                print(
+                    f"Epoch {epoch}, Average Batch Loss: {sum(batch_losses) / len(batch_losses)}, Validation Loss: {val_loss}"
+                )
 
-            average_batch_loss = sum(batch_losses) / len(batch_losses)
-            print(f"Epoch {epoch}, Average Batch Loss: {average_batch_loss}")
+            else:
+                average_batch_loss = sum(batch_losses) / len(batch_losses)
+                print(f"Epoch {epoch}, Average Batch Loss: {average_batch_loss}")
 
         self.trained = True
 

@@ -34,7 +34,7 @@ class FeatureEngineer:
     ):
         self.data = data
         try:
-            self.data = self.data.sort_values(by=['model', 'exp', 'sector', 'year'])
+            self.data = self.data.sort_values(by=["model", "exp", "sector", "year"])
         except:
             pass
         self.train_size = train_size
@@ -122,7 +122,23 @@ class FeatureEngineer:
         if X is not None:
             self.X = X
         else:
-            dropped_columns =  ["id", "cmip_model", "pathway", "exp", 'ice_sheet', 'Scenario', 'Ocean forcing', 'Ocean sensitivity', 'Ice shelf fracture', 'Tier', 'aogcm', 'id', 'exp', 'model', 'ivaf']
+            dropped_columns = [
+                "id",
+                "cmip_model",
+                "pathway",
+                "exp",
+                "ice_sheet",
+                "Scenario",
+                "Ocean forcing",
+                "Ocean sensitivity",
+                "Ice shelf fracture",
+                "Tier",
+                "aogcm",
+                "id",
+                "exp",
+                "model",
+                "ivaf",
+            ]
             dropped_columns = [x for x in self.data.columns if x in dropped_columns]
             dropped_data = self.data[dropped_columns]
             self.X = self.data.drop(
@@ -199,7 +215,7 @@ class FeatureEngineer:
             [
                 pd.DataFrame(X_scaled, columns=self.X.columns, index=self.X.index),
                 pd.DataFrame(y_scaled, columns=self.y.columns, index=self.y.index),
-                dropped_data
+                dropped_data,
             ],
             axis=1,
         )
@@ -250,7 +266,7 @@ class FeatureEngineer:
             self.data = data
         self.data = backfill_outliers(self.data, percentile=percentile)
         return self
-    
+
     def drop_outliers(self, method, column, expression=None, quantiles=[0.01, 0.99], data=None):
         if data is not None:
             self.data = data
@@ -302,10 +318,29 @@ def add_lag_variables(data: pd.DataFrame, lag: int) -> pd.DataFrame:
     """
 
     # Separate columns that won't be lagged and shouldn't be dropped
-    cols_to_exclude = ["id", "cmip_model", "pathway", "exp", 'ice_sheet', 'Scenario', 'Ocean forcing', 'Ocean sensitivity', 'Ice shelf fracture', 'Tier', 'aogcm', 'id', 'exp', 'model', 'ivaf', 'sector']
+    cols_to_exclude = [
+        "id",
+        "cmip_model",
+        "pathway",
+        "exp",
+        "ice_sheet",
+        "Scenario",
+        "Ocean forcing",
+        "Ocean sensitivity",
+        "Ice shelf fracture",
+        "Tier",
+        "aogcm",
+        "id",
+        "exp",
+        "model",
+        "ivaf",
+        "sector",
+    ]
     cols_to_exclude = [x for x in cols_to_exclude if x in data.columns]
-    temporal_indicator = 'time' if 'time' in data.columns else 'year'
-    non_lagged_cols = [temporal_indicator] + [x for x in data.columns if "sle" in x or x in cols_to_exclude]
+    temporal_indicator = "time" if "time" in data.columns else "year"
+    non_lagged_cols = [temporal_indicator] + [
+        x for x in data.columns if "sle" in x or x in cols_to_exclude
+    ]
     projection_length = 86
 
     # Initialize a list to collect the processed DataFrames
@@ -481,19 +516,22 @@ def drop_outliers(
         outlier_data = data.copy()
 
         # Apply subset expressions to filter outlier data
+        subset_dfs = []
         for subset_expression in expression:
             column, operator, value = subset_expression
 
             if operator.lower() in ("equal", "equals", "=", "=="):
-                outlier_data = outlier_data[outlier_data[column] == value]
+                outlier_dataframe = outlier_data[outlier_data[column] == value]
             elif operator.lower() in ("not equal", "not equals", "!=", "~="):
-                outlier_data = outlier_data[outlier_data[column] != value]
+                outlier_dataframe = outlier_data[outlier_data[column] != value]
             elif operator.lower() in ("greater than", "greater", ">=", ">"):
-                outlier_data = outlier_data[outlier_data[column] > value]
+                outlier_dataframe = outlier_data[outlier_data[column] > value]
             elif operator.lower() in ("less than", "less", "<=", "<"):
-                outlier_data = outlier_data[outlier_data[column] < value]
+                outlier_dataframe = outlier_data[outlier_data[column] < value]
             else:
                 raise ValueError(f'Operator must be in ["==", "!=", ">", "<"], received {operator}')
+            subset_dfs.append(outlier_dataframe)
+        outlier_data = pd.concat(subset_dfs)
 
     # Check if outlier_data is empty
     if outlier_data.empty:
@@ -509,19 +547,23 @@ def drop_outliers(
     # Create dataframe of experiments with outliers (want to delete the entire 86 rows)
     outlier_runs = pd.DataFrame()
     # TODO: Check to see if this works
-    outlier_runs["modelname"] = outlier_data['modelname']
-    outlier_runs["exp_id"] = outlier_data['exp']
+    outlier_runs["modelname"] = outlier_data["model"]
+    outlier_runs["exp_id"] = outlier_data["exp"]
     outlier_runs["sector"] = outlier_data["sector"]
     outlier_runs_list = outlier_runs.values.tolist()
     unique_outliers = [list(x) for x in set(tuple(x) for x in outlier_runs_list)]
 
+    data["outlier"] = False
+
     # Drop those runs
-    for i in unique_outliers:
+    for i in tqdm(unique_outliers, total=len(unique_outliers), desc="Dropping outliers"):
         modelname = i[0]
         exp_id = i[1]
         sector = i[2]
-        data = data.drop(
-            data[(data[modelname] == 1) & (data[exp_id] == 1) & (data["sector"] == sector)].index
-        )
+        data.loc[
+            (data.model == modelname) & (data.exp == exp_id) & (data.sector == sector), "outlier"
+        ] = True
+
+    data = data[data["outlier"] == False]
 
     return data

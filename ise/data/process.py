@@ -9,7 +9,7 @@ import pandas as pd
 import xarray as xr
 from tqdm import tqdm
 
-from ise.data.scaler import StandardScaler, RobustScaler, LogScaler
+from ise.data.scaler import LogScaler, RobustScaler, StandardScaler
 from ise.models.grid import PCA
 from ise.utils.functions import get_all_filepaths
 
@@ -819,7 +819,7 @@ class DimensionalityReducer:
     # generate pca models
     # convert each forcing file to pca space
 
-    def generate_pca_models(self, num_forcing_pcs, num_projection_pcs, scaling_method='standard'):
+    def generate_pca_models(self, num_forcing_pcs, num_projection_pcs, scaling_method="standard"):
         """
         Generate principal component analysis (PCA) models for atmosphere and ocean variables.
 
@@ -1138,7 +1138,12 @@ class DimensionalityReducer:
         print(f"Finished converting projections to PCA space, files outputted to {output_dir}.")
 
     def _generate_ais_atmosphere_pcas(
-        self, atmosphere_fps: list, save_dir: str, num_pcs="95%", scaler_dir: str = None, scaler_method="standard",
+        self,
+        atmosphere_fps: list,
+        save_dir: str,
+        num_pcs="95%",
+        scaler_dir: str = None,
+        scaler_method="standard",
     ):
         """
         Generate principal component analysis (PCA) for atmospheric variables.
@@ -1183,11 +1188,11 @@ class DimensionalityReducer:
             variable_array = variable_array.reshape(len(atmosphere_fps) * 86, 761 * 761)
 
             # scale data
-            if scaler_method.lower() == 'standard':
+            if scaler_method.lower() == "standard":
                 variable_scaler = StandardScaler()
-            elif scaler_method.lower() == 'robust':
+            elif scaler_method.lower() == "robust":
                 variable_scaler = RobustScaler()
-            elif scaler_method.lower() == 'log':
+            elif scaler_method.lower() == "log":
                 variable_scaler = LogScaler()
             variable_scaler.fit(variable_array)
             variable_array = variable_scaler.transform(variable_array)
@@ -1205,7 +1210,12 @@ class DimensionalityReducer:
         return 0
 
     def _generate_ais_ocean_pcas(
-        self, ocean_fps: list, save_dir: str, num_pcs="95%", scaler_dir: str = None, scaler_method='standard',
+        self,
+        ocean_fps: list,
+        save_dir: str,
+        num_pcs="95%",
+        scaler_dir: str = None,
+        scaler_method="standard",
     ):
         """
         Generate principal component analysis (PCA) for ocean variables.
@@ -1261,33 +1271,33 @@ class DimensionalityReducer:
         temperature_array = np.nan_to_num(temperature_array)
 
         # scale data
-        if scaler_method.lower() == 'standard':
+        if scaler_method.lower() == "standard":
             therm_scaler = StandardScaler()
-        elif scaler_method.lower() == 'robust':
+        elif scaler_method.lower() == "robust":
             therm_scaler = RobustScaler()
-        elif scaler_method.lower() == 'log':
+        elif scaler_method.lower() == "log":
             therm_scaler = LogScaler()
         else:
             raise ValueError(f"Scaler method {scaler_method} not recognized.")
         therm_scaler.fit(thermal_forcing_array)
         thermal_forcing_array = therm_scaler.transform(thermal_forcing_array)
 
-        if scaler_method.lower() == 'standard':
+        if scaler_method.lower() == "standard":
             salinity_scaler = StandardScaler()
-        elif scaler_method.lower() == 'robust':
+        elif scaler_method.lower() == "robust":
             salinity_scaler = RobustScaler()
-        elif scaler_method.lower() == 'log':
+        elif scaler_method.lower() == "log":
             salinity_scaler = LogScaler()
         else:
             raise ValueError(f"Scaler method {scaler_method} not recognized.")
         salinity_scaler.fit(salinity_array)
         salinity_array = salinity_scaler.transform(salinity_array)
 
-        if scaler_method.lower() == 'standard':
+        if scaler_method.lower() == "standard":
             temp_scaler = StandardScaler()
-        elif scaler_method.lower() == 'robust':
+        elif scaler_method.lower() == "robust":
             temp_scaler = RobustScaler()
-        elif scaler_method.lower() == 'log':
+        elif scaler_method.lower() == "log":
             temp_scaler = LogScaler()
         else:
             raise ValueError(f"Scaler method {scaler_method} not recognized.")
@@ -1322,7 +1332,12 @@ class DimensionalityReducer:
         return 0
 
     def _generate_gris_atmosphere_pcas(
-        self, atmosphere_fps: list, save_dir: str, num_pcs="95%", scaler_dir: str = None, scaler_method='standard'
+        self,
+        atmosphere_fps: list,
+        save_dir: str,
+        num_pcs="95%",
+        scaler_dir: str = None,
+        scaler_method="standard",
     ):
 
         # if no separate directory for saving scalers is specified, use the pca save_dir
@@ -1364,22 +1379,22 @@ class DimensionalityReducer:
         st_forcing_array = np.nan_to_num(st_forcing_array)
 
         # scale data
-        if scaler_method.lower() == 'standard':
+        if scaler_method.lower() == "standard":
             smb_scaler = StandardScaler()
-        elif scaler_method.lower() == 'robust':
+        elif scaler_method.lower() == "robust":
             smb_scaler = RobustScaler()
-        elif scaler_method.lower() == 'log':
+        elif scaler_method.lower() == "log":
             smb_scaler = LogScaler()
         else:
             raise ValueError(f"Scaler method {scaler_method} not recognized.")
         smb_scaler.fit(smb_forcing_array)
         smb_forcing_array = smb_scaler.transform(smb_forcing_array)
 
-        if scaler_method.lower() == 'standard':
+        if scaler_method.lower() == "standard":
             st_scaler = StandardScaler()
-        elif scaler_method.lower() == 'robust':
+        elif scaler_method.lower() == "robust":
             st_scaler = RobustScaler()
-        elif scaler_method.lower() == 'log':
+        elif scaler_method.lower() == "log":
             st_scaler = LogScaler()
         else:
             raise ValueError(f"Scaler method {scaler_method} not recognized.")
@@ -1407,7 +1422,12 @@ class DimensionalityReducer:
         return 0
 
     def _generate_gris_ocean_pcas(
-        self, ocean_fps: list, save_dir: str, num_pcs="95%", scaler_dir: str = None, scaler_method='standard'
+        self,
+        ocean_fps: list,
+        save_dir: str,
+        num_pcs="95%",
+        scaler_dir: str = None,
+        scaler_method="standard",
     ):
 
         # if no separate directory for saving scalers is specified, use the pca save_dir
@@ -1449,22 +1469,22 @@ class DimensionalityReducer:
         thermal_forcing_array = np.nan_to_num(thermal_forcing_array)
 
         # scale data
-        if scaler_method.lower() == 'standard':
+        if scaler_method.lower() == "standard":
             basin_runoff_scaler = StandardScaler()
-        elif scaler_method.lower() == 'robust':
+        elif scaler_method.lower() == "robust":
             basin_runoff_scaler = RobustScaler()
-        elif scaler_method.lower() == 'log':
+        elif scaler_method.lower() == "log":
             basin_runoff_scaler = LogScaler()
         else:
             raise ValueError(f"Scaler method {scaler_method} not recognized.")
         basin_runoff_scaler.fit(basin_runoff_array)
         basin_runoff_array = basin_runoff_scaler.transform(basin_runoff_array)
 
-        if scaler_method.lower() == 'standard':
+        if scaler_method.lower() == "standard":
             thermal_forcing_scaler = StandardScaler()
-        elif scaler_method.lower() == 'robust':
+        elif scaler_method.lower() == "robust":
             thermal_forcing_scaler = RobustScaler()
-        elif scaler_method.lower() == 'log':
+        elif scaler_method.lower() == "log":
             thermal_forcing_scaler = LogScaler()
         else:
             raise ValueError(f"Scaler method {scaler_method} not recognized.")
@@ -1491,7 +1511,9 @@ class DimensionalityReducer:
 
         return 0
 
-    def _generate_sle_pca(self, sle_fps: list, save_dir: str, num_pcs="99%", scaler_dir=None, scaler_method='standard'):
+    def _generate_sle_pca(
+        self, sle_fps: list, save_dir: str, num_pcs="99%", scaler_dir=None, scaler_method="standard"
+    ):
         """
         Generate principal component analysis (PCA) for sea level equivalent (SLE) variables.
 
@@ -1537,11 +1559,11 @@ class DimensionalityReducer:
         sle_array = np.nan_to_num(sle_array)
 
         # scale sle
-        if scaler_method.lower() == 'standard':
+        if scaler_method.lower() == "standard":
             scaler = StandardScaler()
-        elif scaler_method.lower() == 'robust':
+        elif scaler_method.lower() == "robust":
             scaler = RobustScaler()
-        elif scaler_method.lower() == 'log':
+        elif scaler_method.lower() == "log":
             scaler = LogScaler()
         else:
             raise ValueError(f"Scaler method {scaler_method} not recognized.")
@@ -1742,7 +1764,9 @@ class DimensionalityReducer:
                     pr_anomaly=StandardScaler.load(f"{self.scaler_directory}/{pr_model}"),
                     smb_anomaly=StandardScaler.load(f"{self.scaler_directory}/{smb_model}"),
                     ts_anomaly=StandardScaler.load(f"{self.scaler_directory}/{ts_model}"),
-                    thermal_forcing=StandardScaler.load(f"{self.scaler_directory}/{thermal_forcing_model}"),
+                    thermal_forcing=StandardScaler.load(
+                        f"{self.scaler_directory}/{thermal_forcing_model}"
+                    ),
                     salinity=StandardScaler.load(f"{self.scaler_directory}/{salinity_model}"),
                     temperature=StandardScaler.load(f"{self.scaler_directory}/{temperature_model}"),
                     sle=StandardScaler.load(f"{self.scaler_directory}/{sle_model}"),
@@ -2409,12 +2433,11 @@ def process_AIS_atmospheric_sectors(forcing_directory, grid_file):
     filepaths = [f for f in filepaths if "1995-2100" in f]
     filepaths = [f for f in filepaths if "8km" in f]
 
-
     sectors = _format_grid_file(grid_file)
     unique_sectors = np.unique(sectors)
     all_data = []
     for i, fp in enumerate(filepaths):
-        fp = r'/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing//AIS/Atmosphere_Forcing/miroc-esm-chem_rcp8.5/Regridded_8km/MIROC-ESM-CHEM_8km_anomaly_1995-2100.nc'
+        fp = r"/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing//AIS/Atmosphere_Forcing/miroc-esm-chem_rcp8.5/Regridded_8km/MIROC-ESM-CHEM_8km_anomaly_1995-2100.nc"
         print("")
         print(f"File {i+1} / {len(filepaths)}")
         print(f'File: {fp.split("/")[-1]}')
@@ -2443,7 +2466,9 @@ def process_AIS_atmospheric_sectors(forcing_directory, grid_file):
         aogcm_data = []
         for sector in unique_sectors:
             mask = dataset.sector == sector
-            sector_averages = dataset.where(mask,).mean(dim=["x", "y"], skipna=True)
+            sector_averages = dataset.where(
+                mask,
+            ).mean(dim=["x", "y"], skipna=True)
             sector_averages = sector_averages.to_dataframe()
             sector_averages["aogcm"] = fp.split("/")[-3].lower()
             sector_averages["year"] = np.arange(1, 87)
@@ -2675,7 +2700,7 @@ def process_GrIS_oceanic_sectors(forcing_directory, grid_file):
 
 def _format_grid_file(grid_file):
     if isinstance(grid_file, str):
-        grids = xr.open_dataset(grid_file)#.transpose('x', 'y',)
+        grids = xr.open_dataset(grid_file)  # .transpose('x', 'y',)
         sector_name = "sectors" if "8km" in grid_file.lower() else "ID"
     elif isinstance(grid_file, xr.Dataset):
         sector_name = "ID" if "Rignot" in grids.Description else "sectors"
@@ -2684,7 +2709,7 @@ def _format_grid_file(grid_file):
 
     grids = grids.expand_dims(dim={"time": 86})
     sectors = grids[sector_name]
-    grids = grids.transpose('time', 'x', 'y', ...)
+    grids = grids.transpose("time", "x", "y", ...)
 
     return sectors
 
