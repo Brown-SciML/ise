@@ -7,8 +7,7 @@ from nflows import distributions, flows, transforms
 from torch import nn, optim
 
 from ise.data.dataclasses import EmulatorDataset
-from ise.data.scaler import Scaler
-from ise.models.grid import PCA
+from ise.data.scaler import StandardScaler
 
 
 class PCA(nn.Module):
@@ -218,7 +217,7 @@ class DimensionProcessor(nn.Module):
 
         # LOAD SCALER
         if isinstance(scaler_model, str):
-            self.scaler = Scaler.load(scaler_model)
+            self.scaler = StandardScaler.load(scaler_model)
         elif isinstance(scaler_model, PCA):
             self.scaler = scaler_model
         else:
@@ -264,7 +263,7 @@ class WeakPredictor(nn.Module):
         lstm_num_layers,
         lstm_hidden_size,
         output_size,
-        dim_processor,
+        dim_processor=None,
         scaler_path=None,
         ice_sheet="AIS",
     ):
@@ -287,9 +286,9 @@ class WeakPredictor(nn.Module):
             num_layers=lstm_num_layers,
         )
         self.relu = nn.ReLU()
-        self.linear1 = nn.Linear(in_features=lstm_hidden_size, out_features=512)
-        self.linear2 = nn.Linear(in_features=512, out_features=256)
-        self.linear_out = nn.Linear(in_features=256, out_features=output_size)
+        self.linear1 = nn.Linear(in_features=lstm_hidden_size, out_features=32)
+        # self.linear2 = nn.Linear(in_features=512, out_features=256)
+        self.linear_out = nn.Linear(in_features=32, out_features=output_size)
 
         self.optimizer = optim.Adam(
             self.parameters(),
@@ -299,7 +298,7 @@ class WeakPredictor(nn.Module):
         self.trained = False
 
         if isinstance(dim_processor, DimensionProcessor):
-            self.dim_processor = dim_processor
+            self.dim_processor = dim_processor.to(self.device)
         elif isinstance(dim_processor, str) and scaler_path is None:
             raise ValueError(
                 "If dim_processor is a path to a PCA object, scaler_path must be provided"
@@ -307,13 +306,13 @@ class WeakPredictor(nn.Module):
         elif isinstance(dim_processor, str) and scaler_path is not None:
             self.dim_processor = DimensionProcessor(
                 pca_model=self.pca_model, scaler_model=scaler_path
-            )
+            ).to(self.device)
+        elif dim_processor is None:
+            self.dim_processor = None
         else:
             raise ValueError(
                 "dim_processor must be a DimensionProcessor instance or a path (str) to a PCA object with scaler_path specified as a Scaler object."
             )
-
-        self.dim_processor.to(self.device)
 
     def forward(self, x):
         batch_size = x.shape[0]
@@ -327,9 +326,8 @@ class WeakPredictor(nn.Module):
             .requires_grad_()
             .to(self.device)
         )
-
-        out, (hn, cn) = self.lstm(x, (h0, c0))
-        x = hn[-1, :, :]  # last layer of the hidden state
+        _, (hn, _) = self.lstm(x, (h0, c0))
+        x = hn[-1, :, :]
 
         # # Shape: (num_layers, batch_size, hidden_dim)
         # h0 = torch.zeros(self.lstm_num_layers, x.size(0), self.lstm_num_hidden).to(x.device)
@@ -346,8 +344,8 @@ class WeakPredictor(nn.Module):
         # x = self.linear1(out[:, -1, :])
         x = self.linear1(x)
         x = self.relu(x)
-        x = self.linear2(x)
-        x = self.relu(x)
+        # x = self.linear2(x)
+        # x = self.relu(x)
         x = self.linear_out(x)
 
         return x
@@ -380,7 +378,7 @@ class WeakPredictor(nn.Module):
             for i, (x, y) in enumerate(data_loader):
                 x = x.to(self.device)
                 y = y.to(self.device)
-                batch_size = x.shape[0]
+                # batch_size = x.shape[0]
                 self.optimizer.zero_grad()
                 y_pred = self.forward(x)
 

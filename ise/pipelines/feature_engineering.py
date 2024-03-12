@@ -2,7 +2,6 @@
 ise.pipelines.processing, this module will get data ready for modeling."""
 import pandas as pd
 
-from ise.data._EmulatorData import EmulatorData
 from ise.utils.functions import _structure_emulatordata_args
 
 

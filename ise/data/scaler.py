@@ -4,7 +4,7 @@ import torch
 from torch import nn
 
 
-class Scaler(nn.Module):
+class StandardScaler(nn.Module):
     """
     A class for scaling input data using mean and standard deviation.
 
@@ -29,7 +29,7 @@ class Scaler(nn.Module):
     def __init__(
         self,
     ):
-        super(Scaler, self).__init__()
+        super(StandardScaler, self).__init__()
         self.mean_ = None
         self.scale_ = None
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -43,7 +43,7 @@ class Scaler(nn.Module):
             X (torch.Tensor): The input data to be scaled.
 
         """
-        X = self._to_tensor(X)
+        X = _to_tensor(X).to(self.device)
         self.mean_ = torch.mean(X, dim=0)
         self.scale_ = torch.std(X, dim=0, unbiased=False)
         self.eps = 1e-8  # to avoid divide by zero
@@ -65,7 +65,7 @@ class Scaler(nn.Module):
             RuntimeError: If the Scaler instance is not fitted yet.
 
         """
-        X = self._to_tensor(X)
+        X = _to_tensor(X).to(self.device)
         if self.mean_ is None or self.scale_ is None:
             raise RuntimeError("This Scaler instance is not fitted yet.")
         transformed = (X - self.mean_) / self.scale_
@@ -91,7 +91,7 @@ class Scaler(nn.Module):
             RuntimeError: If the Scaler instance is not fitted yet.
 
         """
-        X = self._to_tensor(X)
+        X = _to_tensor(X).to(self.device)
         if self.mean_ is None or self.scale_ is None:
             raise RuntimeError("This Scaler instance is not fitted yet.")
         return X * self.scale_ + self.mean_
@@ -112,32 +112,6 @@ class Scaler(nn.Module):
             path,
         )
 
-    def _to_tensor(self, x):
-        """
-        Converts input data to a PyTorch tensor of type float.
-
-        Args:
-            x: Input data to be converted. Must be a pandas dataframe, numpy array, or PyTorch tensor.
-
-        Returns:
-            torch.Tensor: A PyTorch tensor of type float.
-
-        Raises:
-            ValueError: If the input data is not a pandas dataframe, numpy array, or PyTorch tensor.
-
-        """
-        if x is None:
-            return None
-        if isinstance(x, pd.DataFrame):
-            x = x.values
-        elif isinstance(x, np.ndarray):
-            x = torch.tensor(x)
-        elif isinstance(x, torch.Tensor):
-            pass
-        else:
-            raise ValueError("Data must be a pandas dataframe, numpy array, or PyTorch tensor")
-        return x.float()
-
     @staticmethod
     def load(path):
         """
@@ -151,7 +125,97 @@ class Scaler(nn.Module):
 
         """
         checkpoint = torch.load(path)
-        scaler = Scaler()
+        scaler = StandardScaler()
         scaler.mean_ = checkpoint["mean_"]
         scaler.scale_ = checkpoint["scale_"]
         return scaler
+    
+    
+
+
+class RobustScaler(nn.Module):
+    def __init__(self):
+        super(RobustScaler, self).__init__()
+        self.median_ = None
+        self.iqr_ = None
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.to(self.device)
+
+    def fit(self, X):
+        X = _to_tensor(X).to(self.device)
+        self.median_ = torch.median(X, dim=0).values
+        q75, q25 = torch.quantile(X, 0.75, dim=0), torch.quantile(X, 0.25, dim=0)
+        self.iqr_ = q75 - q25
+
+    def transform(self, X):
+        X = _to_tensor(X).to(self.device)
+        if self.median_ is None or self.iqr_ is None:
+            raise RuntimeError("This RobustScaler instance is not fitted yet.")
+        return (X - self.median_) / (self.iqr_ + 1e-8)
+
+    def inverse_transform(self, X):
+        X = _to_tensor(X).to(self.device)
+        if self.median_ is None or self.iqr_ is None:
+            raise RuntimeError("This RobustScaler instance is not fitted yet.")
+        return X * (self.iqr_ + 1e-8) + self.median_
+
+    def save(self, path):
+        torch.save({
+            "median_": self.median_,
+            "iqr_": self.iqr_,
+        }, path)
+
+    @staticmethod
+    def load(path):
+        checkpoint = torch.load(path)
+        scaler = RobustScaler()
+        scaler.median_ = checkpoint["median_"]
+        scaler.iqr_ = checkpoint["iqr_"]
+        return scaler
+    
+
+
+class LogScaler(nn.Module):
+    def __init__(self, epsilon=1e-8):
+        super(LogScaler, self).__init__()
+        self.epsilon = epsilon  # To handle log(0)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.to(self.device)
+
+    def fit(self, X):
+        pass  # Not applicable for LogScaler, but could check for non-negativity or similar here
+
+    def transform(self, X):
+        X = _to_tensor(X).to(self.device)
+        return torch.log(X + self.epsilon)
+
+    def inverse_transform(self, X):
+        X = _to_tensor(X).to(self.device)
+        return torch.exp(X) - self.epsilon
+
+    def save(self, path):
+        torch.save({
+            "epsilon": self.epsilon,
+        }, path)
+
+    @staticmethod
+    def load(path):
+        checkpoint = torch.load(path)
+        scaler = LogScaler()
+        scaler.epsilon = checkpoint["epsilon"]
+        return scaler
+
+
+def _to_tensor(x):
+    if x is None:
+        return None
+    if isinstance(x, pd.DataFrame):
+        x = x.values
+        x = torch.tensor(x)
+    elif isinstance(x, np.ndarray):
+        x = torch.tensor(x)
+    elif isinstance(x, torch.Tensor):
+        pass
+    else:
+        raise ValueError("Data must be a pandas dataframe, numpy array, or PyTorch tensor")
+    return x.float()

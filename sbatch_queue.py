@@ -21,7 +21,7 @@ densities_path = (
     else r"/users/pvankatw/research/current/supplemental/GIS_densities.csv"
 )
 
-scaler = 'robust'
+scaler = 'log'
 output_dir = f"/oscar/scratch/pvankatw/datasets/pca_full_{scaler}/{ice_sheet}"
 converted_forcing_dir = f"{output_dir}/forcings/"
 converted_projection_dir = f"{output_dir}/projections/"
@@ -47,3 +47,4 @@ merger = DatasetMerger(
 merger.merge_dataset()
 
 print("Done!")
+

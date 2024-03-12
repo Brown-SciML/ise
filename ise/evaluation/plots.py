@@ -18,15 +18,6 @@ from ise.evaluation.metrics import (
     mean_squared_error_sector,
     sum_by_sector,
 )
-from ise.evaluation.plots import (
-    UncertaintyBounds,
-    plot_callibration,
-    plot_distributions,
-    plot_ensemble,
-    plot_ensemble_mean,
-    plot_histograms,
-    plot_test_series,
-)
 from ise.utils.functions import (
     create_distribution,
     get_uncertainty_bands,

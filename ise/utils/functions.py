@@ -10,9 +10,7 @@ from netCDF4 import Dataset
 from scipy.stats import gaussian_kde
 from sklearn.preprocessing import MinMaxScaler
 
-from ise.data import EmulatorData
 from ise.evaluation.metrics import js_divergence, kl_divergence
-from ise.utils.functions import _structure_emulatordata_args
 
 
 def load_model(model_path, model_class, architecture, mc_dropout=False, dropout_prob=0.1):

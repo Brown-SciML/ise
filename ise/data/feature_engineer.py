@@ -1,4 +1,5 @@
 import pickle
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -32,6 +33,10 @@ class FeatureEngineer:
         output_directory: str = None,
     ):
         self.data = data
+        try:
+            self.data = self.data.sort_values(by=['model', 'exp', 'sector', 'year'])
+        except:
+            pass
         self.train_size = train_size
         self.val_size = val_size
         self.test_size = test_size
@@ -117,13 +122,11 @@ class FeatureEngineer:
         if X is not None:
             self.X = X
         else:
+            dropped_columns =  ["id", "cmip_model", "pathway", "exp", 'ice_sheet', 'Scenario', 'Ocean forcing', 'Ocean sensitivity', 'Ice shelf fracture', 'Tier', 'aogcm', 'id', 'exp', 'model', 'ivaf']
+            dropped_columns = [x for x in self.data.columns if x in dropped_columns]
+            dropped_data = self.data[dropped_columns]
             self.X = self.data.drop(
-                columns=[x for x in self.data.columns if "sle" in x]
-                + [
-                    "cmip_model",
-                    "pathway",
-                    "exp",
-                ]
+                columns=[x for x in self.data.columns if "sle" in x] + dropped_columns
             )
 
         if y is not None:
@@ -196,6 +199,7 @@ class FeatureEngineer:
             [
                 pd.DataFrame(X_scaled, columns=self.X.columns, index=self.X.index),
                 pd.DataFrame(y_scaled, columns=self.y.columns, index=self.y.index),
+                dropped_data
             ],
             axis=1,
         )
@@ -246,6 +250,12 @@ class FeatureEngineer:
             self.data = data
         self.data = backfill_outliers(self.data, percentile=percentile)
         return self
+    
+    def drop_outliers(self, method, column, expression=None, quantiles=[0.01, 0.99], data=None):
+        if data is not None:
+            self.data = data
+        self.data = drop_outliers(self.data, column, method, expression, quantiles)
+        return self
 
 
 def backfill_outliers(data, percentile=99.999):
@@ -292,8 +302,10 @@ def add_lag_variables(data: pd.DataFrame, lag: int) -> pd.DataFrame:
     """
 
     # Separate columns that won't be lagged and shouldn't be dropped
-    cols_to_exclude = ["id", "cmip_model", "pathway", "exp"]
-    non_lagged_cols = ["time"] + [x for x in data.columns if "sle" in x or x in cols_to_exclude]
+    cols_to_exclude = ["id", "cmip_model", "pathway", "exp", 'ice_sheet', 'Scenario', 'Ocean forcing', 'Ocean sensitivity', 'Ice shelf fracture', 'Tier', 'aogcm', 'id', 'exp', 'model', 'ivaf', 'sector']
+    cols_to_exclude = [x for x in cols_to_exclude if x in data.columns]
+    temporal_indicator = 'time' if 'time' in data.columns else 'year'
+    non_lagged_cols = [temporal_indicator] + [x for x in data.columns if "sle" in x or x in cols_to_exclude]
     projection_length = 86
 
     # Initialize a list to collect the processed DataFrames
@@ -417,3 +429,99 @@ def split_training_data(
         test.to_csv(f"{output_directory}/test.csv", index=False)
 
     return train, val, test
+
+
+def drop_outliers(
+    data: pd.DataFrame,
+    column: str,
+    method: str,
+    expression: List[tuple] = None,
+    quantiles: List[float] = [0.01, 0.99],
+):
+    """
+    Drops simulations that are outliers based on the provided method and expression.
+    Extra complexity is handled due to the necessity of removing the entire 86 row series from
+    the dataset rather than simply removing the rows with given conditions. Note that the
+    condition indicates rows to be DROPPED, not kept (e.g. 'sle', '>', '20' would drop all
+    simulations containing sle values over 20). If quantile method is used, outliers are dropped
+    from the SLE column based on the provided quantile in the quantiles argument. If explicit is
+    chosen, expression must contain a list of tuples such that the tuple contains
+    [(column, operator, expression)] of the subset, e.g. [("sle", ">", 20), ("sle", "<", -20)].
+
+    Args:
+        data (pd.DataFrame): The input DataFrame.
+        method (str): Method of outlier deletion, must be in [quantile, explicit]
+        expression (list[tuple]): List of subset expressions in the form [column, operator, value], defaults to None.
+        quantiles (list[float]): List of quantiles for quantile method, defaults to [0.01, 0.99].
+
+    Returns:
+        data (pd.DataFrame): having outliers dropped.
+    """
+
+    # Check if method is quantile
+    if method.lower() == "quantile":
+        if quantiles is None:
+            raise AttributeError("If method == quantile, quantiles argument cannot be None")
+
+        # Calculate lower and upper quantiles
+        lower_sle, upper_sle = np.quantile(np.array(data[column]), quantiles)
+
+        # Filter outlier data based on quantiles
+        outlier_data = data[(data[column] <= lower_sle) | (data[column] >= upper_sle)]
+
+    # Check if method is explicit
+    elif method.lower() == "explicit":
+        if expression is None:
+            raise AttributeError("If method == explicit, expression argument cannot be None")
+        elif not isinstance(expression, list) or not isinstance(expression[0], tuple):
+            raise AttributeError(
+                'Expression argument must be a list of tuples, e.g. [("sle", ">", 20), ("sle", "<", -20)]'
+            )
+
+        outlier_data = data.copy()
+
+        # Apply subset expressions to filter outlier data
+        for subset_expression in expression:
+            column, operator, value = subset_expression
+
+            if operator.lower() in ("equal", "equals", "=", "=="):
+                outlier_data = outlier_data[outlier_data[column] == value]
+            elif operator.lower() in ("not equal", "not equals", "!=", "~="):
+                outlier_data = outlier_data[outlier_data[column] != value]
+            elif operator.lower() in ("greater than", "greater", ">=", ">"):
+                outlier_data = outlier_data[outlier_data[column] > value]
+            elif operator.lower() in ("less than", "less", "<=", "<"):
+                outlier_data = outlier_data[outlier_data[column] < value]
+            else:
+                raise ValueError(f'Operator must be in ["==", "!=", ">", "<"], received {operator}')
+
+    # Check if outlier_data is empty
+    if outlier_data.empty:
+        return data
+
+    cols = outlier_data.columns
+
+    # Get columns with non-zero values
+    # nonzero_columns = outlier_data.apply(lambda x: x > 0).apply(
+    #     lambda x: list(cols[x.values]), axis=1
+    # )
+
+    # Create dataframe of experiments with outliers (want to delete the entire 86 rows)
+    outlier_runs = pd.DataFrame()
+    # TODO: Check to see if this works
+    outlier_runs["modelname"] = outlier_data['modelname']
+    outlier_runs["exp_id"] = outlier_data['exp']
+    outlier_runs["sector"] = outlier_data["sector"]
+    outlier_runs_list = outlier_runs.values.tolist()
+    unique_outliers = [list(x) for x in set(tuple(x) for x in outlier_runs_list)]
+
+    # Drop those runs
+    for i in unique_outliers:
+        modelname = i[0]
+        exp_id = i[1]
+        sector = i[2]
+        data = data.drop(
+            data[(data[modelname] == 1) & (data[exp_id] == 1) & (data["sector"] == sector)].index
+        )
+
+    return data

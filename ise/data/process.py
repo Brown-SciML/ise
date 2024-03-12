@@ -9,9 +9,9 @@ import pandas as pd
 import xarray as xr
 from tqdm import tqdm
 
-from ise.data.scaler import Scaler
+from ise.data.scaler import StandardScaler, RobustScaler, LogScaler
 from ise.models.grid import PCA
-from ise.utils import get_all_filepaths
+from ise.utils.functions import get_all_filepaths
 
 
 class GridProcessor:
@@ -819,7 +819,7 @@ class DimensionalityReducer:
     # generate pca models
     # convert each forcing file to pca space
 
-    def generate_pca_models(self, num_forcing_pcs, num_projection_pcs):
+    def generate_pca_models(self, num_forcing_pcs, num_projection_pcs, scaling_method='standard'):
         """
         Generate principal component analysis (PCA) models for atmosphere and ocean variables.
 
@@ -847,12 +847,14 @@ class DimensionalityReducer:
                 self.pca_model_directory,
                 num_pcs=num_forcing_pcs,
                 scaler_dir=self.scaler_directory,
+                scaler_method=scaling_method,
             )
             self._generate_ais_ocean_pcas(
                 self.forcing_paths["ocean"],
                 self.pca_model_directory,
                 num_pcs=num_forcing_pcs,
                 scaler_dir=self.scaler_directory,
+                scaler_method=scaling_method,
             )
         else:
             self._generate_gris_atmosphere_pcas(
@@ -860,12 +862,14 @@ class DimensionalityReducer:
                 self.pca_model_directory,
                 num_pcs=num_forcing_pcs,
                 scaler_dir=self.scaler_directory,
+                scaler_method=scaling_method,
             )
             self._generate_gris_ocean_pcas(
                 self.forcing_paths["ocean"],
                 self.pca_model_directory,
                 num_pcs=num_forcing_pcs,
                 scaler_dir=self.scaler_directory,
+                scaler_method=scaling_method,
             )
 
         # Train PCA model for SLE and save
@@ -877,6 +881,7 @@ class DimensionalityReducer:
             save_dir=self.pca_model_directory,
             num_pcs=num_projection_pcs,
             scaler_dir=self.scaler_directory,
+            scaler_method=scaling_method,
         )
 
         return 0
@@ -1133,7 +1138,7 @@ class DimensionalityReducer:
         print(f"Finished converting projections to PCA space, files outputted to {output_dir}.")
 
     def _generate_ais_atmosphere_pcas(
-        self, atmosphere_fps: list, save_dir: str, num_pcs="95%", scaler_dir: str = None
+        self, atmosphere_fps: list, save_dir: str, num_pcs="95%", scaler_dir: str = None, scaler_method="standard",
     ):
         """
         Generate principal component analysis (PCA) for atmospheric variables.
@@ -1178,7 +1183,12 @@ class DimensionalityReducer:
             variable_array = variable_array.reshape(len(atmosphere_fps) * 86, 761 * 761)
 
             # scale data
-            variable_scaler = Scaler()
+            if scaler_method.lower() == 'standard':
+                variable_scaler = StandardScaler()
+            elif scaler_method.lower() == 'robust':
+                variable_scaler = RobustScaler()
+            elif scaler_method.lower() == 'log':
+                variable_scaler = LogScaler()
             variable_scaler.fit(variable_array)
             variable_array = variable_scaler.transform(variable_array)
 
@@ -1195,7 +1205,7 @@ class DimensionalityReducer:
         return 0
 
     def _generate_ais_ocean_pcas(
-        self, ocean_fps: list, save_dir: str, num_pcs="95%", scaler_dir: str = None
+        self, ocean_fps: list, save_dir: str, num_pcs="95%", scaler_dir: str = None, scaler_method='standard',
     ):
         """
         Generate principal component analysis (PCA) for ocean variables.
@@ -1251,15 +1261,36 @@ class DimensionalityReducer:
         temperature_array = np.nan_to_num(temperature_array)
 
         # scale data
-        therm_scaler = Scaler()
+        if scaler_method.lower() == 'standard':
+            therm_scaler = StandardScaler()
+        elif scaler_method.lower() == 'robust':
+            therm_scaler = RobustScaler()
+        elif scaler_method.lower() == 'log':
+            therm_scaler = LogScaler()
+        else:
+            raise ValueError(f"Scaler method {scaler_method} not recognized.")
         therm_scaler.fit(thermal_forcing_array)
         thermal_forcing_array = therm_scaler.transform(thermal_forcing_array)
 
-        salinity_scaler = Scaler()
+        if scaler_method.lower() == 'standard':
+            salinity_scaler = StandardScaler()
+        elif scaler_method.lower() == 'robust':
+            salinity_scaler = RobustScaler()
+        elif scaler_method.lower() == 'log':
+            salinity_scaler = LogScaler()
+        else:
+            raise ValueError(f"Scaler method {scaler_method} not recognized.")
         salinity_scaler.fit(salinity_array)
         salinity_array = salinity_scaler.transform(salinity_array)
 
-        temp_scaler = Scaler()
+        if scaler_method.lower() == 'standard':
+            temp_scaler = StandardScaler()
+        elif scaler_method.lower() == 'robust':
+            temp_scaler = RobustScaler()
+        elif scaler_method.lower() == 'log':
+            temp_scaler = LogScaler()
+        else:
+            raise ValueError(f"Scaler method {scaler_method} not recognized.")
         temp_scaler.fit(temperature_array)
         temperature_array = temp_scaler.transform(temperature_array)
 
@@ -1291,7 +1322,7 @@ class DimensionalityReducer:
         return 0
 
     def _generate_gris_atmosphere_pcas(
-        self, atmosphere_fps: list, save_dir: str, num_pcs="95%", scaler_dir: str = None
+        self, atmosphere_fps: list, save_dir: str, num_pcs="95%", scaler_dir: str = None, scaler_method='standard'
     ):
 
         # if no separate directory for saving scalers is specified, use the pca save_dir
@@ -1333,11 +1364,25 @@ class DimensionalityReducer:
         st_forcing_array = np.nan_to_num(st_forcing_array)
 
         # scale data
-        smb_scaler = Scaler()
+        if scaler_method.lower() == 'standard':
+            smb_scaler = StandardScaler()
+        elif scaler_method.lower() == 'robust':
+            smb_scaler = RobustScaler()
+        elif scaler_method.lower() == 'log':
+            smb_scaler = LogScaler()
+        else:
+            raise ValueError(f"Scaler method {scaler_method} not recognized.")
         smb_scaler.fit(smb_forcing_array)
         smb_forcing_array = smb_scaler.transform(smb_forcing_array)
 
-        st_scaler = Scaler()
+        if scaler_method.lower() == 'standard':
+            st_scaler = StandardScaler()
+        elif scaler_method.lower() == 'robust':
+            st_scaler = RobustScaler()
+        elif scaler_method.lower() == 'log':
+            st_scaler = LogScaler()
+        else:
+            raise ValueError(f"Scaler method {scaler_method} not recognized.")
         st_scaler.fit(st_forcing_array)
         st_forcing_array = st_scaler.transform(st_forcing_array)
 
@@ -1362,7 +1407,7 @@ class DimensionalityReducer:
         return 0
 
     def _generate_gris_ocean_pcas(
-        self, ocean_fps: list, save_dir: str, num_pcs="95%", scaler_dir: str = None
+        self, ocean_fps: list, save_dir: str, num_pcs="95%", scaler_dir: str = None, scaler_method='standard'
     ):
 
         # if no separate directory for saving scalers is specified, use the pca save_dir
@@ -1404,11 +1449,25 @@ class DimensionalityReducer:
         thermal_forcing_array = np.nan_to_num(thermal_forcing_array)
 
         # scale data
-        basin_runoff_scaler = Scaler()
+        if scaler_method.lower() == 'standard':
+            basin_runoff_scaler = StandardScaler()
+        elif scaler_method.lower() == 'robust':
+            basin_runoff_scaler = RobustScaler()
+        elif scaler_method.lower() == 'log':
+            basin_runoff_scaler = LogScaler()
+        else:
+            raise ValueError(f"Scaler method {scaler_method} not recognized.")
         basin_runoff_scaler.fit(basin_runoff_array)
         basin_runoff_array = basin_runoff_scaler.transform(basin_runoff_array)
 
-        thermal_forcing_scaler = Scaler()
+        if scaler_method.lower() == 'standard':
+            thermal_forcing_scaler = StandardScaler()
+        elif scaler_method.lower() == 'robust':
+            thermal_forcing_scaler = RobustScaler()
+        elif scaler_method.lower() == 'log':
+            thermal_forcing_scaler = LogScaler()
+        else:
+            raise ValueError(f"Scaler method {scaler_method} not recognized.")
         thermal_forcing_scaler.fit(thermal_forcing_array)
         thermal_forcing_array = thermal_forcing_scaler.transform(thermal_forcing_array)
 
@@ -1432,7 +1491,7 @@ class DimensionalityReducer:
 
         return 0
 
-    def _generate_sle_pca(self, sle_fps: list, save_dir: str, num_pcs="99%", scaler_dir=None):
+    def _generate_sle_pca(self, sle_fps: list, save_dir: str, num_pcs="99%", scaler_dir=None, scaler_method='standard'):
         """
         Generate principal component analysis (PCA) for sea level equivalent (SLE) variables.
 
@@ -1478,7 +1537,14 @@ class DimensionalityReducer:
         sle_array = np.nan_to_num(sle_array)
 
         # scale sle
-        scaler = Scaler()
+        if scaler_method.lower() == 'standard':
+            scaler = StandardScaler()
+        elif scaler_method.lower() == 'robust':
+            scaler = RobustScaler()
+        elif scaler_method.lower() == 'log':
+            scaler = LogScaler()
+        else:
+            raise ValueError(f"Scaler method {scaler_method} not recognized.")
         scaler.fit(sle_array)
         sle_array = scaler.transform(sle_array)
 
@@ -1671,20 +1737,20 @@ class DimensionalityReducer:
                 sle_model = [x for x in scaler_paths if "sle" in x][0]
 
                 scalers = dict(
-                    evspsbl_anomaly=Scaler.load(f"{self.scaler_directory}/{evspsbl_model}"),
-                    mrro_anomaly=Scaler.load(f"{self.scaler_directory}/{mrro_model}"),
-                    pr_anomaly=Scaler.load(f"{self.scaler_directory}/{pr_model}"),
-                    smb_anomaly=Scaler.load(f"{self.scaler_directory}/{smb_model}"),
-                    ts_anomaly=Scaler.load(f"{self.scaler_directory}/{ts_model}"),
-                    thermal_forcing=Scaler.load(f"{self.scaler_directory}/{thermal_forcing_model}"),
-                    salinity=Scaler.load(f"{self.scaler_directory}/{salinity_model}"),
-                    temperature=Scaler.load(f"{self.scaler_directory}/{temperature_model}"),
-                    sle=Scaler.load(f"{self.scaler_directory}/{sle_model}"),
+                    evspsbl_anomaly=StandardScaler.load(f"{self.scaler_directory}/{evspsbl_model}"),
+                    mrro_anomaly=StandardScaler.load(f"{self.scaler_directory}/{mrro_model}"),
+                    pr_anomaly=StandardScaler.load(f"{self.scaler_directory}/{pr_model}"),
+                    smb_anomaly=StandardScaler.load(f"{self.scaler_directory}/{smb_model}"),
+                    ts_anomaly=StandardScaler.load(f"{self.scaler_directory}/{ts_model}"),
+                    thermal_forcing=StandardScaler.load(f"{self.scaler_directory}/{thermal_forcing_model}"),
+                    salinity=StandardScaler.load(f"{self.scaler_directory}/{salinity_model}"),
+                    temperature=StandardScaler.load(f"{self.scaler_directory}/{temperature_model}"),
+                    sle=StandardScaler.load(f"{self.scaler_directory}/{sle_model}"),
                 )
             else:
                 scalers = {}
                 scaler_path = [x for x in scaler_paths if var_name in x][0]
-                scalers[var_name] = Scaler.load(f"{self.scaler_directory}/{scaler_path}")
+                scalers[var_name] = StandardScaler.load(f"{self.scaler_directory}/{scaler_path}")
 
         else:  # GrIS
             if var_name not in [
@@ -1706,26 +1772,26 @@ class DimensionalityReducer:
                 sle_model = [x for x in scaler_paths if "sle" in x][0]
 
                 scalers = dict(
-                    aSMB=Scaler.load(
+                    aSMB=StandardScaler.load(
                         f"{self.scaler_directory}/{aSMB_model}",
                     ),
-                    aST=Scaler.load(
+                    aST=StandardScaler.load(
                         f"{self.scaler_directory}/{aST_model}",
                     ),
-                    basin_runoff=Scaler.load(
+                    basin_runoff=StandardScaler.load(
                         f"{self.scaler_directory}/{basin_runoff_model}",
                     ),
-                    thermal_forcing=Scaler.load(
+                    thermal_forcing=StandardScaler.load(
                         f"{self.scaler_directory}/{thermal_forcing_model}",
                     ),
-                    sle=Scaler.load(
+                    sle=StandardScaler.load(
                         f"{self.scaler_directory}/{sle_model}",
                     ),
                 )
             else:
                 scalers = {}
                 scaler_path = [x for x in scaler_paths if var_name in x][0]
-                scalers[var_name] = Scaler.load(f"{self.scaler_directory}/{scaler_path}")
+                scalers[var_name] = StandardScaler.load(f"{self.scaler_directory}/{scaler_path}")
 
         return scalers
 
@@ -2781,13 +2847,21 @@ def process_sectors(
 
     forcing_exists = os.path.exists(f"{export_directory}/forcings.csv")
     if not forcing_exists or (forcing_exists and overwrite):
-        # atmospheric_df = process_AIS_atmospheric_sectors(forcing_directory, grid_file) if ice_sheet == 'AIS' else process_GrIS_atmospheric_sectors(forcing_directory, grid_file)
-        # oceanic_df = process_AIS_oceanic_sectors(forcing_directory, grid_file) if ice_sheet == 'AIS' else process_GrIS_oceanic_sectors(forcing_directory, grid_file)
-        # atmospheric_df.to_csv(f"{export_directory}/{ice_sheet}_atmospheric.csv", index=False)
-        # oceanic_df.to_csv(f"{export_directory}/{ice_sheet}_oceanic.csv", index=False)
+        atmospheric_df = (
+            process_AIS_atmospheric_sectors(forcing_directory, grid_file)
+            if ice_sheet == "AIS"
+            else process_GrIS_atmospheric_sectors(forcing_directory, grid_file)
+        )
+        oceanic_df = (
+            process_AIS_oceanic_sectors(forcing_directory, grid_file)
+            if ice_sheet == "AIS"
+            else process_GrIS_oceanic_sectors(forcing_directory, grid_file)
+        )
+        atmospheric_df.to_csv(f"{export_directory}/{ice_sheet}_atmospheric.csv", index=False)
+        oceanic_df.to_csv(f"{export_directory}/{ice_sheet}_oceanic.csv", index=False)
 
-        atmospheric_df = pd.read_csv(f"{export_directory}/{ice_sheet}_atmospheric.csv")
-        oceanic_df = pd.read_csv(f"{export_directory}/{ice_sheet}_oceanic.csv")
+        # atmospheric_df = pd.read_csv(f"{export_directory}/{ice_sheet}_atmospheric.csv")
+        # oceanic_df = pd.read_csv(f"{export_directory}/{ice_sheet}_oceanic.csv")
         # atmospheric_df = atmospheric_df[[x for x in atmospheric_df.columns if '.1' not in x]]
         # oceanic_df = oceanic_df[[x for x in oceanic_df.columns if '.1' not in x]]
 
