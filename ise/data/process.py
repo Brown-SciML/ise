@@ -2395,38 +2395,26 @@ def process_GrIS_atmospheric_sectors(forcing_directory, grid_file):
 
 def process_AIS_atmospheric_sectors(forcing_directory, grid_file):
 
-    ice_sheet = "AIS" if "ais" in forcing_directory.lower() else "GrIS"
+    ice_sheet = "AIS"
 
     start_time = time.time()
-    path_to_forcings = (
-        f"Atmosphere_Forcing/aSMB_observed/v1/" if ice_sheet == "GrIS" else "Atmosphere_Forcing/"
-    )
+    path_to_forcings = "AIS/Atmosphere_Forcing/"
     af_directory = (
         f"{forcing_directory}/{path_to_forcings}"
         if not forcing_directory.endswith(path_to_forcings)
         else forcing_directory
     )
 
-    if ice_sheet == "AIS":
-        filepaths = get_all_filepaths(path=af_directory, filetype="nc")
-        filepaths = [f for f in filepaths if "1995-2100" in f]
-        filepaths = [f for f in filepaths if "8km" in f]
-    else:
-        filepaths = os.listdir(af_directory)
+    filepaths = get_all_filepaths(path=af_directory, filetype="nc")
+    filepaths = [f for f in filepaths if "1995-2100" in f]
+    filepaths = [f for f in filepaths if "8km" in f]
 
-    # check to see if GrIS forcings have been combined
-    if ice_sheet == "GrIS":
-        filepaths = get_all_filepaths(path=af_directory, contains="combined", filetype="nc")
-        if not filepaths:
-            combine_gris_forcings(af_directory)
-            filepaths = get_all_filepaths(path=af_directory, contains="combined", filetype="nc")
-            if not filepaths:
-                raise ValueError("No combined files found. Check combine_gris_forcings function.")
 
     sectors = _format_grid_file(grid_file)
     unique_sectors = np.unique(sectors)
     all_data = []
     for i, fp in enumerate(filepaths):
+        fp = r'/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing//AIS/Atmosphere_Forcing/miroc-esm-chem_rcp8.5/Regridded_8km/MIROC-ESM-CHEM_8km_anomaly_1995-2100.nc'
         print("")
         print(f"File {i+1} / {len(filepaths)}")
         print(f'File: {fp.split("/")[-1]}')
@@ -2852,16 +2840,16 @@ def process_sectors(
             if ice_sheet == "AIS"
             else process_GrIS_atmospheric_sectors(forcing_directory, grid_file)
         )
-        oceanic_df = (
-            process_AIS_oceanic_sectors(forcing_directory, grid_file)
-            if ice_sheet == "AIS"
-            else process_GrIS_oceanic_sectors(forcing_directory, grid_file)
-        )
         atmospheric_df.to_csv(f"{export_directory}/{ice_sheet}_atmospheric.csv", index=False)
-        oceanic_df.to_csv(f"{export_directory}/{ice_sheet}_oceanic.csv", index=False)
+        # oceanic_df = (
+        #     process_AIS_oceanic_sectors(forcing_directory, grid_file)
+        #     if ice_sheet == "AIS"
+        #     else process_GrIS_oceanic_sectors(forcing_directory, grid_file)
+        # )
+        # oceanic_df.to_csv(f"{export_directory}/{ice_sheet}_oceanic.csv", index=False)
 
         # atmospheric_df = pd.read_csv(f"{export_directory}/{ice_sheet}_atmospheric.csv")
-        # oceanic_df = pd.read_csv(f"{export_directory}/{ice_sheet}_oceanic.csv")
+        oceanic_df = pd.read_csv(f"{export_directory}/{ice_sheet}_oceanic.csv")
         # atmospheric_df = atmospheric_df[[x for x in atmospheric_df.columns if '.1' not in x]]
         # oceanic_df = oceanic_df[[x for x in oceanic_df.columns if '.1' not in x]]
 
