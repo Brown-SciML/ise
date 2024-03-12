@@ -2437,12 +2437,13 @@ def process_AIS_atmospheric_sectors(forcing_directory, grid_file):
         if "z" in dataset.dims:
             dataset = dataset.mean(dim="z", skipna=True)
 
+        # dataset = dataset.transpose("time", "x", "y", ...)
         dataset["sector"] = sectors
 
         aogcm_data = []
         for sector in unique_sectors:
             mask = dataset.sector == sector
-            sector_averages = dataset.where(mask, drop=True).mean(dim=["x", "y"])
+            sector_averages = dataset.where(mask,).mean(dim=["x", "y"], skipna=True)
             sector_averages = sector_averages.to_dataframe()
             sector_averages["aogcm"] = fp.split("/")[-3].lower()
             sector_averages["year"] = np.arange(1, 87)
@@ -2674,8 +2675,8 @@ def process_GrIS_oceanic_sectors(forcing_directory, grid_file):
 
 def _format_grid_file(grid_file):
     if isinstance(grid_file, str):
-        grids = xr.open_dataset(grid_file)
-        sector_name = "sectors" if "ais" in grid_file.lower() else "ID"
+        grids = xr.open_dataset(grid_file)#.transpose('x', 'y',)
+        sector_name = "sectors" if "8km" in grid_file.lower() else "ID"
     elif isinstance(grid_file, xr.Dataset):
         sector_name = "ID" if "Rignot" in grids.Description else "sectors"
     else:
@@ -2683,6 +2684,7 @@ def _format_grid_file(grid_file):
 
     grids = grids.expand_dims(dim={"time": 86})
     sectors = grids[sector_name]
+    grids = grids.transpose('time', 'x', 'y', ...)
 
     return sectors
 
