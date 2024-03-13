@@ -748,7 +748,7 @@ def interpolate_values(data):
 
 
 class DimensionalityReducer:
-    def __init__(self, forcing_dir, projection_dir, output_dir, ice_sheet=None):
+    def __init__(self, forcing_dir, projection_dir, output_dir, ice_sheet=None, scaling_method=None):
         super().__init__()
         if forcing_dir is None:
             raise ValueError("Forcing directory must be specified.")
@@ -769,6 +769,7 @@ class DimensionalityReducer:
             self.scaler_directory = f"{self.output_dir}/scalers/"
         else:
             self.scaler_directory = None
+        self.scaling_method = scaling_method
 
         if ice_sheet not in ("AIS", "GrIS"):
             raise ValueError("Ice sheet must be specified and must be 'AIS' or 'GrIS'.")
@@ -839,6 +840,7 @@ class DimensionalityReducer:
         if not os.path.exists(f"{self.output_dir}/scalers/"):
             os.mkdir(f"{self.output_dir}/scalers/")
         self.scaler_directory = f"{self.output_dir}/scalers/"
+        self.scaling_method = scaling_method
 
         # Train PCA models for each atmospheric and oceanic forcing variable and save
         if self.ice_sheet == "AIS":
@@ -847,14 +849,14 @@ class DimensionalityReducer:
                 self.pca_model_directory,
                 num_pcs=num_forcing_pcs,
                 scaler_dir=self.scaler_directory,
-                scaler_method=scaling_method,
+                scaling_method=scaling_method,
             )
             self._generate_ais_ocean_pcas(
                 self.forcing_paths["ocean"],
                 self.pca_model_directory,
                 num_pcs=num_forcing_pcs,
                 scaler_dir=self.scaler_directory,
-                scaler_method=scaling_method,
+                scaling_method=scaling_method,
             )
         else:
             self._generate_gris_atmosphere_pcas(
@@ -862,14 +864,14 @@ class DimensionalityReducer:
                 self.pca_model_directory,
                 num_pcs=num_forcing_pcs,
                 scaler_dir=self.scaler_directory,
-                scaler_method=scaling_method,
+                scaling_method=scaling_method,
             )
             self._generate_gris_ocean_pcas(
                 self.forcing_paths["ocean"],
                 self.pca_model_directory,
                 num_pcs=num_forcing_pcs,
                 scaler_dir=self.scaler_directory,
-                scaler_method=scaling_method,
+                scaling_method=scaling_method,
             )
 
         # Train PCA model for SLE and save
@@ -881,13 +883,13 @@ class DimensionalityReducer:
             save_dir=self.pca_model_directory,
             num_pcs=num_projection_pcs,
             scaler_dir=self.scaler_directory,
-            scaler_method=scaling_method,
+            scaling_method=scaling_method,
         )
 
         return 0
 
     def convert_forcings(
-        self, forcing_files: list = None, pca_model_directory: str = None, output_dir: str = None
+        self, forcing_files: list = None, pca_model_directory: str = None, output_dir: str = None, scaling_method=None,
     ):
         """
         Converts atmospheric and oceanic forcing files to PCA space using pretrained PCA models.
@@ -907,6 +909,15 @@ class DimensionalityReducer:
             raise ValueError(
                 "PCA model directory must be specified, or DimensionalityReducer.generate_pca_models must be run first."
             )
+        if self.scaling_method is None and scaling_method is None:
+            raise ValueError(
+                "Scalers must be generated first, or scaling_method must be identified if they already exist. Run DimensionalityReducer.generate_pca_models first."
+            )
+            
+            
+        if scaling_method is not None:
+            self.scaling_method = scaling_method
+            
         if pca_model_directory is not None:
             self.pca_model_directory = pca_model_directory
 
@@ -959,6 +970,7 @@ class DimensionalityReducer:
                             var_name=var,
                             pca_model_directory=self.pca_model_directory,
                             scaler_directory=self.scaler_directory,
+                            scaling_method=self.scaling_method,
                         )
                     except KeyError:  # if a variable is missing (usually mrro_anomaly), skip it
                         warnings.warn(f"Variable {var} not found in {forcing_name}. Skipped.")
@@ -974,6 +986,7 @@ class DimensionalityReducer:
                         var_name=var,
                         pca_model_directory=self.pca_model_directory,
                         scaler_directory=self.scaler_directory,
+                        scaling_method=self.scaling_method,
                     )
                 except KeyError:
                     warnings.warn(f"Variable {var} not found in {forcing_name}. Skipped.")
@@ -1044,6 +1057,7 @@ class DimensionalityReducer:
                 var_name=var,
                 pca_model_directory=self.pca_model_directory,
                 scaler_directory=self.scaler_directory,
+                scaling_method=self.scaling_method,
             )
             transformed_data[
                 var
@@ -1066,7 +1080,7 @@ class DimensionalityReducer:
         return 0
 
     def convert_projections(
-        self, projection_files: list = None, pca_model_directory: str = None, output_dir: str = None
+        self, projection_files: list = None, pca_model_directory: str = None, output_dir: str = None, scaling_method=None,
     ):
 
         # check inputs for validity
@@ -1075,6 +1089,16 @@ class DimensionalityReducer:
             raise ValueError(
                 "PCA model directory must be specified, or DimensionalityReducer.generate_pca_models must be run first."
             )
+        
+        if self.scaling_method is None and scaling_method is None:
+            raise ValueError(
+                "Scalers must be generated first, or scaling_method must be identified if they already exist. Run DimensionalityReducer.generate_pca_models first."
+            )
+            
+            
+        if scaling_method is not None:
+            self.scaling_method = scaling_method
+        
         if pca_model_directory is not None:
             self.pca_model_directory = pca_model_directory
 
@@ -1120,6 +1144,7 @@ class DimensionalityReducer:
                 var_name=var,
                 pca_model_directory=self.pca_model_directory,
                 scaler_directory=self.scaler_directory,
+                scaling_method=self.scaling_method,
             )
             transformed_data[
                 var
@@ -1143,7 +1168,7 @@ class DimensionalityReducer:
         save_dir: str,
         num_pcs="95%",
         scaler_dir: str = None,
-        scaler_method="standard",
+        scaling_method="standard",
     ):
         """
         Generate principal component analysis (PCA) for atmospheric variables.
@@ -1188,11 +1213,11 @@ class DimensionalityReducer:
             variable_array = variable_array.reshape(len(atmosphere_fps) * 86, 761 * 761)
 
             # scale data
-            if scaler_method.lower() == "standard":
+            if scaling_method.lower() == "standard":
                 variable_scaler = StandardScaler()
-            elif scaler_method.lower() == "robust":
+            elif scaling_method.lower() == "robust":
                 variable_scaler = RobustScaler()
-            elif scaler_method.lower() == "log":
+            elif scaling_method.lower() == "log":
                 variable_scaler = LogScaler()
             variable_scaler.fit(variable_array)
             variable_array = variable_scaler.transform(variable_array)
@@ -1215,7 +1240,7 @@ class DimensionalityReducer:
         save_dir: str,
         num_pcs="95%",
         scaler_dir: str = None,
-        scaler_method="standard",
+        scaling_method="standard",
     ):
         """
         Generate principal component analysis (PCA) for ocean variables.
@@ -1271,36 +1296,36 @@ class DimensionalityReducer:
         temperature_array = np.nan_to_num(temperature_array)
 
         # scale data
-        if scaler_method.lower() == "standard":
+        if scaling_method.lower() == "standard":
             therm_scaler = StandardScaler()
-        elif scaler_method.lower() == "robust":
+        elif scaling_method.lower() == "robust":
             therm_scaler = RobustScaler()
-        elif scaler_method.lower() == "log":
+        elif scaling_method.lower() == "log":
             therm_scaler = LogScaler()
         else:
-            raise ValueError(f"Scaler method {scaler_method} not recognized.")
+            raise ValueError(f"Scaler method {scaling_method} not recognized.")
         therm_scaler.fit(thermal_forcing_array)
         thermal_forcing_array = therm_scaler.transform(thermal_forcing_array)
 
-        if scaler_method.lower() == "standard":
+        if scaling_method.lower() == "standard":
             salinity_scaler = StandardScaler()
-        elif scaler_method.lower() == "robust":
+        elif scaling_method.lower() == "robust":
             salinity_scaler = RobustScaler()
-        elif scaler_method.lower() == "log":
+        elif scaling_method.lower() == "log":
             salinity_scaler = LogScaler()
         else:
-            raise ValueError(f"Scaler method {scaler_method} not recognized.")
+            raise ValueError(f"Scaler method {scaling_method} not recognized.")
         salinity_scaler.fit(salinity_array)
         salinity_array = salinity_scaler.transform(salinity_array)
 
-        if scaler_method.lower() == "standard":
+        if scaling_method.lower() == "standard":
             temp_scaler = StandardScaler()
-        elif scaler_method.lower() == "robust":
+        elif scaling_method.lower() == "robust":
             temp_scaler = RobustScaler()
-        elif scaler_method.lower() == "log":
+        elif scaling_method.lower() == "log":
             temp_scaler = LogScaler()
         else:
-            raise ValueError(f"Scaler method {scaler_method} not recognized.")
+            raise ValueError(f"Scaler method {scaling_method} not recognized.")
         temp_scaler.fit(temperature_array)
         temperature_array = temp_scaler.transform(temperature_array)
 
@@ -1337,7 +1362,7 @@ class DimensionalityReducer:
         save_dir: str,
         num_pcs="95%",
         scaler_dir: str = None,
-        scaler_method="standard",
+        scaling_method="standard",
     ):
 
         # if no separate directory for saving scalers is specified, use the pca save_dir
@@ -1379,25 +1404,25 @@ class DimensionalityReducer:
         st_forcing_array = np.nan_to_num(st_forcing_array)
 
         # scale data
-        if scaler_method.lower() == "standard":
+        if scaling_method.lower() == "standard":
             smb_scaler = StandardScaler()
-        elif scaler_method.lower() == "robust":
+        elif scaling_method.lower() == "robust":
             smb_scaler = RobustScaler()
-        elif scaler_method.lower() == "log":
+        elif scaling_method.lower() == "log":
             smb_scaler = LogScaler()
         else:
-            raise ValueError(f"Scaler method {scaler_method} not recognized.")
+            raise ValueError(f"Scaler method {scaling_method} not recognized.")
         smb_scaler.fit(smb_forcing_array)
         smb_forcing_array = smb_scaler.transform(smb_forcing_array)
 
-        if scaler_method.lower() == "standard":
+        if scaling_method.lower() == "standard":
             st_scaler = StandardScaler()
-        elif scaler_method.lower() == "robust":
+        elif scaling_method.lower() == "robust":
             st_scaler = RobustScaler()
-        elif scaler_method.lower() == "log":
+        elif scaling_method.lower() == "log":
             st_scaler = LogScaler()
         else:
-            raise ValueError(f"Scaler method {scaler_method} not recognized.")
+            raise ValueError(f"Scaler method {scaling_method} not recognized.")
         st_scaler.fit(st_forcing_array)
         st_forcing_array = st_scaler.transform(st_forcing_array)
 
@@ -1427,7 +1452,7 @@ class DimensionalityReducer:
         save_dir: str,
         num_pcs="95%",
         scaler_dir: str = None,
-        scaler_method="standard",
+        scaling_method="standard",
     ):
 
         # if no separate directory for saving scalers is specified, use the pca save_dir
@@ -1469,25 +1494,25 @@ class DimensionalityReducer:
         thermal_forcing_array = np.nan_to_num(thermal_forcing_array)
 
         # scale data
-        if scaler_method.lower() == "standard":
+        if scaling_method.lower() == "standard":
             basin_runoff_scaler = StandardScaler()
-        elif scaler_method.lower() == "robust":
+        elif scaling_method.lower() == "robust":
             basin_runoff_scaler = RobustScaler()
-        elif scaler_method.lower() == "log":
+        elif scaling_method.lower() == "log":
             basin_runoff_scaler = LogScaler()
         else:
-            raise ValueError(f"Scaler method {scaler_method} not recognized.")
+            raise ValueError(f"Scaler method {scaling_method} not recognized.")
         basin_runoff_scaler.fit(basin_runoff_array)
         basin_runoff_array = basin_runoff_scaler.transform(basin_runoff_array)
 
-        if scaler_method.lower() == "standard":
+        if scaling_method.lower() == "standard":
             thermal_forcing_scaler = StandardScaler()
-        elif scaler_method.lower() == "robust":
+        elif scaling_method.lower() == "robust":
             thermal_forcing_scaler = RobustScaler()
-        elif scaler_method.lower() == "log":
+        elif scaling_method.lower() == "log":
             thermal_forcing_scaler = LogScaler()
         else:
-            raise ValueError(f"Scaler method {scaler_method} not recognized.")
+            raise ValueError(f"Scaler method {scaling_method} not recognized.")
         thermal_forcing_scaler.fit(thermal_forcing_array)
         thermal_forcing_array = thermal_forcing_scaler.transform(thermal_forcing_array)
 
@@ -1512,7 +1537,7 @@ class DimensionalityReducer:
         return 0
 
     def _generate_sle_pca(
-        self, sle_fps: list, save_dir: str, num_pcs="99%", scaler_dir=None, scaler_method="standard"
+        self, sle_fps: list, save_dir: str, num_pcs="99%", scaler_dir=None, scaling_method="standard"
     ):
         """
         Generate principal component analysis (PCA) for sea level equivalent (SLE) variables.
@@ -1559,14 +1584,14 @@ class DimensionalityReducer:
         sle_array = np.nan_to_num(sle_array)
 
         # scale sle
-        if scaler_method.lower() == "standard":
+        if scaling_method.lower() == "standard":
             scaler = StandardScaler()
-        elif scaler_method.lower() == "robust":
+        elif scaling_method.lower() == "robust":
             scaler = RobustScaler()
-        elif scaler_method.lower() == "log":
+        elif scaling_method.lower() == "log":
             scaler = LogScaler()
         else:
-            raise ValueError(f"Scaler method {scaler_method} not recognized.")
+            raise ValueError(f"Scaler method {scaling_method} not recognized.")
         scaler.fit(sle_array)
         sle_array = scaler.transform(sle_array)
 
@@ -1712,7 +1737,16 @@ class DimensionalityReducer:
 
         return pca_models
 
-    def _load_scalers(self, scaler_directory, var_name="all"):
+    def _load_scalers(self, scaler_directory, var_name="all", scaling_method="standard"):
+        
+        if scaling_method.lower() == "standard":
+            scaler_class = StandardScaler
+        elif scaling_method.lower() == "robust":
+            scaler_class = RobustScaler
+        elif scaling_method.lower() == "log":
+            scaler_class = LogScaler
+        else:
+            raise ValueError(f"Scaler method {scaling_method} not recognized.")
         if self.scaler_directory is None and scaler_directory is None:
             warnings.warn(
                 "self.scaler_directory is None, resorting to using self.pca_model_directory"
@@ -1759,22 +1793,22 @@ class DimensionalityReducer:
                 sle_model = [x for x in scaler_paths if "sle" in x][0]
 
                 scalers = dict(
-                    evspsbl_anomaly=StandardScaler.load(f"{self.scaler_directory}/{evspsbl_model}"),
-                    mrro_anomaly=StandardScaler.load(f"{self.scaler_directory}/{mrro_model}"),
-                    pr_anomaly=StandardScaler.load(f"{self.scaler_directory}/{pr_model}"),
-                    smb_anomaly=StandardScaler.load(f"{self.scaler_directory}/{smb_model}"),
-                    ts_anomaly=StandardScaler.load(f"{self.scaler_directory}/{ts_model}"),
-                    thermal_forcing=StandardScaler.load(
+                    evspsbl_anomaly=scaler_class.load(f"{self.scaler_directory}/{evspsbl_model}"),
+                    mrro_anomaly=scaler_class.load(f"{self.scaler_directory}/{mrro_model}"),
+                    pr_anomaly=scaler_class.load(f"{self.scaler_directory}/{pr_model}"),
+                    smb_anomaly=scaler_class.load(f"{self.scaler_directory}/{smb_model}"),
+                    ts_anomaly=scaler_class.load(f"{self.scaler_directory}/{ts_model}"),
+                    thermal_forcing=scaler_class.load(
                         f"{self.scaler_directory}/{thermal_forcing_model}"
                     ),
-                    salinity=StandardScaler.load(f"{self.scaler_directory}/{salinity_model}"),
-                    temperature=StandardScaler.load(f"{self.scaler_directory}/{temperature_model}"),
-                    sle=StandardScaler.load(f"{self.scaler_directory}/{sle_model}"),
+                    salinity=scaler_class.load(f"{self.scaler_directory}/{salinity_model}"),
+                    temperature=scaler_class.load(f"{self.scaler_directory}/{temperature_model}"),
+                    sle=scaler_class.load(f"{self.scaler_directory}/{sle_model}"),
                 )
             else:
                 scalers = {}
                 scaler_path = [x for x in scaler_paths if var_name in x][0]
-                scalers[var_name] = StandardScaler.load(f"{self.scaler_directory}/{scaler_path}")
+                scalers[var_name] = scaler_class.load(f"{self.scaler_directory}/{scaler_path}")
 
         else:  # GrIS
             if var_name not in [
@@ -1796,30 +1830,30 @@ class DimensionalityReducer:
                 sle_model = [x for x in scaler_paths if "sle" in x][0]
 
                 scalers = dict(
-                    aSMB=StandardScaler.load(
+                    aSMB=scaler_class.load(
                         f"{self.scaler_directory}/{aSMB_model}",
                     ),
-                    aST=StandardScaler.load(
+                    aST=scaler_class.load(
                         f"{self.scaler_directory}/{aST_model}",
                     ),
-                    basin_runoff=StandardScaler.load(
+                    basin_runoff=scaler_class.load(
                         f"{self.scaler_directory}/{basin_runoff_model}",
                     ),
-                    thermal_forcing=StandardScaler.load(
+                    thermal_forcing=scaler_class.load(
                         f"{self.scaler_directory}/{thermal_forcing_model}",
                     ),
-                    sle=StandardScaler.load(
+                    sle=scaler_class.load(
                         f"{self.scaler_directory}/{sle_model}",
                     ),
                 )
             else:
                 scalers = {}
                 scaler_path = [x for x in scaler_paths if var_name in x][0]
-                scalers[var_name] = StandardScaler.load(f"{self.scaler_directory}/{scaler_path}")
+                scalers[var_name] = scaler_class.load(f"{self.scaler_directory}/{scaler_path}")
 
         return scalers
 
-    def transform(self, x, var_name, num_pcs=None, pca_model_directory=None, scaler_directory=None):
+    def transform(self, x, var_name, num_pcs=None, pca_model_directory=None, scaler_directory=None, scaling_method="standard"):
         """
         Transform the given variable into PCA space.
 
@@ -1853,7 +1887,7 @@ class DimensionalityReducer:
 
         # load pca and scaler models
         pca_models = self._load_pca_models(self.pca_model_directory, var_name=var_name)
-        scalers = self._load_scalers(self.scaler_directory, var_name=var_name)
+        scalers = self._load_scalers(self.scaler_directory, var_name=var_name, scaling_method=scaling_method)
         pca = pca_models[var_name]
         scaler = scalers[var_name]
         x = np.nan_to_num(x)

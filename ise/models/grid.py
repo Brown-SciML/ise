@@ -8,6 +8,7 @@ from torch import nn, optim
 
 from ise.data.dataclasses import EmulatorDataset
 from ise.data.scaler import StandardScaler
+from ise.utils.functions import to_tensor
 
 
 class PCA(nn.Module):
@@ -266,6 +267,7 @@ class WeakPredictor(nn.Module):
         dim_processor=None,
         scaler_path=None,
         ice_sheet="AIS",
+        criterion=None,
     ):
         super(WeakPredictor, self).__init__()
 
@@ -293,7 +295,7 @@ class WeakPredictor(nn.Module):
         self.optimizer = optim.Adam(
             self.parameters(),
         )
-        self.criterion = None
+        self.criterion = criterion
 
         self.trained = False
 
@@ -328,20 +330,7 @@ class WeakPredictor(nn.Module):
         )
         _, (hn, _) = self.lstm(x, (h0, c0))
         x = hn[-1, :, :]
-
-        # # Shape: (num_layers, batch_size, hidden_dim)
-        # h0 = torch.zeros(self.lstm_num_layers, x.size(0), self.lstm_num_hidden).to(x.device)
-
-        # # Initialize cell state
-        # c0 = torch.zeros(self.lstm_num_layers, x.size(0), self.lstm_num_hidden).to(x.device)
-
-        # # Passing in the input and hidden state into the model and obtaining outputs
-        # out, _ = self.lstm(x, (h0, c0))
-
-        # # Reshaping the outputs such that it can be fit into the fully connected layer
-        # # out[:, -1, :] just selects the last time step's outputs
-
-        # x = self.linear1(out[:, -1, :])
+        
         x = self.linear1(x)
         x = self.relu(x)
         # x = self.linear2(x)
@@ -353,12 +342,12 @@ class WeakPredictor(nn.Module):
     def fit(
         self, X, y, epochs=100, sequence_length=3, batch_size=64, loss=None, val_X=None, val_y=None
     ):
+        X, y = to_tensor(X).to(self.device), to_tensor(y).to(self.device)
 
-        if not val_X.empty and not val_y.empty:
+        if val_X is not None and val_y is not None: #not val_X.empty and not val_y.empty:
             validate = True
         else:
             validate = False
-        print(f"Training with {loss}")
         if loss is not None:
             self.criterion = loss.to(self.device)
         elif loss is None and self.criterion is None:
@@ -375,7 +364,6 @@ class WeakPredictor(nn.Module):
         data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
         self.train()
         self.to(self.device)
-        print(f"Training on {self.device}")
         for epoch in range(1, epochs + 1):
             self.train()
             batch_losses = []
@@ -439,21 +427,28 @@ class WeakPredictor(nn.Module):
         return preds
 
 
-class DeepEmulator(nn.Module):
-    def __init__(self, weak_predictors: list = []):
-        super(DeepEmulator, self).__init__()
+class DeepEnsemble(nn.Module):
+    def __init__(self, weak_predictors: list = [], forcing_size=None, sle_size=None, num_predictors=3):
+        super(DeepEnsemble, self).__init__()
 
         if not weak_predictors:
+            if forcing_size is None or sle_size is None:
+                raise ValueError("forcing_size and sle_size must be provided if weak_predictors is not provided")
             self.weak_predictors = [
                 WeakPredictor(
-                    lstm_num_layers=np.random.choice(4, 1),
-                    lstm_hidden_size=np.random.choice([512, 256, 128, 64], 1),
+                    input_size=forcing_size + 1, # plus one for latent z addition
+                    output_size=sle_size,
+                    lstm_num_layers=np.random.randint(low=1, high=3, size=1)[0],
+                    lstm_hidden_size=np.random.choice([512, 256, 128, 64], 1)[0],
+                    criterion=torch.nn.MSELoss()
                 )
-                for _ in range(10)
+                for _ in range(num_predictors)
             ]
         else:
             if isinstance(weak_predictors, list):
                 self.weak_predictors = weak_predictors
+                if not [isinstance(x, WeakPredictor) for x in weak_predictors].all():
+                    raise ValueError("weak_predictors must be a list of WeakPredictor instances")
             else:
                 raise ValueError("weak_predictors must be a list of WeakPredictor instances")
 
@@ -470,11 +465,13 @@ class DeepEmulator(nn.Module):
         epistemic_uncertainty = np.var([wp(x) for wp in self.weak_predictors], axis=0)
         return mean_prediction, epistemic_uncertainty
 
-    def fit(self, X, y, epochs=100, batch_size=64):
+    def fit(self, X, y, epochs=100, batch_size=64, ):
         if self.trained:
             warnings.warn("This model has already been trained. Training anyways.")
-        for wp in self.weak_predictors:
+        for i, wp in enumerate(self.weak_predictors):
+            print(f'Training Weak Predictor {i+1} of {len(self.weak_predictors)}:')
             wp.fit(X, y, epochs, batch_size)
+            print('')
 
 
 class NormalizingFlow(nn.Module):
@@ -485,13 +482,16 @@ class NormalizingFlow(nn.Module):
     ):
         super(NormalizingFlow, self).__init__()
         self.num_flow_transforms = 5
-        self.flow_hidden_features = 128
         self.num_input_features = forcing_size
         self.num_predicted_sle = sle_size
+        self.flow_hidden_features = sle_size * 2
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.to(self.device)
+        
 
         self.base_distribution = distributions.normal.ConditionalDiagonalNormal(
-            shape=[self.num_input_features],
-            context_encoder=nn.Linear(1, self.num_input_features * 2),
+            shape=[self.num_predicted_sle],
+            context_encoder=nn.Linear(self.num_input_features, self.flow_hidden_features),
         )
 
         t = []
@@ -511,60 +511,90 @@ class NormalizingFlow(nn.Module):
 
         self.t = transforms.base.CompositeTransform(t)
 
-        self.flow = flows.base.Flow(transform=self.t, distribution=self.base_dist)
+        self.flow = flows.base.Flow(transform=self.t, distribution=self.base_distribution)
 
         self.optimizer = optim.Adam(self.flow.parameters())
-        self.criterion = -self.flow.log_prob
+        self.criterion = self.flow.log_prob
         self.trained = False
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.to(self.device)
 
     def fit(self, X, y, epochs=100, batch_size=64):
-        dataset = EmulatorDataset(X, y, sequence_length=3)
+        X, y = to_tensor(X).to(self.device), to_tensor(y).to(self.device)
+        dataset = EmulatorDataset(X, y, sequence_length=1)
         data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
         self.train()
 
         for epoch in range(1, epochs + 1):
+            epoch_loss = []
             for i, (x, y) in enumerate(data_loader):
+                x = x.to(self.device).view(x.shape[0], -1)
+                y = y.to(self.device)
                 self.optimizer.zero_grad()
-                loss = self.criterion(inputs=y, context=x)
+                loss = torch.mean(-self.flow.log_prob(inputs=y, context=x))
                 loss.backward()
                 self.optimizer.step()
-                if i % 10 == 0:
-                    print(f"Epoch: {epoch}, Batch: {i}, Loss: {loss.item()}")
+                epoch_loss.append(loss.item())
+            print(f"Epoch {epoch}, Loss: {sum(epoch_loss) / len(epoch_loss)}")
         self.trained = True
+    
+    def sample(self, features, num_samples, return_type='numpy'):
+        if not isinstance(features, torch.Tensor):
+            features = to_tensor(features)
+        samples = self.flow.sample(num_samples, context=features).reshape(features.shape[0], num_samples)
+        if return_type == 'tensor':
+            pass
+        elif return_type == 'numpy':
+            samples = samples.detach().numpy()
+        else:
+            raise ValueError("return_type must be 'numpy' or 'tensor'")
+        return samples
 
     def get_latent(self, x, latent_constant=0.0):
-        return self.flow.t(latent_constant, context=x)
+        x = to_tensor(x).to(self.device)
+        # latent_constant = torch.tensor(latent_constant).to(self.device)
+        latent_constant_tensor = torch.ones((x.shape[0], 1)).to(self.device) * latent_constant
+        z, _ = self.t(latent_constant_tensor.float(), context=x)
+        return z
 
-    def aleatoric(self, inputs, num_samples):
-        samples = self.flow.sample(num_samples, inputs)
+    def aleatoric(self, features, num_samples):
+        if not isinstance(features, torch.Tensor):
+            features = to_tensor(features)
+        samples = self.flow.sample(num_samples, context=features)
         samples = samples.detach().numpy()
-        variance = np.var(samples, axis=0)
-        return variance
+        std = np.std(samples, axis=0)
+        return std
 
 
 class HybridEmulator(torch.nn.Module):
     def __init__(self, deep_ensemble, normalizing_flow):
         super(HybridEmulator, self).__init__()
 
-        if not isinstance(deep_ensemble, DeepEmulator):
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.to(self.device)
+        
+        if not isinstance(deep_ensemble, DeepEnsemble):
             raise ValueError("deep_ensemble must be a DeepEmulator instance")
         if not isinstance(normalizing_flow, NormalizingFlow):
             raise ValueError("normalizing_flow must be a NormalizingFlow instance")
 
-        self.deep_ensemble = deep_ensemble
-        self.normalizing_flow = normalizing_flow
+        self.deep_ensemble = deep_ensemble.to(self.device)
+        self.normalizing_flow = normalizing_flow.to(self.device)
         self.trained = self.deep_ensemble.trained and self.normalizing_flow.trained
 
-    def train(
-        self,
-        X,
-        y,
-    ):
+
+    def fit(self, X, y, epochs=100):
+        X, y = to_tensor(X).to(self.device), to_tensor(y).to(self.device)
         if self.trained:
             warnings.warn("This model has already been trained. Training anyways.")
-        self.normalizing_flow.fit(X, y, epochs=250)
-        z = self.normalizing_flow.get_latent(X, y)
-        self.deep_ensemble.fit(z, y)
+        if not self.normalizing_flow.trained:
+            print(f'Training Normalizing Flow ({epochs} epochs):')
+            self.normalizing_flow.fit(X, y, epochs=epochs)
+        z = self.normalizing_flow.get_latent(X, y).detach()
+        X_latent = torch.concatenate((X, z), axis=1)
+        if not self.deep_ensemble.trained:
+            print(f'Training Deep Ensemble ({epochs} epochs):')
+            self.deep_ensemble.fit(X_latent, y, epochs=epochs)
         self.trained = True
 
     def forward(self, x):
