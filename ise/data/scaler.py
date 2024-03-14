@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import torch
 from torch import nn
-
+from scipy.stats import yeojohnson, yeojohnson_normmax
 
 class StandardScaler(nn.Module):
     """
@@ -178,25 +178,31 @@ class RobustScaler(nn.Module):
 class LogScaler(nn.Module):
     def __init__(self, epsilon=1e-8):
         super(LogScaler, self).__init__()
-        self.epsilon = epsilon  # To handle log(0)
+        self.epsilon = epsilon
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.to(self.device)
+        self.min_value = None
 
     def fit(self, X):
-        pass  # Not applicable for LogScaler, but could check for non-negativity or similar here
+        dataset_min = torch.min(X) - self.epsilon
+        if dataset_min >= 0:
+            self.min_value = 0
 
     def transform(self, X):
         X = _to_tensor(X).to(self.device)
-        return torch.log(X + self.epsilon)
+        X_shifted = X - self.min_value # adding shift (subtracting negative or zero)
+        return torch.log(X_shifted + self.epsilon)
 
     def inverse_transform(self, X):
         X = _to_tensor(X).to(self.device)
-        return torch.exp(X) - self.epsilon
+        X_exp = torch.exp(X) - self.epsilon
+        return X_exp + self.min_value
 
     def save(self, path):
         torch.save(
             {
                 "epsilon": self.epsilon,
+                "min_value": self.min_value,
             },
             path,
         )
@@ -207,6 +213,43 @@ class LogScaler(nn.Module):
         scaler = LogScaler()
         scaler.epsilon = checkpoint["epsilon"]
         return scaler
+    
+
+class YeoJohnsonScaler(nn.Module):
+    def __init__(self):
+        super(YeoJohnsonScaler, self).__init__()
+        self.lambdas_ = None
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.to(self.device)
+
+    def fit(self, X):
+        X_np = X.cpu().numpy() if isinstance(X, torch.Tensor) else np.array(X)
+        _, self.lambdas_ = yeojohnson(X_np)
+        self.lambdas_ = torch.tensor(self.lambdas_, dtype=torch.float32).to(self.device)
+
+    def transform(self, X):
+        X = _to_tensor(X, self.device)
+        if self.lambdas_ is None:
+            raise RuntimeError("This YeoJohnsonScaler instance is not fitted yet.")
+        # Transformation logic here...
+
+    def inverse_transform(self, X):
+        raise NotImplementedError("Inverse transform is not implemented due to its complexity and dependency on the original data scale.")
+
+    def save(self, path):
+        torch.save({
+            "lambdas_": self.lambdas_,
+        }, path)
+
+    @staticmethod
+    def load(path, device=None):
+        device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        checkpoint = torch.load(path, map_location=device)
+        scaler = YeoJohnsonScaler()
+        scaler.lambdas_ = checkpoint["lambdas_"]
+        scaler.to(device)
+        return scaler
+
 
 
 def _to_tensor(x):

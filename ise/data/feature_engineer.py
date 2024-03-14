@@ -1,5 +1,6 @@
 import pickle
 from typing import List
+import torch
 
 import numpy as np
 import pandas as pd
@@ -228,6 +229,9 @@ class FeatureEngineer:
             self.scaler_X_path = scaler_X_path
         if scaler_y_path is not None:
             self.scaler_y_path = scaler_y_path
+        
+        if isinstance(y, torch.Tensor):
+            y = y.detach().cpu().numpy()
 
         # Load scaler for X
         if X is not None:

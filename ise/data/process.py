@@ -748,7 +748,9 @@ def interpolate_values(data):
 
 
 class DimensionalityReducer:
-    def __init__(self, forcing_dir, projection_dir, output_dir, ice_sheet=None, scaling_method=None):
+    def __init__(
+        self, forcing_dir, projection_dir, output_dir, ice_sheet=None, scaling_method=None
+    ):
         super().__init__()
         if forcing_dir is None:
             raise ValueError("Forcing directory must be specified.")
@@ -889,7 +891,11 @@ class DimensionalityReducer:
         return 0
 
     def convert_forcings(
-        self, forcing_files: list = None, pca_model_directory: str = None, output_dir: str = None, scaling_method=None,
+        self,
+        forcing_files: list = None,
+        pca_model_directory: str = None,
+        output_dir: str = None,
+        scaling_method=None,
     ):
         """
         Converts atmospheric and oceanic forcing files to PCA space using pretrained PCA models.
@@ -913,11 +919,10 @@ class DimensionalityReducer:
             raise ValueError(
                 "Scalers must be generated first, or scaling_method must be identified if they already exist. Run DimensionalityReducer.generate_pca_models first."
             )
-            
-            
+
         if scaling_method is not None:
             self.scaling_method = scaling_method
-            
+
         if pca_model_directory is not None:
             self.pca_model_directory = pca_model_directory
 
@@ -1080,7 +1085,11 @@ class DimensionalityReducer:
         return 0
 
     def convert_projections(
-        self, projection_files: list = None, pca_model_directory: str = None, output_dir: str = None, scaling_method=None,
+        self,
+        projection_files: list = None,
+        pca_model_directory: str = None,
+        output_dir: str = None,
+        scaling_method=None,
     ):
 
         # check inputs for validity
@@ -1089,16 +1098,15 @@ class DimensionalityReducer:
             raise ValueError(
                 "PCA model directory must be specified, or DimensionalityReducer.generate_pca_models must be run first."
             )
-        
+
         if self.scaling_method is None and scaling_method is None:
             raise ValueError(
                 "Scalers must be generated first, or scaling_method must be identified if they already exist. Run DimensionalityReducer.generate_pca_models first."
             )
-            
-            
+
         if scaling_method is not None:
             self.scaling_method = scaling_method
-        
+
         if pca_model_directory is not None:
             self.pca_model_directory = pca_model_directory
 
@@ -1537,7 +1545,12 @@ class DimensionalityReducer:
         return 0
 
     def _generate_sle_pca(
-        self, sle_fps: list, save_dir: str, num_pcs="99%", scaler_dir=None, scaling_method="standard"
+        self,
+        sle_fps: list,
+        save_dir: str,
+        num_pcs="99%",
+        scaler_dir=None,
+        scaling_method="standard",
     ):
         """
         Generate principal component analysis (PCA) for sea level equivalent (SLE) variables.
@@ -1738,7 +1751,7 @@ class DimensionalityReducer:
         return pca_models
 
     def _load_scalers(self, scaler_directory, var_name="all", scaling_method="standard"):
-        
+
         if scaling_method.lower() == "standard":
             scaler_class = StandardScaler
         elif scaling_method.lower() == "robust":
@@ -1853,7 +1866,15 @@ class DimensionalityReducer:
 
         return scalers
 
-    def transform(self, x, var_name, num_pcs=None, pca_model_directory=None, scaler_directory=None, scaling_method="standard"):
+    def transform(
+        self,
+        x,
+        var_name,
+        num_pcs=None,
+        pca_model_directory=None,
+        scaler_directory=None,
+        scaling_method="standard",
+    ):
         """
         Transform the given variable into PCA space.
 
@@ -1887,7 +1908,9 @@ class DimensionalityReducer:
 
         # load pca and scaler models
         pca_models = self._load_pca_models(self.pca_model_directory, var_name=var_name)
-        scalers = self._load_scalers(self.scaler_directory, var_name=var_name, scaling_method=scaling_method)
+        scalers = self._load_scalers(
+            self.scaler_directory, var_name=var_name, scaling_method=scaling_method
+        )
         pca = pca_models[var_name]
         scaler = scalers[var_name]
         x = np.nan_to_num(x)

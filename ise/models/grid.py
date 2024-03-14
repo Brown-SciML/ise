@@ -260,21 +260,22 @@ class DimensionProcessor(nn.Module):
 class WeakPredictor(nn.Module):
     def __init__(
         self,
-        input_size,
         lstm_num_layers,
         lstm_hidden_size,
-        output_size,
+        input_size=28,
+        output_size=1,
         dim_processor=None,
         scaler_path=None,
         ice_sheet="AIS",
-        criterion=None,
+        criterion=torch.nn.MSELoss(),
     ):
         super(WeakPredictor, self).__init__()
+        
+        self.lstm_num_layers = lstm_num_layers
+        self.lstm_num_hidden = lstm_hidden_size
 
         self.input_size = input_size
         self.output_size = output_size
-        self.lstm_num_layers = lstm_num_layers
-        self.lstm_num_hidden = lstm_hidden_size
         self.ice_sheet = ice_sheet
         self.ice_sheet_dim = (761, 761) if ice_sheet == "AIS" else (337, 577)
 
@@ -295,8 +296,8 @@ class WeakPredictor(nn.Module):
         self.optimizer = optim.Adam(
             self.parameters(),
         )
+        
         self.criterion = criterion
-
         self.trained = False
 
         if isinstance(dim_processor, DimensionProcessor):
@@ -330,7 +331,7 @@ class WeakPredictor(nn.Module):
         )
         _, (hn, _) = self.lstm(x, (h0, c0))
         x = hn[-1, :, :]
-        
+
         x = self.linear1(x)
         x = self.relu(x)
         # x = self.linear2(x)
@@ -340,18 +341,18 @@ class WeakPredictor(nn.Module):
         return x
 
     def fit(
-        self, X, y, epochs=100, sequence_length=3, batch_size=64, loss=None, val_X=None, val_y=None
+        self, X, y, epochs=100, sequence_length=5, batch_size=64, loss=None, val_X=None, val_y=None
     ):
         X, y = to_tensor(X).to(self.device), to_tensor(y).to(self.device)
 
-        if val_X is not None and val_y is not None: #not val_X.empty and not val_y.empty:
+        if val_X is not None and val_y is not None:  # not val_X.empty and not val_y.empty:
             validate = True
         else:
             validate = False
         if loss is not None:
             self.criterion = loss.to(self.device)
         elif loss is None and self.criterion is None:
-            raise ValueError("loss must be provided if no criterion is set.")
+            raise ValueError("loss must be provided if criterion is None.")
 
         self.criterion = self.criterion.to(self.device)
 
@@ -405,7 +406,7 @@ class WeakPredictor(nn.Module):
 
         self.trained = True
 
-    def predict(self, X, sequence_length=3, batch_size=64):
+    def predict(self, X, sequence_length=5, batch_size=64):
         self.eval()
         self.to(self.device)
         if isinstance(X, pd.DataFrame):
@@ -414,7 +415,7 @@ class WeakPredictor(nn.Module):
         dataset = EmulatorDataset(X, y=None, sequence_length=sequence_length)
         data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False)
 
-        X = torch.tensor(X).to(self.device)
+        X = to_tensor(X).to(self.device)
 
         preds = torch.tensor([]).to(self.device)
         for X_test_batch in data_loader:
@@ -428,26 +429,27 @@ class WeakPredictor(nn.Module):
 
 
 class DeepEnsemble(nn.Module):
-    def __init__(self, weak_predictors: list = [], forcing_size=None, sle_size=None, num_predictors=3):
+    def __init__(
+        self, weak_predictors: list = [], forcing_size=27, sle_size=1, num_predictors=3
+    ):
         super(DeepEnsemble, self).__init__()
 
         if not weak_predictors:
             if forcing_size is None or sle_size is None:
-                raise ValueError("forcing_size and sle_size must be provided if weak_predictors is not provided")
+                raise ValueError(
+                    "forcing_size and sle_size must be provided if weak_predictors is not provided"
+                )
             self.weak_predictors = [
                 WeakPredictor(
-                    input_size=forcing_size + 1, # plus one for latent z addition
-                    output_size=sle_size,
                     lstm_num_layers=np.random.randint(low=1, high=3, size=1)[0],
                     lstm_hidden_size=np.random.choice([512, 256, 128, 64], 1)[0],
-                    criterion=torch.nn.MSELoss()
                 )
                 for _ in range(num_predictors)
             ]
         else:
             if isinstance(weak_predictors, list):
                 self.weak_predictors = weak_predictors
-                if not [isinstance(x, WeakPredictor) for x in weak_predictors].all():
+                if not all([isinstance(x, WeakPredictor) for x in weak_predictors]):
                     raise ValueError("weak_predictors must be a list of WeakPredictor instances")
             else:
                 raise ValueError("weak_predictors must be a list of WeakPredictor instances")
@@ -461,24 +463,34 @@ class DeepEnsemble(nn.Module):
     def forward(self, x):
         if not self.trained:
             warnings.warn("This model has not been trained. Predictions will not be accurate.")
-        mean_prediction = np.mean([wp(x) for wp in self.weak_predictors], axis=0)
-        epistemic_uncertainty = np.var([wp(x) for wp in self.weak_predictors], axis=0)
+        mean_prediction = torch.mean(torch.stack([wp.predict(x) for wp in self.weak_predictors], axis=1), axis=1).squeeze()
+        epistemic_uncertainty = torch.std(torch.stack([wp.predict(x) for wp in self.weak_predictors], axis=1), axis=1).squeeze()
         return mean_prediction, epistemic_uncertainty
+    
+    def predict(self, x):
+        return self.forward(x)
 
-    def fit(self, X, y, epochs=100, batch_size=64, ):
+    def fit(
+        self,
+        X,
+        y,
+        epochs=100,
+        batch_size=64,
+    ):
         if self.trained:
             warnings.warn("This model has already been trained. Training anyways.")
         for i, wp in enumerate(self.weak_predictors):
-            print(f'Training Weak Predictor {i+1} of {len(self.weak_predictors)}:')
+            print(f"Training Weak Predictor {i+1} of {len(self.weak_predictors)}:")
             wp.fit(X, y, epochs, batch_size)
-            print('')
+            print("")
+        self.trained = True
 
 
 class NormalizingFlow(nn.Module):
     def __init__(
         self,
-        forcing_size,
-        sle_size,
+        forcing_size=27,
+        sle_size=1,
     ):
         super(NormalizingFlow, self).__init__()
         self.num_flow_transforms = 5
@@ -487,7 +499,6 @@ class NormalizingFlow(nn.Module):
         self.flow_hidden_features = sle_size * 2
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.to(self.device)
-        
 
         self.base_distribution = distributions.normal.ConditionalDiagonalNormal(
             shape=[self.num_predicted_sle],
@@ -537,15 +548,17 @@ class NormalizingFlow(nn.Module):
                 epoch_loss.append(loss.item())
             print(f"Epoch {epoch}, Loss: {sum(epoch_loss) / len(epoch_loss)}")
         self.trained = True
-    
-    def sample(self, features, num_samples, return_type='numpy'):
+
+    def sample(self, features, num_samples, return_type="numpy"):
         if not isinstance(features, torch.Tensor):
             features = to_tensor(features)
-        samples = self.flow.sample(num_samples, context=features).reshape(features.shape[0], num_samples)
-        if return_type == 'tensor':
+        samples = self.flow.sample(num_samples, context=features).reshape(
+            features.shape[0], num_samples
+        )
+        if return_type == "tensor":
             pass
-        elif return_type == 'numpy':
-            samples = samples.detach().numpy()
+        elif return_type == "numpy":
+            samples = samples.detach().cpu().numpy()
         else:
             raise ValueError("return_type must be 'numpy' or 'tensor'")
         return samples
@@ -561,8 +574,8 @@ class NormalizingFlow(nn.Module):
         if not isinstance(features, torch.Tensor):
             features = to_tensor(features)
         samples = self.flow.sample(num_samples, context=features)
-        samples = samples.detach().numpy()
-        std = np.std(samples, axis=0)
+        samples = samples.detach().cpu().numpy()
+        std = np.std(samples, axis=1).squeeze()
         return std
 
 
@@ -572,7 +585,7 @@ class HybridEmulator(torch.nn.Module):
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.to(self.device)
-        
+
         if not isinstance(deep_ensemble, DeepEnsemble):
             raise ValueError("deep_ensemble must be a DeepEmulator instance")
         if not isinstance(normalizing_flow, NormalizingFlow):
@@ -582,24 +595,41 @@ class HybridEmulator(torch.nn.Module):
         self.normalizing_flow = normalizing_flow.to(self.device)
         self.trained = self.deep_ensemble.trained and self.normalizing_flow.trained
 
-
-    def fit(self, X, y, epochs=100):
+    def fit(self, X, y, epochs=100, nf_epochs=None, de_epochs=None):
+        # if specific epoch numbers are not supplied, use the same number of epochs for both
+        if nf_epochs is None:
+            nf_epochs = epochs
+        if de_epochs is None:
+            de_epochs = epochs
+            
         X, y = to_tensor(X).to(self.device), to_tensor(y).to(self.device)
         if self.trained:
             warnings.warn("This model has already been trained. Training anyways.")
         if not self.normalizing_flow.trained:
-            print(f'Training Normalizing Flow ({epochs} epochs):')
-            self.normalizing_flow.fit(X, y, epochs=epochs)
-        z = self.normalizing_flow.get_latent(X, y).detach()
+            print(f"\nTraining Normalizing Flow ({nf_epochs} epochs):")
+            self.normalizing_flow.fit(X, y, epochs=nf_epochs)
+        z = self.normalizing_flow.get_latent(X,).detach()
         X_latent = torch.concatenate((X, z), axis=1)
         if not self.deep_ensemble.trained:
-            print(f'Training Deep Ensemble ({epochs} epochs):')
-            self.deep_ensemble.fit(X_latent, y, epochs=epochs)
+            print(f"\nTraining Deep Ensemble ({de_epochs} epochs):")
+            self.deep_ensemble.fit(X_latent, y, epochs=de_epochs)
         self.trained = True
 
     def forward(self, x):
+        x = to_tensor(x).to(self.device)
         if not self.trained:
             warnings.warn("This model has not been trained. Predictions will not be accurate.")
-        prediction, epistemic = self.deep_ensemble(x)
+        z = self.normalizing_flow.get_latent(x, ).detach()
+        X_latent = torch.concatenate((x, z), axis=1)
+        prediction, epistemic = self.deep_ensemble(X_latent)
         aleatoric = self.normalizing_flow.aleatoric(x, 100)
         return prediction, epistemic, aleatoric
+    
+    def save(self, path):
+        torch.save(self.state_dict(), path)
+    
+    @staticmethod
+    def load(path, deep_ensemble, normalizing_flow):
+        model = HybridEmulator(deep_ensemble, normalizing_flow)
+        model.load_state_dict(torch.load(path))
+        return model

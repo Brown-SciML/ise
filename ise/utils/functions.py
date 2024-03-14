@@ -559,24 +559,43 @@ def _structure_architecture_args(architecture, time_series):
     return architecture
 
 
-def get_X_y(data, dataset_type='sectors', return_format=None):
-    if dataset_type.lower() == 'sectors':
-        dropped_columns =  ["id", "cmip_model", "pathway", "exp", 'ice_sheet', 'Scenario', 'Ocean forcing', 'Ocean sensitivity', 'Ice shelf fracture', 'Tier', 'aogcm', 'id', 'exp', 'model', 'ivaf']
+def get_X_y(data, dataset_type="sectors", return_format=None):
+    if dataset_type.lower() == "sectors":
+        dropped_columns = [
+            "id",
+            "cmip_model",
+            "pathway",
+            "exp",
+            "ice_sheet",
+            "Scenario",
+            "Ocean forcing",
+            "Ocean sensitivity",
+            "Ice shelf fracture",
+            "Tier",
+            "aogcm",
+            "id",
+            "exp",
+            "model",
+            "ivaf",
+        ]
         dropped_columns = [x for x in data.columns if x in dropped_columns]
-        X_drop = [x for x in data.columns if 'sle' in x] + dropped_columns
+        X_drop = [x for x in data.columns if "sle" in x] + dropped_columns
         X = data.drop(columns=X_drop)
-        y = data[[x for x in data.columns if 'sle' in x]]
+        y = data[[x for x in data.columns if "sle" in x]]
     if return_format is not None:
-        if return_format.lower() == 'numpy':
+        if return_format.lower() == "numpy":
             return X.values, y.values
-        elif return_format.lower() == 'tensor':
+        elif return_format.lower() == "tensor":
             return torch.tensor(X.values), torch.tensor(y.values)
-        elif return_format.lower() == 'pandas':
+        elif return_format.lower() == "pandas":
             pass
         else:
-            raise ValueError(f"return_format must be in ['numpy', 'tensor', 'pandas'], received {return_format}")
-    
+            raise ValueError(
+                f"return_format must be in ['numpy', 'tensor', 'pandas'], received {return_format}"
+            )
+
     return X, y
+
 
 def to_tensor(x):
     """
