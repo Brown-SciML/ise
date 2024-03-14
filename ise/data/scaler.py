@@ -4,6 +4,8 @@ import torch
 from torch import nn
 from scipy.stats import yeojohnson, yeojohnson_normmax
 
+from ise.utils.functions import to_tensor
+
 class StandardScaler(nn.Module):
     """
     A class for scaling input data using mean and standard deviation.
@@ -21,7 +23,6 @@ class StandardScaler(nn.Module):
         transform(X): Scales the input data using the computed mean and standard deviation.
         inverse_transform(X): Reverses the scaling operation on the input data.
         save(path): Saves the mean and standard deviation to a file.
-        _to_tensor(x): Converts input data to a PyTorch tensor of type float.
         load(path): Loads the mean and standard deviation from a file.
 
     """
@@ -43,7 +44,7 @@ class StandardScaler(nn.Module):
             X (torch.Tensor): The input data to be scaled.
 
         """
-        X = _to_tensor(X).to(self.device)
+        X = to_tensor(X).to(self.device)
         self.mean_ = torch.mean(X, dim=0)
         self.scale_ = torch.std(X, dim=0, unbiased=False)
         self.eps = 1e-8  # to avoid divide by zero
@@ -65,7 +66,7 @@ class StandardScaler(nn.Module):
             RuntimeError: If the Scaler instance is not fitted yet.
 
         """
-        X = _to_tensor(X).to(self.device)
+        X = to_tensor(X).to(self.device)
         if self.mean_ is None or self.scale_ is None:
             raise RuntimeError("This Scaler instance is not fitted yet.")
         transformed = (X - self.mean_) / self.scale_
@@ -91,7 +92,7 @@ class StandardScaler(nn.Module):
             RuntimeError: If the Scaler instance is not fitted yet.
 
         """
-        X = _to_tensor(X).to(self.device)
+        X = to_tensor(X).to(self.device)
         if self.mean_ is None or self.scale_ is None:
             raise RuntimeError("This Scaler instance is not fitted yet.")
         return X * self.scale_ + self.mean_
@@ -140,19 +141,19 @@ class RobustScaler(nn.Module):
         self.to(self.device)
 
     def fit(self, X):
-        X = _to_tensor(X).to(self.device)
+        X = to_tensor(X).to(self.device)
         self.median_ = torch.median(X, dim=0).values
         q75, q25 = torch.quantile(X, 0.75, dim=0), torch.quantile(X, 0.25, dim=0)
         self.iqr_ = q75 - q25
 
     def transform(self, X):
-        X = _to_tensor(X).to(self.device)
+        X = to_tensor(X).to(self.device)
         if self.median_ is None or self.iqr_ is None:
             raise RuntimeError("This RobustScaler instance is not fitted yet.")
         return (X - self.median_) / (self.iqr_ + 1e-8)
 
     def inverse_transform(self, X):
-        X = _to_tensor(X).to(self.device)
+        X = to_tensor(X).to(self.device)
         if self.median_ is None or self.iqr_ is None:
             raise RuntimeError("This RobustScaler instance is not fitted yet.")
         return X * (self.iqr_ + 1e-8) + self.median_
@@ -184,17 +185,18 @@ class LogScaler(nn.Module):
         self.min_value = None
 
     def fit(self, X):
+        X = to_tensor(X).to(self.device)
         dataset_min = torch.min(X) - self.epsilon
         if dataset_min >= 0:
             self.min_value = 0
 
     def transform(self, X):
-        X = _to_tensor(X).to(self.device)
+        X = to_tensor(X).to(self.device)
         X_shifted = X - self.min_value # adding shift (subtracting negative or zero)
         return torch.log(X_shifted + self.epsilon)
 
     def inverse_transform(self, X):
-        X = _to_tensor(X).to(self.device)
+        X = to_tensor(X).to(self.device)
         X_exp = torch.exp(X) - self.epsilon
         return X_exp + self.min_value
 
@@ -228,7 +230,7 @@ class YeoJohnsonScaler(nn.Module):
         self.lambdas_ = torch.tensor(self.lambdas_, dtype=torch.float32).to(self.device)
 
     def transform(self, X):
-        X = _to_tensor(X, self.device)
+        X = to_tensor(X, self.device)
         if self.lambdas_ is None:
             raise RuntimeError("This YeoJohnsonScaler instance is not fitted yet.")
         # Transformation logic here...
@@ -250,18 +252,3 @@ class YeoJohnsonScaler(nn.Module):
         scaler.to(device)
         return scaler
 
-
-
-def _to_tensor(x):
-    if x is None:
-        return None
-    if isinstance(x, pd.DataFrame):
-        x = x.values
-        x = torch.tensor(x)
-    elif isinstance(x, np.ndarray):
-        x = torch.tensor(x)
-    elif isinstance(x, torch.Tensor):
-        pass
-    else:
-        raise ValueError("Data must be a pandas dataframe, numpy array, or PyTorch tensor")
-    return x.float()
