@@ -4,7 +4,7 @@ from typing import List
 from torch import nn
 
 from ise.data._EmulatorData import EmulatorData
-from ise.models.sector import ExploratoryModel, TimeSeriesEmulator
+from ise.models.sector import ExploratoryModel, VariationalLSTMEmulator
 from ise.models.train import Trainer
 from ise.utils.functions import (
     _structure_architecture_args,
@@ -18,7 +18,7 @@ def lag_sequence_test(
     lag_array,
     sequence_array,
     iterations,
-    model_class=TimeSeriesEmulator,
+    model_class=VariationalLSTMEmulator,
     emulator_data_args=None,
     architecture=None,
     verbose=True,
@@ -91,7 +91,7 @@ def rnn_architecture_test(
     rnn_layers_array: List[int],
     hidden_nodes_array: List[int],
     iterations: int,
-    model_class=TimeSeriesEmulator,
+    model_class=VariationalLSTMEmulator,
     verbose: bool = True,
     epochs: int = 100,
     batch_size: int = 100,

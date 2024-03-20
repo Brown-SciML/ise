@@ -44,7 +44,7 @@ class ExploratoryModel(torch.nn.Module):
         return self.model(x)
 
 
-class TimeSeriesEmulator(torch.nn.Module):
+class VariationalLSTMEmulator(torch.nn.Module):
     def __init__(self, architecture, mc_dropout=False, dropout_prob=None):
         super().__init__()
         self.model_name = "TimeSeriesEmulator"

@@ -7,7 +7,7 @@ import pandas as pd
 
 from ise.evaluation._tests import binned_sle_table, test_pretrained_model
 from ise.evaluation.plots import SectorPlotter
-from ise.models.sector import TimeSeriesEmulator
+from ise.models.sector import VariationalLSTMEmulator
 from ise.utils.functions import (
     calculate_distribution_metrics,
     combine_testing_results,
@@ -87,7 +87,7 @@ def analyze_model(
     if isinstance(model_path, str):
         model = load_model(
             model_path=model_path,
-            model_class=TimeSeriesEmulator,
+            model_class=VariationalLSTMEmulator,
             architecture=architecture,
             mc_dropout=mc_dropout,
             dropout_prob=dropout_prob,

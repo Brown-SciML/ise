@@ -12,7 +12,7 @@ from sklearn.metrics import r2_score
 from torch import nn
 
 from ise.models.gp import GP
-from ise.models.sector import ExploratoryModel, TimeSeriesEmulator
+from ise.models.sector import ExploratoryModel, VariationalLSTMEmulator
 from ise.models.train import Trainer
 from ise.utils.functions import unscale_column
 
@@ -22,7 +22,7 @@ def train_timeseries_network(
     architecture: dict = None,
     epochs: int = 20,
     batch_size: int = 100,
-    model_class=TimeSeriesEmulator,
+    model_class=VariationalLSTMEmulator,
     loss=nn.MSELoss(),
     mc_dropout: bool = True,
     dropout_prob: float = 0.1,

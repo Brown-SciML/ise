@@ -1,3 +1,6 @@
+
+
+
 import json
 import os
 import warnings
@@ -16,7 +19,6 @@ from ise.utils.functions import to_tensor
 
 class PCA(nn.Module):
     def __init__(self, n_components):
-
         """
         Principal Component Analysis (PCA) model.
 
@@ -587,7 +589,7 @@ class DeepEnsemble(nn.Module):
                     "forcing_size and sle_size must be provided if weak_predictors is not provided"
                 )
             self.loss_choices = [torch.nn.MSELoss(), MSEDeviationLoss(threshold=1.0, penalty_multiplier=2.0), torch.nn.L1Loss(), torch.nn.HuberLoss()]
-            loss_probabilities = [.50, .15, .15, .2]
+            loss_probabilities = [.45, .05, .3, .2]
             self.weak_predictors = [
                 WeakPredictor(
                     lstm_num_layers=np.random.randint(low=1, high=3, size=1)[0],
@@ -894,14 +896,52 @@ class NormalizingFlow(nn.Module):
     
     def save(self, path):
         """
-        Saves the trained model to the specified path.
+        Saves the model parameters and metadata to the specified path.
 
         Args:
             path (str): The path to save the model.
         """
-        if not self.trained:
-            raise ValueError("This model has not been trained yet. Please train the model before saving.")
+        # Prepare metadata for saving
+        metadata = {
+            'forcing_size': self.forcing_size,
+            'sle_size': self.sle_size,
+        }
+        metadata_path = path + '_metadata.json'
+        
+        # Save metadata
+        with open(metadata_path, 'w') as f:
+            json.dump(metadata, f, indent=4)
+        
+        # Save model parameters
         torch.save(self.state_dict(), path)
+        print(f"Model and metadata saved to {path} and {metadata_path}, respectively.")
+
+    @staticmethod
+    def load(path):
+        """
+        Loads the NormalizingFlow model from the specified path.
+
+        Args:
+            path (str): The path to load the model from.
+
+        Returns:
+            NormalizingFlow: The loaded NormalizingFlow model.
+        """
+        # Load metadata
+        metadata_path = path + '_metadata.json'
+        with open(metadata_path, 'r') as f:
+            metadata = json.load(f)
+        
+        # Reconstruct the model using the loaded metadata
+        model = NormalizingFlow(forcing_size=metadata['forcing_size'], sle_size=metadata['sle_size'])
+        
+        # Load the model parameters
+        model.load_state_dict(torch.load(path))
+        model.eval()  # Set the model to evaluation mode
+        
+        return model
+        
+    
     
 
 
@@ -982,7 +1022,7 @@ class HybridEmulator(torch.nn.Module):
             self.deep_ensemble.fit(X_latent, y, epochs=de_epochs, sequence_length=sequence_length)
         self.trained = True
 
-    def forward(self, x):
+    def forward(self, x, smooth_projection=False,):
         """
         Performs a forward pass through the hybrid emulator.
 
@@ -1000,6 +1040,9 @@ class HybridEmulator(torch.nn.Module):
         X_latent = torch.concatenate((x, z), axis=1)
         prediction, epistemic = self.deep_ensemble(X_latent)
         aleatoric = self.normalizing_flow.aleatoric(x, 100)
+        
+        if smooth_projection:
+            stop = ''
         return prediction, epistemic, aleatoric
     
     def save(self, save_dir):
