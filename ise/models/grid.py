@@ -903,8 +903,8 @@ class NormalizingFlow(nn.Module):
         """
         # Prepare metadata for saving
         metadata = {
-            'forcing_size': self.forcing_size,
-            'sle_size': self.sle_size,
+            'forcing_size': self.num_input_features,
+            'sle_size': self.num_predicted_sle,
         }
         metadata_path = path + '_metadata.json'
         

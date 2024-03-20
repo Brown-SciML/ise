@@ -18,5 +18,6 @@ setup(
         "matplotlib",
         "seaborn",
         "tqdm",
+        "cftime",
     ],
 )
