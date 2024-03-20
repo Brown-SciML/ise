@@ -9,4 +9,6 @@ This repository contains source code for processing climate forcings from [ISMIP
 
 Documentation can be found at here: <https://brown-sciml.github.io/ise/>.
 
+To access code for exact replication of "A Variational LSTM Emulator of Sea Level Contribution From the Antarctic Ice Sheet", see the release [https://github.com/Brown-SciML/ise/releases/tag/v1.0.0](https://github.com/Brown-SciML/ise/releases/tag/v1.0.0).
+
 *This repository is a work in progress that is actively being updated and improved. Feel free to contact Peter Van Katwyk, Ph.D. student @ Brown University at peter_van_katwyk@brown.edu with further questions.*

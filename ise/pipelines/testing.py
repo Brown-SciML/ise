@@ -1,17 +1,19 @@
 """Pipeline functions for analyzing a trained network, including model testing, automatic generation
 of descriptive plots, and analyzing the accuracy of uncertainty bounds."""
+import json
 import os
-from ise.models.timeseries import TimeSeriesEmulator
-from ise.utils.data import (
+
+import pandas as pd
+
+from ise.evaluation._tests import binned_sle_table, test_pretrained_model
+from ise.evaluation.plots import SectorPlotter
+from ise.models.sector import VariationalLSTMEmulator
+from ise.utils.functions import (
+    calculate_distribution_metrics,
     combine_testing_results,
     load_ml_data,
-    calculate_distribution_metrics,
+    load_model,
 )
-from ise.models.testing import test_pretrained_model, binned_sle_table
-from ise.utils.models import load_model
-from ise.visualization import Plotter
-import json
-import pandas as pd
 
 
 def analyze_model(
@@ -65,7 +67,7 @@ def analyze_model(
         # save metrics, preds, and bounds
         with open(f"{save_directory}/metrics.txt", "w") as metrics_file:
             metrics_file.write(json.dumps(metrics))
-        
+
         pd.Series(preds, name="preds").to_csv(f"{save_directory}/NN_predictions.csv")
         # with open(f"{save_directory}/bounds.txt", "w") as bounds_file:
         #     bounds_file.write(json.dumps(bounds))
@@ -85,7 +87,7 @@ def analyze_model(
     if isinstance(model_path, str):
         model = load_model(
             model_path=model_path,
-            model_class=TimeSeriesEmulator,
+            model_class=VariationalLSTMEmulator,
             architecture=architecture,
             mc_dropout=mc_dropout,
             dropout_prob=dropout_prob,
@@ -112,14 +114,10 @@ JS Divergence: {distribution_metrics['js']}
         print("3/4: Generating plots")
 
     if plot:
-        plotter = Plotter.Plotter(
-            results_dataset=dataset, save_directory=save_directory
-        )
+        plotter = SectorPlotter(results_dataset=dataset, save_directory=save_directory)
         plotter.plot_ensemble(save=f"{save_directory}/ensemble_plot.png")
         plotter.plot_ensemble_mean(save=f"{save_directory}/ensemble_means.png")
-        plotter.plot_distributions(
-            year=2100, save=f"{save_directory}/distributions.png"
-        )
+        plotter.plot_distributions(year=2100, save=f"{save_directory}/distributions.png")
         plotter.plot_histograms(year=2100, save=f"{save_directory}/histograms.png")
         plotter.plot_callibration(alpha=0.5, save=f"{save_directory}/callibration.png")
 

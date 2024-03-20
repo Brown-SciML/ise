@@ -1,20 +1,21 @@
-import pandas as pd
-import numpy as np
 import gpytorch
+import numpy as np
+import pandas as pd
 import torch
 
 DATA_DIRECTORY = r"/users/pvankatw/emulator/untracked_folder/ml_data"
 
-train_features = pd.read_csv(f'{DATA_DIRECTORY}/ts_train_features.csv')
-train_labels = pd.read_csv(f'{DATA_DIRECTORY}/ts_train_labels.csv')
-test_features = pd.read_csv(f'{DATA_DIRECTORY}/ts_test_features.csv')
-test_labels = pd.read_csv(f'{DATA_DIRECTORY}/ts_test_labels.csv')
+train_features = pd.read_csv(f"{DATA_DIRECTORY}/ts_train_features.csv")
+train_labels = pd.read_csv(f"{DATA_DIRECTORY}/ts_train_labels.csv")
+test_features = pd.read_csv(f"{DATA_DIRECTORY}/ts_test_features.csv")
+test_labels = pd.read_csv(f"{DATA_DIRECTORY}/ts_test_labels.csv")
 
 
 train_features = torch.from_numpy(np.array(train_features))
 train_labels = torch.from_numpy(np.array(train_labels))
 test_features = torch.from_numpy(np.array(test_features))
 test_labels = torch.from_numpy(np.array(test_labels))
+
 
 class GPyTorchModel(gpytorch.models.ExactGP):
     def __init__(self, train_x, train_y, likelihood):
@@ -26,6 +27,7 @@ class GPyTorchModel(gpytorch.models.ExactGP):
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
 
 # initialize likelihood and model
 likelihood = gpytorch.likelihoods.GaussianLikelihood()
@@ -55,11 +57,16 @@ for i in range(training_iter):
     # Calc loss and backprop gradients
     loss = -mll(output, train_labels)
     loss.backward()
-    print('Iter %d/%d - Loss: %.3f   lengthscale: %.3f   noise: %.3f' % (
-        i + 1, training_iter, loss.item(),
-        model.covar_module.base_kernel.lengthscale.item(),
-        model.likelihood.noise.item()
-    ))
+    print(
+        "Iter %d/%d - Loss: %.3f   lengthscale: %.3f   noise: %.3f"
+        % (
+            i + 1,
+            training_iter,
+            loss.item(),
+            model.covar_module.base_kernel.lengthscale.item(),
+            model.likelihood.noise.item(),
+        )
+    )
     optimizer.step()
 
 
