@@ -189,6 +189,8 @@ class LogScaler(nn.Module):
         dataset_min = torch.min(X) - self.epsilon
         if dataset_min >= 0:
             self.min_value = 0
+        else:
+            self.min_value = dataset_min
 
     def transform(self, X):
         X = to_tensor(X).to(self.device)
@@ -214,6 +216,7 @@ class LogScaler(nn.Module):
         checkpoint = torch.load(path)
         scaler = LogScaler()
         scaler.epsilon = checkpoint["epsilon"]
+        scaler.min_value = checkpoint["min_value"]
         return scaler
     
 

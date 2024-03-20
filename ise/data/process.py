@@ -1163,6 +1163,8 @@ class DimensionalityReducer:
                 transformed_data[var],
                 columns=[f"{var}_pc{i+1}" for i in range(transformed_data[var].shape[1])],
             )
+            variable_df['model'] = "_".join(path.split('/')[-1].split('_')[2:4])
+            variable_df['exp'] = path.replace('.nc', '').split('/')[-1].split('_')[-1]
             variable_df.to_csv(f"{output_dir}/projections/PCA_{projection_name}.csv", index=False)
 
         print(
@@ -2925,15 +2927,15 @@ def process_sectors(
             else process_GrIS_atmospheric_sectors(forcing_directory, grid_file)
         )
         atmospheric_df.to_csv(f"{export_directory}/{ice_sheet}_atmospheric.csv", index=False)
-        # oceanic_df = (
-        #     process_AIS_oceanic_sectors(forcing_directory, grid_file)
-        #     if ice_sheet == "AIS"
-        #     else process_GrIS_oceanic_sectors(forcing_directory, grid_file)
-        # )
-        # oceanic_df.to_csv(f"{export_directory}/{ice_sheet}_oceanic.csv", index=False)
+        oceanic_df = (
+            process_AIS_oceanic_sectors(forcing_directory, grid_file)
+            if ice_sheet == "AIS"
+            else process_GrIS_oceanic_sectors(forcing_directory, grid_file)
+        )
+        oceanic_df.to_csv(f"{export_directory}/{ice_sheet}_oceanic.csv", index=False)
 
         # atmospheric_df = pd.read_csv(f"{export_directory}/{ice_sheet}_atmospheric.csv")
-        oceanic_df = pd.read_csv(f"{export_directory}/{ice_sheet}_oceanic.csv")
+        # oceanic_df = pd.read_csv(f"{export_directory}/{ice_sheet}_oceanic.csv")
         # atmospheric_df = atmospheric_df[[x for x in atmospheric_df.columns if '.1' not in x]]
         # oceanic_df = oceanic_df[[x for x in oceanic_df.columns if '.1' not in x]]
 

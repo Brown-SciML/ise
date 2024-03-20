@@ -318,3 +318,38 @@ class WeightedPCALoss(torch.nn.Module):
             return torch.sum(weighted_error)
         else:
             return weighted_error
+
+
+class MSEDeviationLoss(torch.nn.Module):
+    def __init__(self, threshold=1.0, penalty_multiplier=2.0):
+        """
+        Custom MSE Loss with an additional penalty for large deviations.
+
+        Parameters:
+        - threshold: The error magnitude beyond which the penalty is applied.
+        - penalty_multiplier: Multiplier for the penalty term for errors exceeding the threshold.
+        """
+        super(MSEDeviationLoss, self).__init__()
+        self.threshold = threshold
+        self.penalty_multiplier = penalty_multiplier
+
+    def forward(self, predictions, targets):
+        """
+        Compute the custom loss.
+
+        Parameters:
+        - predictions: The predicted values.
+        - targets: The ground truth values.
+
+        Returns:
+        - loss: The computed custom loss.
+        """
+        mse_loss = torch.mean((predictions - targets) ** 2)
+        large_deviation_penalty = torch.mean(
+            torch.where(
+                torch.abs(predictions - targets) > self.threshold,
+                self.penalty_multiplier * (predictions - targets) ** 2,
+                torch.tensor(0.0, device=predictions.device)
+            )
+        )
+        return mse_loss + large_deviation_penalty

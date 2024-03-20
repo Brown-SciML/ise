@@ -1,3 +1,4 @@
+import os
 import pickle
 from typing import List
 import torch
@@ -55,6 +56,8 @@ class FeatureEngineer:
             self.train, self.val, self.test = self.split_data(
                 data, train_size, val_size, test_size, output_directory, random_state=42
             )
+        self._including_model_characteristics = False
+        
 
         self.train = None
         self.val = None
@@ -123,23 +126,39 @@ class FeatureEngineer:
         if X is not None:
             self.X = X
         else:
-            dropped_columns = [
+            if self._including_model_characteristics:
+                dropped_columns = [
                 "id",
                 "cmip_model",
                 "pathway",
                 "exp",
                 "ice_sheet",
                 "Scenario",
-                "Ocean forcing",
-                "Ocean sensitivity",
-                "Ice shelf fracture",
                 "Tier",
                 "aogcm",
                 "id",
                 "exp",
                 "model",
                 "ivaf",
-            ]
+                ]
+            else:
+                dropped_columns = [
+                    "id",
+                    "cmip_model",
+                    "pathway",
+                    "exp",
+                    "ice_sheet",
+                    "Scenario",
+                    "Ocean forcing",
+                    "Ocean sensitivity",
+                    "Ice shelf fracture",
+                    "Tier",
+                    "aogcm",
+                    "id",
+                    "exp",
+                    "model",
+                    "ivaf",
+                ]
             dropped_columns = [x for x in self.data.columns if x in dropped_columns]
             dropped_data = self.data[dropped_columns]
             self.X = self.data.drop(
@@ -205,8 +224,12 @@ class FeatureEngineer:
 
         # Optionally save the scalers
         if save_dir is not None:
-            self.scaler_X_path = f"{save_dir}/scaler_X.pkl"
-            self.scaler_y_path = f"{save_dir}/scaler_y.pkl"
+            if os.path.exists(f'{save_dir}/scalers/'):
+                self.scaler_X_path = f"{save_dir}/scalers/scaler_X.pkl"
+                self.scaler_y_path = f"{save_dir}/scalers/scaler_y.pkl"
+            else:
+                self.scaler_X_path = f"{save_dir}/scaler_X.pkl"
+                self.scaler_y_path = f"{save_dir}/scaler_y.pkl"
             with open(self.scaler_X_path, "wb") as f:
                 pickle.dump(scaler_X, f)
             with open(self.scaler_y_path, "wb") as f:
@@ -276,8 +299,25 @@ class FeatureEngineer:
             self.data = data
         self.data = drop_outliers(self.data, column, method, expression, quantiles)
         return self
+    
+    def add_model_characteristics(self, data=None, model_char_path=r'./ise/utils/model_characteristics.csv', encode=True):
+        if data is not None:
+            self.data = data
+        self.data = add_model_characteristics(self.data, model_char_path, encode)
+        self._including_model_characteristics = True
+        
+        return self
 
 
+def add_model_characteristics(data, model_char_path=r'./ise/utils/model_characteristics.csv', encode=True) -> pd.DataFrame:
+    model_chars = pd.read_csv(model_char_path)
+    all_data = pd.merge(data, model_chars, on='model', how='left')
+    existing_char_columns = ['Ocean forcing', 'Ocean sensitivity', 'Ice shelf fracture'] # These are the columns that are already in the data and should not be encoded
+    if encode:
+        all_data = pd.get_dummies(all_data, columns=[x for x in model_chars.columns if x not in ['initial_year', 'model', 'Scenario', ]] + existing_char_columns)
+    
+    return all_data
+    
 def backfill_outliers(data, percentile=99.999):
     """
     Replaces extreme values in y-values (above the specified percentile and below the 1-percentile across all y-values)
@@ -540,20 +580,17 @@ def drop_outliers(
     # Check if outlier_data is empty
     if outlier_data.empty:
         return data
-
-    cols = outlier_data.columns
-
-    # Get columns with non-zero values
-    # nonzero_columns = outlier_data.apply(lambda x: x > 0).apply(
-    #     lambda x: list(cols[x.values]), axis=1
-    # )
-
+    
     # Create dataframe of experiments with outliers (want to delete the entire 86 rows)
     outlier_runs = pd.DataFrame()
     # TODO: Check to see if this works
     outlier_runs["modelname"] = outlier_data["model"]
     outlier_runs["exp_id"] = outlier_data["exp"]
-    outlier_runs["sector"] = outlier_data["sector"]
+    try:
+        outlier_runs["sector"] = outlier_data["sector"]
+        sectors = True
+    except KeyError:
+        sectors = False
     outlier_runs_list = outlier_runs.values.tolist()
     unique_outliers = [list(x) for x in set(tuple(x) for x in outlier_runs_list)]
 
@@ -563,10 +600,12 @@ def drop_outliers(
     for i in tqdm(unique_outliers, total=len(unique_outliers), desc="Dropping outliers"):
         modelname = i[0]
         exp_id = i[1]
-        sector = i[2]
-        data.loc[
-            (data.model == modelname) & (data.exp == exp_id) & (data.sector == sector), "outlier"
-        ] = True
+        
+        if sectors:
+            sector = i[2]
+            data.loc[(data.model == modelname) & (data.exp == exp_id) & (data.sector == sector), "outlier"] = True
+        else:
+            data.loc[(data.model == modelname) & (data.exp == exp_id), "outlier"] = True
 
     data = data[data["outlier"] == False]
 

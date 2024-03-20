@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import xarray as xr
 from scipy.spatial.distance import jensenshannon
+from scipy.stats import kstest, ttest_ind
 
 
 def sum_by_sector(array, grid_file):
@@ -109,3 +110,11 @@ def relative_squared_error(y_true, y_pred):
     ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
     rse = ss_res / ss_tot
     return rse
+
+def kolmogorov_smirnov(x1, x2):
+    res = kstest(x1, x2)
+    return res.statistic, res.pvalue
+
+def t_test(x1, x2):
+    res = ttest_ind(x1, x2)
+    return res.statistic, res.pvalue

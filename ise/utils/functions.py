@@ -348,21 +348,9 @@ def get_uncertainty_bands(
     return mean, sd, upper_ci, lower_ci, upper_q, lower_q
 
 
-def create_distribution(year: int, dataset: np.ndarray):
-    """Creates a distribution from an array of numbers using a gaussian kernel density estimator.
-    Takes an array and ensures it follows probability rules (e.g. integrate to 1, nonzero, etc.),
-    useful for calculating divergences such as ise.utils.data.kl_divergence and ise.utils.data.js_divergence.
-
-    Args:
-        year (int): Year to generate the distribution.
-        dataset (np.ndarray): MX85 matrix of true values or predictions for the series, see ise.utils.data.group_by_run.
-
-    Returns:
-        tuple: Tuple containing [density, support], or the output distribution and the x values associated with those probabilities.
-    """
-    data = dataset[:, year - 2101]  # -1 will be year 2100
-    kde = gaussian_kde(data, bw_method="silverman")
-    support = np.arange(-30, 20, 0.001)
+def create_distribution(dataset: np.ndarray, min_range=-30, max_range=20, step=0.001):
+    kde = gaussian_kde(dataset, bw_method="silverman")
+    support = np.arange(min_range, max_range, step)
     density = kde(support)
     return density, support
 
@@ -559,7 +547,7 @@ def _structure_architecture_args(architecture, time_series):
     return architecture
 
 
-def get_X_y(data, dataset_type="sectors", return_format=None):
+def get_X_y(data, dataset_type="sectors", return_format=None, ):
     if dataset_type.lower() == "sectors":
         dropped_columns = [
             "id",
@@ -577,6 +565,7 @@ def get_X_y(data, dataset_type="sectors", return_format=None):
             "exp",
             "model",
             "ivaf",
+            "outlier",
         ]
         dropped_columns = [x for x in data.columns if x in dropped_columns]
         X_drop = [x for x in data.columns if "sle" in x] + dropped_columns
