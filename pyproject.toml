@@ -16,6 +16,18 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    "numpy>=1.23.1",
+    "pandas>=1.4.4",
+    "pdoc>=14.4.0",
+    "scikit-learn",
+    "torch>=1.13.0",
+    "xarray>=0.20.1",
+    "tensorboard>=2.9.0",
+    "matplotlib>=3.5.2",
+    "seaborn>=0.12.1",
+    "tqdm>=4.64.1",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/Brown-SciML/ise"
