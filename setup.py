@@ -19,5 +19,6 @@ setup(
         "seaborn",
         "tqdm",
         "cftime",
+        "netcdf4",
     ],
 )

@@ -3,6 +3,7 @@
 
 import json
 import os
+import pickle
 import warnings
 
 import numpy as np
@@ -437,7 +438,7 @@ class WeakPredictor(nn.Module):
         # Perform linear layer operations
         x = self.linear1(x)
         x = self.relu(x)
-        x = self.dropout(x)
+        # x = self.dropout(x)
         x = self.linear_out(x)
 
         return x
@@ -588,13 +589,13 @@ class DeepEnsemble(nn.Module):
                 raise ValueError(
                     "forcing_size and sle_size must be provided if weak_predictors is not provided"
                 )
-            self.loss_choices = [torch.nn.MSELoss(), MSEDeviationLoss(threshold=1.0, penalty_multiplier=2.0), torch.nn.L1Loss(), torch.nn.HuberLoss()]
-            loss_probabilities = [.45, .05, .3, .2]
+            self.loss_choices = [torch.nn.MSELoss(), torch.nn.MSELoss(), torch.nn.L1Loss(), torch.nn.HuberLoss()]
+            # loss_probabilities = [.45, .05, .3, .2]
             self.weak_predictors = [
                 WeakPredictor(
                     lstm_num_layers=np.random.randint(low=1, high=3, size=1)[0],
                     lstm_hidden_size=np.random.choice([512, 256, 128, 64], 1)[0],
-                    criterion=np.random.choice(self.loss_choices, 1, p=loss_probabilities)[0],
+                    criterion=np.random.choice(self.loss_choices, 1, )[0],
                     input_size=forcing_size,
                     output_size=1,
                 )
@@ -627,8 +628,9 @@ class DeepEnsemble(nn.Module):
         """
         if not self.trained:
             warnings.warn("This model has not been trained. Predictions will not be accurate.")
-        mean_prediction = torch.mean(torch.stack([wp.predict(x) for wp in self.weak_predictors], axis=1), axis=1).squeeze()
-        epistemic_uncertainty = torch.std(torch.stack([wp.predict(x) for wp in self.weak_predictors], axis=1), axis=1).squeeze()
+        preds = torch.stack([wp.predict(x) for wp in self.weak_predictors], axis=1)
+        mean_prediction = torch.mean(preds, axis=1).squeeze()
+        epistemic_uncertainty = torch.std(preds, axis=1).squeeze()
         return mean_prediction, epistemic_uncertainty
     
     def predict(self, x):
@@ -941,9 +943,6 @@ class NormalizingFlow(nn.Module):
         
         return model
         
-    
-    
-
 
 
 class HybridEmulator(torch.nn.Module):
@@ -986,6 +985,7 @@ class HybridEmulator(torch.nn.Module):
         self.deep_ensemble = deep_ensemble.to(self.device)
         self.normalizing_flow = normalizing_flow.to(self.device)
         self.trained = self.deep_ensemble.trained and self.normalizing_flow.trained
+        self.scaler_path = None
 
     def fit(self, X, y, epochs=100, nf_epochs=None, de_epochs=None, sequence_length=5):
         """
@@ -1040,10 +1040,52 @@ class HybridEmulator(torch.nn.Module):
         X_latent = torch.concatenate((x, z), axis=1)
         prediction, epistemic = self.deep_ensemble(X_latent)
         aleatoric = self.normalizing_flow.aleatoric(x, 100)
+        prediction = prediction.detach().cpu().numpy()
+        epistemic = epistemic.detach().cpu().numpy()
+        uncertainties = dict(
+            total=aleatoric+epistemic,
+            epistemic=epistemic,
+            aleatoric=aleatoric,
+        )
+        #        uncertainties = dict(
+        #     total=dict(upper=prediction + epistemic + aleatoric, lower=prediction - epistemic - aleatoric),
+        #     epistemic=dict(upper=prediction + epistemic, lower=prediction - epistemic),
+        #     aleatoric=dict(upper=prediction + aleatoric, lower=prediction - aleatoric),
+        # )
         
         if smooth_projection:
             stop = ''
-        return prediction, epistemic, aleatoric
+        return prediction, uncertainties
+        
+    def predict(self, x, scaler_path=None, smooth_projection=False):
+        if scaler_path is None and self.scaler_path is None:
+            warnings.warn("No scaler path provided, uncertainties are not in units of SLE.")
+            return self.forward(x, smooth_projection=smooth_projection)
+        
+        predictions, uncertainties = self.forward(x, smooth_projection=smooth_projection)
+        epi = uncertainties['epistemic']
+        ale = uncertainties['aleatoric']
+        
+        self.scaler_path = scaler_path
+        with open(self.scaler_path, "rb") as f:
+            scaler = pickle.load(f)
+            
+        bound_epistemic, bound_aleatoric = predictions + epi, predictions + ale
+        
+        unscaled_predictions = scaler.inverse_transform(predictions.reshape(-1, 1))
+        unscaled_bound_epistemic = scaler.inverse_transform(bound_epistemic.reshape(-1, 1))
+        unscaled_bound_aleatoric = scaler.inverse_transform(bound_aleatoric.reshape(-1, 1))
+        epistemic = unscaled_bound_epistemic - unscaled_predictions
+        aleatoric = unscaled_bound_aleatoric - unscaled_predictions
+        
+        uncertainties = dict(
+            total=epistemic+aleatoric,
+            epistemic=epistemic,
+            aleatoric=aleatoric,
+        )
+
+        return unscaled_predictions, epistemic, aleatoric
+            
     
     def save(self, save_dir):
         """
