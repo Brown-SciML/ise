@@ -2,7 +2,7 @@ import os
 import random
 import warnings
 
-import imageio
+# import imageio
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -228,38 +228,39 @@ class EvaluationPlotter:
         plt.close("all")
 
     def _generate_side_by_side_video(self, y_true, y_pred, fps=3):
-        if not (len(y_true.shape) == 3 and len(y_pred.shape) == 3):
-            raise ValueError(
-                "y_true and y_pred must be 3D arrays with shape (timesteps, height, width)"
-            )
+        pass
+        # if not (len(y_true.shape) == 3 and len(y_pred.shape) == 3):
+        #     raise ValueError(
+        #         "y_true and y_pred must be 3D arrays with shape (timesteps, height, width)"
+        #     )
 
-        timesteps = y_true.shape[0]
+        # timesteps = y_true.shape[0]
 
-        for timestep in tqdm(range(timesteps), total=timesteps, desc="Generating video"):
-            save_path = f"timestep_{timestep}.png"  # Save each frame with timestep
-            self.spatial_side_by_side(
-                y_true, y_pred, timestep, save_path, cmap=plt.cm.viridis, video=False
-            )
+        # for timestep in tqdm(range(timesteps), total=timesteps, desc="Generating video"):
+        #     save_path = f"timestep_{timestep}.png"  # Save each frame with timestep
+        #     self.spatial_side_by_side(
+        #         y_true, y_pred, timestep, save_path, cmap=plt.cm.viridis, video=False
+        #     )
 
-        images = []
-        # Improved sorting function that handles unexpected filenames more gracefully
-        try:
-            files = sorted(
-                os.listdir(self.save_dir),
-                key=lambda x: int(x.replace("timestep_", "").split(".")[0]),
-            )
-        except ValueError:
-            raise ValueError(
-                "Unexpected filenames found in save directory. Expected format: 'timestep_#.png'"
-            )
-        for filename in files:
-            if filename.endswith(".png"):
-                image_path = os.path.join(self.save_dir, filename)
-                images.append(imageio.imread(image_path))
+        # images = []
+        # # Improved sorting function that handles unexpected filenames more gracefully
+        # try:
+        #     files = sorted(
+        #         os.listdir(self.save_dir),
+        #         key=lambda x: int(x.replace("timestep_", "").split(".")[0]),
+        #     )
+        # except ValueError:
+        #     raise ValueError(
+        #         "Unexpected filenames found in save directory. Expected format: 'timestep_#.png'"
+        #     )
+        # for filename in files:
+        #     if filename.endswith(".png"):
+        #         image_path = os.path.join(self.save_dir, filename)
+        #         images.append(imageio.imread(image_path))
 
-        # Create a video from the images
-        video_path = f"{self.save_dir}/plot_video.mp4"
-        imageio.mimwrite(video_path, images, fps=fps, codec="libx264")  # fps is frames per second
+        # # Create a video from the images
+        # video_path = f"{self.save_dir}/plot_video.mp4"
+        # imageio.mimwrite(video_path, images, fps=fps, codec="libx264")  # fps is frames per second
 
     def sector_side_by_side(
         self,

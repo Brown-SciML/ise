@@ -9,6 +9,7 @@ import torch
 from netCDF4 import Dataset
 from scipy.stats import gaussian_kde
 from sklearn.preprocessing import MinMaxScaler
+import pickle as pkl
 
 from ise.evaluation.metrics import js_divergence, kl_divergence
 
@@ -607,3 +608,18 @@ def to_tensor(x):
     else:
         raise ValueError("Data must be a pandas dataframe, numpy array, or PyTorch tensor")
     return x.float()
+
+def unscale(y, scaler_path):
+    """
+    Unscale the output data using the scaler saved during training.
+
+    Args:
+        y: Input data to be unscaled.
+        scaler_path: Path to the scaler used for scaling the data.
+
+    Returns:
+        The unscaled data.
+    """
+    scaler = pkl.load(open(scaler_path, "rb"))
+    y = scaler.inverse_transform(y)
+    return y
