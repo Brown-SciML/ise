@@ -758,17 +758,24 @@ class DeepEnsemble(nn.Module):
                 output_size=wp_metadata['sle_size'],
                 criterion=criterion
             )
-            wp.load_state_dict(torch.load(wp_path))
+            if torch.cuda.is_available():
+                wp.load_state_dict(torch.load(wp_path))
+            else:
+                wp.load_state_dict(torch.load(wp_path, map_location='cpu'))
             wp.eval()  # Set the weak predictor to evaluation mode
             weak_predictors.append(wp)
         
         # Instantiate the model with the loaded weak predictors
         model = cls(weak_predictors=weak_predictors)
-        
+
         # Load the ensemble model parameters excluding weak predictors as they are loaded separately
         ensemble_state_dict = torch.load(model_path)
         # It might be necessary to filter out weak_predictor states from the ensemble state_dict if they were included
         model.load_state_dict(ensemble_state_dict, strict=False)
+        
+        model.forcing_size = wp_metadata['forcing_size']
+        model.sle_size = wp_metadata['sle_size']
+        model.num_predictors = len(weak_predictors)
         model.eval()  # Set the model to evaluation mode
         
         return model
