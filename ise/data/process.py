@@ -10,7 +10,7 @@ import xarray as xr
 from tqdm import tqdm
 
 from ise.data.scaler import LogScaler, RobustScaler, StandardScaler
-from ise.models.grid import PCA
+from ise.models.hybrid import PCA
 from ise.utils.functions import get_all_filepaths
 
 
@@ -1163,8 +1163,8 @@ class DimensionalityReducer:
                 transformed_data[var],
                 columns=[f"{var}_pc{i+1}" for i in range(transformed_data[var].shape[1])],
             )
-            variable_df['model'] = "_".join(path.split('/')[-1].split('_')[2:4])
-            variable_df['exp'] = path.replace('.nc', '').split('/')[-1].split('_')[-1]
+            variable_df["model"] = "_".join(path.split("/")[-1].split("_")[2:4])
+            variable_df["exp"] = path.replace(".nc", "").split("/")[-1].split("_")[-1]
             variable_df.to_csv(f"{output_dir}/projections/PCA_{projection_name}.csv", index=False)
 
         print(
@@ -2936,8 +2936,8 @@ def process_sectors(
 
         atmospheric_df = pd.read_csv(f"{export_directory}/{ice_sheet}_atmospheric.csv")
         oceanic_df = pd.read_csv(f"{export_directory}/{ice_sheet}_oceanic.csv")
-        atmospheric_df = atmospheric_df[[x for x in atmospheric_df.columns if '.1' not in x]]
-        oceanic_df = oceanic_df[[x for x in oceanic_df.columns if '.1' not in x]]
+        atmospheric_df = atmospheric_df[[x for x in atmospheric_df.columns if ".1" not in x]]
+        oceanic_df = oceanic_df[[x for x in oceanic_df.columns if ".1" not in x]]
 
         atmospheric_df = atmospheric_df.loc[:, ~atmospheric_df.columns.duplicated()]
         oceanic_df = oceanic_df.loc[:, ~oceanic_df.columns.duplicated()]

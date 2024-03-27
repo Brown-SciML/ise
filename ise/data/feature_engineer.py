@@ -2,10 +2,10 @@ import json
 import os
 import pickle
 from typing import List
-import torch
 
 import numpy as np
 import pandas as pd
+import torch
 from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
 from tqdm import tqdm
 
@@ -58,7 +58,6 @@ class FeatureEngineer:
                 data, train_size, val_size, test_size, output_directory, random_state=42
             )
         self._including_model_characteristics = False
-        
 
         self.train = None
         self.val = None
@@ -129,18 +128,18 @@ class FeatureEngineer:
         else:
             if self._including_model_characteristics:
                 dropped_columns = [
-                "id",
-                "cmip_model",
-                "pathway",
-                "exp",
-                "ice_sheet",
-                "Scenario",
-                "Tier",
-                "aogcm",
-                "id",
-                "exp",
-                "model",
-                "ivaf",
+                    "id",
+                    "cmip_model",
+                    "pathway",
+                    "exp",
+                    "ice_sheet",
+                    "Scenario",
+                    "Tier",
+                    "aogcm",
+                    "id",
+                    "exp",
+                    "model",
+                    "ivaf",
                 ]
             else:
                 dropped_columns = [
@@ -225,7 +224,7 @@ class FeatureEngineer:
 
         # Optionally save the scalers
         if save_dir is not None:
-            if os.path.exists(f'{save_dir}/scalers/'):
+            if os.path.exists(f"{save_dir}/scalers/"):
                 self.scaler_X_path = f"{save_dir}/scalers/scaler_X.pkl"
                 self.scaler_y_path = f"{save_dir}/scalers/scaler_y.pkl"
             else:
@@ -244,7 +243,6 @@ class FeatureEngineer:
             ],
             axis=1,
         )
-        
 
         return X_scaled, y_scaled
 
@@ -254,7 +252,7 @@ class FeatureEngineer:
             self.scaler_X_path = scaler_X_path
         if scaler_y_path is not None:
             self.scaler_y_path = scaler_y_path
-        
+
         if isinstance(y, torch.Tensor):
             y = y.detach().cpu().numpy()
 
@@ -301,34 +299,58 @@ class FeatureEngineer:
             self.data = data
         self.data = drop_outliers(self.data, column, method, expression, quantiles)
         return self
-    
-    def add_model_characteristics(self, data=None, model_char_path=r'./ise/utils/model_characteristics.csv', encode=True, ids_path=None):
+
+    def add_model_characteristics(
+        self,
+        data=None,
+        model_char_path=r"./ise/utils/model_characteristics.csv",
+        encode=True,
+        ids_path=None,
+    ):
         if data is not None:
             self.data = data
         self.data = add_model_characteristics(self.data, model_char_path, encode, ids_path=ids_path)
         self._including_model_characteristics = True
-        
+
         return self
-    
 
 
-def add_model_characteristics(data, model_char_path=r'./ise/utils/model_characteristics.csv', encode=True, ids_path=None) -> pd.DataFrame:
+def add_model_characteristics(
+    data, model_char_path=r"./ise/utils/model_characteristics.csv", encode=True, ids_path=None
+) -> pd.DataFrame:
     model_chars = pd.read_csv(model_char_path)
-    all_data = pd.merge(data, model_chars, on='model', how='left')
-    existing_char_columns = ['Ocean forcing', 'Ocean sensitivity', 'Ice shelf fracture'] # These are the columns that are already in the data and should not be encoded
-    
+    all_data = pd.merge(data, model_chars, on="model", how="left")
+    existing_char_columns = [
+        "Ocean forcing",
+        "Ocean sensitivity",
+        "Ice shelf fracture",
+    ]  # These are the columns that are already in the data and should not be encoded
+
     # if 'Ocean forcing' not in data.columns:
     #     if ids_path is None:
     #         raise ValueError("ids must be provided if 'Ocean forcing' is not in the data.")
     #     else:
     #         ids = json.load(open(ids_path, 'r'))
-            
-    
+
     if encode:
-        all_data = pd.get_dummies(all_data, columns=[x for x in model_chars.columns if x not in ['initial_year', 'model', 'Scenario', ]] + existing_char_columns)
-    
+        all_data = pd.get_dummies(
+            all_data,
+            columns=[
+                x
+                for x in model_chars.columns
+                if x
+                not in [
+                    "initial_year",
+                    "model",
+                    "Scenario",
+                ]
+            ]
+            + existing_char_columns,
+        )
+
     return all_data
-    
+
+
 def backfill_outliers(data, percentile=99.999):
     """
     Replaces extreme values in y-values (above the specified percentile and below the 1-percentile across all y-values)
@@ -420,7 +442,11 @@ def add_lag_variables(data: pd.DataFrame, lag: int) -> pd.DataFrame:
             # Fill missing values caused by shifting
             lagged_segment.fillna(method="bfill", inplace=True)
             non_lagged_data = pd.concat(
-                [non_lagged_data.reset_index(drop=True), lagged_data.reset_index(drop=True), lagged_segment.reset_index(drop=True), ],
+                [
+                    non_lagged_data.reset_index(drop=True),
+                    lagged_data.reset_index(drop=True),
+                    lagged_segment.reset_index(drop=True),
+                ],
                 axis=1,
             )
 
@@ -508,14 +534,14 @@ def split_training_data(
         int(len(total_ids) * train_size) : int(len(total_ids) * (train_size + val_size))
     ]
     test_ids = total_ids[int(len(total_ids) * (train_size + val_size)) :]
-    
+
     split_data = {
-    "train_ids": train_ids.tolist(),
-    "val_ids": val_ids.tolist(),
-    "test_ids": test_ids.tolist()
+        "train_ids": train_ids.tolist(),
+        "val_ids": val_ids.tolist(),
+        "test_ids": test_ids.tolist(),
     }
-    
-    with open(f"{output_directory}/ids.json", 'w') as file:
+
+    with open(f"{output_directory}/ids.json", "w") as file:
         json.dump(split_data, file)
 
     train = data[data["id"].isin(train_ids)]
@@ -600,7 +626,7 @@ def drop_outliers(
     # Check if outlier_data is empty
     if outlier_data.empty:
         return data
-    
+
     # Create dataframe of experiments with outliers (want to delete the entire 86 rows)
     outlier_runs = pd.DataFrame()
     # TODO: Check to see if this works
@@ -620,10 +646,13 @@ def drop_outliers(
     for i in tqdm(unique_outliers, total=len(unique_outliers), desc="Dropping outliers"):
         modelname = i[0]
         exp_id = i[1]
-        
+
         if sectors:
             sector = i[2]
-            data.loc[(data.model == modelname) & (data.exp == exp_id) & (data.sector == sector), "outlier"] = True
+            data.loc[
+                (data.model == modelname) & (data.exp == exp_id) & (data.sector == sector),
+                "outlier",
+            ] = True
         else:
             data.loc[(data.model == modelname) & (data.exp == exp_id), "outlier"] = True
 

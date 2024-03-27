@@ -1,10 +1,11 @@
 import numpy as np
 import pandas as pd
 import torch
-from torch import nn
 from scipy.stats import yeojohnson, yeojohnson_normmax
+from torch import nn
 
 from ise.utils.functions import to_tensor
+
 
 class StandardScaler(nn.Module):
     """
@@ -194,7 +195,7 @@ class LogScaler(nn.Module):
 
     def transform(self, X):
         X = to_tensor(X).to(self.device)
-        X_shifted = X - self.min_value # adding shift (subtracting negative or zero)
+        X_shifted = X - self.min_value  # adding shift (subtracting negative or zero)
         return torch.log(X_shifted + self.epsilon)
 
     def inverse_transform(self, X):
@@ -218,7 +219,7 @@ class LogScaler(nn.Module):
         scaler.epsilon = checkpoint["epsilon"]
         scaler.min_value = checkpoint["min_value"]
         return scaler
-    
+
 
 class YeoJohnsonScaler(nn.Module):
     def __init__(self):
@@ -239,12 +240,17 @@ class YeoJohnsonScaler(nn.Module):
         # Transformation logic here...
 
     def inverse_transform(self, X):
-        raise NotImplementedError("Inverse transform is not implemented due to its complexity and dependency on the original data scale.")
+        raise NotImplementedError(
+            "Inverse transform is not implemented due to its complexity and dependency on the original data scale."
+        )
 
     def save(self, path):
-        torch.save({
-            "lambdas_": self.lambdas_,
-        }, path)
+        torch.save(
+            {
+                "lambdas_": self.lambdas_,
+            },
+            path,
+        )
 
     @staticmethod
     def load(path, device=None):
@@ -254,4 +260,3 @@ class YeoJohnsonScaler(nn.Module):
         scaler.lambdas_ = checkpoint["lambdas_"]
         scaler.to(device)
         return scaler
-

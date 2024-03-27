@@ -1,4 +1,5 @@
 import os
+import pickle as pkl
 from itertools import product
 from typing import List
 
@@ -9,7 +10,6 @@ import torch
 from netCDF4 import Dataset
 from scipy.stats import gaussian_kde
 from sklearn.preprocessing import MinMaxScaler
-import pickle as pkl
 
 from ise.evaluation.metrics import js_divergence, kl_divergence
 
@@ -548,7 +548,11 @@ def _structure_architecture_args(architecture, time_series):
     return architecture
 
 
-def get_X_y(data, dataset_type="sectors", return_format=None, ):
+def get_X_y(
+    data,
+    dataset_type="sectors",
+    return_format=None,
+):
     if dataset_type.lower() == "sectors":
         dropped_columns = [
             "id",
@@ -608,6 +612,7 @@ def to_tensor(x):
     else:
         raise ValueError("Data must be a pandas dataframe, numpy array, or PyTorch tensor")
     return x.float()
+
 
 def unscale(y, scaler_path):
     """

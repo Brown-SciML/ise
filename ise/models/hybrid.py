@@ -1,5 +1,14 @@
+"""Description
 
-
+Classes:
+    - PCA: Class for Prinicpal Component Analysis, including fitting and transforming data.
+    - DimensionProcessor: Class for dimension processing using PCA and scaling.
+    - WeakPredictor: Class for an individual 'weak' predictor model in a deep ensemble.
+    - DeepEnsemble: Class for a deep ensemble of WeakPredictor models.
+    - NormalizingFlow: Class for a Normalizing Flow model.
+    - HybridEmulator: Model class for emulating ismip6 ice sheet models while quantifying both data and model uncertainty.
+    
+"""
 
 import json
 import os
@@ -13,7 +22,7 @@ from nflows import distributions, flows, transforms
 from torch import nn, optim
 
 from ise.data.dataclasses import EmulatorDataset
-from ise.data.scaler import StandardScaler, RobustScaler, LogScaler
+from ise.data.scaler import LogScaler, RobustScaler, StandardScaler
 from ise.models.loss import MSEDeviationLoss, WeightedMSELoss
 from ise.utils.functions import to_tensor
 
@@ -251,7 +260,7 @@ class DimensionProcessor(nn.Module):
             scaler_class = LogScaler
         else:
             raise ValueError("scaler_method must be 'standard', 'robust', or 'log'")
-    
+
         if isinstance(scaler_model, str):
             self.scaler = scaler_class.load(scaler_model)
         elif isinstance(scaler_model, scaler_class):
@@ -364,7 +373,7 @@ class WeakPredictor(nn.Module):
         criterion=torch.nn.MSELoss(),
     ):
         super(WeakPredictor, self).__init__()
-        
+
         # Initialize attributes
         self.lstm_num_layers = lstm_num_layers
         self.lstm_num_hidden = lstm_hidden_size
@@ -508,9 +517,7 @@ class WeakPredictor(nn.Module):
                 val_preds = self.predict(
                     val_X, sequence_length=sequence_length, batch_size=batch_size
                 ).to(self.device)
-                val_loss = self.criterion(
-                    val_preds, torch.tensor(val_y, device=self.device)
-                )
+                val_loss = self.criterion(val_preds, torch.tensor(val_y, device=self.device))
                 print(
                     f"Epoch {epoch}, Average Batch Loss: {sum(batch_losses) / len(batch_losses)}, Validation Loss: {val_loss}"
                 )
@@ -579,9 +586,7 @@ class DeepEnsemble(nn.Module):
     - load(model_path): Loads the model parameters and metadata and returns an instance of the model.
     """
 
-    def __init__(
-        self, weak_predictors: list = [], forcing_size=83, sle_size=1, num_predictors=3
-    ):
+    def __init__(self, weak_predictors: list = [], forcing_size=83, sle_size=1, num_predictors=3):
         super(DeepEnsemble, self).__init__()
         self.forcing_size = forcing_size
         self.sle_size = sle_size
@@ -591,13 +596,21 @@ class DeepEnsemble(nn.Module):
                 raise ValueError(
                     "forcing_size and sle_size must be provided if weak_predictors is not provided"
                 )
-            self.loss_choices = [torch.nn.MSELoss(), torch.nn.MSELoss(), torch.nn.L1Loss(), torch.nn.HuberLoss()]
+            self.loss_choices = [
+                torch.nn.MSELoss(),
+                torch.nn.MSELoss(),
+                torch.nn.L1Loss(),
+                torch.nn.HuberLoss(),
+            ]
             # loss_probabilities = [.45, .05, .3, .2]
             self.weak_predictors = [
                 WeakPredictor(
                     lstm_num_layers=np.random.randint(low=1, high=3, size=1)[0],
                     lstm_hidden_size=np.random.choice([512, 256, 128, 64], 1)[0],
-                    criterion=np.random.choice(self.loss_choices, 1, )[0],
+                    criterion=np.random.choice(
+                        self.loss_choices,
+                        1,
+                    )[0],
                     input_size=forcing_size,
                     output_size=1,
                 )
@@ -634,7 +647,7 @@ class DeepEnsemble(nn.Module):
         mean_prediction = torch.mean(preds, axis=1).squeeze()
         epistemic_uncertainty = torch.std(preds, axis=1).squeeze()
         return mean_prediction, epistemic_uncertainty
-    
+
     def predict(self, x):
         """
         Makes predictions using the model.
@@ -673,7 +686,7 @@ class DeepEnsemble(nn.Module):
             wp.fit(X, y, epochs=epochs, batch_size=batch_size, sequence_length=sequence_length)
             print("")
         self.trained = True
-        
+
     def save(self, model_path):
         """
         Saves the model parameters and metadata, including each WeakPredictor individually.
@@ -682,7 +695,9 @@ class DeepEnsemble(nn.Module):
         - model_path: Path to save the model.
         """
         if not self.trained:
-            raise ValueError("This model has not been trained yet. Please train the model before saving.")
+            raise ValueError(
+                "This model has not been trained yet. Please train the model before saving."
+            )
 
         # Create a directory for the weak_predictor models if it does not exist
         model_dir = os.path.dirname(model_path)
@@ -692,21 +707,24 @@ class DeepEnsemble(nn.Module):
 
         # Metadata for the ensemble, not including the state_dicts of the weak_predictors
         metadata = {
-            'model_type': self.__class__.__name__,
-            'weak_predictors': [
+            "model_type": self.__class__.__name__,
+            "weak_predictors": [
                 {
-                    'lstm_num_layers': int(wp.lstm_num_layers),
-                    'lstm_num_hidden': int(wp.lstm_num_hidden),
-                    'criterion': wp.criterion.__class__.__name__,
-                    'forcing_size': wp.input_size,
-                    'sle_size': wp.output_size,
-                    'trained': wp.trained,
-                    'weak_predictor_path': os.path.join("weak_predictors", f"weak_predictor_{i}.pth")  # Path relative to model_dir
-                } for i, wp in enumerate(self.weak_predictors)
+                    "lstm_num_layers": int(wp.lstm_num_layers),
+                    "lstm_num_hidden": int(wp.lstm_num_hidden),
+                    "criterion": wp.criterion.__class__.__name__,
+                    "forcing_size": wp.input_size,
+                    "sle_size": wp.output_size,
+                    "trained": wp.trained,
+                    "weak_predictor_path": os.path.join(
+                        "weak_predictors", f"weak_predictor_{i}.pth"
+                    ),  # Path relative to model_dir
+                }
+                for i, wp in enumerate(self.weak_predictors)
             ],
         }
-        metadata_path = model_path.replace('.pth', '_metadata.json')
-        with open(metadata_path, 'w') as file:
+        metadata_path = model_path.replace(".pth", "_metadata.json")
+        with open(metadata_path, "w") as file:
             json.dump(metadata, file, indent=4)
         print(f"Model metadata saved to {metadata_path}")
 
@@ -719,7 +737,6 @@ class DeepEnsemble(nn.Module):
             wp_model_path = os.path.join(weak_predictors_dir, f"weak_predictor_{i+1}.pth")
             torch.save(wp.state_dict(), wp_model_path)
             print(f"WeakPredictor {i+1} model parameters saved to {wp_model_path}")
-
 
     @classmethod
     def load(cls, model_path):
@@ -734,37 +751,43 @@ class DeepEnsemble(nn.Module):
         - An instance of the model with loaded parameters.
         """
         # Load metadata
-        metadata_path = model_path.replace('.pth', '_metadata.json')
-        with open(metadata_path, 'r') as file:
+        metadata_path = model_path.replace(".pth", "_metadata.json")
+        with open(metadata_path, "r") as file:
             metadata = json.load(file)
-        
+
         # Check for correct model type
-        if cls.__name__ != metadata['model_type']:
-            raise ValueError(f"Model type in metadata ({metadata['model_type']}) does not match the class type ({cls.__name__})")
-        
+        if cls.__name__ != metadata["model_type"]:
+            raise ValueError(
+                f"Model type in metadata ({metadata['model_type']}) does not match the class type ({cls.__name__})"
+            )
+
         # Prepare loss lookup for instantiating weak predictors
-        loss_lookup = {'MSELoss': torch.nn.MSELoss(), 'L1Loss': torch.nn.L1Loss(), 'HuberLoss': torch.nn.HuberLoss()}
-        
+        loss_lookup = {
+            "MSELoss": torch.nn.MSELoss(),
+            "L1Loss": torch.nn.L1Loss(),
+            "HuberLoss": torch.nn.HuberLoss(),
+        }
+
         # Load weak_predictors
         model_dir = os.path.dirname(model_path)
         weak_predictors = []
-        for wp_metadata in metadata['weak_predictors']:
-            wp_path = os.path.join(model_dir, wp_metadata['weak_predictor_path'])
-            criterion = loss_lookup[wp_metadata['criterion']]
+        for wp_metadata in metadata["weak_predictors"]:
+            wp_path = os.path.join(model_dir, wp_metadata["weak_predictor_path"])
+            criterion = loss_lookup[wp_metadata["criterion"]]
             wp = WeakPredictor(
-                lstm_num_layers=wp_metadata['lstm_num_layers'],
-                lstm_hidden_size=wp_metadata['lstm_num_hidden'],
-                input_size=wp_metadata['forcing_size'],
-                output_size=wp_metadata['sle_size'],
-                criterion=criterion
+                lstm_num_layers=wp_metadata["lstm_num_layers"],
+                lstm_hidden_size=wp_metadata["lstm_num_hidden"],
+                input_size=wp_metadata["forcing_size"],
+                output_size=wp_metadata["sle_size"],
+                criterion=criterion,
             )
             if torch.cuda.is_available():
                 wp.load_state_dict(torch.load(wp_path))
             else:
-                wp.load_state_dict(torch.load(wp_path, map_location='cpu'))
+                wp.load_state_dict(torch.load(wp_path, map_location="cpu"))
             wp.eval()  # Set the weak predictor to evaluation mode
             weak_predictors.append(wp)
-        
+
         # Instantiate the model with the loaded weak predictors
         model = cls(weak_predictors=weak_predictors)
 
@@ -772,12 +795,12 @@ class DeepEnsemble(nn.Module):
         ensemble_state_dict = torch.load(model_path)
         # It might be necessary to filter out weak_predictor states from the ensemble state_dict if they were included
         model.load_state_dict(ensemble_state_dict, strict=False)
-        
-        model.forcing_size = wp_metadata['forcing_size']
-        model.sle_size = wp_metadata['sle_size']
+
+        model.forcing_size = wp_metadata["forcing_size"]
+        model.sle_size = wp_metadata["sle_size"]
         model.num_predictors = len(weak_predictors)
         model.eval()  # Set the model to evaluation mode
-        
+
         return model
 
 
@@ -876,7 +899,7 @@ class NormalizingFlow(nn.Module):
                 self.optimizer.zero_grad()
                 loss = torch.mean(-self.flow.log_prob(inputs=y, context=x))
                 if torch.isnan(loss):
-                    stop = ''
+                    stop = ""
                 loss.backward()
                 self.optimizer.step()
                 epoch_loss.append(loss.item())
@@ -941,7 +964,7 @@ class NormalizingFlow(nn.Module):
         samples = samples.detach().cpu().numpy()
         std = np.std(samples, axis=1).squeeze()
         return std
-    
+
     def save(self, path):
         """
         Saves the model parameters and metadata to the specified path.
@@ -949,20 +972,22 @@ class NormalizingFlow(nn.Module):
         Args:
             path (str): The path to save the model.
         """
-        
+
         if not self.trained:
-            raise ValueError("This model has not been trained yet. Please train the model before saving.")
+            raise ValueError(
+                "This model has not been trained yet. Please train the model before saving."
+            )
         # Prepare metadata for saving
         metadata = {
-            'forcing_size': self.num_input_features,
-            'sle_size': self.num_predicted_sle,
+            "forcing_size": self.num_input_features,
+            "sle_size": self.num_predicted_sle,
         }
-        metadata_path = path + '_metadata.json'
-        
+        metadata_path = path + "_metadata.json"
+
         # Save metadata
-        with open(metadata_path, 'w') as f:
+        with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=4)
-        
+
         # Save model parameters
         torch.save(self.state_dict(), path)
         print(f"Model and metadata saved to {path} and {metadata_path}, respectively.")
@@ -979,22 +1004,23 @@ class NormalizingFlow(nn.Module):
             NormalizingFlow: The loaded NormalizingFlow model.
         """
         # Load metadata
-        metadata_path = path + '_metadata.json'
-        with open(metadata_path, 'r') as f:
+        metadata_path = path + "_metadata.json"
+        with open(metadata_path, "r") as f:
             metadata = json.load(f)
-        
+
         # Reconstruct the model using the loaded metadata
-        model = NormalizingFlow(forcing_size=metadata['forcing_size'], sle_size=metadata['sle_size'])
-        
+        model = NormalizingFlow(
+            forcing_size=metadata["forcing_size"], sle_size=metadata["sle_size"]
+        )
+
         # Load the model parameters
         if not torch.cuda.is_available():
-            model.load_state_dict(torch.load(path, map_location='cpu'))
+            model.load_state_dict(torch.load(path, map_location="cpu"))
         else:
             model.load_state_dict(torch.load(path))
         model.eval()  # Set the model to evaluation model
-        
+
         return model
-        
 
 
 class HybridEmulator(torch.nn.Module):
@@ -1060,21 +1086,27 @@ class HybridEmulator(torch.nn.Module):
             nf_epochs = epochs
         if de_epochs is None:
             de_epochs = epochs
-            
+
         X, y = to_tensor(X).to(self.device), to_tensor(y).to(self.device)
         if self.trained:
             warnings.warn("This model has already been trained. Training anyways.")
         if not self.normalizing_flow.trained:
             print(f"\nTraining Normalizing Flow ({nf_epochs} epochs):")
             self.normalizing_flow.fit(X, y, epochs=nf_epochs)
-        z = self.normalizing_flow.get_latent(X,).detach()
+        z = self.normalizing_flow.get_latent(
+            X,
+        ).detach()
         X_latent = torch.concatenate((X, z), axis=1)
         if not self.deep_ensemble.trained:
             print(f"\nTraining Deep Ensemble ({de_epochs} epochs):")
             self.deep_ensemble.fit(X_latent, y, epochs=de_epochs, sequence_length=sequence_length)
         self.trained = True
 
-    def forward(self, x, smooth_projection=False,):
+    def forward(
+        self,
+        x,
+        smooth_projection=False,
+    ):
         """
         Performs a forward pass through the hybrid emulator.
 
@@ -1089,58 +1121,54 @@ class HybridEmulator(torch.nn.Module):
         x = to_tensor(x).to(self.device)
         if not self.trained:
             warnings.warn("This model has not been trained. Predictions will not be accurate.")
-        z = self.normalizing_flow.get_latent(x, ).detach()
+        z = self.normalizing_flow.get_latent(
+            x,
+        ).detach()
         X_latent = torch.concatenate((x, z), axis=1)
         prediction, epistemic = self.deep_ensemble(X_latent)
         aleatoric = self.normalizing_flow.aleatoric(x, 100)
         prediction = prediction.detach().cpu().numpy()
         epistemic = epistemic.detach().cpu().numpy()
         uncertainties = dict(
-            total=aleatoric+epistemic,
+            total=aleatoric + epistemic,
             epistemic=epistemic,
             aleatoric=aleatoric,
         )
-        #        uncertainties = dict(
-        #     total=dict(upper=prediction + epistemic + aleatoric, lower=prediction - epistemic - aleatoric),
-        #     epistemic=dict(upper=prediction + epistemic, lower=prediction - epistemic),
-        #     aleatoric=dict(upper=prediction + aleatoric, lower=prediction - aleatoric),
-        # )
-        
+
         if smooth_projection:
-            stop = ''
+            stop = ""
         return prediction, uncertainties
-        
+
     def predict(self, x, scaler_path=None, smooth_projection=False):
         self.eval()
         if scaler_path is None and self.scaler_path is None:
             warnings.warn("No scaler path provided, uncertainties are not in units of SLE.")
             return self.forward(x, smooth_projection=smooth_projection)
-        
+
         predictions, uncertainties = self.forward(x, smooth_projection=smooth_projection)
-        epi = uncertainties['epistemic']
-        ale = uncertainties['aleatoric']
-        
+        epi = uncertainties["epistemic"]
+        ale = uncertainties["aleatoric"]
+
         self.scaler_path = scaler_path
         with open(self.scaler_path, "rb") as f:
             scaler = pickle.load(f)
-            
+
         bound_epistemic, bound_aleatoric = predictions + epi, predictions + ale
-        
+
         unscaled_predictions = scaler.inverse_transform(predictions.reshape(-1, 1))
         unscaled_bound_epistemic = scaler.inverse_transform(bound_epistemic.reshape(-1, 1))
         unscaled_bound_aleatoric = scaler.inverse_transform(bound_aleatoric.reshape(-1, 1))
         epistemic = unscaled_bound_epistemic - unscaled_predictions
         aleatoric = unscaled_bound_aleatoric - unscaled_predictions
-        
+
         uncertainties = dict(
-            total=epistemic+aleatoric,
+            total=epistemic + aleatoric,
             epistemic=epistemic,
             aleatoric=aleatoric,
         )
 
         return unscaled_predictions, uncertainties
-            
-    
+
     def save(self, save_dir):
         """
         Saves the trained model to the specified directory.
@@ -1153,15 +1181,17 @@ class HybridEmulator(torch.nn.Module):
 
         """
         if not self.trained:
-            raise ValueError("This model has not been trained yet. Please train the model before saving.")
-        if save_dir.endswith('.pth'):
+            raise ValueError(
+                "This model has not been trained yet. Please train the model before saving."
+            )
+        if save_dir.endswith(".pth"):
             raise ValueError("save_dir must be a directory, not a file")
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        
+
         self.deep_ensemble.save(f"{save_dir}/deep_ensemble.pth")
         self.normalizing_flow.save(f"{save_dir}/normalizing_flow.pth")
-    
+
     @staticmethod
     def load(deep_ensemble_path, normalizing_flow_path):
         """

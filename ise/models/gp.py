@@ -1,4 +1,3 @@
-"""Gaussian process model architecture, containing training and testing capabilities."""
 
 import numpy as np
 from joblib import dump, load

@@ -1,3 +1,13 @@
+"""This module contains custom loss functions for training neural network emulators.
+
+Classes:
+    - WeightedGridLoss: Custom loss function that penalizes errors based on the total variation of a grid.
+    - WeightedMSELoss: Custom loss function that penalizes errors on extreme values more.
+    - WeightedMSEPCALoss: Custom loss function that penalizes errors on extreme values more and allows for custom weighting of each prediction in a batched manner.
+    - WeightedMSELossWithSignPenalty: Custom loss function that penalizes errors on extreme values more and adds a penalty for opposite sign predictions.
+"""
+
+
 import torch
 
 
@@ -349,7 +359,7 @@ class MSEDeviationLoss(torch.nn.Module):
             torch.where(
                 torch.abs(predictions - targets) > self.threshold,
                 self.penalty_multiplier * (predictions - targets) ** 2,
-                torch.tensor(0.0, device=predictions.device)
+                torch.tensor(0.0, device=predictions.device),
             )
         )
         return mse_loss + large_deviation_penalty

@@ -111,9 +111,11 @@ def relative_squared_error(y_true, y_pred):
     rse = ss_res / ss_tot
     return rse
 
+
 def kolmogorov_smirnov(x1, x2):
     res = kstest(x1, x2)
     return res.statistic, res.pvalue
+
 
 def t_test(x1, x2):
     res = ttest_ind(x1, x2)
