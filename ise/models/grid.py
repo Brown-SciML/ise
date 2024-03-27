@@ -645,6 +645,7 @@ class DeepEnsemble(nn.Module):
         Returns:
         - predictions: Predictions made by the model.
         """
+        self.eval()
         return self.forward(x)
 
     def fit(
@@ -675,14 +676,21 @@ class DeepEnsemble(nn.Module):
         
     def save(self, model_path):
         """
-        Saves the model parameters and metadata.
+        Saves the model parameters and metadata, including each WeakPredictor individually.
 
         Args:
         - model_path: Path to save the model.
         """
         if not self.trained:
             raise ValueError("This model has not been trained yet. Please train the model before saving.")
-        # Save model metadata
+
+        # Create a directory for the weak_predictor models if it does not exist
+        model_dir = os.path.dirname(model_path)
+        weak_predictors_dir = os.path.join(model_dir, "weak_predictors")
+        if not os.path.exists(weak_predictors_dir):
+            os.makedirs(weak_predictors_dir)
+
+        # Metadata for the ensemble, not including the state_dicts of the weak_predictors
         metadata = {
             'model_type': self.__class__.__name__,
             'weak_predictors': [
@@ -692,19 +700,26 @@ class DeepEnsemble(nn.Module):
                     'criterion': wp.criterion.__class__.__name__,
                     'forcing_size': wp.input_size,
                     'sle_size': wp.output_size,
-                    'trained': wp.trained
-                } for wp in self.weak_predictors
+                    'trained': wp.trained,
+                    'weak_predictor_path': os.path.join("weak_predictors", f"weak_predictor_{i}.pth")  # Path relative to model_dir
+                } for i, wp in enumerate(self.weak_predictors)
             ],
-
         }
         metadata_path = model_path.replace('.pth', '_metadata.json')
         with open(metadata_path, 'w') as file:
             json.dump(metadata, file, indent=4)
         print(f"Model metadata saved to {metadata_path}")
 
-        # Save model parameters
+        # Save the state dictionary of the DeepEnsemble (excluding weak_predictors' state_dicts)
         torch.save(self.state_dict(), model_path)
         print(f"Model parameters saved to {model_path}")
+
+        # Save each WeakPredictor model separately
+        for i, wp in enumerate(self.weak_predictors):
+            wp_model_path = os.path.join(weak_predictors_dir, f"weak_predictor_{i+1}.pth")
+            torch.save(wp.state_dict(), wp_model_path)
+            print(f"WeakPredictor {i+1} model parameters saved to {wp_model_path}")
+
 
     @classmethod
     def load(cls, model_path):
@@ -723,17 +738,37 @@ class DeepEnsemble(nn.Module):
         with open(metadata_path, 'r') as file:
             metadata = json.load(file)
         
-        # Instantiate the model based on metadata
+        # Check for correct model type
         if cls.__name__ != metadata['model_type']:
-            raise ValueError(f"Model type in metadata ({metadata['model_type']}) does not match the class type ({cls.__class__.__name__})")
+            raise ValueError(f"Model type in metadata ({metadata['model_type']}) does not match the class type ({cls.__name__})")
         
+        # Prepare loss lookup for instantiating weak predictors
         loss_lookup = {'MSELoss': torch.nn.MSELoss(), 'L1Loss': torch.nn.L1Loss(), 'HuberLoss': torch.nn.HuberLoss()}
         
-        weak_predictors = [WeakPredictor(lstm_num_layers=wp['lstm_num_layers'], lstm_hidden_size=wp['lstm_num_hidden'], criterion=loss_lookup[wp['criterion']], ) for wp in metadata['weak_predictors']]
+        # Load weak_predictors
+        model_dir = os.path.dirname(model_path)
+        weak_predictors = []
+        for wp_metadata in metadata['weak_predictors']:
+            wp_path = os.path.join(model_dir, wp_metadata['weak_predictor_path'])
+            criterion = loss_lookup[wp_metadata['criterion']]
+            wp = WeakPredictor(
+                lstm_num_layers=wp_metadata['lstm_num_layers'],
+                lstm_hidden_size=wp_metadata['lstm_num_hidden'],
+                input_size=wp_metadata['forcing_size'],
+                output_size=wp_metadata['sle_size'],
+                criterion=criterion
+            )
+            wp.load_state_dict(torch.load(wp_path))
+            wp.eval()  # Set the weak predictor to evaluation mode
+            weak_predictors.append(wp)
+        
+        # Instantiate the model with the loaded weak predictors
         model = cls(weak_predictors=weak_predictors)
         
-        # Load model parameters
-        model.load_state_dict(torch.load(model_path))
+        # Load the ensemble model parameters excluding weak predictors as they are loaded separately
+        ensemble_state_dict = torch.load(model_path)
+        # It might be necessary to filter out weak_predictor states from the ensemble state_dict if they were included
+        model.load_state_dict(ensemble_state_dict, strict=False)
         model.eval()  # Set the model to evaluation mode
         
         return model
@@ -1043,6 +1078,7 @@ class HybridEmulator(torch.nn.Module):
             tuple: A tuple containing the prediction, epistemic uncertainty, and aleatoric uncertainty.
 
         """
+        self.eval()
         x = to_tensor(x).to(self.device)
         if not self.trained:
             warnings.warn("This model has not been trained. Predictions will not be accurate.")
@@ -1068,6 +1104,7 @@ class HybridEmulator(torch.nn.Module):
         return prediction, uncertainties
         
     def predict(self, x, scaler_path=None, smooth_projection=False):
+        self.eval()
         if scaler_path is None and self.scaler_path is None:
             warnings.warn("No scaler path provided, uncertainties are not in units of SLE.")
             return self.forward(x, smooth_projection=smooth_projection)
