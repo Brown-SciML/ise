@@ -599,9 +599,9 @@ def to_tensor(x):
     if x is None:
         return None
     if isinstance(x, pd.DataFrame):
-        x = torch.tensor(x.values)
+        x = torch.tensor(x.values, dtype=torch.float32)
     elif isinstance(x, np.ndarray):
-        x = torch.tensor(x)
+        x = torch.tensor(x, dtype=torch.float32)
     elif isinstance(x, torch.Tensor):
         pass
     else:

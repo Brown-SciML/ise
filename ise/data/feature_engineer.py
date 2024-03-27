@@ -1,3 +1,4 @@
+import json
 import os
 import pickle
 from typing import List
@@ -243,6 +244,7 @@ class FeatureEngineer:
             ],
             axis=1,
         )
+        
 
         return X_scaled, y_scaled
 
@@ -300,19 +302,28 @@ class FeatureEngineer:
         self.data = drop_outliers(self.data, column, method, expression, quantiles)
         return self
     
-    def add_model_characteristics(self, data=None, model_char_path=r'./ise/utils/model_characteristics.csv', encode=True):
+    def add_model_characteristics(self, data=None, model_char_path=r'./ise/utils/model_characteristics.csv', encode=True, ids_path=None):
         if data is not None:
             self.data = data
-        self.data = add_model_characteristics(self.data, model_char_path, encode)
+        self.data = add_model_characteristics(self.data, model_char_path, encode, ids_path=ids_path)
         self._including_model_characteristics = True
         
         return self
+    
 
 
-def add_model_characteristics(data, model_char_path=r'./ise/utils/model_characteristics.csv', encode=True) -> pd.DataFrame:
+def add_model_characteristics(data, model_char_path=r'./ise/utils/model_characteristics.csv', encode=True, ids_path=None) -> pd.DataFrame:
     model_chars = pd.read_csv(model_char_path)
     all_data = pd.merge(data, model_chars, on='model', how='left')
     existing_char_columns = ['Ocean forcing', 'Ocean sensitivity', 'Ice shelf fracture'] # These are the columns that are already in the data and should not be encoded
+    
+    # if 'Ocean forcing' not in data.columns:
+    #     if ids_path is None:
+    #         raise ValueError("ids must be provided if 'Ocean forcing' is not in the data.")
+    #     else:
+    #         ids = json.load(open(ids_path, 'r'))
+            
+    
     if encode:
         all_data = pd.get_dummies(all_data, columns=[x for x in model_chars.columns if x not in ['initial_year', 'model', 'Scenario', ]] + existing_char_columns)
     
@@ -409,7 +420,7 @@ def add_lag_variables(data: pd.DataFrame, lag: int) -> pd.DataFrame:
             # Fill missing values caused by shifting
             lagged_segment.fillna(method="bfill", inplace=True)
             non_lagged_data = pd.concat(
-                [non_lagged_data.reset_index(drop=True), lagged_segment.reset_index(drop=True)],
+                [non_lagged_data.reset_index(drop=True), lagged_data.reset_index(drop=True), lagged_segment.reset_index(drop=True), ],
                 axis=1,
             )
 
@@ -497,6 +508,15 @@ def split_training_data(
         int(len(total_ids) * train_size) : int(len(total_ids) * (train_size + val_size))
     ]
     test_ids = total_ids[int(len(total_ids) * (train_size + val_size)) :]
+    
+    split_data = {
+    "train_ids": train_ids.tolist(),
+    "val_ids": val_ids.tolist(),
+    "test_ids": test_ids.tolist()
+    }
+    
+    with open(f"{output_directory}/ids.json", 'w') as file:
+        json.dump(split_data, file)
 
     train = data[data["id"].isin(train_ids)]
     val = data[data["id"].isin(val_ids)]

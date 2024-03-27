@@ -20,5 +20,6 @@ setup(
         "tqdm",
         "cftime",
         "netcdf4",
+        "nflows",
     ],
 )

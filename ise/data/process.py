@@ -2816,7 +2816,7 @@ def process_AIS_outputs(
             sector_x_data.rename(columns={f"ivaf_sector_{sector}": "ivaf"}, inplace=True)
             sector_x_data["sector"] = sector
             sector_x_data["year"] = np.arange(1, 87)
-            sector_x_data["id"] = f"{model}_sector{sector}"
+            sector_x_data["id"] = f"{model}_{exp}_sector{sector}"
 
             all_sectors.append(sector_x_data)
         full_dataset = pd.concat(all_sectors, axis=0)
@@ -2921,23 +2921,23 @@ def process_sectors(
 
     forcing_exists = os.path.exists(f"{export_directory}/forcings.csv")
     if not forcing_exists or (forcing_exists and overwrite):
-        atmospheric_df = (
-            process_AIS_atmospheric_sectors(forcing_directory, grid_file)
-            if ice_sheet == "AIS"
-            else process_GrIS_atmospheric_sectors(forcing_directory, grid_file)
-        )
-        atmospheric_df.to_csv(f"{export_directory}/{ice_sheet}_atmospheric.csv", index=False)
-        oceanic_df = (
-            process_AIS_oceanic_sectors(forcing_directory, grid_file)
-            if ice_sheet == "AIS"
-            else process_GrIS_oceanic_sectors(forcing_directory, grid_file)
-        )
-        oceanic_df.to_csv(f"{export_directory}/{ice_sheet}_oceanic.csv", index=False)
+        # atmospheric_df = (
+        #     process_AIS_atmospheric_sectors(forcing_directory, grid_file)
+        #     if ice_sheet == "AIS"
+        #     else process_GrIS_atmospheric_sectors(forcing_directory, grid_file)
+        # )
+        # atmospheric_df.to_csv(f"{export_directory}/{ice_sheet}_atmospheric.csv", index=False)
+        # oceanic_df = (
+        #     process_AIS_oceanic_sectors(forcing_directory, grid_file)
+        #     if ice_sheet == "AIS"
+        #     else process_GrIS_oceanic_sectors(forcing_directory, grid_file)
+        # )
+        # oceanic_df.to_csv(f"{export_directory}/{ice_sheet}_oceanic.csv", index=False)
 
-        # atmospheric_df = pd.read_csv(f"{export_directory}/{ice_sheet}_atmospheric.csv")
-        # oceanic_df = pd.read_csv(f"{export_directory}/{ice_sheet}_oceanic.csv")
-        # atmospheric_df = atmospheric_df[[x for x in atmospheric_df.columns if '.1' not in x]]
-        # oceanic_df = oceanic_df[[x for x in oceanic_df.columns if '.1' not in x]]
+        atmospheric_df = pd.read_csv(f"{export_directory}/{ice_sheet}_atmospheric.csv")
+        oceanic_df = pd.read_csv(f"{export_directory}/{ice_sheet}_oceanic.csv")
+        atmospheric_df = atmospheric_df[[x for x in atmospheric_df.columns if '.1' not in x]]
+        oceanic_df = oceanic_df[[x for x in oceanic_df.columns if '.1' not in x]]
 
         atmospheric_df = atmospheric_df.loc[:, ~atmospheric_df.columns.duplicated()]
         oceanic_df = oceanic_df.loc[:, ~oceanic_df.columns.duplicated()]

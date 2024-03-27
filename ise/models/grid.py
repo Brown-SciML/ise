@@ -356,7 +356,7 @@ class WeakPredictor(nn.Module):
         self,
         lstm_num_layers,
         lstm_hidden_size,
-        input_size=43,
+        input_size=83,
         output_size=1,
         dim_processor=None,
         scaler_path=None,
@@ -580,9 +580,11 @@ class DeepEnsemble(nn.Module):
     """
 
     def __init__(
-        self, weak_predictors: list = [], forcing_size=44, sle_size=1, num_predictors=3
+        self, weak_predictors: list = [], forcing_size=83, sle_size=1, num_predictors=3
     ):
         super(DeepEnsemble, self).__init__()
+        self.forcing_size = forcing_size
+        self.sle_size = sle_size
 
         if not weak_predictors:
             if forcing_size is None or sle_size is None:
@@ -688,6 +690,8 @@ class DeepEnsemble(nn.Module):
                     'lstm_num_layers': int(wp.lstm_num_layers),
                     'lstm_num_hidden': int(wp.lstm_num_hidden),
                     'criterion': wp.criterion.__class__.__name__,
+                    'forcing_size': wp.input_size,
+                    'sle_size': wp.output_size,
                     'trained': wp.trained
                 } for wp in self.weak_predictors
             ],
@@ -725,7 +729,7 @@ class DeepEnsemble(nn.Module):
         
         loss_lookup = {'MSELoss': torch.nn.MSELoss(), 'L1Loss': torch.nn.L1Loss(), 'HuberLoss': torch.nn.HuberLoss()}
         
-        weak_predictors = [WeakPredictor(lstm_num_layers=wp['lstm_num_layers'], lstm_hidden_size=wp['lstm_num_hidden'], criterion=loss_lookup[wp['criterion']]) for wp in metadata['weak_predictors']]
+        weak_predictors = [WeakPredictor(lstm_num_layers=wp['lstm_num_layers'], lstm_hidden_size=wp['lstm_num_hidden'], criterion=loss_lookup[wp['criterion']], ) for wp in metadata['weak_predictors']]
         model = cls(weak_predictors=weak_predictors)
         
         # Load model parameters
@@ -903,6 +907,9 @@ class NormalizingFlow(nn.Module):
         Args:
             path (str): The path to save the model.
         """
+        
+        if not self.trained:
+            raise ValueError("This model has not been trained yet. Please train the model before saving.")
         # Prepare metadata for saving
         metadata = {
             'forcing_size': self.num_input_features,
@@ -938,8 +945,11 @@ class NormalizingFlow(nn.Module):
         model = NormalizingFlow(forcing_size=metadata['forcing_size'], sle_size=metadata['sle_size'])
         
         # Load the model parameters
-        model.load_state_dict(torch.load(path))
-        model.eval()  # Set the model to evaluation mode
+        if not torch.cuda.is_available():
+            model.load_state_dict(torch.load(path, map_location='cpu'))
+        else:
+            model.load_state_dict(torch.load(path))
+        model.eval()  # Set the model to evaluation model
         
         return model
         
@@ -1084,7 +1094,7 @@ class HybridEmulator(torch.nn.Module):
             aleatoric=aleatoric,
         )
 
-        return unscaled_predictions, epistemic, aleatoric
+        return unscaled_predictions, uncertainties
             
     
     def save(self, save_dir):
@@ -1122,7 +1132,9 @@ class HybridEmulator(torch.nn.Module):
 
         """
         deep_ensemble = DeepEnsemble.load(deep_ensemble_path)
+        deep_ensemble.trained = True
         normalizing_flow = NormalizingFlow.load(normalizing_flow_path)
+        normalizing_flow.trained = True
         model = HybridEmulator(deep_ensemble, normalizing_flow)
         model.trained = True
         return model
