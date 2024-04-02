@@ -375,8 +375,8 @@ class WeakPredictor(nn.Module):
         super(WeakPredictor, self).__init__()
 
         # Initialize attributes
-        self.lstm_num_layers = lstm_num_layers
-        self.lstm_num_hidden = lstm_hidden_size
+        self.lstm_num_layers = int(lstm_num_layers)
+        self.lstm_num_hidden = int(lstm_hidden_size)
         self.input_size = input_size
         self.output_size = output_size
         self.ice_sheet = ice_sheet
