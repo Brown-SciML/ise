@@ -349,7 +349,7 @@ def get_uncertainty_bands(
     return mean, sd, upper_ci, lower_ci, upper_q, lower_q
 
 
-def create_distribution(dataset: np.ndarray, min_range=-30, max_range=20, step=0.001):
+def create_distribution(dataset: np.ndarray, min_range=-30, max_range=20, step=0.01):
     kde = gaussian_kde(dataset, bw_method="silverman")
     support = np.arange(min_range, max_range, step)
     density = kde(support)
@@ -576,6 +576,32 @@ def get_X_y(
         X_drop = [x for x in data.columns if "sle" in x] + dropped_columns
         X = data.drop(columns=X_drop)
         y = data[[x for x in data.columns if "sle" in x]]
+    
+    elif 'scenario' in dataset_type.lower():
+        dropped_columns = [
+            'sector', 
+            'year',
+            "cmip_model",
+            "pathway",
+            "exp",
+            "ice_sheet",
+            "Ocean forcing",
+            "Ocean sensitivity",
+            "Ice shelf fracture",
+            "Tier",
+            "aogcm",
+            "id",
+            "exp",
+            "model",
+            "ivaf",
+            "outlier",
+            'sle',
+        ]
+        dropped_columns = [x for x in data.columns if x in dropped_columns] + [x for x in data.columns if 'lag' in x]
+        X_drop = [x for x in data.columns if "Scenario" in x] + dropped_columns
+        X = data.drop(columns=X_drop)
+        y = data[[x for x in data.columns if "Scenario" in x]]
+        
     if return_format is not None:
         if return_format.lower() == "numpy":
             return X.values, y.values

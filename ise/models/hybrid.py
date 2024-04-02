@@ -588,7 +588,7 @@ class DeepEnsemble(nn.Module):
 
     def __init__(self, weak_predictors: list = [], forcing_size=83, sle_size=1, num_predictors=3):
         super(DeepEnsemble, self).__init__()
-        self.forcing_size = forcing_size
+        self.forcing_size = forcing_size + 1 # for latent z from nf
         self.sle_size = sle_size
 
         if not weak_predictors:
@@ -611,8 +611,8 @@ class DeepEnsemble(nn.Module):
                         self.loss_choices,
                         1,
                     )[0],
-                    input_size=forcing_size,
-                    output_size=1,
+                    input_size=self.forcing_size,
+                    output_size=self.sle_size,
                 )
                 for _ in range(num_predictors)
             ]
@@ -717,7 +717,7 @@ class DeepEnsemble(nn.Module):
                     "sle_size": wp.output_size,
                     "trained": wp.trained,
                     "weak_predictor_path": os.path.join(
-                        "weak_predictors", f"weak_predictor_{i}.pth"
+                        "weak_predictors", f"weak_predictor_{i+1}.pth"
                     ),  # Path relative to model_dir
                 }
                 for i, wp in enumerate(self.weak_predictors)

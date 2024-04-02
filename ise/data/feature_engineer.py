@@ -415,7 +415,7 @@ def add_lag_variables(data: pd.DataFrame, lag: int) -> pd.DataFrame:
     ]
     cols_to_exclude = [x for x in cols_to_exclude if x in data.columns]
     temporal_indicator = "time" if "time" in data.columns else "year"
-    non_lagged_cols = [temporal_indicator] + [
+    non_temporal_cols = [temporal_indicator] + [
         x for x in data.columns if "sle" in x or x in cols_to_exclude
     ]
     projection_length = 86
@@ -433,25 +433,21 @@ def add_lag_variables(data: pd.DataFrame, lag: int) -> pd.DataFrame:
         segment = data.iloc[segment_start:segment_end, :]
 
         # Separate the segment into lagged and non-lagged parts
-        non_lagged_data = segment[non_lagged_cols]
-        lagged_data = segment.drop(columns=non_lagged_cols)
+        non_lagged_data = segment[non_temporal_cols]
+        base_temporal_columns = segment.drop(columns=non_temporal_cols)
 
+        lags = []
         # Generate lagged variables for the segment
         for shift in range(1, lag + 1):
-            lagged_segment = lagged_data.shift(shift).add_suffix(f".lag{shift}")
+            lag_columns = base_temporal_columns.shift(shift).add_suffix(f".lag{shift}")
             # Fill missing values caused by shifting
-            lagged_segment.fillna(method="bfill", inplace=True)
-            non_lagged_data = pd.concat(
-                [
-                    non_lagged_data.reset_index(drop=True),
-                    lagged_data.reset_index(drop=True),
-                    lagged_segment.reset_index(drop=True),
-                ],
-                axis=1,
-            )
+            lag_columns.fillna(method="bfill", inplace=True)
+            lags.append(lag_columns)
+        full_segment_data = pd.concat([non_lagged_data.reset_index(drop=True), base_temporal_columns.reset_index(drop=True), pd.concat(lags, axis=1).reset_index(drop=True)], axis=1)
+
 
         # Store the processed segment
-        processed_segments.append(non_lagged_data)
+        processed_segments.append(full_segment_data)
 
     # Concatenate all processed segments into a single DataFrame
     final_data = pd.concat(processed_segments, axis=0)
