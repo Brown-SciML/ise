@@ -387,7 +387,7 @@ class WeakPredictor(nn.Module):
         # Initialize model layers
         self.lstm = nn.LSTM(
             input_size=input_size,
-            hidden_size=lstm_hidden_size,
+            hidden_size=int(lstm_hidden_size),
             batch_first=True,
             num_layers=lstm_num_layers,
         )
