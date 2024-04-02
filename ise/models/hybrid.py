@@ -1139,25 +1139,28 @@ class HybridEmulator(torch.nn.Module):
             stop = ""
         return prediction, uncertainties
 
-    def predict(self, x, scaler_path=None, smooth_projection=False):
+    def predict(self, x, output_scaler=None, smooth_projection=False):
         self.eval()
-        if scaler_path is None and self.scaler_path is None:
+        if output_scaler is None and self.scaler_path is None:
             warnings.warn("No scaler path provided, uncertainties are not in units of SLE.")
             return self.forward(x, smooth_projection=smooth_projection)
+        if not isinstance(output_scaler, str):
+            if 'fit' not in dir(output_scaler) or 'transform' not in dir(output_scaler):
+                raise ValueError("output_scaler must be a Scaler object or a path to a Scaler object.")
+        else:
+            self.scaler_path = output_scaler
+            with open(self.scaler_path, "rb") as f:
+                output_scaler = pickle.load(f)
 
         predictions, uncertainties = self.forward(x, smooth_projection=smooth_projection)
         epi = uncertainties["epistemic"]
         ale = uncertainties["aleatoric"]
 
-        self.scaler_path = scaler_path
-        with open(self.scaler_path, "rb") as f:
-            scaler = pickle.load(f)
-
         bound_epistemic, bound_aleatoric = predictions + epi, predictions + ale
 
-        unscaled_predictions = scaler.inverse_transform(predictions.reshape(-1, 1))
-        unscaled_bound_epistemic = scaler.inverse_transform(bound_epistemic.reshape(-1, 1))
-        unscaled_bound_aleatoric = scaler.inverse_transform(bound_aleatoric.reshape(-1, 1))
+        unscaled_predictions = output_scaler.inverse_transform(predictions.reshape(-1, 1))
+        unscaled_bound_epistemic = output_scaler.inverse_transform(bound_epistemic.reshape(-1, 1))
+        unscaled_bound_aleatoric = output_scaler.inverse_transform(bound_aleatoric.reshape(-1, 1))
         epistemic = unscaled_bound_epistemic - unscaled_predictions
         aleatoric = unscaled_bound_aleatoric - unscaled_predictions
 
