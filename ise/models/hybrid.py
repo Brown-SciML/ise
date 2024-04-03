@@ -371,6 +371,7 @@ class WeakPredictor(nn.Module):
         scaler_path=None,
         ice_sheet="AIS",
         criterion=torch.nn.MSELoss(),
+        projection_length=86,
     ):
         super(WeakPredictor, self).__init__()
 
@@ -380,6 +381,7 @@ class WeakPredictor(nn.Module):
         self.input_size = input_size
         self.output_size = output_size
         self.ice_sheet = ice_sheet
+        self.projection_length = projection_length
         self.ice_sheet_dim = (761, 761) if ice_sheet == "AIS" else (337, 577)
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.to(self.device)
@@ -491,7 +493,7 @@ class WeakPredictor(nn.Module):
             y = y.values
 
         # Create dataset and data loader
-        dataset = EmulatorDataset(X, y, sequence_length=sequence_length)
+        dataset = EmulatorDataset(X, y, sequence_length=sequence_length, projection_length=self.projection_length)
         data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
         # Set model to training mode
@@ -548,7 +550,7 @@ class WeakPredictor(nn.Module):
             X = X.values
 
         # Create dataset and data loader
-        dataset = EmulatorDataset(X, y=None, sequence_length=sequence_length)
+        dataset = EmulatorDataset(X, y=None, sequence_length=sequence_length, projection_length=self.projection_length)
         data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False)
 
         # Move input data to device
@@ -586,11 +588,12 @@ class DeepEnsemble(nn.Module):
     - load(model_path): Loads the model parameters and metadata and returns an instance of the model.
     """
 
-    def __init__(self, weak_predictors: list = [], forcing_size=83, sle_size=1, num_predictors=3):
+    def __init__(self, weak_predictors: list = [], forcing_size=83, sle_size=1, num_predictors=3, projection_length=86):
         super(DeepEnsemble, self).__init__()
         self.forcing_size = forcing_size + 1 # for latent z from nf
         self.sle_size = sle_size
-
+        self.projection_length = projection_length
+        
         if not weak_predictors:
             if forcing_size is None or sle_size is None:
                 raise ValueError(
@@ -613,6 +616,7 @@ class DeepEnsemble(nn.Module):
                     )[0],
                     input_size=self.forcing_size,
                     output_size=self.sle_size,
+                    projection_length=self.projection_length,
                 )
                 for _ in range(num_predictors)
             ]
@@ -837,12 +841,14 @@ class NormalizingFlow(nn.Module):
         self,
         forcing_size=43,
         sle_size=1,
+        projection_length=86,
     ):
         super(NormalizingFlow, self).__init__()
         self.num_flow_transforms = 5
         self.num_input_features = forcing_size
         self.num_predicted_sle = sle_size
         self.flow_hidden_features = sle_size * 2
+        self.projection_length=projection_length,
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.to(self.device)
 
@@ -887,7 +893,7 @@ class NormalizingFlow(nn.Module):
             batch_size (int): The batch size for training (default: 64).
         """
         X, y = to_tensor(X).to(self.device), to_tensor(y).to(self.device)
-        dataset = EmulatorDataset(X, y, sequence_length=1)
+        dataset = EmulatorDataset(X, y, sequence_length=1, projection_length=self.projection_length)
         data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
         self.train()
 
@@ -1049,7 +1055,7 @@ class HybridEmulator(torch.nn.Module):
 
     """
 
-    def __init__(self, deep_ensemble, normalizing_flow):
+    def __init__(self, deep_ensemble, normalizing_flow,):
         super(HybridEmulator, self).__init__()
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"

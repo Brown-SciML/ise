@@ -26,12 +26,12 @@ class EmulatorDataset(Dataset):
         __getitem__(i): Returns the i-th item in the dataset.
     """
 
-    def __init__(self, X, y, sequence_length=5):
+    def __init__(self, X, y, sequence_length=5, projection_length=86):
         super().__init__()
 
-        if X.shape[0] < 86:
+        if X.shape[0] < projection_length:
             warnings.warn(
-                "Full projections of 86 timesteps are not present in the dataset. This may lead to unexpected behavior."
+                f"Full projections of {projection_length} timesteps are not present in the dataset. This may lead to unexpected behavior."
             )
         self.X = self._to_tensor(X)
         self.y = self._to_tensor(y)
@@ -42,7 +42,7 @@ class EmulatorDataset(Dataset):
             self.num_projections, self.num_timesteps, self.num_features = X.shape
         elif self.xdim == 2:  # unbatched (rows of projections*timestamps)
             self.projections_and_timesteps, self.features = X.shape
-            self.num_timesteps = 86
+            self.num_timesteps = projection_length
             self.num_projections = self.projections_and_timesteps // self.num_timesteps
         # self.num_sequences = self.timesteps - sequence_length + 1
 
