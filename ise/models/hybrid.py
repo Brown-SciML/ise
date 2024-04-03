@@ -1196,7 +1196,7 @@ class HybridEmulator(torch.nn.Module):
         self.normalizing_flow.save(f"{save_dir}/normalizing_flow.pth")
 
     @staticmethod
-    def load(deep_ensemble_path, normalizing_flow_path):
+    def load(model_dir=None, deep_ensemble_path=None, normalizing_flow_path=None):
         """
         Loads a trained model from the specified paths.
 
@@ -1208,6 +1208,11 @@ class HybridEmulator(torch.nn.Module):
             HybridEmulator: The loaded hybrid emulator model.
 
         """
+        if model_dir is None and (deep_ensemble_path is None or normalizing_flow_path is None):
+            raise ValueError("Either model_dir or both deep_ensemble_path and normalizing_flow_path must be provided.")
+        if model_dir is not None:
+            deep_ensemble_path = f"{model_dir}/deep_ensemble.pth"
+            normalizing_flow_path = f"{model_dir}/normalizing_flow.pth"
         deep_ensemble = DeepEnsemble.load(deep_ensemble_path)
         deep_ensemble.trained = True
         normalizing_flow = NormalizingFlow.load(normalizing_flow_path)
