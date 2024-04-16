@@ -548,18 +548,25 @@ class ProjectionProcessor:
             ).transpose("x", "y", "time", ...)
 
             # subtract out control
-            ivaf = ivaf_ctrl.ivaf.values - ivaf
+            # ivaf = ivaf_ctrl.ivaf.values - ivaf
+            ivaf_with_ctrl = ivaf.copy()
+            ivaf = ivaf - ivaf_ctrl.ivaf.values
 
         # save ivaf file (copied format from bed_data, change accordingly.)
         ivaf_nc["ivaf"] = (("x", "y", "time"), ivaf)
+        if not ctrl_proj:
+            ivaf_nc['ivaf_with_control'] = (("x", "y", "time"), ivaf_with_ctrl)
         ivaf_nc = ivaf_nc.drop_vars(
             [
                 "topg",
             ]
         )
         ivaf_nc["sle"] = ivaf_nc.ivaf / 1e9 / 362.5
+        export_nc_path = os.path.join(directory, f"ivaf_{self.ice_sheet}_{group}_{model}_{exp}.nc")
+        if os.path.exists(export_nc_path):
+            os.remove(export_nc_path)
         ivaf_nc.to_netcdf(
-            os.path.join(directory, f"ivaf_{self.ice_sheet}_{group}_{model}_{exp}.nc")
+            export_nc_path
         )
 
         print(f"{group}_{model}_{exp}: Processing successful.")
@@ -2481,7 +2488,7 @@ def process_AIS_atmospheric_sectors(forcing_directory, grid_file):
     ice_sheet = "AIS"
 
     start_time = time.time()
-    path_to_forcings = "AIS/Atmosphere_Forcing/"
+    path_to_forcings = "/Atmosphere_Forcing/"
     af_directory = (
         f"{forcing_directory}/{path_to_forcings}"
         if not forcing_directory.endswith(path_to_forcings)
@@ -2496,7 +2503,6 @@ def process_AIS_atmospheric_sectors(forcing_directory, grid_file):
     unique_sectors = np.unique(sectors)
     all_data = []
     for i, fp in enumerate(filepaths):
-        fp = r"/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing//AIS/Atmosphere_Forcing/miroc-esm-chem_rcp8.5/Regridded_8km/MIROC-ESM-CHEM_8km_anomaly_1995-2100.nc"
         print("")
         print(f"File {i+1} / {len(filepaths)}")
         print(f'File: {fp.split("/")[-1]}')
@@ -2775,6 +2781,7 @@ def _format_grid_file(grid_file):
 
 def process_AIS_outputs(
     zenodo_directory,
+    with_ctrl=False
 ):
 
     directory = (
@@ -2782,7 +2789,10 @@ def process_AIS_outputs(
         if not zenodo_directory.endswith("ComputedScalarsPaper")
         else zenodo_directory
     )
-    files = get_all_filepaths(directory, contains="ivaf_minus_ctrl_proj", filetype="nc")
+    if not with_ctrl:
+        files = get_all_filepaths(directory, contains="ivaf_minus_ctrl_proj", filetype="nc")
+    else:
+        files = get_all_filepaths(directory, contains="ivaf_AIS", filetype="nc", not_contains=['hist', 'ctrl'])
     count = 0
 
     all_files_data = []
@@ -2845,6 +2855,7 @@ def merge_datasets(forcings, projections, experiments_file, ice_sheet="AIS", exp
     )
     forcings["aogcm"] = forcings["aogcm"].apply(formatting_function)
     projections.rename(columns={"AOGCM": "aogcm"}, inplace=True)
+    forcings['sector'] = forcings.sector.astype(int)
     dataset = pd.merge(forcings, projections, on=["aogcm", "year", "sector"], how="inner")
 
     return dataset
@@ -2917,22 +2928,24 @@ def process_sectors(
     experiments_file,
     export_directory=None,
     overwrite=False,
+    with_ctrl=False,
 ):
 
     forcing_exists = os.path.exists(f"{export_directory}/forcings.csv")
     if not forcing_exists or (forcing_exists and overwrite):
-        # atmospheric_df = (
-        #     process_AIS_atmospheric_sectors(forcing_directory, grid_file)
-        #     if ice_sheet == "AIS"
-        #     else process_GrIS_atmospheric_sectors(forcing_directory, grid_file)
-        # )
-        # atmospheric_df.to_csv(f"{export_directory}/{ice_sheet}_atmospheric.csv", index=False)
-        # oceanic_df = (
-        #     process_AIS_oceanic_sectors(forcing_directory, grid_file)
-        #     if ice_sheet == "AIS"
-        #     else process_GrIS_oceanic_sectors(forcing_directory, grid_file)
-        # )
-        # oceanic_df.to_csv(f"{export_directory}/{ice_sheet}_oceanic.csv", index=False)
+        
+        atmospheric_df = (
+            process_AIS_atmospheric_sectors(forcing_directory, grid_file)
+            if ice_sheet == "AIS"
+            else process_GrIS_atmospheric_sectors(forcing_directory, grid_file)
+        )
+        atmospheric_df.to_csv(f"{export_directory}/{ice_sheet}_atmospheric.csv", index=False)
+        oceanic_df = (
+            process_AIS_oceanic_sectors(forcing_directory, grid_file)
+            if ice_sheet == "AIS"
+            else process_GrIS_oceanic_sectors(forcing_directory, grid_file)
+        )
+        oceanic_df.to_csv(f"{export_directory}/{ice_sheet}_oceanic.csv", index=False)
 
         atmospheric_df = pd.read_csv(f"{export_directory}/{ice_sheet}_atmospheric.csv")
         oceanic_df = pd.read_csv(f"{export_directory}/{ice_sheet}_oceanic.csv")
@@ -2960,6 +2973,7 @@ def process_sectors(
         projections = (
             process_AIS_outputs(
                 zenodo_directory,
+                with_ctrl=with_ctrl,
             )
             if ice_sheet == "AIS"
             else process_GrIS_outputs(

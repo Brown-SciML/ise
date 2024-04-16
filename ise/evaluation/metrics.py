@@ -120,3 +120,41 @@ def kolmogorov_smirnov(x1, x2):
 def t_test(x1, x2):
     res = ttest_ind(x1, x2)
     return res.statistic, res.pvalue
+
+
+def calculate_ece(predictions, uncertainties, true_values, bins=10):
+    """
+    Calculate the Expected Calibration Error (ECE) for regression model predictions.
+    
+    Args:
+    predictions (numpy.ndarray): Array of predicted means by the model.
+    uncertainties (numpy.ndarray): Array of predicted standard deviations (uncertainty estimates).
+    true_values (numpy.ndarray): Array of actual values.
+    bins (int): Number of bins to use for grouping predictions by their uncertainty.
+
+    Returns:
+    float: The Expected Calibration Error.
+    """
+    bin_limits = np.linspace(np.min(uncertainties), np.max(uncertainties), bins+1)
+    ece = 0.0
+    total_count = len(predictions)
+
+    for i in range(bins):
+        bin_mask = (uncertainties >= bin_limits[i]) & (uncertainties < bin_limits[i+1])
+        if np.sum(bin_mask) == 0:
+            continue
+        bin_predictions = predictions[bin_mask]
+        bin_uncertainties = uncertainties[bin_mask]
+        bin_true_values = true_values[bin_mask]
+
+        # Assume Gaussian distribution: about 95.4% of data should fall within ±2 standard deviations
+        lower_bounds = bin_predictions - 2 * bin_uncertainties
+        upper_bounds = bin_predictions + 2 * bin_uncertainties
+        in_range = (bin_true_values >= lower_bounds) & (bin_true_values <= upper_bounds)
+        observed_probability = np.mean(in_range)
+        expected_probability = 0.954  # For ±2 standard deviations in Gaussian distribution
+
+        # Calculate the absolute difference weighted by the number of elements in the bin
+        ece += np.abs(observed_probability - expected_probability) * np.sum(bin_mask) / total_count
+
+    return ece

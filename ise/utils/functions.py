@@ -460,10 +460,16 @@ def get_all_filepaths(
             all_files = [file for file in all_files if file.endswith(filetype)]
 
     if contains:
-        all_files = [file for file in all_files if contains in file]
+        if isinstance(contains, str):
+            contains = [contains]
+        for substr in contains:
+            all_files = [file for file in all_files if substr in file]
 
     if not_contains:
-        all_files = [file for file in all_files if not_contains not in file]
+        if isinstance(not_contains, str):
+            not_contains = [not_contains]
+        for substr in not_contains:
+            all_files = [file for file in all_files if substr not in file]
 
     return all_files
 
@@ -629,7 +635,7 @@ def to_tensor(x):
     """
     if x is None:
         return None
-    if isinstance(x, pd.DataFrame):
+    if isinstance(x, pd.DataFrame) or isinstance(x, pd.Series):
         x = torch.tensor(x.values, dtype=torch.float32)
     elif isinstance(x, np.ndarray):
         x = torch.tensor(x, dtype=torch.float32)

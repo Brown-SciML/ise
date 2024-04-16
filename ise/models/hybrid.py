@@ -472,7 +472,8 @@ class WeakPredictor(nn.Module):
         """
         # Convert data to tensors and move to device
         X, y = to_tensor(X).to(self.device), to_tensor(y).to(self.device)
-
+        if y.ndimension() == 1:
+            y = y.unsqueeze(1)
         # Check if validation data is provided
         if val_X is not None and val_y is not None:
             validate = True
@@ -848,7 +849,7 @@ class NormalizingFlow(nn.Module):
         self.num_input_features = forcing_size
         self.num_predicted_sle = sle_size
         self.flow_hidden_features = sle_size * 2
-        self.projection_length=projection_length,
+        self.projection_length=projection_length
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.to(self.device)
 
@@ -893,6 +894,8 @@ class NormalizingFlow(nn.Module):
             batch_size (int): The batch size for training (default: 64).
         """
         X, y = to_tensor(X).to(self.device), to_tensor(y).to(self.device)
+        if y.ndimension() == 1:
+            y = y.unsqueeze(1)
         dataset = EmulatorDataset(X, y, sequence_length=1, projection_length=self.projection_length)
         data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
         self.train()
