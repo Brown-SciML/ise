@@ -558,6 +558,7 @@ def get_X_y(
     data,
     dataset_type="sectors",
     return_format=None,
+    cols='all',
 ):
     if dataset_type.lower() == "sectors":
         dropped_columns = [
@@ -607,6 +608,9 @@ def get_X_y(
         X_drop = [x for x in data.columns if "Scenario" in x] + dropped_columns
         X = data.drop(columns=X_drop)
         y = data[[x for x in data.columns if "Scenario" in x]]
+        
+    if isinstance(cols, list) and cols:
+        X = X[list(cols)]
         
     if return_format is not None:
         if return_format.lower() == "numpy":

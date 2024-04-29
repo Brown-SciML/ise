@@ -44,6 +44,7 @@ class FeatureEngineer:
         self.val_size = val_size
         self.test_size = test_size
         self.output_directory = output_directory
+        self.ice_sheet = ice_sheet
 
         self.scaler_X_path = None
         self.scaler_y_path = None
@@ -303,12 +304,15 @@ class FeatureEngineer:
     def add_model_characteristics(
         self,
         data=None,
-        model_char_path=r"./ise/utils/model_characteristics.csv",
+        model_char_path=None,
         encode=True,
         ids_path=None,
     ):
+        
         if data is not None:
             self.data = data
+        if model_char_path is None:
+            model_char_path = f"./ise/utils/{self.ice_sheet}_model_characteristics.csv"
         self.data = add_model_characteristics(self.data, model_char_path, encode, ids_path=ids_path)
         self._including_model_characteristics = True
 

@@ -158,3 +158,33 @@ def calculate_ece(predictions, uncertainties, true_values, bins=10):
         ece += np.abs(observed_probability - expected_probability) * np.sum(bin_mask) / total_count
 
     return ece
+
+def mean_squared_error(y_true, y_pred):
+    """
+    Calculate Mean Squared Error (MSE).
+
+    Args:
+    - y_true: numpy array or a list of actual numbers
+    - y_pred: numpy array or a list of predicted numbers
+
+    Returns:
+    - mse: Mean Squared Error
+    """
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
+    mse = np.mean((y_true - y_pred) ** 2)
+    return mse
+
+def mean_absolute_error(y_true, y_pred):
+    """
+    Calculate Mean Absolute Error (MAE).
+
+    Args:
+    - y_true: numpy array or a list of actual numbers
+    - y_pred: numpy array or a list of predicted numbers
+
+    Returns:
+    - mae: Mean Absolute Error
+    """
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
+    mae = np.mean(np.abs(y_true - y_pred))
+    return mae
