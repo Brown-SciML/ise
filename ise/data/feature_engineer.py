@@ -119,6 +119,10 @@ class FeatureEngineer:
         """
         if data is not None:
             self.data = data
+        if "mrro_anomaly" not in self.data.columns:
+            print('mrro_anomaly not in columns, skipping fill_mrro_nans()')
+            return self.data
+        
         self.data = fill_mrro_nans(self.data, method)
 
         return self.data
@@ -210,8 +214,11 @@ class FeatureEngineer:
 
         scaler_X.fit(X_data)
         X_scaled = scaler_X.transform(X_data)
+        
+        categorical_cols = [x for x in self.X.columns if len(set(self.X[x])) <= 2]
+        self.X[categorical_cols] = self.X[categorical_cols].astype('category')
 
-        # Fit and transform X
+        # Fit and transform y
         if isinstance(self.y, pd.DataFrame):
             y_data = self.y.values
         elif isinstance(self.y, np.ndarray):
@@ -486,6 +493,8 @@ def fill_mrro_nans(data: pd.DataFrame, method) -> pd.DataFrame:
             data[col] = data[col].fillna(data[col].median())
     elif method.lower() == "drop":
         data = data.dropna(subset=mrro_columns)
+    elif method.lower() == 'mean_by_year':
+        data['mrro_anomaly'] = data.groupby('year')['mrro_anomaly'].transform(lambda x: x.fillna(x.mean()))
     else:
         raise ValueError("method must be 'zero', 'mean', 'median', or 'drop'")
     return data
@@ -534,11 +543,15 @@ def split_training_data(
         int(len(total_ids) * train_size) : int(len(total_ids) * (train_size + val_size))
     ]
     test_ids = total_ids[int(len(total_ids) * (train_size + val_size)) :]
+    
+    train_ids = list(pd.read_csv(r'/oscar/scratch/pvankatw/datasets/sectors/GrIS/train.csv').id.unique())
+    val_ids = list(pd.read_csv(r'/oscar/scratch/pvankatw/datasets/sectors/GrIS/val.csv').id.unique())
+    test_ids = list(pd.read_csv(r'/oscar/scratch/pvankatw/datasets/sectors/GrIS/test.csv').id.unique())
 
     split_data = {
-        "train_ids": train_ids.tolist(),
-        "val_ids": val_ids.tolist(),
-        "test_ids": test_ids.tolist(),
+        "train_ids": list(train_ids),
+        "val_ids": list(val_ids),
+        "test_ids": list(test_ids),
     }
 
     with open(f"{output_directory}/ids.json", "w") as file:

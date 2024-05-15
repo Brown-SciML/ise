@@ -2498,6 +2498,9 @@ def process_AIS_atmospheric_sectors(forcing_directory, grid_file):
     filepaths = get_all_filepaths(path=af_directory, filetype="nc")
     filepaths = [f for f in filepaths if "1995-2100" in f]
     filepaths = [f for f in filepaths if "8km" in f]
+    
+    if not filepaths:
+        raise ValueError("No files found. Check the path to the forcing files.")
 
     sectors = _format_grid_file(grid_file)
     unique_sectors = np.unique(sectors)

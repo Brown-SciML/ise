@@ -477,6 +477,7 @@ class WeakPredictor(nn.Module):
         # Check if validation data is provided
         if val_X is not None and val_y is not None:
             validate = True
+            val_X, val_y = to_tensor(val_X).to(self.device), to_tensor(val_y).to(self.device)
         else:
             validate = False
 
@@ -956,7 +957,7 @@ class NormalizingFlow(nn.Module):
         z, _ = self.t(latent_constant_tensor.float(), context=x)
         return z
 
-    def aleatoric(self, features, num_samples):
+    def aleatoric(self, features, num_samples, batch_size=128):
         """
         Computes the aleatoric uncertainty of the model predictions.
 
@@ -969,10 +970,21 @@ class NormalizingFlow(nn.Module):
         """
         if not isinstance(features, torch.Tensor):
             features = to_tensor(features)
-        samples = self.flow.sample(num_samples, context=features)
-        samples = samples.detach().cpu().numpy()
-        std = np.std(samples, axis=1).squeeze()
-        return std
+            
+        num_batches = (features.shape[0] + batch_size - 1) // batch_size
+        aleatoric_uncertainty = []
+        
+        for i in range(num_batches):
+            start_idx = i * batch_size
+            end_idx = min((i+1)*batch_size, features.shape[0])
+            batch_features = features[start_idx:end_idx]
+            
+            samples = self.flow.sample(num_samples, context=batch_features)
+            samples = samples.detach().cpu().numpy()
+            std = np.std(samples, axis=1).squeeze()
+            aleatoric_uncertainty.append(std)
+            
+        return np.concatenate(aleatoric_uncertainty)
 
     def save(self, path):
         """
@@ -1161,6 +1173,8 @@ class HybridEmulator(torch.nn.Module):
             with open(self.scaler_path, "rb") as f:
                 output_scaler = pickle.load(f)
 
+        
+
         predictions, uncertainties = self.forward(x, smooth_projection=smooth_projection)
         epi = uncertainties["epistemic"]
         ale = uncertainties["aleatoric"]
@@ -1181,7 +1195,7 @@ class HybridEmulator(torch.nn.Module):
 
         return unscaled_predictions, uncertainties
 
-    def save(self, save_dir):
+    def save(self, save_dir, input_features=None):
         """
         Saves the trained model to the specified directory.
 
@@ -1203,6 +1217,13 @@ class HybridEmulator(torch.nn.Module):
 
         self.deep_ensemble.save(f"{save_dir}/deep_ensemble.pth")
         self.normalizing_flow.save(f"{save_dir}/normalizing_flow.pth")
+        
+        if input_features is not None:
+            if not isinstance(input_features, list):
+                raise ValueError("input_features must be a list of feature names")
+            else:
+                with open(f"{save_dir}/input_features.json", "w") as f:
+                    json.dump(input_features, f, indent=4)
 
     @staticmethod
     def load(model_dir=None, deep_ensemble_path=None, normalizing_flow_path=None):
@@ -1229,3 +1250,5 @@ class HybridEmulator(torch.nn.Module):
         model = HybridEmulator(deep_ensemble, normalizing_flow)
         model.trained = True
         return model
+
+

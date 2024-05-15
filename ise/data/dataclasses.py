@@ -29,6 +29,11 @@ class EmulatorDataset(Dataset):
     def __init__(self, X, y, sequence_length=5, projection_length=86):
         super().__init__()
 
+        if isinstance(projection_length, tuple):
+            if len(projection_length) == 1:
+                projection_length = projection_length[0]
+            else:
+                raise ValueError("Projection length must be a single integer or a tuple of two integers.")
         if X.shape[0] < projection_length:
             warnings.warn(
                 f"Full projections of {projection_length} timesteps are not present in the dataset. This may lead to unexpected behavior."

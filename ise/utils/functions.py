@@ -559,6 +559,7 @@ def get_X_y(
     dataset_type="sectors",
     return_format=None,
     cols='all',
+    with_chars=True,
 ):
     if dataset_type.lower() == "sectors":
         dropped_columns = [
@@ -611,6 +612,13 @@ def get_X_y(
         
     if isinstance(cols, list) and cols:
         X = X[list(cols)]
+        
+    if not with_chars:
+        char_cols = ['initial', 'numerics', 'ice_flow', 'initialization', 'velocity', 'bed', 
+                     'surface', 'ghf', 'res', 'Ocean', 'Ice shelf', 'stress', 'resolution', 'init', 
+                     'melt', 'ice_front', 'open', 'standard', ]
+        drop_cols = [col for col in X.columns if any(substring in col for substring in char_cols)]
+        X = X.drop(columns=drop_cols)
         
     if return_format is not None:
         if return_format.lower() == "numpy":
