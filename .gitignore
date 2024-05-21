@@ -14,7 +14,12 @@ run_gp.py
 *.out
 *.sh
 supplemental/
-
+*.png
+*.svg
+*.pdf
+*.pkl
+*.pt
+*.pth
 
 .vscode/
 .vscode

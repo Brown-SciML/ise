@@ -18,6 +18,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import torch
+from torch.nn import functional as F
 from nflows import distributions, flows, transforms
 from torch import nn, optim
 
@@ -25,6 +26,7 @@ from ise.data.dataclasses import EmulatorDataset
 from ise.data.scaler import LogScaler, RobustScaler, StandardScaler
 from ise.models.loss import MSEDeviationLoss, WeightedMSELoss
 from ise.utils.functions import to_tensor
+from ise.evaluation import metrics as m
 
 
 class PCA(nn.Module):
@@ -322,6 +324,71 @@ class DimensionProcessor(nn.Module):
 
         return scaled_grid
 
+class EarlyStopping:
+    """
+    Early stopping utility to stop training when a monitored quantity has stopped improving.
+
+    Args:
+        patience (int): How long to wait after the last time the monitored quantity improved.
+        delta (float): Minimum change in the monitored quantity to qualify as an improvement.
+        verbose (bool): If True, prints a message for each validation loss improvement. Default: False.
+        path (str): Path to save the model when validation loss improves. Default: 'checkpoint.pt'.
+        trace_func (function): Function to trace print statements. Default: print.
+
+    Attributes:
+        patience (int): How long to wait after the last time the monitored quantity improved.
+        delta (float): Minimum change in the monitored quantity to qualify as an improvement.
+        verbose (bool): If True, prints a message for each validation loss improvement.
+        path (str): Path to save the model when validation loss improves.
+        trace_func (function): Function to trace print statements.
+        counter (int): Counts how long to wait before stopping.
+        best_score (float): Best score seen so far.
+        early_stop (bool): Whether or not to stop early.
+        val_loss_min (float): Minimum validation loss seen so far.
+    """
+    def __init__(self, patience=7, delta=0, verbose=False, path='checkpoint.pt', trace_func=print):
+        self.patience = patience
+        self.delta = delta
+        self.verbose = verbose
+        self.path = path
+        self.trace_func = trace_func
+        self.counter = 0
+        self.best_score = None
+        self.early_stop = False
+        self.val_loss_min = float('inf')
+        self.log = ""
+
+    def __call__(self, val_loss, model):
+        score = -val_loss
+
+        if self.best_score is None:
+            self.best_score = score
+            self.save_checkpoint(val_loss, model)
+        elif score < self.best_score + self.delta:
+            self.counter += 1
+            # if self.verbose:
+            #     self.trace_func(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+            if self.counter >= self.patience:
+                self.early_stop = True
+            self.log = f"EarlyStopping counter: {self.counter} out of {self.patience}"
+            
+        else:
+            self.best_score = score
+            self.save_checkpoint(val_loss, model)
+            self.counter = 0
+
+    def save_checkpoint(self, val_loss, model):
+        '''Saves model when validation loss decreases.'''
+        # if self.verbose:
+        #     self.trace_func(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
+        
+        if model.__class__.__name__ == 'NormalizingFlow':
+            self.log = f"Train loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f})."
+        else:
+            self.log = f"Validation MSE decreased ({self.val_loss_min:.6f} --> {val_loss:.6f})."
+        torch.save(model.state_dict(), f"{self.path}")
+        self.val_loss_min = val_loss
+
 
 class WeakPredictor(nn.Module):
     """
@@ -357,7 +424,7 @@ class WeakPredictor(nn.Module):
 
     Methods:
         forward(x): Performs a forward pass through the model.
-        fit(X, y, epochs, sequence_length, batch_size, loss, val_X, val_y): Trains the model.
+        fit(X, y, epochs, sequence_length, batch_size, loss, X_val, y_val): Trains the model.
         predict(X, sequence_length, batch_size): Makes predictions using the trained model.
     """
 
@@ -372,6 +439,7 @@ class WeakPredictor(nn.Module):
         ice_sheet="AIS",
         criterion=torch.nn.MSELoss(),
         projection_length=86,
+        optimizer=optim.Adam
     ):
         super(WeakPredictor, self).__init__()
 
@@ -398,7 +466,7 @@ class WeakPredictor(nn.Module):
         self.linear_out = nn.Linear(in_features=32, out_features=output_size)
 
         # Initialize optimizer and other components
-        self.optimizer = optim.Adam(self.parameters())
+        self.optimizer = optimizer(self.parameters())
         self.dropout = nn.Dropout(p=0.2)
         self.criterion = criterion
         self.trained = False
@@ -455,10 +523,11 @@ class WeakPredictor(nn.Module):
         return x
 
     def fit(
-        self, X, y, epochs=100, sequence_length=5, batch_size=64, loss=None, val_X=None, val_y=None
+        self, X, y, epochs=100, sequence_length=5, batch_size=64, loss=None, X_val=None, y_val=None, early_stopping=False,
+        patience=10, delta=0, early_stopping_path='checkpoint.pt', verbose=True,
     ):
         """
-        Trains the model.
+        Trains the model with early stopping.
 
         Args:
             X (numpy.ndarray or pandas.DataFrame): The input data.
@@ -467,17 +536,24 @@ class WeakPredictor(nn.Module):
             sequence_length (int, optional): The sequence length for creating input sequences. Defaults to 5.
             batch_size (int, optional): The batch size. Defaults to 64.
             loss (torch.nn.Module, optional): The loss function to use. If None, the default criterion is used. Defaults to None.
-            val_X (numpy.ndarray or pandas.DataFrame, optional): The validation input data. Defaults to None.
-            val_y (numpy.ndarray or pandas.DataFrame, optional): The validation target data. Defaults to None.
+            X_val (numpy.ndarray or pandas.DataFrame, optional): The validation input data. Defaults to None.
+            y_val (numpy.ndarray or pandas.DataFrame, optional): The validation target data. Defaults to None.
+            patience (int, optional): The number of epochs to wait for improvement before stopping. Defaults to 10.
+            delta (float, optional): The minimum change in the monitored quantity to qualify as an improvement. Defaults to 0.
+            early_stopping_path (str, optional): The path to save the model with the best validation loss. Defaults to 'checkpoint.pt'.
         """
         # Convert data to tensors and move to device
         X, y = to_tensor(X).to(self.device), to_tensor(y).to(self.device)
         if y.ndimension() == 1:
             y = y.unsqueeze(1)
         # Check if validation data is provided
-        if val_X is not None and val_y is not None:
+        if X_val is not None and y_val is not None:
             validate = True
-            val_X, val_y = to_tensor(val_X).to(self.device), to_tensor(val_y).to(self.device)
+            if not early_stopping:
+                warnings.warn(
+                    "Validation data provided but early_stopping is False. Early stopping is recommended for validation data."
+                )
+            X_val, y_val = to_tensor(X_val).to(self.device), to_tensor(y_val).to(self.device)
         else:
             validate = False
 
@@ -502,6 +578,10 @@ class WeakPredictor(nn.Module):
         self.train()
         self.to(self.device)
 
+        # Initialize early stopping
+        if early_stopping:
+            early_stopper = EarlyStopping(patience=patience, delta=delta, path=early_stopping_path, verbose=verbose)
+
         # Training loop
         for epoch in range(1, epochs + 1):
             self.train()
@@ -519,17 +599,35 @@ class WeakPredictor(nn.Module):
             # Print average batch loss and validation loss (if provided)
             if validate:
                 val_preds = self.predict(
-                    val_X, sequence_length=sequence_length, batch_size=batch_size
+                    X_val, sequence_length=sequence_length, batch_size=batch_size
                 ).to(self.device)
-                val_loss = self.criterion(val_preds, torch.tensor(val_y, device=self.device))
-                print(
-                    f"Epoch {epoch}, Average Batch Loss: {sum(batch_losses) / len(batch_losses)}, Validation Loss: {val_loss}"
-                )
+                # val_loss = self.criterion(val_preds, torch.tensor(y_val, device=self.device))
+                val_loss = F.mse_loss(val_preds, torch.tensor(y_val, device=self.device))
+                
+
+                if early_stopping:
+                    # Check early stopping
+                    early_stopper(val_loss, self)
+
+                    if early_stopper.early_stop:
+                        if verbose:
+                            print("Early stopping") 
+                        break
+                    
+                if verbose:
+                    print(f"[epoch/total]: [{epoch}/{epochs}], train loss: {sum(batch_losses) / len(batch_losses)}, val mse: {val_loss} -- {early_stopper.log if early_stopping else ''}")
             else:
                 average_batch_loss = sum(batch_losses) / len(batch_losses)
-                print(f"Epoch {epoch}, Average Batch Loss: {average_batch_loss}")
+                if verbose:
+                    print(f"[epoch/total]: [{epoch}/{epochs}], train loss: {sum(batch_losses) / len(batch_losses)}")
 
         self.trained = True
+        
+        # loads best model
+        if early_stopping:
+            self.load_state_dict(torch.load(early_stopping_path))
+            # removes checkpoint file for saving later
+            os.remove(early_stopping_path)
 
     def predict(self, X, sequence_length=5, batch_size=64):
         """
@@ -668,30 +766,41 @@ class DeepEnsemble(nn.Module):
         return self.forward(x)
 
     def fit(
-        self,
-        X,
-        y,
-        epochs=100,
-        batch_size=64,
-        sequence_length=5,
-    ):
-        """
-        Trains the model.
+            self,
+            X,
+            y,
+            X_val=None,
+            y_val=None,
+            early_stopping=False,
+            epochs=100,
+            batch_size=128,
+            sequence_length=5,
+            patience=10,
+            delta=0,
+            early_stopping_path='checkpoint_ensemble',
+            verbose=True,
+        ):
+            """
+            Trains the model with early stopping.
 
-        Args:
-        - X: Input data.
-        - y: Target data.
-        - epochs (int, optional): Number of epochs to train the model. Default is 100.
-        - batch_size (int, optional): Batch size for training. Default is 64.
-        - sequence_length (int, optional): Length of input sequences. Default is 5.
-        """
-        if self.trained:
-            warnings.warn("This model has already been trained. Training anyways.")
-        for i, wp in enumerate(self.weak_predictors):
-            print(f"Training Weak Predictor {i+1} of {len(self.weak_predictors)}:")
-            wp.fit(X, y, epochs=epochs, batch_size=batch_size, sequence_length=sequence_length)
-            print("")
-        self.trained = True
+            Args:
+            - X: Input data.
+            - y: Target data.
+            - epochs (int, optional): Number of epochs to train the model. Default is 100.
+            - batch_size (int, optional): Batch size for training. Default is 64.
+            - sequence_length (int, optional): Length of input sequences. Default is 5.
+            - patience (int, optional): The number of epochs to wait for improvement before stopping. Defaults to 10.
+            - delta (float, optional): The minimum change in the monitored quantity to qualify as an improvement. Defaults to 0.
+            - early_stopping_path (str, optional): The path to save the model with the best validation loss. Defaults to 'checkpoint_ensemble'.
+            """
+            if self.trained:
+                warnings.warn("This model has already been trained. Training anyways.")
+            for i, wp in enumerate(self.weak_predictors):
+                if verbose:
+                    print(f"Training Weak Predictor {i+1} of {len(self.weak_predictors)}:")
+                wp.fit(X, y, X_val=X_val, y_val=y_val, early_stopping=early_stopping, epochs=epochs, batch_size=batch_size, sequence_length=sequence_length, patience=patience, delta=delta, early_stopping_path=f'{early_stopping_path}_wp{i+1}.pth', verbose=verbose)
+                print("")
+            self.trained = True
 
     def save(self, model_path):
         """
@@ -832,7 +941,7 @@ class NormalizingFlow(nn.Module):
         trained (bool): Indicates whether the model has been trained or not.
 
     Methods:
-        fit(X, y, epochs=100, batch_size=64): Trains the model on the given input and output data.
+        fit(X, y, epochs=100, batch_size=64, patience=10, delta=0, early_stopping_path='checkpoint.pt'): Trains the model on the given input and output data.
         sample(features, num_samples, return_type="numpy"): Generates samples from the model.
         get_latent(x, latent_constant=0.0): Computes the latent representation of the input data.
         aleatoric(features, num_samples): Computes the aleatoric uncertainty of the model predictions.
@@ -844,13 +953,14 @@ class NormalizingFlow(nn.Module):
         forcing_size=43,
         sle_size=1,
         projection_length=86,
+        num_flow_transforms=5,
     ):
         super(NormalizingFlow, self).__init__()
-        self.num_flow_transforms = 5
+        self.num_flow_transforms = num_flow_transforms
         self.num_input_features = forcing_size
         self.num_predicted_sle = sle_size
         self.flow_hidden_features = sle_size * 2
-        self.projection_length=projection_length
+        self.projection_length = projection_length
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.to(self.device)
 
@@ -884,15 +994,18 @@ class NormalizingFlow(nn.Module):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.to(self.device)
 
-    def fit(self, X, y, epochs=100, batch_size=64):
+    def fit(self, X, y, epochs=100, batch_size=64, early_stopping=True, patience=10, delta=1e-3, early_stopping_path='checkpoint.pt', verbose=True):
         """
-        Trains the model on the given input and output data.
+        Trains the model on the given input and output data with early stopping.
 
         Args:
             X (array-like): The input data.
             y (array-like): The output data.
             epochs (int): The number of training epochs (default: 100).
             batch_size (int): The batch size for training (default: 64).
+            patience (int, optional): The number of epochs to wait for improvement before stopping. Defaults to 10.
+            delta (float, optional): The minimum change in the monitored quantity to qualify as an improvement. Defaults to 0.
+            early_stopping_path (str, optional): The path to save the model with the best training loss. Defaults to 'checkpoint.pt'.
         """
         X, y = to_tensor(X).to(self.device), to_tensor(y).to(self.device)
         if y.ndimension() == 1:
@@ -900,6 +1013,10 @@ class NormalizingFlow(nn.Module):
         dataset = EmulatorDataset(X, y, sequence_length=1, projection_length=self.projection_length)
         data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
         self.train()
+
+        # Initialize early stopping
+        if early_stopping:
+            early_stopper = EarlyStopping(patience=patience, delta=delta, path=early_stopping_path, verbose=True)
 
         for epoch in range(1, epochs + 1):
             epoch_loss = []
@@ -913,8 +1030,24 @@ class NormalizingFlow(nn.Module):
                 loss.backward()
                 self.optimizer.step()
                 epoch_loss.append(loss.item())
-            print(f"Epoch {epoch}, Loss: {sum(epoch_loss) / len(epoch_loss)}")
+            average_epoch_loss = sum(epoch_loss) / len(epoch_loss)
+
+            # Check early stopping
+            if early_stopping:
+                early_stopper(average_epoch_loss, self)
+
+                if early_stopper.early_stop:
+                    print("Early stopping")
+                    break
+            if verbose:
+                print(f"[epoch/total]: [{epoch}/{epochs}], loss: {average_epoch_loss}{f' -- {early_stopper.log}' if early_stopping else ''}")
+            
+
         self.trained = True
+        # Load the best model checkpoint
+        if early_stopping:
+            self.load_state_dict(torch.load(early_stopping_path))
+            os.remove(early_stopping_path)
 
     def sample(self, features, num_samples, return_type="numpy"):
         """
@@ -1086,7 +1219,9 @@ class HybridEmulator(torch.nn.Module):
         self.trained = self.deep_ensemble.trained and self.normalizing_flow.trained
         self.scaler_path = None
 
-    def fit(self, X, y, epochs=100, nf_epochs=None, de_epochs=None, sequence_length=5):
+    def fit(self, X, y, X_val=None, y_val=None, early_stopping=None, epochs=100, nf_epochs=None, 
+            de_epochs=None, sequence_length=5, patience=10, delta=0, 
+            early_stopping_path='checkpoint_ensemble', verbose=True):
         """
         Fits the hybrid emulator to the training data.
 
@@ -1101,7 +1236,17 @@ class HybridEmulator(torch.nn.Module):
             sequence_length (int): The sequence length used for training the deep ensemble model (default: 5).
 
         """
+        
+        # Handling early stopping (if validation data is provided, turn it on and send a notification)
+        if early_stopping is None:
+            if X_val is not None and y_val is None:
+                early_stopping = True
+                print('Validation data provided and early_stopping argument is None, early stopping enabled.')
+            else:
+                early_stopping = False
+            
         torch.manual_seed(np.random.randint(0, 100000))
+        
         # if specific epoch numbers are not supplied, use the same number of epochs for both
         if nf_epochs is None:
             nf_epochs = epochs
@@ -1112,15 +1257,27 @@ class HybridEmulator(torch.nn.Module):
         if self.trained:
             warnings.warn("This model has already been trained. Training anyways.")
         if not self.normalizing_flow.trained:
-            print(f"\nTraining Normalizing Flow ({nf_epochs} epochs):")
-            self.normalizing_flow.fit(X, y, epochs=nf_epochs)
+            print(f"\nTraining Normalizing Flow ({'Maximum ' if early_stopping else ''}{nf_epochs} epochs):")
+            self.normalizing_flow.fit(X, y, early_stopping=early_stopping, patience=patience, 
+                                      delta=delta, epochs=nf_epochs, verbose=verbose)
         z = self.normalizing_flow.get_latent(
             X,
         ).detach()
         X_latent = torch.concatenate((X, z), axis=1)
+        
+        X_val_latent = None
+        if X_val is not None and y_val is not None:
+            X_val, y_val = to_tensor(X_val).to(self.device), to_tensor(y_val).to(self.device)
+            z = self.normalizing_flow.get_latent(X_val,).detach()
+            X_val_latent = torch.concatenate((X_val, z), axis=1)
+        
         if not self.deep_ensemble.trained:
-            print(f"\nTraining Deep Ensemble ({de_epochs} epochs):")
-            self.deep_ensemble.fit(X_latent, y, epochs=de_epochs, sequence_length=sequence_length)
+            print(f"\nTraining Deep Ensemble ({'Maximum ' if early_stopping else ''}{de_epochs} epochs):")
+            self.deep_ensemble.fit(
+                X_latent, y, X_val=X_val_latent, y_val=y_val, early_stopping=early_stopping, 
+                patience=patience, delta=delta, early_stopping_path=early_stopping_path,
+                epochs=de_epochs, sequence_length=sequence_length, verbose=verbose,
+                )
         self.trained = True
 
     def forward(

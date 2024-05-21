@@ -3,6 +3,7 @@ import torch
 import xarray as xr
 from scipy.spatial.distance import jensenshannon
 from scipy.stats import kstest, ttest_ind
+from sklearn.metrics import r2_score as r2
 
 
 def sum_by_sector(array, grid_file):
@@ -35,6 +36,9 @@ def sum_by_sector(array, grid_file):
             sums_by_sector[i, sector - 1] = np.sum(array[i, :, :][sectors == sector])
     return sums_by_sector
 
+def r2_score(y_true, y_pred):
+    return r2(y_true, y_pred)
+    
 
 def mean_squared_error_sector(sum_sectors_true, sum_sectors_pred):
     return np.mean((sum_sectors_true - sum_sectors_pred) ** 2)
