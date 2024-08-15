@@ -452,7 +452,7 @@ def add_lag_variables(data: pd.DataFrame, lag: int) -> pd.DataFrame:
         for shift in range(1, lag + 1):
             lag_columns = base_temporal_columns.shift(shift).add_suffix(f".lag{shift}")
             # Fill missing values caused by shifting
-            lag_columns.fillna(method="bfill", inplace=True)
+            lag_columns.bfill(inplace=True)
             lags.append(lag_columns)
         full_segment_data = pd.concat([non_lagged_data.reset_index(drop=True), base_temporal_columns.reset_index(drop=True), pd.concat(lags, axis=1).reset_index(drop=True)], axis=1)
 
@@ -544,9 +544,9 @@ def split_training_data(
     ]
     test_ids = total_ids[int(len(total_ids) * (train_size + val_size)) :]
     
-    train_ids = list(pd.read_csv(r'/oscar/scratch/pvankatw/datasets/sectors/GrIS/train.csv').id.unique())
-    val_ids = list(pd.read_csv(r'/oscar/scratch/pvankatw/datasets/sectors/GrIS/val.csv').id.unique())
-    test_ids = list(pd.read_csv(r'/oscar/scratch/pvankatw/datasets/sectors/GrIS/test.csv').id.unique())
+    # train_ids = list(pd.read_csv(r'/oscar/scratch/pvankatw/datasets/sectors/GrIS/train.csv').id.unique())
+    # val_ids = list(pd.read_csv(r'/oscar/scratch/pvankatw/datasets/sectors/GrIS/val.csv').id.unique())
+    # test_ids = list(pd.read_csv(r'/oscar/scratch/pvankatw/datasets/sectors/GrIS/test.csv').id.unique())
 
     split_data = {
         "train_ids": list(train_ids),

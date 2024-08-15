@@ -602,7 +602,7 @@ class WeakPredictor(nn.Module):
                     X_val, sequence_length=sequence_length, batch_size=batch_size
                 ).to(self.device)
                 # val_loss = self.criterion(val_preds, torch.tensor(y_val, device=self.device))
-                val_loss = F.mse_loss(val_preds, torch.tensor(y_val, device=self.device))
+                val_loss = F.mse_loss(val_preds.squeeze(), torch.tensor(y_val, device=self.device).squeeze())
                 
 
                 if early_stopping:
@@ -619,7 +619,7 @@ class WeakPredictor(nn.Module):
             else:
                 average_batch_loss = sum(batch_losses) / len(batch_losses)
                 if verbose:
-                    print(f"[epoch/total]: [{epoch}/{epochs}], train loss: {sum(batch_losses) / len(batch_losses)}")
+                    print(f"[epoch/total]: [{epoch}/{epochs}], train loss: {average_batch_loss}")
 
         self.trained = True
         
@@ -1177,9 +1177,9 @@ class NormalizingFlow(nn.Module):
         return model
 
 
-class HybridEmulator(torch.nn.Module):
+class ISEFlow(torch.nn.Module):
     """
-    A hybrid emulator that combines a deep ensemble and a normalizing flow model.
+    The ISEFlow (Flow-based Ice Sheet Emulator) that combines a deep ensemble and a normalizing flow model.
 
     Args:
         deep_ensemble (DeepEnsemble): The deep ensemble model.
@@ -1204,7 +1204,7 @@ class HybridEmulator(torch.nn.Module):
     """
 
     def __init__(self, deep_ensemble, normalizing_flow,):
-        super(HybridEmulator, self).__init__()
+        super(ISEFlow, self).__init__()
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.to(self.device)
@@ -1404,7 +1404,7 @@ class HybridEmulator(torch.nn.Module):
         deep_ensemble.trained = True
         normalizing_flow = NormalizingFlow.load(normalizing_flow_path)
         normalizing_flow.trained = True
-        model = HybridEmulator(deep_ensemble, normalizing_flow)
+        model = ISEFlow(deep_ensemble, normalizing_flow)
         model.trained = True
         return model
 

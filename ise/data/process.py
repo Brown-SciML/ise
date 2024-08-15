@@ -10,7 +10,7 @@ import xarray as xr
 from tqdm import tqdm
 
 from ise.data.scaler import LogScaler, RobustScaler, StandardScaler
-from ise.models.hybrid import PCA
+from ise.models.ISEFlow import PCA
 from ise.utils.functions import get_all_filepaths
 
 

@@ -4,6 +4,7 @@ import xarray as xr
 from scipy.spatial.distance import jensenshannon
 from scipy.stats import kstest, ttest_ind
 from sklearn.metrics import r2_score as r2
+import properscoring as ps
 
 
 def sum_by_sector(array, grid_file):
@@ -58,6 +59,9 @@ def kl_divergence(p: np.ndarray, q: np.ndarray):
         float: KL Divergence
     """
     return np.sum(np.where(p != 0, p * np.log(p / q), 0))
+
+def crps(y_true, y_pred, y_std):
+    return ps.crps_gaussian(y_true, mu=y_pred, sig=y_std)
 
 
 def js_divergence(p: np.ndarray, q: np.ndarray):

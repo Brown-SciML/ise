@@ -1462,6 +1462,21 @@ typing = ["typing-extensions"]
 xmp = ["defusedxml"]
 
 [[package]]
+name = "properscoring"
+version = "0.1"
+description = "Proper scoring rules in Python"
+optional = false
+python-versions = "*"
+files = [
+    {file = "properscoring-0.1-py2.py3-none-any.whl", hash = "sha256:f84d5b06c13549d0171ce52ad7b45c6f5726ac44b733d24af5c60654cbb821dc"},
+    {file = "properscoring-0.1.tar.gz", hash = "sha256:b0cc4963cc218b728d6c5f77b3259c8f835ae00e32e82678cdf6936049b93961"},
+]
+
+[package.dependencies]
+numpy = "*"
+scipy = "*"
+
+[[package]]
 name = "protobuf"
 version = "5.26.1"
 description = ""
@@ -2211,4 +2226,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "7d1e7899411d98ac7f7ad008b6dd6ad13148195c72186bde5767d94f0130b1ae"
+content-hash = "adf3c357bbaad36a12fbf4c9780f846c0fb9c6fa60a35588719992fcd090c25d"
