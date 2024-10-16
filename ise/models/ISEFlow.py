@@ -1259,7 +1259,7 @@ class ISEFlow(torch.nn.Module):
         if not self.normalizing_flow.trained:
             print(f"\nTraining Normalizing Flow ({'Maximum ' if early_stopping else ''}{nf_epochs} epochs):")
             self.normalizing_flow.fit(X, y, early_stopping=early_stopping, patience=patience, 
-                                      delta=delta, epochs=nf_epochs, verbose=verbose)
+                                      delta=delta, epochs=nf_epochs, verbose=verbose, early_stopping_path=early_stopping_path)
         z = self.normalizing_flow.get_latent(
             X,
         ).detach()
@@ -1330,9 +1330,10 @@ class ISEFlow(torch.nn.Module):
             with open(self.scaler_path, "rb") as f:
                 output_scaler = pickle.load(f)
 
-        
-
+        import time
+        start_time = time.time()
         predictions, uncertainties = self.forward(x, smooth_projection=smooth_projection)
+        print('forward time:', time.time() - start_time)
         epi = uncertainties["epistemic"]
         ale = uncertainties["aleatoric"]
 

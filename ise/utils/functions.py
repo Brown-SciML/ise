@@ -561,7 +561,34 @@ def get_X_y(
     cols='all',
     with_chars=True,
 ):
-    if dataset_type.lower() == "sectors":
+    
+    ice_sheet = "AIS" if dataset_type.lower() == "regions" and 'smb_anomaly' in data.columns else 'GrIS'
+    regions = True if dataset_type.lower() == "regions" else False
+    if dataset_type.lower() == "sectors" or regions:
+        
+        if regions:
+            sector_to_region = {}
+            if ice_sheet == 'AIS':
+                for i, sector in enumerate(data.sector.unique()):
+                    if i > 0 and i < 6:
+                        sector_to_region[sector] = 1
+                    elif i > 5 and i < 17:
+                        sector_to_region[sector] = 2
+                    else:
+                        sector_to_region[sector] = 3
+            else:
+                for i, sector in enumerate(data.sector.unique()):
+                    sector_to_region[sector] = 1
+            
+            data['region'] = data.sector.map(sector_to_region)
+            data['id'] = data['id'].apply(lambda x: "_".join(x.split('_')[:-1]))
+            data = data.groupby(['region', 'id', 'year']).agg({
+                'sle': 'mean', 
+                **{col: 'mean' for col in data.columns.difference(['sle']) if data[col].dtype == 'float64'}
+            }, )
+            data = data.drop(columns=['year']) # drop year so that there aren't two year columns after reset_index()
+            data = data.reset_index()
+            
         dropped_columns = [
             "id",
             "cmip_model",

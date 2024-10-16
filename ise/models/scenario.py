@@ -42,7 +42,7 @@ class ScenarioPredictor(nn.Module):
         x = self.sigmoid(x)
         return x
       
-    def fit(self, train_loader, val_loader=None, epochs=10, lr=1e-3, print_every=1):
+    def fit(self, train_loader, val_loader=None, epochs=10, lr=1e-3, print_every=1, save_checkpoint=True):
 
         # Set the model to training mode
         self.train()
@@ -50,7 +50,7 @@ class ScenarioPredictor(nn.Module):
         # Update the optimizer learning rate
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = lr
-
+        self.best_val_loss = 10000
         for epoch in range(epochs):
             total_loss = 0
             for batch in train_loader:
@@ -75,6 +75,10 @@ class ScenarioPredictor(nn.Module):
                     # Evaluate the model on the validation set
                     self.eval()  # Set the model to evaluation mode
                     val_loss, val_accuracy = self.evaluate(val_loader)
+                    if save_checkpoint:
+                        if val_loss < self.best_val_loss:
+                            self.best_val_loss = val_loss
+                            torch.save(self.state_dict(), 'checkpoint.pth')
                     print(f'Validation Loss: {val_loss}, Validation Accuracy: {val_accuracy}')
                     self.train()  # Set the model back to training mode
 
@@ -127,3 +131,11 @@ class ScenarioPredictor(nn.Module):
             output = self.forward(x)
         return output
 
+    def load(self, path):
+        """
+        Loads the model state from a file.
+
+        Args:
+            path (str): Path to the file containing the model state.
+        """
+        self.load_state_dict(torch.load(path, map_location=self.device))

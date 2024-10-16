@@ -46,38 +46,45 @@ def mean_squared_error_sector(sum_sectors_true, sum_sectors_pred):
 
 
 def kl_divergence(p: np.ndarray, q: np.ndarray):
-    """Calculates the Kullback-Leibler Divergence between two distributions. Q is typically a
-    'known' distirubtion and should be the true values, whereas P is typcically the test distribution,
-    or the predicted distribution. Note the the KL divergence is assymetric, and near-zero values for
-    p with a non-near zero values for q cause the KL divergence to inflate [citation].
+    """Calculates the Kullback-Leibler Divergence between two distributions."""
+    p = np.asarray(p, dtype=np.float64)
+    q = np.asarray(q, dtype=np.float64)
+    
+    # Normalize p and q to ensure they are probability distributions
+    p /= np.sum(p)
+    q /= np.sum(q)
+    
+    # Clip values to avoid numerical instability
+    epsilon = 1e-10
+    p = np.clip(p, epsilon, 1)
+    q = np.clip(q, epsilon, 1)
+    
+    # Compute KL divergence
+    return np.sum(p * np.log(p / q))
 
-    Args:
-        p (np.ndarray): Test distribution
-        q (np.ndarray): Known distribution
-
-    Returns:
-        float: KL Divergence
-    """
-    return np.sum(np.where(p != 0, p * np.log(p / q), 0))
-
-def crps(y_true, y_pred, y_std):
-    return ps.crps_gaussian(y_true, mu=y_pred, sig=y_std)
 
 
 def js_divergence(p: np.ndarray, q: np.ndarray):
-    """Calculates the Jensen-Shannon Divergence between two distributions. Q is typically a
-    'known' distirubtion and should be the true values, whereas P is typcically the test distribution,
-    or the predicted distribution. Note the the JS divergence, unlike the KL divergence, is symetric.
+    """Calculates the Jensen-Shannon Divergence between two distributions."""
+    p = np.asarray(p, dtype=np.float64)
+    q = np.asarray(q, dtype=np.float64)
+    
+    # Normalize p and q to ensure they are probability distributions
+    p /= np.sum(p)
+    q /= np.sum(q)
+    
+    # Clip values to avoid numerical instability
+    epsilon = 1e-10
+    p = np.clip(p, epsilon, 1)
+    q = np.clip(q, epsilon, 1)
+    
+    # Calculate the Jensen-Shannon Divergence
+    jsd = jensenshannon(p, q) ** 2  # The function returns the square root, so square it for the divergence
+    
+    return jsd
 
-    Args:
-        p (np.ndarray): Test distribution
-        q (np.ndarray): Known distribution
-
-    Returns:
-        float: JS Divergence
-    """
-    return jensenshannon(p, q)
-
+def crps(y_true, y_pred, y_std):
+    return ps.crps_gaussian(y_true, mu=y_pred, sig=y_std)
 
 def mape(y_true, y_pred):
     """
