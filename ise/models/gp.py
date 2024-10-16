@@ -144,3 +144,6 @@ R2: {r2:0.6f}"""
             raise ValueError("Path must end with .joblib")
         self = load(path)
         return self
+
+
+# TODO write Emulandice based on train_gp.py
