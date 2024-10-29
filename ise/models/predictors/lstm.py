@@ -127,9 +127,9 @@ class LSTM(nn.Module):
         # Initialize early stopping
         if save_checkpoints:
             if early_stopping:
-                checkpointer = EarlyStoppingCheckpointer(self, checkpoint_path, patience, verbose)
+                checkpointer = EarlyStoppingCheckpointer(self, self.optimizer, checkpoint_path, patience, verbose)
             else:
-                checkpointer = CheckpointSaver(self, checkpoint_path, verbose=verbose)
+                checkpointer = CheckpointSaver(self, self.optimizer, checkpoint_path, verbose)
                 
             checkpointer.best_loss = best_loss
         
