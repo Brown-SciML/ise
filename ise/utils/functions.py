@@ -582,12 +582,13 @@ def get_X_y(
             
             data['region'] = data.sector.map(sector_to_region)
             data['id'] = data['id'].apply(lambda x: "_".join(x.split('_')[:-1]))
-            data = data.groupby(['region', 'id', 'year']).agg({
-                'sle': 'mean', 
+            data = data.groupby(['region', 'id', 'year', 'Scenario']).agg({
+                'sle': 'mean',   # for GP, used mean instead of sum so that scales of errors are the same
                 **{col: 'mean' for col in data.columns.difference(['sle']) if data[col].dtype == 'float64'}
             }, )
             data = data.drop(columns=['year']) # drop year so that there aren't two year columns after reset_index()
             data = data.reset_index()
+            scenarios = data.Scenario
             
         dropped_columns = [
             "id",
@@ -658,6 +659,9 @@ def get_X_y(
             raise ValueError(
                 f"return_format must be in ['numpy', 'tensor', 'pandas'], received {return_format}"
             )
+    
+    if regions:
+        return X, y, scenarios
 
     return X, y
 

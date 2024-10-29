@@ -14,6 +14,7 @@ import json
 import os
 import pickle
 import warnings
+import copy
 
 import numpy as np
 import pandas as pd
@@ -1280,68 +1281,130 @@ class ISEFlow(torch.nn.Module):
                 )
         self.trained = True
 
-    def forward(
-        self,
-        x,
-        smooth_projection=False,
-    ):
+    def forward(self, x, smooth_projection=False, window_size=3):
         """
         Performs a forward pass through the hybrid emulator.
 
         Args:
             x (array-like): The input data.
-
-        Returns:
-            tuple: A tuple containing the prediction, epistemic uncertainty, and aleatoric uncertainty.
-
+            smooth_projection (bool): Apply rolling window smoothing to predictions if True.
+            window_size (int): The size of the rolling window for smoothing.
         """
         self.eval()
         x = to_tensor(x).to(self.device)
         if not self.trained:
             warnings.warn("This model has not been trained. Predictions will not be accurate.")
-        z = self.normalizing_flow.get_latent(
-            x,
-        ).detach()
-        X_latent = torch.concatenate((x, z), axis=1)
+        
+        z = self.normalizing_flow.get_latent(x).detach()
+        X_latent = torch.cat((x, z), axis=1)
         prediction, epistemic = self.deep_ensemble(X_latent)
         aleatoric = self.normalizing_flow.aleatoric(x, 100)
+
+        # Convert tensors to numpy arrays
         prediction = prediction.detach().cpu().numpy()
         epistemic = epistemic.detach().cpu().numpy()
+        aleatoric = aleatoric.detach().cpu().numpy() if isinstance(aleatoric, torch.Tensor) else aleatoric
+        
+        # Apply smoothing if the flag is set to True
+        if smooth_projection:
+            if len(x) > 86:
+                warnings.warn("The input data is longer than the projection length. The output may not be accurate.")
+
+            prediction_series = pd.Series(prediction).rolling(window=window_size,).mean()
+            prediction_series.iloc[:window_size] = prediction[:window_size]
+            prediction = prediction_series.to_numpy()
+            
+            epistemic_series = pd.Series(epistemic).rolling(window=window_size,).mean()
+            epistemic_series.iloc[:window_size] = epistemic[:window_size]
+            epistemic = epistemic_series.to_numpy()
+            
+            aleatoric_series = pd.Series(aleatoric).rolling(window=window_size,).mean()
+            aleatoric_series.iloc[:window_size] = aleatoric[:window_size]
+            aleatoric = aleatoric_series.to_numpy()
+
         uncertainties = dict(
             total=aleatoric + epistemic,
             epistemic=epistemic,
             aleatoric=aleatoric,
         )
 
-        if smooth_projection:
-            stop = ""
+            
         return prediction, uncertainties
 
-    def predict(self, x, output_scaler=None, smooth_projection=False):
+
+    def predict(self, x, output_scaler=None, smooth_projection=False, window_size=5):
+        """
+        Makes predictions and applies the inverse transform of the scaler if provided.
+
+        Args:
+            x (array-like): The input data.
+            output_scaler (StandardScaler): Scaler object used for output transformations.
+            smooth_projection (bool): Apply rolling window smoothing to predictions if True.
+            window_size (int): The size of the rolling window for smoothing.
+
+        Returns:
+            tuple: A tuple containing predictions and uncertainties (total, epistemic, aleatoric).
+        """
         self.eval()
         if output_scaler is None and self.scaler_path is None:
             warnings.warn("No scaler path provided, uncertainties are not in units of SLE.")
-            return self.forward(x, smooth_projection=smooth_projection)
-        if not isinstance(output_scaler, str):
-            if 'fit' not in dir(output_scaler) or 'transform' not in dir(output_scaler):
-                raise ValueError("output_scaler must be a Scaler object or a path to a Scaler object.")
-        else:
+            return self.forward(x, smooth_projection=smooth_projection, window_size=window_size)
+
+        if isinstance(output_scaler, str):
             self.scaler_path = output_scaler
             with open(self.scaler_path, "rb") as f:
                 output_scaler = pickle.load(f)
 
-        import time
-        start_time = time.time()
-        predictions, uncertainties = self.forward(x, smooth_projection=smooth_projection)
-        print('forward time:', time.time() - start_time)
-        epi = uncertainties["epistemic"]
-        ale = uncertainties["aleatoric"]
+        predictions, uncertainties = self.forward(x, smooth_projection=smooth_projection, window_size=window_size)
 
-        bound_epistemic, bound_aleatoric = predictions + epi, predictions + ale
-
+        # Apply inverse scaling to the predictions and uncertainties
         unscaled_predictions = output_scaler.inverse_transform(predictions.reshape(-1, 1))
-        unscaled_bound_epistemic = output_scaler.inverse_transform(bound_epistemic.reshape(-1, 1))
-        unscaled_bound_aleatoric = output_scaler.inverse_transform(bound_aleatoric.reshape(-1, 1))
+        unscaled_bound_epistemic = output_scaler.inverse_transform((predictions + uncertainties['epistemic']).reshape(-1, 1))
+        unscaled_bound_aleatoric = output_scaler.inverse_transform((predictions + uncertainties['aleatoric']).reshape(-1, 1))
+
+        epistemic = unscaled_bound_epistemic - unscaled_predictions
+        aleatoric = unscaled_bound_aleatoric - unscaled_predictions
+
+        uncertainties = dict(
+            total=epistemic + aleatoric,
+            epistemic=epistemic,
+            aleatoric=aleatoric,
+        )
+
+        return unscaled_predictions, uncertainties
+
+
+
+    def predict(self, x, output_scaler=None, smooth_projection=False, window_size=5):
+        """
+        Makes predictions and applies the inverse transform of the scaler if provided.
+
+        Args:
+            x (array-like): The input data.
+            output_scaler (StandardScaler): Scaler object used for output transformations.
+            smooth_projection (bool): Apply rolling window smoothing to predictions if True.
+            window_size (int): The size of the rolling window for smoothing.
+
+        Returns:
+            tuple: A tuple containing predictions and uncertainties (total, epistemic, aleatoric).
+        """
+        self.eval()
+        if output_scaler is None and self.scaler_path is None:
+            warnings.warn("No scaler path provided, uncertainties are not in units of SLE.")
+            return self.forward(x, smooth_projection=smooth_projection, window_size=window_size)
+
+        if isinstance(output_scaler, str):
+            self.scaler_path = output_scaler
+            with open(self.scaler_path, "rb") as f:
+                output_scaler = pickle.load(f)
+
+        predictions, uncertainties = self.forward(x, smooth_projection=smooth_projection, window_size=window_size)
+
+        # Apply inverse scaling to the predictions and uncertainties
+        unscaled_predictions = output_scaler.inverse_transform(predictions.reshape(-1, 1))
+        unscaled_bound_epistemic = output_scaler.inverse_transform((predictions + uncertainties['epistemic']).reshape(-1, 1))
+        unscaled_bound_aleatoric = output_scaler.inverse_transform((predictions + uncertainties['aleatoric']).reshape(-1, 1))
+
         epistemic = unscaled_bound_epistemic - unscaled_predictions
         aleatoric = unscaled_bound_aleatoric - unscaled_predictions
 
