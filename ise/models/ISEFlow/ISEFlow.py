@@ -13,6 +13,8 @@ from ise.utils.functions import to_tensor
 from ise.utils.training import EarlyStoppingCheckpointer, CheckpointSaver
 from ise.models.predictors.deep_ensemble import DeepEnsemble
 from ise.models.density_estimators.normalizing_flow import NormalizingFlow
+from .de import ISEFlow_AIS_DE, ISEFlow_GrIS_DE
+from .nf import ISEFlow_AIS_NF, ISEFlow_GrIS_NF
 
 class ISEFlow(torch.nn.Module):
     """
@@ -159,15 +161,13 @@ class ISEFlow(torch.nn.Module):
 
 class ISEFlow_AIS(ISEFlow):
     def __init__(self,):
-        deep_ensemble = None
-        normalizing_flow = None
+        deep_ensemble = ISEFlow_AIS_DE()
+        normalizing_flow = ISEFlow_AIS_NF()
         super(ISEFlow_AIS, self).__init__(deep_ensemble, normalizing_flow)
-        # TODO: Implement ISEFlow-AIS
         
 
 class ISEFlow_GrIS(ISEFlow):
     def __init__(self,):
-        deep_ensemble = None
-        normalizing_flow = None
+        deep_ensemble = ISEFlow_GrIS_DE()
+        normalizing_flow = ISEFlow_GrIS_NF()
         super(ISEFlow_GrIS, self).__init__(deep_ensemble, normalizing_flow)
-        # TODO: Implement ISEFlow-GrIS
