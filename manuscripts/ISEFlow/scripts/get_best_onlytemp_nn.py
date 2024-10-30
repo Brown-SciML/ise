@@ -82,8 +82,8 @@ def get_optimal_temponly_model(ice_sheet, out_dir, iterations=10, with_chars=Fal
             cur_time = time.time()
 
             # Initialize the model
-            de = DeepEnsemble(num_predictors=num_predictors, forcing_size=X_train.shape[1])
-            nf = NormalizingFlow(forcing_size=X_train.shape[1])
+            de = DeepEnsemble(num_ensemble_members=num_predictors, input_size=X_train.shape[1])
+            nf = NormalizingFlow(input_size=X_train.shape[1])
             emulator = ISEFlow(de, nf)
 
             # Randomly choose epochs for normalizing flow and deep ensemble training
@@ -94,10 +94,10 @@ def get_optimal_temponly_model(ice_sheet, out_dir, iterations=10, with_chars=Fal
             train_time_start = time.time()
             print(f"\n\nTraining model with {num_predictors} predictors, {nf_epochs} NF epochs, and {de_epochs} DE epochs")
             emulator.fit(
-                X_train, y_train, X_val, y_val,
-                early_stopping=True, patience=10, delta=1e-5,
+                X_train, y_train, X_val=X_val, y_val=y_val, 
+                save_checkpoints=True, checkpoint_path=f"{ice_sheet}_onlysmb_checkpoint.pt",
+                early_stopping=True, patience=10,
                 nf_epochs=nf_epochs, de_epochs=de_epochs,
-                early_stopping_path=f"{ice_sheet}_onlysmb_checkpoint.pt"
             )
             train_time_end = time.time()
             total_train_time = (train_time_end - train_time_start) / 60.0
@@ -147,9 +147,16 @@ if __name__ == '__main__':
         with_chars = False
 
     # Call the main function to start the model training process
+    # get_optimal_temponly_model(
+    #     ice_sheet,
+    #     f'/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/ISEFlow/models/isolated_variables/SMB_only/{ice_sheet}/',
+    #     iterations=iterations,
+    #     with_chars=with_chars
+    # )
+    
     get_optimal_temponly_model(
         ice_sheet,
-        f'/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/ISEFlow/models/isolated_variables/SMB_only/{ice_sheet}/',
+        f'/users/pvankatw/research/ise/delete/',
         iterations=iterations,
         with_chars=with_chars
     )

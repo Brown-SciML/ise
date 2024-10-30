@@ -9,13 +9,13 @@ import json
 
 try:
     from ise.data.feature_engineer import FeatureEngineer
-    from ise.models.ISEFlow import ISEFlow, WeakPredictor
+    from ise.models.ISEFlow import ISEFlow, LSTM
     from ise.utils.functions import get_X_y, unscale
 except ModuleNotFoundError:
     import sys
     sys.path.append('/users/pvankatw/research/ise/')
     from ise.data.feature_engineer import FeatureEngineer
-    from ise.models.ISEFlow import ISEFlow, WeakPredictor
+    from ise.models.ISEFlow import ISEFlow, LSTM
     from ise.utils.functions import get_X_y, unscale
 
 def add_lagged_shaps(shap_df):
@@ -172,9 +172,9 @@ if __name__ == '__main__':
     # Initialize model
     device = "cuda" if torch.cuda.is_available() else "cpu"
     if ICE_SHEET == 'AIS':
-        model = WeakPredictor(lstm_num_layers=1, lstm_hidden_size=512, input_size=X_val.shape[1], ice_sheet='AIS', criterion=torch.nn.MSELoss())
+        model = LSTM(lstm_num_layers=1, lstm_hidden_size=512, input_size=X_val.shape[1], ice_sheet='AIS', criterion=torch.nn.MSELoss())
     else:
-        model = WeakPredictor(lstm_num_layers=1, lstm_hidden_size=512, input_size=X_val.shape[1], ice_sheet='GrIS', criterion=torch.nn.MSELoss())
+        model = LSTM(lstm_num_layers=1, lstm_hidden_size=512, input_size=X_val.shape[1], ice_sheet='GrIS', criterion=torch.nn.MSELoss())
 
     model.load_state_dict(torch.load(f"{model_dir}/wp_model.pth", map_location=device))
     model.to(device)

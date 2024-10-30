@@ -8,16 +8,19 @@ class CheckpointSaver:
         self.optimizer = optimizer
         self.best_loss = float('inf')
         self.verbose = verbose
+        self.log = None
         
-    def __call__(self, loss, epoch, save_best_only=True, path=None):
+    def __call__(self, loss, epoch, save_best_only=True,):
         is_better = self._determine_if_better(loss) if save_best_only else True
 
         if is_better or not save_best_only:  # Save if loss improves or save_best_only is False
-            self.save_checkpoint(epoch, loss, path)
+            self.save_checkpoint(epoch, loss, self.checkpoint_path)
             if self.verbose:
-                print(f"Loss decreased ({self.best_loss:.6f} --> {loss:.6f}). Saving checkpoint.")
+                self.log = f"Loss decreased ({self.best_loss:.6f} --> {loss:.6f}). Saving checkpoint to {self.checkpoint_path}."
             self._update_best_loss(loss)
             return True
+        else:
+            self.log = ""
         return False
         
     def _determine_if_better(self, loss: float):
@@ -36,8 +39,8 @@ class CheckpointSaver:
             'best_loss': self.best_loss,
         }
         torch.save(checkpoint, checkpoint_path)
-        if self.verbose:
-            print(f"Checkpoint saved to {checkpoint_path}")
+        # if self.verbose:
+        #     print(f"Checkpoint saved to {checkpoint_path}")
     
     def load_checkpoint(self, path: str = None):
         checkpoint_path = path or self.checkpoint_path
@@ -57,8 +60,8 @@ class EarlyStoppingCheckpointer(CheckpointSaver):
         self.counter = 0
         self.early_stop = False
 
-    def __call__(self, loss, epoch, save_best_only=True, path=None):
-        saved = super().__call__(loss, epoch, save_best_only, path)
+    def __call__(self, loss, epoch, save_best_only=True,):
+        saved = super().__call__(loss, epoch, save_best_only,)
         if saved:
             self.counter = 0  # Reset counter if the model improved
         else:

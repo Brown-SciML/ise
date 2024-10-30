@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 sys.path.append('/users/pvankatw/research/ise/')
 from ise.evaluation import metrics as m
 from ise.utils import functions as f
-from ise.models.ISEFlow import DeepEnsemble, ISEFlow, NormalizingFlow
+from ise.models.ISEFlow import ISEFlow, DeepEnsemble, NormalizingFlow
 from ise.evaluation.metrics import crps
 
 

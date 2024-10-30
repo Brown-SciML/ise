@@ -31,15 +31,20 @@ def get_best_nn(data_directory, export_directory, iterations=10, with_chars=True
             X_val_df, _ = f.get_X_y(pd.read_csv(f"{data_directory}/val.csv"), 'sectors', return_format='pandas', with_chars=with_chars)
             X_val, y_val = f.get_X_y(pd.read_csv(f"{data_directory}/val.csv"), 'sectors', return_format='numpy', with_chars=with_chars)
             cur_time = time.time()
-            de = DeepEnsemble(num_predictors=num_predictors, forcing_size=X_train.shape[1], )
-            nf = NormalizingFlow(forcing_size=X_train.shape[1])
+            de = DeepEnsemble(num_ensemble_members=num_predictors, input_size=X_train.shape[1], )
+            nf = NormalizingFlow(input_size=X_train.shape[1])
             emulator = ISEFlow(de, nf)
 
             nf_epochs = 100
             de_epochs = 100
             train_time_start = time.time()
             print('\n\nTraining model with ', num_predictors, 'predictors,', nf_epochs, 'NF epochs, and', de_epochs, 'DE epochs')
-            emulator.fit(X_train, y_train, X_val=X_val, y_val=y_val, early_stopping=True, patience=20, delta=1e-5, nf_epochs=nf_epochs, de_epochs=de_epochs, early_stopping_path=f"checkpoint_{ice_sheet}")
+            emulator.fit(
+                X_train, y_train, X_val=X_val, y_val=y_val, 
+                save_checkpoints=True, checkpoint_path=f"checkpoint_{ice_sheet}",
+                early_stopping=True, patience=20, 
+                nf_epochs=nf_epochs, de_epochs=de_epochs,
+            )
             train_time_end = time.time()
             total_train_time = (train_time_end - train_time_start) / 60.0
             
@@ -70,7 +75,7 @@ def get_best_nn(data_directory, export_directory, iterations=10, with_chars=True
 if __name__ == '__main__':    
     ICE_SHEET = 'GrIS'
     WITH_CHARS = True
-    ITERATIONS = 10
+    ITERATIONS = 1
     DATA_DIRECTORY = f'/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/ISEFlow/data/ml/{ICE_SHEET}/'
     EXPORT_DIRECTORY = f'/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/ISEFlow/models/all_variables/{"with_characteristics" if WITH_CHARS else "without_characteristics"}/{ICE_SHEET}/'
     get_best_nn(DATA_DIRECTORY, EXPORT_DIRECTORY, iterations=ITERATIONS, with_chars=WITH_CHARS)

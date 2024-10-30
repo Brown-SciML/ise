@@ -87,32 +87,43 @@ class NormalizingFlow(nn.Module):
                 checkpointer = CheckpointSaver(self, self.optimizer, checkpoint_path, verbose)
             checkpointer.best_loss = best_loss
 
-        for epoch in range(start_epoch, epochs + 1):
-            epoch_loss = []
-            for i, (x, y) in enumerate(data_loader):
-                x = x.to(self.device).view(x.shape[0], -1)
-                y = y.to(self.device)
-                self.optimizer.zero_grad()
-                loss = torch.mean(-self.flow.log_prob(inputs=y, context=x))
-                loss.backward()
-                self.optimizer.step()
-                epoch_loss.append(loss.item())
-            average_epoch_loss = sum(epoch_loss) / len(epoch_loss)
+        if start_epoch < epochs:
+            for epoch in range(start_epoch, epochs + 1):
+                epoch_loss = []
+                for i, (x, y) in enumerate(data_loader):
+                    x = x.to(self.device).view(x.shape[0], -1)
+                    y = y.to(self.device)
+                    self.optimizer.zero_grad()
+                    loss = torch.mean(-self.flow.log_prob(inputs=y, context=x))
+                    loss.backward()
+                    self.optimizer.step()
+                    epoch_loss.append(loss.item())
+                average_epoch_loss = sum(epoch_loss) / len(epoch_loss)
 
-            if save_checkpoints:
-                checkpointer(average_epoch_loss)
-                if hasattr(checkpointer, "early_stop") and checkpointer.early_stop:
-                    if verbose:
-                        print("Early stopping")
-                    break
+                if save_checkpoints:
+                    checkpointer(average_epoch_loss, epoch)
+                    if hasattr(checkpointer, "early_stop") and checkpointer.early_stop:
+                        if verbose:
+                            print("Early stopping")
+                        break
 
+                if verbose:
+                    print(f"[epoch/total]: [{epoch}/{epochs}], loss: {average_epoch_loss}{f' -- {checkpointer.log}' if save_checkpoints else ''}")
+        else:
             if verbose:
-                print(f"[epoch/total]: [{epoch}/{epochs}], loss: {average_epoch_loss}{f' -- {checkpointer.log}' if early_stopping else ''}")
-            
+                print(f"Training already completed ({epochs}/{epochs}).")
+                    
         self.trained = True
         
-        if early_stopping:
-            self.load_state_dict(torch.load(checkpoint_path))
+        if save_checkpoints:
+            checkpoint = torch.load(checkpoint_path)
+            if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint.keys():
+                self.load_state_dict(checkpoint['model_state_dict'])
+                self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+                self.best_loss = checkpoint['best_loss']
+                self.epochs_trained = checkpoint['epoch']
+            else:
+                self.load_state_dict(checkpoint)
             os.remove(checkpoint_path)
 
     def sample(self, features, num_samples, return_type="numpy"):
@@ -150,7 +161,9 @@ class NormalizingFlow(nn.Module):
         metadata = {
             "input_size": self.num_input_features,
             "output_size": self.num_predicted_sle,
-            "device": self.device
+            "device": self.device,
+            "best_loss": self.best_loss,
+            "epochs_trained": self.epochs_trained,
         }
         metadata_path = path + "_metadata.json"
 
@@ -177,11 +190,14 @@ class NormalizingFlow(nn.Module):
 
         checkpoint = torch.load(path, map_location="cpu" if not torch.cuda.is_available() else None)
         
-        # 
-        # model.load_state_dict(checkpoint['model_state_dict'])
-        model.load_state_dict(checkpoint)
-        # model.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        # model.trained = checkpoint['trained']
+        if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint.keys():
+            model.load_state_dict(checkpoint['model_state_dict'])
+            model.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            model.trained = checkpoint['trained']
+        else:
+            model.load_state_dict(checkpoint)
+            model.trained = True
+            
         model.trained = True
         model.to(model.device)
         model.eval()

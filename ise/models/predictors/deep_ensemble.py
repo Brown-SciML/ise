@@ -109,6 +109,8 @@ class DeepEnsemble(nn.Module):
                     "output_size": member.output_size,
                     "trained": member.trained,
                     "path": os.path.join("ensemble_members", f"member_{i+1}.pth"),
+                    "best_loss": float(member.best_loss),
+                    "epochs_trained": int(member.epochs_trained),
                 }
                 for i, member in enumerate(self.ensemble_members)
             ],
@@ -129,6 +131,10 @@ class DeepEnsemble(nn.Module):
             member_path = os.path.join(ensemble_dir, f"member_{i+1}.pth")
             torch.save(member.state_dict(), member_path)
             print(f"Ensemble Member {i+1} saved to {member_path}")
+        
+        print('Removing checkpoints after saving to model directory...')
+        [os.remove(member.checkpoint_path) for member in self.ensemble_members if hasattr(member, "checkpoint_path")]
+        
 
     @classmethod
     def load(cls, model_path):

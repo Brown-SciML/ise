@@ -82,6 +82,7 @@ class LSTM(nn.Module):
         # Check if a checkpoint exists and load it
         start_epoch = 1
         best_loss = float("inf")
+        self.checkpoint_path = checkpoint_path
         if os.path.exists(checkpoint_path):
             checkpoint = torch.load(checkpoint_path)
             self.load_state_dict(checkpoint['model_state_dict'])
@@ -134,47 +135,58 @@ class LSTM(nn.Module):
             checkpointer.best_loss = best_loss
         
         # Training loop
-        for epoch in range(start_epoch, epochs + 1):
-            self.train()
-            batch_losses = []
-            for i, (x, y) in enumerate(data_loader):
-                x = x.to(self.device)
-                y = y.to(self.device)
-                self.optimizer.zero_grad()
-                y_pred = self.forward(x)
-                loss = self.criterion(y_pred, y)  # Renamed to 'loss' for clarity
-                loss.backward()
-                self.optimizer.step()
-                batch_losses.append(loss.item())
+        if start_epoch < epochs:
+            for epoch in range(start_epoch, epochs + 1):
+                self.train()
+                batch_losses = []
+                for i, (x, y) in enumerate(data_loader):
+                    x = x.to(self.device)
+                    y = y.to(self.device)
+                    self.optimizer.zero_grad()
+                    y_pred = self.forward(x)
+                    loss = self.criterion(y_pred, y)  # Renamed to 'loss' for clarity
+                    loss.backward()
+                    self.optimizer.step()
+                    batch_losses.append(loss.item())
 
-            # Print average batch loss and validation loss (if provided)
-            if validate:
-                val_preds = self.predict(
-                    X_val, sequence_length=sequence_length, batch_size=batch_size
-                ).to(self.device)
-                val_loss = F.mse_loss(val_preds.squeeze(), y_val.squeeze())
+                # Print average batch loss and validation loss (if provided)
+                if validate:
+                    val_preds = self.predict(
+                        X_val, sequence_length=sequence_length, batch_size=batch_size
+                    ).to(self.device)
+                    val_loss = F.mse_loss(val_preds.squeeze(), y_val.squeeze())
 
-                if save_checkpoints:
-                    checkpointer(val_loss)
+                    if save_checkpoints:
+                        checkpointer(val_loss, epoch)
 
-                    if hasattr(checkpointer, "early_stop") and checkpointer.early_stop:
-                        if verbose:
-                            print("Early stopping") 
-                        break
-                    
-                if verbose:
-                    print(f"[epoch/total]: [{epoch}/{epochs}], train loss: {sum(batch_losses) / len(batch_losses)}, val mse: {val_loss:.6f} -- {getattr(checkpointer, 'log', '')}")
-            else:
-                average_batch_loss = sum(batch_losses) / len(batch_losses)
-                if verbose:
-                    print(f"[epoch/total]: [{epoch}/{epochs}], train loss: {average_batch_loss}")
+                        if hasattr(checkpointer, "early_stop") and checkpointer.early_stop:
+                            if verbose:
+                                print("Early stopping") 
+                            break
+                        
+                    if verbose:
+                        print(f"[epoch/total]: [{epoch}/{epochs}], train loss: {sum(batch_losses) / len(batch_losses)}, val mse: {val_loss:.6f} -- {getattr(checkpointer, 'log', '')}")
+                else:
+                    average_batch_loss = sum(batch_losses) / len(batch_losses)
+                    if verbose:
+                        print(f"[epoch/total]: [{epoch}/{epochs}], train loss: {average_batch_loss}")
+        else:
+            if verbose:
+                print(f"Training already completed ({epochs}/{epochs}).")
 
         self.trained = True
         
         # loads best model
         if save_checkpoints:
-            self.load_state_dict(torch.load(checkpoint_path))
-            os.remove(checkpoint_path)
+            checkpoint = torch.load(checkpoint_path)
+            if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint.keys():
+                self.load_state_dict(checkpoint['model_state_dict'])
+                self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+                self.best_loss = checkpoint['best_loss']
+                self.epochs_trained = checkpoint['epoch']
+            else:
+                self.load_state_dict(checkpoint)
+            # os.remove(checkpoint_path)
 
     def predict(self, X, sequence_length=5, batch_size=64, dataclass=EmulatorDataset):
         self.eval()
