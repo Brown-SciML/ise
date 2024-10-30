@@ -1,0 +1,95 @@
+{
+    "model_type": "DeepEnsemble",
+    "weak_predictors": [
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 128,
+            "criterion": "HuberLoss",
+            "forcing_size": 99,
+            "sle_size": 1,
+            "trained": true,
+            "weak_predictor_path": "weak_predictors/weak_predictor_1.pth"
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 512,
+            "criterion": "HuberLoss",
+            "forcing_size": 99,
+            "sle_size": 1,
+            "trained": true,
+            "weak_predictor_path": "weak_predictors/weak_predictor_2.pth"
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 512,
+            "criterion": "HuberLoss",
+            "forcing_size": 99,
+            "sle_size": 1,
+            "trained": true,
+            "weak_predictor_path": "weak_predictors/weak_predictor_3.pth"
+        },
+        {
+            "lstm_num_layers": 2,
+            "lstm_num_hidden": 128,
+            "criterion": "HuberLoss",
+            "forcing_size": 99,
+            "sle_size": 1,
+            "trained": true,
+            "weak_predictor_path": "weak_predictors/weak_predictor_4.pth"
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 256,
+            "criterion": "L1Loss",
+            "forcing_size": 99,
+            "sle_size": 1,
+            "trained": true,
+            "weak_predictor_path": "weak_predictors/weak_predictor_5.pth"
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 512,
+            "criterion": "MSELoss",
+            "forcing_size": 99,
+            "sle_size": 1,
+            "trained": true,
+            "weak_predictor_path": "weak_predictors/weak_predictor_6.pth"
+        },
+        {
+            "lstm_num_layers": 2,
+            "lstm_num_hidden": 128,
+            "criterion": "MSELoss",
+            "forcing_size": 99,
+            "sle_size": 1,
+            "trained": true,
+            "weak_predictor_path": "weak_predictors/weak_predictor_7.pth"
+        },
+        {
+            "lstm_num_layers": 2,
+            "lstm_num_hidden": 512,
+            "criterion": "MSELoss",
+            "forcing_size": 99,
+            "sle_size": 1,
+            "trained": true,
+            "weak_predictor_path": "weak_predictors/weak_predictor_8.pth"
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 256,
+            "criterion": "L1Loss",
+            "forcing_size": 99,
+            "sle_size": 1,
+            "trained": true,
+            "weak_predictor_path": "weak_predictors/weak_predictor_9.pth"
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 64,
+            "criterion": "HuberLoss",
+            "forcing_size": 99,
+            "sle_size": 1,
+            "trained": true,
+            "weak_predictor_path": "weak_predictors/weak_predictor_10.pth"
+        }
+    ]
+}
