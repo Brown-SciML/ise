@@ -1,0 +1,95 @@
+{
+    "model_type": "DeepEnsemble",
+    "ensemble_members": [
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 128,
+            "criterion": "HuberLoss",
+            "input_size": 99,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/lstm1.pth"
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 512,
+            "criterion": "HuberLoss",
+            "input_size": 99,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/lstm2.pth"
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 512,
+            "criterion": "HuberLoss",
+            "input_size": 99,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/lstm3.pth"
+        },
+        {
+            "lstm_num_layers": 2,
+            "lstm_num_hidden": 128,
+            "criterion": "HuberLoss",
+            "input_size": 99,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/lstm4.pth"
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 256,
+            "criterion": "L1Loss",
+            "input_size": 99,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/lstm5.pth"
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 512,
+            "criterion": "MSELoss",
+            "input_size": 99,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/lstm6.pth"
+        },
+        {
+            "lstm_num_layers": 2,
+            "lstm_num_hidden": 128,
+            "criterion": "MSELoss",
+            "input_size": 99,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/lstm7.pth"
+        },
+        {
+            "lstm_num_layers": 2,
+            "lstm_num_hidden": 512,
+            "criterion": "MSELoss",
+            "input_size": 99,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/lstm8.pth"
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 256,
+            "criterion": "L1Loss",
+            "input_size": 99,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/lstm9.pth"
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 64,
+            "criterion": "HuberLoss",
+            "input_size": 99,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/lstm10.pth"
+        }
+    ]
+}

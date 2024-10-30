@@ -560,7 +560,9 @@ def get_X_y(
     return_format=None,
     cols='all',
     with_chars=True,
-):
+):  
+    if isinstance(data, str):
+        data = pd.read_csv(data)
     
     ice_sheet = "AIS" if dataset_type.lower() == "regions" and 'smb_anomaly' in data.columns else 'GrIS'
     regions = True if dataset_type.lower() == "regions" else False
@@ -703,3 +705,9 @@ def unscale(y, scaler_path):
     scaler = pkl.load(open(scaler_path, "rb"))
     y = scaler.inverse_transform(y)
     return y
+
+def get_data(data_dir, dataset_type='sectors', return_format='tensor'):
+    X_train, y_train = get_X_y(f"{data_dir}/train.csv", dataset_type=dataset_type, return_format=return_format)
+    X_val, y_val = get_X_y(f"{data_dir}/val.csv", dataset_type=dataset_type, return_format=return_format)
+    X_test, y_test = get_X_y(f"{data_dir}/test.csv", dataset_type=dataset_type, return_format=return_format)
+    return X_train, y_train, X_val, y_val, X_test, y_test
