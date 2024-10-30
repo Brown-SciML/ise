@@ -2,6 +2,7 @@ import json
 import os
 import pickle
 import warnings
+import shutil
 
 import numpy as np
 import torch
@@ -97,13 +98,16 @@ class ISEFlow(torch.nn.Module):
         )
         return prediction, uncertainties
 
-    def predict(self, x, output_scaler=None, smooth_projection=False):
+    def predict(self, x, output_scaler=True, smooth_projection=False):
         self.eval()
-        if output_scaler is None and self.scaler_path is None:
+        if output_scaler is True:
+            output_scaler = os.path.join(self.model_dir, "scaler_y.pkl")
+            with open(output_scaler, "rb") as f:
+                output_scaler = pickle.load(f)
+        elif output_scaler is False and self.scaler_path is None:
             warnings.warn("No scaler path provided, uncertainties are not in units of SLE.")
             return self.forward(x, smooth_projection=smooth_projection)
-
-        if isinstance(output_scaler, str):
+        elif isinstance(output_scaler, str):
             self.scaler_path = output_scaler
             with open(self.scaler_path, "rb") as f:
                 output_scaler = pickle.load(f)
@@ -124,7 +128,7 @@ class ISEFlow(torch.nn.Module):
         )
         return unscaled_predictions, uncertainties
 
-    def save(self, save_dir, input_features=None):
+    def save(self, save_dir, input_features=None, output_scaler_path=None):
         """
         Saves the trained model to the specified directory.
         """
@@ -142,6 +146,12 @@ class ISEFlow(torch.nn.Module):
                 raise ValueError("input_features must be a list of feature names")
             with open(os.path.join(save_dir, "input_features.json"), "w") as f:
                 json.dump(input_features, f, indent=4)
+        
+        if output_scaler_path is not None and output_scaler_path.endswith(".pkl"):
+            self.scaler_path = output_scaler_path
+            
+        if self.scaler_path is not None:
+            shutil.copy(self.scaler_path, os.path.join(save_dir, "scaler_y.pkl"))
 
     @staticmethod
     def load(model_dir=None, deep_ensemble_path=None, normalizing_flow_path=None):
@@ -156,6 +166,8 @@ class ISEFlow(torch.nn.Module):
         normalizing_flow = NormalizingFlow.load(normalizing_flow_path)
         model = ISEFlow(deep_ensemble, normalizing_flow)
         model.trained = True
+        model.model_dir = model_dir
+        
         return model
 
 

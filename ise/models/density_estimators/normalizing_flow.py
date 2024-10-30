@@ -176,9 +176,13 @@ class NormalizingFlow(nn.Module):
         )
 
         checkpoint = torch.load(path, map_location="cpu" if not torch.cuda.is_available() else None)
-        model.load_state_dict(checkpoint['model_state_dict'])
-        model.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        model.trained = checkpoint['trained']
+        
+        # 
+        # model.load_state_dict(checkpoint['model_state_dict'])
+        model.load_state_dict(checkpoint)
+        # model.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        # model.trained = checkpoint['trained']
+        model.trained = True
         model.to(model.device)
         model.eval()
         return model

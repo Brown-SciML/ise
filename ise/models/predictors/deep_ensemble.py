@@ -160,6 +160,7 @@ class DeepEnsemble(nn.Module):
             )
             state_dict = torch.load(member_path, map_location="cpu" if not torch.cuda.is_available() else None)
             member.load_state_dict(state_dict)
+            member.trained = True
             member.eval()
             ensemble_members.append(member)
 

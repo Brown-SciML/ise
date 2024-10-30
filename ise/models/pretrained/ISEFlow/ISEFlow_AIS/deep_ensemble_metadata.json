@@ -8,7 +8,7 @@
             "input_size": 99,
             "output_size": 1,
             "trained": true,
-            "weak_predictor_path": "weak_predictors/weak_predictor_1.pth"
+            "path": "ensemble_members/lstm1.pth"
         },
         {
             "lstm_num_layers": 1,
@@ -17,7 +17,7 @@
             "input_size": 99,
             "output_size": 1,
             "trained": true,
-            "weak_predictor_path": "weak_predictors/weak_predictor_2.pth"
+            "path": "ensemble_members/lstm2.pth"
         },
         {
             "lstm_num_layers": 1,
@@ -26,7 +26,7 @@
             "input_size": 99,
             "output_size": 1,
             "trained": true,
-            "weak_predictor_path": "weak_predictors/weak_predictor_3.pth"
+            "path": "ensemble_members/lstm3.pth"
         },
         {
             "lstm_num_layers": 2,
@@ -35,7 +35,7 @@
             "input_size": 99,
             "output_size": 1,
             "trained": true,
-            "weak_predictor_path": "weak_predictors/weak_predictor_4.pth"
+            "path": "ensemble_members/lstm4.pth"
         },
         {
             "lstm_num_layers": 1,
@@ -44,7 +44,7 @@
             "input_size": 99,
             "output_size": 1,
             "trained": true,
-            "weak_predictor_path": "weak_predictors/weak_predictor_5.pth"
+            "path": "ensemble_members/lstm5.pth"
         },
         {
             "lstm_num_layers": 1,
@@ -53,7 +53,7 @@
             "input_size": 99,
             "output_size": 1,
             "trained": true,
-            "weak_predictor_path": "weak_predictors/weak_predictor_6.pth"
+            "path": "ensemble_members/lstm6.pth"
         },
         {
             "lstm_num_layers": 2,
@@ -62,7 +62,7 @@
             "input_size": 99,
             "output_size": 1,
             "trained": true,
-            "weak_predictor_path": "weak_predictors/weak_predictor_7.pth"
+            "path": "ensemble_members/lstm7.pth"
         },
         {
             "lstm_num_layers": 2,
@@ -71,7 +71,7 @@
             "input_size": 99,
             "output_size": 1,
             "trained": true,
-            "weak_predictor_path": "weak_predictors/weak_predictor_8.pth"
+            "path": "ensemble_members/lstm8.pth"
         },
         {
             "lstm_num_layers": 1,
@@ -80,7 +80,7 @@
             "input_size": 99,
             "output_size": 1,
             "trained": true,
-            "weak_predictor_path": "weak_predictors/weak_predictor_9.pth"
+            "path": "ensemble_members/lstm9.pth"
         },
         {
             "lstm_num_layers": 1,
@@ -89,7 +89,7 @@
             "input_size": 99,
             "output_size": 1,
             "trained": true,
-            "weak_predictor_path": "weak_predictors/weak_predictor_10.pth"
+            "path": "ensemble_members/lstm10.pth"
         }
     ]
 }
