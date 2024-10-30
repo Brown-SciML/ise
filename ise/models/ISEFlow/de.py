@@ -26,7 +26,7 @@ class ISEFlow_AIS_DE(DeepEnsemble):
 
 class ISEFlow_GrIS_DE(DeepEnsemble):
     def __init__(self,):
-        self.input_size = 91
+        self.input_size = 90
         self.output_size = 1
         iseflow_gris_ensemble = [
             LSTM(2, 128, 99, 1, optim.HuberLoss()),

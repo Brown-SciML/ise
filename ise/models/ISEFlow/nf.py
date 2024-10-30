@@ -9,7 +9,7 @@ class ISEFlow_AIS_NF(NormalizingFlow):
         
 class ISEFlow_GrIS_NF(NormalizingFlow):
     def __init__(self,):
-        self.input_size = 91
+        self.input_size = 90
         self.output_size = 1
         self.num_flow_transforms = 5
         super().__init__(self, input_size=self.input_size, output_size=self.output_size, num_flow_transforms=self.num_flow_transforms)
