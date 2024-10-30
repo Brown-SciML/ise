@@ -1,14 +1,13 @@
 from ise.models.predictors.deep_ensemble import DeepEnsemble
 from ise.models.predictors.lstm import LSTM
-from ise.models.ISEFlow import params
 from torch import nn, optim
 
 
 class ISEFlow_AIS_DE(DeepEnsemble):
     def __init__(self, ):
         
-        self.input_size = params["AIS"]["input_size"] # 99
-        self.output_size = params["AIS"]["output_size"] # 1
+        self.input_size = 99
+        self.output_size = 1
         iseflow_ais_ensemble = [
             LSTM(1, 128, 99, 1, optim.HuberLoss()),
             LSTM(1, 512, 99, 1, optim.HuberLoss()),
@@ -27,8 +26,8 @@ class ISEFlow_AIS_DE(DeepEnsemble):
 
 class ISEFlow_GrIS_DE(DeepEnsemble):
     def __init__(self,):
-        self.input_size = params["GrIS"]["input_size"] # 91
-        self.output_size = params["GrIS"]["output_size"] # 1
+        self.input_size = 91
+        self.output_size = 1
         iseflow_gris_ensemble = [
             LSTM(2, 128, 99, 1, optim.HuberLoss()),
             LSTM(2, 256, 99, 1, optim.MSELoss()),
