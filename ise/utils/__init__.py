@@ -1,1 +1,1 @@
-from .functions import get_X_y, get_data
+from .functions import get_X_y, get_data, unscale

@@ -16,6 +16,7 @@ from ise.models.predictors.deep_ensemble import DeepEnsemble
 from ise.models.density_estimators.normalizing_flow import NormalizingFlow
 from .de import ISEFlow_AIS_DE, ISEFlow_GrIS_DE
 from .nf import ISEFlow_AIS_NF, ISEFlow_GrIS_NF
+from ise.models.pretrained import ISEFlow_AIS_v1_0_0_path, ISEFlow_GrIS_v1_0_0_path
 
 class ISEFlow(torch.nn.Module):
     """
@@ -154,10 +155,11 @@ class ISEFlow(torch.nn.Module):
             shutil.copy(self.scaler_path, os.path.join(save_dir, "scaler_y.pkl"))
 
     @staticmethod
-    def load(model_dir=None, deep_ensemble_path=None, normalizing_flow_path=None):
+    def load(model_dir=None, deep_ensemble_path=None, normalizing_flow_path=None,):
         """
         Loads a trained model from the specified paths.
         """
+            
         if model_dir:
             deep_ensemble_path = os.path.join(model_dir, "deep_ensemble.pth")
             normalizing_flow_path = os.path.join(model_dir, "normalizing_flow.pth")
@@ -173,13 +175,34 @@ class ISEFlow(torch.nn.Module):
 
 class ISEFlow_AIS(ISEFlow):
     def __init__(self,):
+        self.ice_sheet = "AIS"
         deep_ensemble = ISEFlow_AIS_DE()
         normalizing_flow = ISEFlow_AIS_NF()
         super(ISEFlow_AIS, self).__init__(deep_ensemble, normalizing_flow)
+    
+    @staticmethod
+    def load(version="v1.0.0", model_dir=None, deep_ensemble_path=None, normalizing_flow_path=None,):
+        if model_dir is None:
+            if version == "v1.0.0":
+                model_dir = ISEFlow_AIS_v1_0_0_path
+            else:
+                raise NotImplementedError("Only version v1.0.0 is supported")
+        return super(ISEFlow_AIS, ISEFlow_AIS).load(model_dir, deep_ensemble_path, normalizing_flow_path)
+        
         
 
 class ISEFlow_GrIS(ISEFlow):
     def __init__(self,):
+        self.ice_sheet = "GrIS"
         deep_ensemble = ISEFlow_GrIS_DE()
         normalizing_flow = ISEFlow_GrIS_NF()
         super(ISEFlow_GrIS, self).__init__(deep_ensemble, normalizing_flow)
+    
+    @staticmethod
+    def load(version="v1.0.0", model_dir=None, deep_ensemble_path=None, normalizing_flow_path=None,):
+        if model_dir is None:
+            if version == "v1.0.0":
+                model_dir = ISEFlow_GrIS_v1_0_0_path
+            else:
+                raise NotImplementedError("Only version v1.0.0 is supported")
+        return super(ISEFlow_GrIS, ISEFlow_GrIS).load(model_dir, deep_ensemble_path, normalizing_flow_path)
