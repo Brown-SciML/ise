@@ -2,7 +2,8 @@ import shap
 from sklearn.ensemble import RandomForestClassifier
 import torch
 import time
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.metrics import classification_report, accuracy_score, precision_score, recall_score, f1_score
+
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -10,19 +11,12 @@ from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.svm import SVC
 import matplotlib.pyplot as plt
 
-# Try importing ISE-specific modules, add a fallback for non-standard paths
-try:
-    from ise.data.dataclasses import ScenarioDataset
-    from ise.models.scenario import ScenarioPredictor
-    from ise.utils import functions as f
-    from ise.evaluation import metrics as m
-except ModuleNotFoundError:
-    import sys
-    sys.path.append('/users/pvankatw/research/ise/')
-    from ise.data.dataclasses import ScenarioDataset
-    from ise.models.scenario import ScenarioPredictor
-    from ise.utils import functions as f
-    from ise.evaluation import metrics as m
+# export PYTHONPATH=/users/pvankatw/research/ise:$PYTHONPATH
+from ise.data.dataclasses import ScenarioDataset
+from ise.models.scenario import ScenarioPredictor
+from ise.utils import functions as f
+from ise.evaluation import metrics as m
+
 
 
 def train_scenario_model(ice_sheet='AIS'):
@@ -102,6 +96,26 @@ def train_scenario_model(ice_sheet='AIS'):
     model = ScenarioPredictor(input_size=X_train.shape[1], hidden_layers=[512, 128, 32])
     model.fit(train_loader, val_loader, epochs=100)
     model.load_state_dict(torch.load('checkpoint.pth'))
+    
+    model.eval()
+    with torch.no_grad():
+        y_val_pred = model.predict(X_val).cpu().numpy().round()
+
+    accuracy = accuracy_score(y_val, y_val_pred)
+    precision = precision_score(y_val, y_val_pred, zero_division=0)
+    recall = recall_score(y_val, y_val_pred, zero_division=0)
+    f1 = f1_score(y_val, y_val_pred, zero_division=0)
+
+    # Compute validation loss using model's internal criterion
+    val_loss, _ = model.evaluate(val_loader)
+
+    # Print results
+    print("\n--- Classification Metrics ---")
+    print(f"Accuracy: {accuracy:.4f}")
+    print(f"Precision: {precision:.4f}")
+    print(f"Recall: {recall:.4f}")
+    print(f"F1-Score: {f1:.4f}")
+    print(f"Validation Loss: {val_loss:.4f}")
 
     # Function to use model for SHAP predictions
     def predict_fn(x):

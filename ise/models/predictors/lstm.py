@@ -133,6 +133,8 @@ class LSTM(nn.Module):
                 checkpointer = CheckpointSaver(self, self.optimizer, checkpoint_path, verbose)
                 
             checkpointer.best_loss = best_loss
+        else:
+            checkpointer = None
         
         # Training loop
         if start_epoch < epochs:
@@ -165,7 +167,7 @@ class LSTM(nn.Module):
                             break
                         
                     if verbose:
-                        print(f"[epoch/total]: [{epoch}/{epochs}], train loss: {sum(batch_losses) / len(batch_losses)}, val mse: {val_loss:.6f} -- {getattr(checkpointer, 'log', '')}")
+                        print(f"[epoch/total]: [{epoch}/{epochs}], train loss: {sum(batch_losses) / len(batch_losses)}, val mse: {val_loss:.6f} -- {getattr(checkpointer, 'log', '') if checkpointer is not None else ''}")
                 else:
                     average_batch_loss = sum(batch_losses) / len(batch_losses)
                     if verbose:

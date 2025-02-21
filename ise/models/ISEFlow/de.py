@@ -9,18 +9,18 @@ class ISEFlow_AIS_DE(DeepEnsemble):
         self.input_size = 99
         self.output_size = 1
         iseflow_ais_ensemble = [
-            LSTM(1, 128, 99, 1, optim.HuberLoss()),
-            LSTM(1, 512, 99, 1, optim.HuberLoss()),
-            LSTM(1, 512, 99, 1, optim.HuberLoss()),
-            LSTM(2, 128, 99, 1, optim.HuberLoss()),
-            LSTM(1, 256, 99, 1, optim.L1Loss()),
-            LSTM(1, 512, 99, 1, optim.MSELoss()),
-            LSTM(2, 128, 99, 1, optim.MSELoss()),
-            LSTM(2, 512, 99, 1, optim.MSELoss()),
-            LSTM(1, 256, 99, 1, optim.L1Loss()),
-            LSTM(1, 64, 99, 1, optim.HuberLoss()),
+            LSTM(1, 128, 99, 1, nn.HuberLoss()),
+            LSTM(1, 512, 99, 1, nn.HuberLoss()),
+            LSTM(1, 512, 99, 1, nn.HuberLoss()),
+            LSTM(2, 128, 99, 1, nn.HuberLoss()),
+            LSTM(1, 256, 99, 1, nn.L1Loss()),
+            LSTM(1, 512, 99, 1, nn.MSELoss()),
+            LSTM(2, 128, 99, 1, nn.MSELoss()),
+            LSTM(2, 512, 99, 1, nn.MSELoss()),
+            LSTM(1, 256, 99, 1, nn.L1Loss()),
+            LSTM(1, 64, 99, 1, nn.HuberLoss()),
         ]
-        super().__init__(self, ensemble_members=iseflow_ais_ensemble, input_size=self.input_size, output_size=self.output_size, output_sequence_length=86,)
+        super().__init__(ensemble_members=iseflow_ais_ensemble, input_size=self.input_size, output_size=self.output_size, output_sequence_length=86,)
     
     
 
@@ -29,15 +29,15 @@ class ISEFlow_GrIS_DE(DeepEnsemble):
         self.input_size = 90
         self.output_size = 1
         iseflow_gris_ensemble = [
-            LSTM(2, 128, 99, 1, optim.HuberLoss()),
-            LSTM(2, 256, 99, 1, optim.MSELoss()),
-            LSTM(2, 128, 99, 1, optim.HuberLoss()),
-            LSTM(2, 128, 99, 1, optim.MSELoss()),
-            LSTM(2, 256, 99, 1, optim.HuberLoss()),
-            LSTM(1, 256, 99, 1, optim.L1Loss()),
-            LSTM(1, 128, 99, 1, optim.HuberLoss()),
-            LSTM(2, 64, 99, 1, optim.MSELoss()),
-            LSTM(2, 256, 99, 1, optim.HuberLoss()),
-            LSTM(1, 256, 99, 1, optim.L1Loss()),
+            LSTM(2, 128, 99, 1, nn.HuberLoss()),
+            LSTM(2, 256, 99, 1, nn.MSELoss()),
+            LSTM(2, 128, 99, 1, nn.HuberLoss()),
+            LSTM(2, 128, 99, 1, nn.MSELoss()),
+            LSTM(2, 256, 99, 1, nn.HuberLoss()),
+            LSTM(1, 256, 99, 1, nn.L1Loss()),
+            LSTM(1, 128, 99, 1, nn.HuberLoss()),
+            LSTM(2, 64, 99, 1, nn.MSELoss()),
+            LSTM(2, 256, 99, 1, nn.HuberLoss()),
+            LSTM(1, 256, 99, 1, nn.L1Loss()),
         ]
-        super().__init__(self, ensemble_members=iseflow_gris_ensemble, input_size=self.input_size, output_size=self.output_size, output_sequence_length=86,)
+        super().__init__(ensemble_members=iseflow_gris_ensemble, input_size=self.input_size, output_size=self.output_size, output_sequence_length=86,)

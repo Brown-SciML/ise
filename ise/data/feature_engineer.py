@@ -324,7 +324,38 @@ class FeatureEngineer:
         self._including_model_characteristics = True
 
         return self
+    
+    
+def scale_data(data, scaler_path, ):
 
+    dropped_columns = [
+        "id",
+        "cmip_model",
+        "pathway",
+        "exp",
+        "ice_sheet",
+        "Scenario",
+        "Tier",
+        "aogcm",
+        "id",
+        "exp",
+        "model",
+        "ivaf",
+    ]
+
+    dropped_columns = [x for x in data.columns if x in dropped_columns]
+    dropped_data = data[dropped_columns]
+    data = data.drop(
+        columns=[x for x in data.columns if "sle" in x] + dropped_columns
+    )
+    cols = data.columns
+
+    scaler = pickle.load(open(scaler_path, "rb"))
+    scaled = scaler.transform(data)
+    scaled = pd.DataFrame(scaled, columns=cols,)
+    if 'outlier' in scaled.columns:
+        scaled = scaled.drop(columns=['outlier'])
+    return scaled
 
 def add_model_characteristics(
     data, model_char_path=r"./ise/utils/model_characteristics.csv", encode=True, ids_path=None
@@ -393,7 +424,7 @@ def backfill_outliers(data, percentile=99.999):
     return data
 
 
-def add_lag_variables(data: pd.DataFrame, lag: int) -> pd.DataFrame:
+def add_lag_variables(data: pd.DataFrame, lag: int, verbose=True) -> pd.DataFrame:
     """
     Adds lag variables to the input DataFrame.
 
@@ -406,24 +437,25 @@ def add_lag_variables(data: pd.DataFrame, lag: int) -> pd.DataFrame:
     """
 
     # Separate columns that won't be lagged and shouldn't be dropped
-    cols_to_exclude = [
-        "id",
-        "cmip_model",
-        "pathway",
-        "exp",
-        "ice_sheet",
-        "Scenario",
-        "Ocean forcing",
-        "Ocean sensitivity",
-        "Ice shelf fracture",
-        "Tier",
-        "aogcm",
-        "id",
-        "exp",
-        "model",
-        "ivaf",
-        "sector",
-    ]
+    # cols_to_exclude = [
+    #     "id",
+    #     "cmip_model",
+    #     "pathway",
+    #     "exp",
+    #     "ice_sheet",
+    #     "Scenario",
+    #     "Ocean forcing",
+    #     "Ocean sensitivity",
+    #     "Ice shelf fracture",
+    #     "Tier",
+    #     "aogcm",
+    #     "id",
+    #     "exp",
+    #     "model",
+    #     "ivaf",
+    #     "sector",
+    # ]
+    cols_to_exclude = [x for x in data.columns if x not in ("year", "pr_anomaly", "evspsbl_anomaly", "mrro_anomaly", "smb_anomaly", "ts_anomaly", "thermal_forcing", "salinity", "temperature")]
     cols_to_exclude = [x for x in cols_to_exclude if x in data.columns]
     temporal_indicator = "time" if "time" in data.columns else "year"
     non_temporal_cols = [temporal_indicator] + [
@@ -437,7 +469,11 @@ def add_lag_variables(data: pd.DataFrame, lag: int) -> pd.DataFrame:
     # Calculate the number of segments
     num_segments = len(data) // projection_length
 
-    for segment_idx in tqdm(range(num_segments), total=num_segments, desc="Adding lag variables"):
+    if verbose:
+        iterator = tqdm(range(num_segments), total=num_segments, desc="Adding lag variables")
+    else:
+        iterator = range(num_segments)
+    for segment_idx in iterator:
         # Extract the segment
         segment_start = segment_idx * projection_length
         segment_end = (segment_idx + 1) * projection_length
