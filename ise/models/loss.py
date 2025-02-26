@@ -1,22 +1,41 @@
-"""This module contains custom loss functions for training neural network emulators.
-
-Classes:
-    - WeightedGridLoss: Custom loss function that penalizes errors based on the total variation of a grid.
-    - WeightedMSELoss: Custom loss function that penalizes errors on extreme values more.
-    - WeightedMSEPCALoss: Custom loss function that penalizes errors on extreme values more and allows for custom weighting of each prediction in a batched manner.
-    - WeightedMSELossWithSignPenalty: Custom loss function that penalizes errors on extreme values more and adds a penalty for opposite sign predictions.
-"""
-
-
 import torch
 
 
 class WeightedGridLoss(torch.nn.Module):
+    """
+    Custom loss function that penalizes errors based on the total variation of a grid.
+
+    This loss function consists of two components:
+    1. **Pixel-wise Weighted Mean Squared Error (MSE):** Higher weight is assigned to extreme values.
+    2. **Total Variation Regularization (TVR):** Enforces spatial smoothness by penalizing large differences 
+       between adjacent grid values.
+
+    Attributes:
+        device (str): The device on which the model runs ('cuda' or 'cpu').
+
+    Methods:
+        - total_variation_regularization: Computes TVR penalty for smoothness.
+        - weighted_pixelwise_mse: Computes MSE loss with per-pixel weighting.
+        - forward: Computes the final weighted loss.
+
+    """
+
+
     def __init__(self):
         super(WeightedGridLoss, self).__init__()
         self.to(self.device)
 
     def total_variation_regularization(self, grid):
+        """
+        Computes the total variation regularization (TVR) loss for spatial smoothness.
+
+        Args:
+            grid (Tensor): A 2D tensor representing spatial data.
+
+        Returns:
+            Tensor: The total variation loss.
+        """
+
         # Calculate the sum of horizontal and vertical differences
         horizontal_diff = torch.abs(torch.diff(grid, axis=2))
         vertical_diff = torch.abs(torch.diff(grid, axis=1))
@@ -26,14 +45,40 @@ class WeightedGridLoss(torch.nn.Module):
         return torch.mean(total_variation)
 
     def weighted_pixelwise_mse(self, true, predicted, weights):
+        """
+        Computes the pixel-wise mean squared error (MSE) with custom weights.
+
+        Args:
+            true (Tensor): Ground truth values.
+            predicted (Tensor): Model predictions.
+            weights (Tensor): Weighting factor for each pixel.
+
+        Returns:
+            Tensor: Weighted mean squared error.
+        """
+
         # Compute the squared error
         squared_error = (true - predicted) ** 2
         # Apply weights
         weighted_error = weights * squared_error
         # Return the mean of the weighted error
         return torch.mean(weighted_error)
-
+    
+    
     def forward(self, true, predicted, smoothness_weight=0.001, extreme_value_threshold=1e-6):
+        """
+        Computes the final weighted loss combining pixel-wise MSE and TVR.
+
+        Args:
+            true (Tensor): Ground truth values.
+            predicted (Tensor): Model predictions.
+            smoothness_weight (float, optional): Weighting factor for the TVR loss. Defaults to 0.001.
+            extreme_value_threshold (float, optional): Threshold to define extreme values. Defaults to 1e-6.
+
+        Returns:
+            Tensor: The total computed loss.
+        """
+
         true = torch.tensor(true, dtype=torch.float32, device=self.device)
         predicted = torch.tensor(predicted, dtype=torch.float32, device=self.device)
 
@@ -53,34 +98,41 @@ class WeightedGridLoss(torch.nn.Module):
 
 
 class WeightedMSELoss(torch.nn.Module):
-    def __init__(self, data_mean, data_std, weight_factor=1.0):
-        """
-        Custom loss function that penalizes errors on extreme values more.
+    """
+    Custom loss function that applies a weighted penalty to extreme values.
 
-        Args:
-            data_mean (float): Mean of the target variable in the training set.
-            data_std (float): Standard deviation of the target variable in the training set.
-            weight_factor (float): Factor to adjust the weighting. Higher values will increase
-                                   the penalty on extremes. Default is 1.0.
-        """
+    This function increases the weight of extreme values based on their deviation from the 
+    dataset mean, normalizing by the standard deviation.
+
+    Attributes:
+        data_mean (Tensor): Mean value of the dataset.
+        data_std (Tensor): Standard deviation of the dataset.
+        weight_factor (Tensor): Factor controlling how much extreme values are penalized.
+
+    Methods:
+        - forward: Computes the weighted mean squared error loss.
+    """
+
+    def __init__(self, data_mean, data_std, weight_factor=1.0):
         super(WeightedMSELoss, self).__init__()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.data_mean = torch.tensor(data_mean, dtype=torch.float32, device=self.device)
         self.data_std = torch.tensor(data_std, dtype=torch.float32, device=self.device)
         self.weight_factor = torch.tensor(weight_factor, dtype=torch.float32, device=self.device)
         self.to(self.device)
-
+        
     def forward(self, input, target):
         """
-        Calculate the Weighted MSE Loss.
+        Computes the Weighted Mean Squared Error (MSE) Loss.
 
         Args:
-            input (tensor): Predicted values.
-            target (tensor): Actual values.
+            input (Tensor): Predicted values.
+            target (Tensor): Ground truth values.
 
         Returns:
             Tensor: Computed loss.
         """
+
         # Ensure data_mean, data_std, and weight_factor are on the same device as input
         input = input.to(self.device)
         target = target.to(self.device)
@@ -106,17 +158,22 @@ class WeightedMSELoss(torch.nn.Module):
 
 
 class WeightedMSEPCALoss(torch.nn.Module):
-    def __init__(self, data_mean, data_std, weight_factor=1.0, custom_weights=None):
-        """
-        Custom loss function that penalizes errors on extreme values more and allows for custom weighting of each prediction
-        in a batched manner.
+    """
+    Extension of WeightedMSELoss that allows for custom per-batch weighting.
 
-        Args:
-            data_mean (float): Mean of the target variable in the training set.
-            data_std (float): Standard deviation of the target variable in the training set.
-            weight_factor (float): Factor to adjust the weighting. Higher values will increase the penalty on extremes. Default is 1.0.
-            custom_weights (torch.Tensor, optional): A tensor of weights corresponding to each y-value in the batch. Default is None.
-        """
+    This loss function enables additional user-defined weights to further adjust penalties for different predictions.
+
+    Attributes:
+        data_mean (Tensor): Mean of the dataset.
+        data_std (Tensor): Standard deviation of the dataset.
+        weight_factor (Tensor): Controls the penalty for extreme values.
+        custom_weights (Tensor, optional): User-defined weight tensor.
+
+    Methods:
+        - forward: Computes the batch-weighted MSE loss.
+    """
+    def __init__(self, data_mean, data_std, weight_factor=1.0, custom_weights=None):
+
         super(WeightedMSEPCALoss, self).__init__()
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -133,15 +190,16 @@ class WeightedMSEPCALoss(torch.nn.Module):
 
     def forward(self, input, target):
         """
-        Calculate the Weighted MSE Loss for batched inputs and outputs.
+        Computes the batch-weighted mean squared error loss.
 
         Args:
-            input (tensor): Predicted values with shape (batch_size, num_targets).
-            target (tensor): Actual values with shape (batch_size, num_targets).
+            input (Tensor): Predicted values.
+            target (Tensor): Ground truth values.
 
         Returns:
             Tensor: Computed loss.
         """
+
 
         input = input.to(self.device)
         target = target.to(self.device)
@@ -181,18 +239,23 @@ class WeightedMSEPCALoss(torch.nn.Module):
 
 
 class WeightedMSELossWithSignPenalty(torch.nn.Module):
-    def __init__(self, data_mean, data_std, weight_factor=1.0, sign_penalty_factor=1.0):
-        """
-        Custom loss function that penalizes errors on extreme values more and adds a penalty for opposite sign predictions.
+    """
+    Custom loss function that penalizes errors on extreme values and opposite sign predictions.
 
-        Args:
-            data_mean (float): Mean of the target variable in the training set.
-            data_std (float): Standard deviation of the target variable in the training set.
-            weight_factor (float): Factor to adjust the weighting for extremes. Higher values will increase
-                                   the penalty on extremes. Default is 1.0.
-            sign_penalty_factor (float): Factor to adjust the penalty for opposite sign predictions.
-                                         Higher values increase the penalty. Default is 1.0.
-        """
+    This function extends WeightedMSELoss by adding a penalty when the sign of the prediction differs from the target.
+
+    Attributes:
+        data_mean (Tensor): Mean of the dataset.
+        data_std (Tensor): Standard deviation of the dataset.
+        weight_factor (Tensor): Factor controlling extreme value weighting.
+        sign_penalty_factor (Tensor): Factor controlling penalty for opposite sign predictions.
+
+    Methods:
+        - forward: Computes the weighted loss with sign penalties.
+    """
+
+    def __init__(self, data_mean, data_std, weight_factor=1.0, sign_penalty_factor=1.0):
+
         super(WeightedMSELossWithSignPenalty, self).__init__()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.data_mean = torch.tensor(data_mean, dtype=torch.float32, device=self.device)
@@ -205,15 +268,16 @@ class WeightedMSELossWithSignPenalty(torch.nn.Module):
 
     def forward(self, input, target):
         """
-        Calculate the Weighted MSE Loss with an additional penalty for opposite sign predictions.
+        Computes the Weighted MSE Loss with an additional sign penalty.
 
         Args:
-            input (tensor): Predicted values.
-            target (tensor): Actual values.
+            input (Tensor): Predicted values.
+            target (Tensor): Ground truth values.
 
         Returns:
             Tensor: Computed loss.
         """
+
         # Calculate the deviation of each target value from the mean
         deviation = torch.abs(target - self.data_mean)
 
@@ -241,15 +305,32 @@ class WeightedMSELossWithSignPenalty(torch.nn.Module):
 
 
 class GridCriterion(torch.nn.Module):
+    """
+    Custom loss function enforcing spatial smoothness using total variation regularization.
+
+    This function encourages smoothness in spatial predictions by penalizing large variations.
+
+    Methods:
+        - total_variation_regularization: Computes the smoothness loss.
+        - forward: Computes the final loss.
+    """
+
     def __init__(
         self,
     ):
         super(GridCriterion, self).__init__()
 
-    def total_variation_regularization(
-        self,
-        grid,
-    ):
+    def total_variation_regularization(self, grid):
+        """
+        Computes total variation regularization (TVR) loss.
+
+        Args:
+            grid (Tensor): A 2D tensor representing spatial data.
+
+        Returns:
+            Tensor: TVR loss.
+        """
+
         # Calculate the sum of horizontal and vertical differences
         horizontal_diff = torch.abs(torch.diff(grid, axis=2))
         vertical_diff = torch.abs(torch.diff(grid, axis=1))
@@ -260,6 +341,18 @@ class GridCriterion(torch.nn.Module):
 
     # def spatial_loss(self, true, predicted, smoothness_weight=0.001):
     def forward(self, true, predicted, smoothness_weight=0.001):
+        """
+        Computes the final loss by combining pixel-wise MSE and TVR.
+
+        Args:
+            true (Tensor): Ground truth values.
+            predicted (Tensor): Model predictions.
+            smoothness_weight (float, optional): Weight for TVR. Defaults to 0.001.
+
+        Returns:
+            Tensor: Computed loss.
+        """
+
         pixelwise_mse = torch.mean(
             torch.abs(true - predicted) ** 2,
         )  # loss for each image in the batch (batch_size,)
@@ -277,15 +370,20 @@ class GridCriterion(torch.nn.Module):
 
 
 class WeightedPCALoss(torch.nn.Module):
-    def __init__(self, component_weights, reduction="mean"):
-        """
-        Custom loss function that applies different weights to the error of each principal component prediction.
+    """
+    Custom loss function applying different weights to errors in principal component analysis.
 
-        Args:
-            component_weights (list or torch.Tensor): Weights for each principal component's error,
-                                                      where the first component has the highest weight.
-            reduction (str): Specifies the reduction to apply to the output: 'none' | 'mean' | 'sum'.
-        """
+    This function allows assigning higher penalties to the first components.
+
+    Attributes:
+        component_weights (Tensor): Weighting factors for each principal component.
+        reduction (str): Specifies reduction mode ('mean', 'sum', or 'none').
+
+    Methods:
+        - forward: Computes the weighted PCA loss.
+    """
+
+    def __init__(self, component_weights, reduction="mean"):
         super(WeightedPCALoss, self).__init__()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.component_weights = torch.tensor(
@@ -298,15 +396,16 @@ class WeightedPCALoss(torch.nn.Module):
 
     def forward(self, input, target):
         """
-        Calculate the weighted loss for principal component predictions.
+        Computes the weighted PCA loss.
 
         Args:
-            input (tensor): Predicted principal components.
-            target (tensor): Actual principal components.
+            input (Tensor): Predicted principal components.
+            target (Tensor): Actual principal components.
 
         Returns:
-            Tensor: Computed Weighted PCA Loss.
+            Tensor: Computed loss.
         """
+
 
         input = input.to(self.device)
         target = target.to(self.device)
@@ -331,29 +430,36 @@ class WeightedPCALoss(torch.nn.Module):
 
 
 class MSEDeviationLoss(torch.nn.Module):
-    def __init__(self, threshold=1.0, penalty_multiplier=2.0):
-        """
-        Custom MSE Loss with an additional penalty for large deviations.
+    """
+    Custom MSE Loss with an additional penalty for large deviations.
 
-        Parameters:
-        - threshold: The error magnitude beyond which the penalty is applied.
-        - penalty_multiplier: Multiplier for the penalty term for errors exceeding the threshold.
-        """
+    This function penalizes predictions that deviate significantly from the target.
+
+    Attributes:
+        threshold (float): Deviation threshold for applying penalties.
+        penalty_multiplier (float): Multiplier controlling penalty severity.
+
+    Methods:
+        - forward: Computes the loss with deviation penalties.
+    """
+
+    def __init__(self, threshold=1.0, penalty_multiplier=2.0):
         super(MSEDeviationLoss, self).__init__()
         self.threshold = threshold
         self.penalty_multiplier = penalty_multiplier
 
     def forward(self, predictions, targets):
         """
-        Compute the custom loss.
+        Computes the MSE loss with an additional deviation penalty.
 
-        Parameters:
-        - predictions: The predicted values.
-        - targets: The ground truth values.
+        Args:
+            predictions (Tensor): Predicted values.
+            targets (Tensor): Ground truth values.
 
         Returns:
-        - loss: The computed custom loss.
+            Tensor: Computed loss.
         """
+
         mse_loss = torch.mean((predictions - targets) ** 2)
         large_deviation_penalty = torch.mean(
             torch.where(

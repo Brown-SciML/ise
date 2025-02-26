@@ -15,18 +15,20 @@ from ise.evaluation.metrics import js_divergence, kl_divergence
 
 
 def load_model(model_path, model_class, architecture, mc_dropout=False, dropout_prob=0.1):
-    """Loads PyTorch model from saved state_dict.
+    """
+    Loads a PyTorch model from a saved state_dict file.
 
     Args:
-        model_path (str): Filepath to model state_dict.
-        model_class (Model): Model class.
-        architecture (dict): Defined architecture of pretrained model.
-        mc_dropout (bool): Flag denoting wether the model was trained using MC Dropout.
-        dropout_prob (float): Value between 0 and 1 denoting the dropout probability.
+        model_path (str): Path to the model's state dictionary file.
+        model_class (type): Class reference of the model to be loaded.
+        architecture (dict): Dictionary specifying the architecture of the model.
+        mc_dropout (bool, optional): Whether the model uses Monte Carlo Dropout. Defaults to False.
+        dropout_prob (float, optional): Dropout probability if MC Dropout is used. Defaults to 0.1.
 
     Returns:
-        model (Model): Pretrained model.
+        torch.nn.Module: The loaded PyTorch model set to the available device (CPU/GPU).
     """
+
     model = model_class(architecture, mc_dropout=mc_dropout, dropout_prob=dropout_prob)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.load_state_dict(torch.load(model_path, map_location=device))
@@ -36,18 +38,19 @@ def load_model(model_path, model_class, architecture, mc_dropout=False, dropout_
 def get_all_filepaths(
     path: str, filetype: str = None, contains: str = None, not_contains: str = None
 ):
-    """Retrieves all filepaths for files within a directory. Supports subsetting based on filetype
-    and substring search.
+    """
+    Retrieves all file paths in a directory, with optional filtering.
 
     Args:
-        path (str): Path to directory to be searched.
-        filetype (str, optional): File type to be returned (e.g. csv, nc). Defaults to None.
-        contains (str, optional): Substring that files found must contain. Defaults to None.
-        not_contains(str, optional): Substring that files found must NOT contain. Defaults to None.
+        path (str): The directory path to search for files.
+        filetype (str, optional): Filter files by extension (e.g., 'csv', 'nc'). Defaults to None.
+        contains (str, optional): Only include files that contain this substring. Defaults to None.
+        not_contains (str, optional): Exclude files that contain this substring. Defaults to None.
 
     Returns:
-        List[str]: list of files within the directory matching the input criteria.
+        List[str]: A list of file paths that match the specified criteria.
     """
+
     all_files = list()
     for (dirpath, dirnames, filenames) in os.walk(path):
         all_files += [os.path.join(dirpath, file) for file in filenames]
@@ -69,13 +72,15 @@ def add_variable_to_nc(source_file_path, target_file_path, variable_name):
     """
     Copies a variable from a source NetCDF file to a target NetCDF file.
 
-    Parameters:
-    - source_file_path: Path to the source NetCDF file.
-    - target_file_path: Path to the target NetCDF file.
-    - variable_name: Name of the variable to be copied.
+    Args:
+        source_file_path (str): Path to the source NetCDF file.
+        target_file_path (str): Path to the target NetCDF file.
+        variable_name (str): Name of the variable to be copied.
 
-    Both files are assumed to have matching dimensions for the variable.
+    Raises:
+        FileNotFoundError: If the specified variable is not found in the source file.
     """
+
     # Open the source NetCDF file in read mode
     with Dataset(source_file_path, "r") as src_nc:
         # Check if the variable exists in the source file
@@ -113,16 +118,22 @@ def add_variable_to_nc(source_file_path, target_file_path, variable_name):
 
 
 def load_ml_data(data_directory: str, time_series: bool = True):
-    """Loads training and testing data for machine learning models. These files are generated using
-    functions in the ise.data.processing modules or process_data in the ise.pipelines.processing module.
+    """
+    Loads machine learning training and testing data from CSV files.
 
     Args:
-        data_directory (str): Directory containing processed files.
-        time_series (bool): Flag denoting whether to load the time-series version of the data.
+        data_directory (str): Directory containing the processed data files.
+        time_series (bool, optional): Whether to load the time-series version of the data. Defaults to True.
 
     Returns:
-        tuple: Tuple containing [train features, train_labels, test_features, test_labels, test_scenarios], or the training and testing datasets including the scenarios used in testing.
+        tuple: A tuple containing:
+            - train_features (pd.DataFrame): Training feature set.
+            - train_labels (pd.Series): Training labels.
+            - test_features (pd.DataFrame): Testing feature set.
+            - test_labels (pd.Series): Testing labels.
+            - test_scenarios (list): List of test scenarios.
     """
+
     if time_series:
         # TODO: Test scenarios has no use, get rid of it
         try:
@@ -168,16 +179,17 @@ def load_ml_data(data_directory: str, time_series: bool = True):
 
 
 def undummify(df: pd.DataFrame, prefix_sep: str = "-"):
-    """Undummifies, or reverses pd.get_dummies, a dataframe. Includes taking encoded categorical
-    variable columns (boolean indices), and converts them back into the original data format.
+    """
+    Converts a one-hot encoded dataframe back to its categorical form.
 
     Args:
-        df (pd.DataFrame): Dataframe to be converted.
-        prefix_sep (str, optional): Prefix separator used in pd.get_dummies. Recommended not to change this. Defaults to "-".
+        df (pd.DataFrame): DataFrame containing one-hot encoded categorical columns.
+        prefix_sep (str, optional): Separator used in column names to identify categories. Defaults to "-".
 
     Returns:
-        _type_: _description_
+        pd.DataFrame: DataFrame with categorical values restored.
     """
+
     cols2collapse = {item.split(prefix_sep)[0]: (prefix_sep in item) for item in df.columns}
 
     series_list = []
@@ -198,26 +210,27 @@ def undummify(df: pd.DataFrame, prefix_sep: str = "-"):
 
 def combine_testing_results(
     data_directory: str,
-    preds: np.ndarray,  # |pd.Series|str,
-    sd: dict = None,  # |pd.DataFrame = None,
-    gp_data: dict = None,  # |pd.DataFrame = None,
+    preds: np.ndarray,
+    sd: dict = None,
+    gp_data: dict = None,
     time_series: bool = True,
     save_directory: str = None,
 ):
-    """Creates testing results dataframe that reverts input data to original formatting and adds on
-    predictions, losses, and uncertainty bounds. Useful for plotting purposes and overall analysis.
+    """
+    Combines test results into a DataFrame with predictions, uncertainties, and true values.
 
     Args:
         data_directory (str): Directory containing training and testing data.
-        preds (np.ndarray | pd.Series | str): Array/Series of neural network predictions, or the path to the csv containing predictions.
-        bounds (dict | pd.DataFrame): Dictionary or pd.DataFrame of uncertainty bounds to be added to the dataframe, generally outputted from ise.models.testing.pretrained.test_pretrained_model. Defaults to None.
-        gp_data (dict | pd.DataFrame): Dictionary or pd.DataFrame containing gaussian process predictions to add to the dataset. Columns/keys must be `preds` and `std`. Defaults to None.
-        time_series (bool, optional): Flag denoting whether to process the data as a time-series dataset or traditional non-time dataset. Defaults to True.
-        save_directory (str, optional): Directory where output files will be saved. Defaults to None.
+        preds (np.ndarray | pd.Series | str): Predictions array, Series, or path to a CSV file with predictions.
+        sd (dict | pd.DataFrame, optional): Standard deviations for uncertainty estimation. Defaults to None.
+        gp_data (dict | pd.DataFrame, optional): Gaussian process predictions and standard deviations. Defaults to None.
+        time_series (bool, optional): Whether to process time-series data. Defaults to True.
+        save_directory (str, optional): Directory where results should be saved. Defaults to None.
 
     Returns:
-        pd.DataFrame: test results dataframe.
+        pd.DataFrame: DataFrame containing test results with true values, predictions, errors, and uncertainty bounds.
     """
+
 
     (
         train_features,
@@ -272,18 +285,21 @@ def group_by_run(
     column: str = None,
     condition: str = None,
 ):
-    """Groups the dataset into each individual simulation series by both the true value of the
-    simulated SLE as well as the model predicted SLE. The resulting arrays are NXM matrices with
-    N being the number of simulations and M being 85, or the length of the series.
+    """
+    Groups dataset simulations into structured matrices for true and predicted values.
 
     Args:
-        dataset (pd.DataFrame): Dataset to be grouped
-        column (str, optional): Column to subset on. Defaults to None.
-        condition (str, optional): Condition to subset with. Can be int, str, float, etc. Defaults to None.
+        dataset (pd.DataFrame): Dataset containing simulation results.
+        column (str, optional): Column name to subset on. Defaults to None.
+        condition (str, optional): Condition for filtering the dataset. Defaults to None.
 
     Returns:
-        tuple: Tuple containing [all_trues, all_preds], or NXM matrices of each series corresponding to true values and predicted values.
+        tuple: A tuple containing:
+            - all_trues (np.ndarray): Matrix of true values (N x M, where N is the number of simulations and M is time steps).
+            - all_preds (np.ndarray): Matrix of predicted values.
+            - scenarios (list): List of scenario information for each simulation.
     """
+
 
     modelnames = dataset.modelname.unique()
     exp_ids = dataset.exp_id.unique()
@@ -326,17 +342,24 @@ def group_by_run(
 def get_uncertainty_bands(
     data: pd.DataFrame, confidence: str = "95", quantiles: List[float] = [0.05, 0.95]
 ):
-    """Calculates uncertainty bands on the monte carlo dropout protocol. Includes traditional
-    confidence interval calculation as well as a quantile-based approach.
+    """
+    Computes uncertainty bands using confidence intervals and quantiles.
 
     Args:
-        data (pd.DataFrame): Dataframe or array of NXM, typically from ise.utils.functions.group_by_run.
-        confidence (str, optional): Confidence level, must be in [95, 99]. Defaults to '95'.
-        quantiles (list[float], optional): Quantiles of uncertainty bands. Defaults to [0.05, 0.95].
+        data (pd.DataFrame): Data matrix of shape (N, M), where N is samples and M is time steps.
+        confidence (str, optional): Confidence level ('95' or '99'). Defaults to "95".
+        quantiles (List[float], optional): Quantiles for uncertainty bands. Defaults to [0.05, 0.95].
 
     Returns:
-        tuple: Tuple containing [mean, sd, upper_ci, lower_ci, upper_q, lower_q], or the mean prediction, standard deviation, and the lower and upper confidence interval and quantile bands.
+        tuple: A tuple containing:
+            - mean (np.ndarray): Mean values.
+            - sd (np.ndarray): Standard deviation values.
+            - upper_ci (np.ndarray): Upper confidence interval.
+            - lower_ci (np.ndarray): Lower confidence interval.
+            - upper_q (np.ndarray): Upper quantile bound.
+            - lower_q (np.ndarray): Lower quantile bound.
     """
+
     z = {"95": 1.96, "99": 2.58}
     data = np.array(data)
     mean = data.mean(axis=0)
@@ -350,6 +373,21 @@ def get_uncertainty_bands(
 
 
 def create_distribution(dataset: np.ndarray, min_range=-30, max_range=20, step=0.01):
+    """
+    Creates a probability density function (PDF) using Gaussian kernel density estimation (KDE).
+
+    Args:
+        dataset (np.ndarray): Input data for KDE.
+        min_range (float, optional): Minimum range for support values. Defaults to -30.
+        max_range (float, optional): Maximum range for support values. Defaults to 20.
+        step (float, optional): Step size for the support values. Defaults to 0.01.
+
+    Returns:
+        tuple: A tuple containing:
+            - density (np.ndarray): Density values from KDE.
+            - support (np.ndarray): Support values for the density function.
+    """
+
     kde = gaussian_kde(dataset, bw_method="silverman")
     support = np.arange(min_range, max_range, step)
     density = kde(support)
@@ -359,19 +397,24 @@ def create_distribution(dataset: np.ndarray, min_range=-30, max_range=20, step=0
 def calculate_distribution_metrics(
     dataset: pd.DataFrame, column: str = None, condition: str = None
 ):
-    """Wrapper for calculating distribution metrics from a dataset. Includes ise.utils.data.group_by_run to
-    group the true values and predicted values into NXM matrices (with N=number of samples and
-    M=85, or the number of years in the series). Then, it uses ise.utils.data.create_distribution to
-    calculate individual distributions from the arrays and calculates the divergences.
+    """
+    Computes distribution divergence metrics between true and predicted values.
+
+    This function groups the dataset by simulation runs, creates probability 
+    distributions for true and predicted values, and calculates the 
+    Kullback-Leibler (KL) and Jensen-Shannon (JS) divergences.
 
     Args:
-        dataset (pd.DataFrame): Dataset to be grouped
-        column (str, optional): Column to subset on. Defaults to None.
-        condition (str, optional): Condition to subset with. Can be int, str, float, etc. Defaults to None.
+        dataset (pd.DataFrame): The dataset containing true and predicted values.
+        column (str, optional): Column name to subset on. Defaults to None.
+        condition (str, optional): Value to filter the dataset based on the specified column. Defaults to None.
 
     Returns:
-        dict: Dictionary containing dict['kl'] for the KL-Divergence and dict['js'] for the Jensen-Shannon Divergence.
+        dict: A dictionary containing:
+            - 'kl' (float): KL-Divergence value.
+            - 'js' (float): Jensen-Shannon Divergence value.
     """
+
     trues, preds, _ = group_by_run(dataset, column=column, condition=condition)
     true_distribution, _ = create_distribution(year=2100, dataset=trues)
     pred_distribution, _ = create_distribution(year=2100, dataset=preds)
@@ -383,16 +426,21 @@ def calculate_distribution_metrics(
 
 
 def unscale_column(dataset: pd.DataFrame, column: str = "year"):
-    """Unscale column in dataset, particularly for unscaling year and sectors column given that
-    they have a known range of values (2016-2100 and 1-18 respectively).
+    """
+    Unscales specified columns back to their original range using known value distributions.
+
+    This function is specifically used to revert the normalization of 'year' and 
+    'sectors' columns since they have known value ranges.
 
     Args:
-        dataset (pd.DataFrame): Dataset containing columns to unscale.
-        column (str | list, optional): Columns to be unscaled, must be in [year, sectors]. Can be both. Defaults to 'year'.
+        dataset (pd.DataFrame): Dataset containing the scaled columns.
+        column (str or list, optional): Column(s) to be unscaled. 
+            Can be 'year', 'sectors', or a list containing both. Defaults to "year".
 
     Returns:
-        pd.DataFrame: dataset containing unscaled columns.
+        pd.DataFrame: Dataset with the specified column(s) unscaled.
     """
+
 
     if isinstance(column, str):
         column = [column]
@@ -411,22 +459,22 @@ def unscale_column(dataset: pd.DataFrame, column: str = "year"):
 
     return dataset
 
-
-"""Utility functions for handling various parts of the package, including argument checking and
-formatting and file traversal."""
-
-
 file_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 def check_input(input: str, options: List[str], argname: str = None):
-    """Checks validity of input argument. Not used frequently due to error raising being better practice.
+    """
+    Validates whether a given input string is within an expected list of options.
 
     Args:
-        input (str): Input value.
-        options (List[str]): Valid options for the input value.
-        argname (str, optional): Name of the argument being tested. Defaults to None.
+        input (str): The input value to validate.
+        options (List[str]): A list of valid options.
+        argname (str, optional): Name of the argument being checked for better error messaging. Defaults to None.
+
+    Raises:
+        ValueError: If the input is not in the list of allowed options.
     """
+
     # simple assert that input is in the designated options (readability purposes only)
     if isinstance(input, str):
         input = input.lower()
@@ -475,16 +523,17 @@ def get_all_filepaths(
 
 
 def _structure_emulatordata_args(input_args: dict, time_series: bool):
-    """Formats kwargs for EmulatorData processing. Includes establishing defaults if values are not
-    supplied.
+    """
+    Formats the keyword arguments for processing EmulatorData, applying default values if needed.
 
     Args:
-        input_args (dict): Dictionary containin kwargs for EmulatorData.process()
-        time_series (bool): Flag denoting whether the processing is time-series.
+        input_args (dict): Dictionary of keyword arguments for EmulatorData processing.
+        time_series (bool): Whether the processing is for time-series data.
 
     Returns:
-        dict: EmulatorData.process() kwargs formatted with defaults.
+        dict: A dictionary of EmulatorData processing arguments with applied defaults.
     """
+
     emulator_data_defaults = dict(
         target_column="sle",
         drop_missing=True,
@@ -514,15 +563,23 @@ def _structure_emulatordata_args(input_args: dict, time_series: bool):
 
 
 def _structure_architecture_args(architecture, time_series):
-    """Formats the arguments for model architectures.
+    """
+    Structures the architecture arguments for model training.
+
+    Ensures that the provided architecture dictionary is appropriate for either 
+    time-series or traditional models.
 
     Args:
-        architecture (dict): User input for desired architecture.
-        time_series (bool): Flag denoting whether to use time series model arguments or traditional.
+        architecture (dict): Dictionary specifying model architecture parameters.
+        time_series (bool): Whether the model is for time-series data.
 
     Returns:
-        architecture (dict): Formatted architecture argument.
+        dict: A structured architecture dictionary.
+
+    Raises:
+        AttributeError: If incompatible architecture arguments are used.
     """
+
 
     # Check to make sure inappropriate args are not used
     if not time_series and (
@@ -558,9 +615,29 @@ def get_X_y(
     data,
     dataset_type="sectors",
     return_format=None,
-    cols='all',
+    cols="all",
     with_chars=True,
 ):  
+    """
+    Extracts input features (X) and target labels (y) from a dataset.
+
+    Supports various dataset types (sectors, regions, scenarios) and formats 
+    (numpy, tensor, pandas).
+
+    Args:
+        data (str or pd.DataFrame): Filepath to the dataset CSV or a pandas DataFrame.
+        dataset_type (str, optional): The type of dataset ('sectors', 'regions', 'scenarios'). Defaults to "sectors".
+        return_format (str, optional): Format of the returned data ('numpy', 'tensor', or 'pandas'). Defaults to None.
+        cols (str or list, optional): Columns to include in the features. Defaults to "all".
+        with_chars (bool, optional): Whether to include characteristic columns in features. Defaults to True.
+
+    Returns:
+        tuple: A tuple containing:
+            - X (pd.DataFrame or np.ndarray or torch.Tensor): The input features.
+            - y (pd.DataFrame or np.ndarray or torch.Tensor): The target labels.
+            - scenarios (list, optional): Scenario identifiers if dataset type is "regions".
+    """
+
     if isinstance(data, str):
         data = pd.read_csv(data)
     
@@ -670,14 +747,18 @@ def get_X_y(
 
 def to_tensor(x):
     """
-    Converts input data to a PyTorch tensor of type float.
+    Converts input data into a PyTorch tensor with float32 dtype.
 
     Args:
-        x: Input data to be converted. Must be a pandas dataframe, numpy array, or PyTorch tensor.
+        x (pd.DataFrame, np.ndarray, or torch.Tensor): Input data.
 
     Returns:
-        A PyTorch tensor of type float.
+        torch.Tensor: Converted tensor.
+
+    Raises:
+        ValueError: If the input data type is not supported.
     """
+
     if x is None:
         return None
     if isinstance(x, pd.DataFrame) or isinstance(x, pd.Series):
@@ -693,20 +774,39 @@ def to_tensor(x):
 
 def unscale(y, scaler_path):
     """
-    Unscale the output data using the scaler saved during training.
+    Unscales a dataset using a previously saved MinMaxScaler.
 
     Args:
-        y: Input data to be unscaled.
-        scaler_path: Path to the scaler used for scaling the data.
+        y (np.ndarray): The scaled data.
+        scaler_path (str): Path to the saved MinMaxScaler object.
 
     Returns:
-        The unscaled data.
+        np.ndarray: The unscaled data.
     """
+
     scaler = pkl.load(open(scaler_path, "rb"))
     y = scaler.inverse_transform(y)
     return y
 
 def get_data(data_dir, dataset_type='sectors', return_format='tensor'):
+    """
+    Loads training, validation, and test datasets, formatting them for model training.
+
+    Args:
+        data_dir (str): Path to the directory containing the dataset files.
+        dataset_type (str, optional): Type of dataset ('sectors' or 'scenarios'). Defaults to 'sectors'.
+        return_format (str, optional): Format of the returned data ('tensor', 'numpy', or 'pandas'). Defaults to 'tensor'.
+
+    Returns:
+        tuple: A tuple containing:
+            - X_train (pd.DataFrame, np.ndarray, or torch.Tensor): Training features.
+            - y_train (pd.DataFrame, np.ndarray, or torch.Tensor): Training labels.
+            - X_val (pd.DataFrame, np.ndarray, or torch.Tensor): Validation features.
+            - y_val (pd.DataFrame, np.ndarray, or torch.Tensor): Validation labels.
+            - X_test (pd.DataFrame, np.ndarray, or torch.Tensor): Testing features.
+            - y_test (pd.DataFrame, np.ndarray, or torch.Tensor): Testing labels.
+    """
+
     X_train, y_train = get_X_y(f"{data_dir}/train.csv", dataset_type=dataset_type, return_format=return_format)
     X_val, y_val = get_X_y(f"{data_dir}/val.csv", dataset_type=dataset_type, return_format=return_format)
     X_test, y_test = get_X_y(f"{data_dir}/test.csv", dataset_type=dataset_type, return_format=return_format)

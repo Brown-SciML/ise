@@ -8,6 +8,33 @@ import json
 from ise.models.predictors.lstm import LSTM
 
 class DeepEnsemble(nn.Module):
+    """
+    Deep Ensemble Model using multiple LSTMs for time series forecasting.
+
+    This class implements an ensemble of LSTM-based predictors. Each LSTM model is trained
+    separately, and predictions from all ensemble members are aggregated to provide a mean
+    prediction along with an epistemic uncertainty estimate.
+
+    Attributes:
+        input_size (int): Size of the input features.
+        output_size (int): Size of the output features.
+        output_sequence_length (int): Length of the predicted output sequence.
+        loss_choices (list): List of loss functions used for different ensemble members.
+        ensemble_members (list): List of LSTM models used as ensemble members.
+        trained (bool): Indicates whether all ensemble members have been trained.
+
+    Args:
+        ensemble_members (list, optional): Pretrained LSTM models. If None, a new ensemble is created.
+        input_size (int): Number of input features.
+        output_size (int): Number of output features.
+        num_ensemble_members (int): Number of ensemble members to create if `ensemble_members` is None.
+        output_sequence_length (int): Length of the output sequence to predict.
+        latent_dim (int): Additional latent dimension added to the input.
+    
+    Raises:
+        ValueError: If `ensemble_members` is provided but does not contain only LSTM instances.
+    """
+
 
     def __init__(self, ensemble_members=None, input_size=83, output_size=1, num_ensemble_members=3, output_sequence_length=86, latent_dim=1):
         super(DeepEnsemble, self).__init__()
@@ -39,15 +66,24 @@ class DeepEnsemble(nn.Module):
 
     def forward(self, x):
         """
-        Performs a forward pass through the ensemble.
+        Performs a forward pass through the ensemble, aggregating predictions.
+
+        Each ensemble member makes a prediction, and the mean and standard deviation
+        of these predictions are computed to provide an estimate of epistemic uncertainty.
 
         Args:
-        - x: Input data.
+            x (Tensor): Input tensor of shape (batch_size, sequence_length, input_size).
 
         Returns:
-        - mean_prediction: Mean prediction across ensemble members.
-        - epistemic_uncertainty: Standard deviation across ensemble predictions.
+            Tuple[Tensor, Tensor]: 
+                - Mean prediction across all ensemble members.
+                - Epistemic uncertainty (standard deviation of predictions).
+        
+        Warnings:
+            - If the model is not trained, a warning is issued indicating that predictions
+              may be unreliable.
         """
+
         if not self.trained:
             warnings.warn("This model has not been trained. Predictions may be inaccurate.")
         preds = torch.cat([member.predict(x).unsqueeze(1) for member in self.ensemble_members], dim=1)
@@ -57,25 +93,49 @@ class DeepEnsemble(nn.Module):
 
     def predict(self, x):
         """
-        Makes predictions using the ensemble.
+        Makes predictions using the trained ensemble.
+
+        This method calls `forward` while ensuring the model is in evaluation mode.
 
         Args:
-        - x: Input data.
+            x (Tensor): Input tensor for prediction.
 
         Returns:
-        - Tuple[Tensor, Tensor]: Mean predictions and uncertainty estimates.
+            Tuple[Tensor, Tensor]: 
+                - Mean predictions across ensemble members.
+                - Uncertainty estimates (standard deviation of predictions).
         """
+
         self.eval()
         return self.forward(x)
-
-    def fit(self, X, y, X_val=None, y_val=None, save_checkpoints=True, checkpoint_path='checkpoint_ensemble', early_stopping=False, epochs=100, batch_size=128, sequence_length=5, patience=10, verbose=True):
+    
+    
+    def fit(self, X, y, X_val=None, y_val=None, save_checkpoints=True, checkpoint_path='checkpoint_ensemble',
+            early_stopping=False, epochs=100, batch_size=128, sequence_length=5, patience=10, verbose=True):
         """
-        Trains the ensemble with optional early stopping.
+        Trains each ensemble member on the provided data.
+
+        The ensemble members are trained separately, allowing for independent learning dynamics.
+        Checkpoints can be saved for each model, and early stopping is available to prevent overfitting.
 
         Args:
-        - X, y: Training data.
-        - early_stopping (bool): Use early stopping. Defaults to False.
+            X (Tensor): Training input data.
+            y (Tensor): Training target data.
+            X_val (Tensor, optional): Validation input data for early stopping.
+            y_val (Tensor, optional): Validation target data for early stopping.
+            save_checkpoints (bool, optional): Whether to save checkpoints during training. Defaults to True.
+            checkpoint_path (str, optional): Path prefix for saving model checkpoints.
+            early_stopping (bool, optional): Whether to use early stopping. Defaults to False.
+            epochs (int, optional): Number of training epochs. Defaults to 100.
+            batch_size (int, optional): Batch size for training. Defaults to 128.
+            sequence_length (int, optional): Length of input sequences. Defaults to 5.
+            patience (int, optional): Number of epochs to wait before early stopping. Defaults to 10.
+            verbose (bool, optional): Whether to print training progress. Defaults to True.
+
+        Raises:
+            Warning: If the model has already been trained, a warning is issued before proceeding.
         """
+
         if self.trained:
             warnings.warn("Model already trained. Proceeding to train again.")
         for i, member in enumerate(self.ensemble_members):
@@ -86,6 +146,25 @@ class DeepEnsemble(nn.Module):
         self.trained = True
 
     def save(self, model_path):
+        """
+        Saves the ensemble model and its metadata.
+
+        This method stores the model parameters, metadata, and each ensemble member's state dictionary.
+        The metadata includes information about the ensemble members, such as their architecture,
+        loss function, and training status.
+
+        Args:
+            model_path (str): File path to save the model.
+
+        Raises:
+            ValueError: If attempting to save the model before it has been trained.
+
+        Notes:
+            - The model directory is automatically created if it does not exist.
+            - Each ensemble member is saved in a separate subdirectory.
+            - After saving, any temporary checkpoint files are removed.
+        """
+
         if not self.trained:
             raise ValueError("Train the model before saving.")
         
@@ -138,6 +217,29 @@ class DeepEnsemble(nn.Module):
 
     @classmethod
     def load(cls, model_path):
+        """
+        Loads a trained ensemble model from a file.
+
+        This method restores the ensemble's state, including the metadata and individual
+        LSTM members. The ensemble members are reinitialized and their state dictionaries
+        are loaded from disk.
+
+        Args:
+            model_path (str): Path to the saved model file.
+
+        Returns:
+            DeepEnsemble: An instance of the loaded ensemble model.
+
+        Raises:
+            FileNotFoundError: If any ensemble member's file is missing.
+            ValueError: If the saved model type does not match `DeepEnsemble`.
+
+        Notes:
+            - The method ensures compatibility between the saved metadata and the loaded model.
+            - Loss functions are restored using a predefined lookup.
+            - The model is set to evaluation mode after loading.
+        """
+
         metadata_path = model_path.replace(".pth", "_metadata.json")
         model_dir = os.path.dirname(model_path)
 

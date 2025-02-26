@@ -5,6 +5,7 @@ ISE, or ice-sheet emulators, is a package for end-to-end creation and analysis o
 
 The main features of ISE include loading and processing of ISMIP6 sea level contribution simulations,
 data preparation and feature engineering for machine learning, and training and testing of trained neural network emulators.
+This repository also contains the code to use ISEFlow, as presented in the paper "ISEFlow: A Flow-Based Neural Network Emulator for Improved Sea Level Projections and Uncertainty Quantification".
 
 .. toctree::
    :maxdepth: 1

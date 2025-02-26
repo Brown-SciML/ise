@@ -10,8 +10,28 @@ from ise.utils.training import EarlyStoppingCheckpointer, CheckpointSaver
 
 class NormalizingFlow(nn.Module):
     """
-    A class representing a Normalizing Flow model.
+    A normalizing flow model for probabilistic modeling using invertible transformations.
+
+    This model utilizes a sequence of invertible transformations to model complex probability 
+    distributions. It is built with a base distribution and a series of transformations, 
+    leveraging autoregressive neural networks.
+
+    Attributes:
+        num_flow_transforms (int): Number of flow transformations in the model.
+        num_input_features (int): Number of input features.
+        num_predicted_sle (int): Number of predicted sea-level equivalent values.
+        flow_hidden_features (int): Number of hidden features in the flow model.
+        output_sequence_length (int): Length of the output sequence.
+        device (str): Device on which the model is run ("cuda" or "cpu").
+        base_distribution (distributions.normal.ConditionalDiagonalNormal): 
+            The base normal distribution conditioned on input features.
+        t (transforms.base.CompositeTransform): Composite transformation for the normalizing flow.
+        flow (flows.base.Flow): The normalizing flow model.
+        optimizer (torch.optim.Adam): Optimizer for training the model.
+        criterion (callable): Log probability function used as the loss criterion.
+        trained (bool): Flag indicating if the model has been trained.
     """
+
     def __init__(
         self,
         input_size=43,
@@ -60,7 +80,25 @@ class NormalizingFlow(nn.Module):
         self.criterion = self.flow.log_prob
         self.trained = False
 
-    def fit(self, X, y, epochs=100, batch_size=64, save_checkpoints=True, checkpoint_path='checkpoint.pt', early_stopping=True, patience=10, verbose=True):
+    def fit(self, X, y, epochs=100, batch_size=64, save_checkpoints=True, 
+            checkpoint_path='checkpoint.pt', early_stopping=True, patience=10, verbose=True):
+        """
+        Trains the normalizing flow model using maximum likelihood estimation.
+
+        Args:
+            X (array-like): Input features of shape (num_samples, num_features).
+            y (array-like): Target values of shape (num_samples, output_size).
+            epochs (int, optional): Number of training epochs. Defaults to 100.
+            batch_size (int, optional): Batch size for training. Defaults to 64.
+            save_checkpoints (bool, optional): Whether to save model checkpoints. Defaults to True.
+            checkpoint_path (str, optional): Path to save model checkpoints. Defaults to 'checkpoint.pt'.
+            early_stopping (bool, optional): Whether to use early stopping. Defaults to True.
+            patience (int, optional): Number of epochs to wait before early stopping. Defaults to 10.
+            verbose (bool, optional): Whether to print training progress. Defaults to True.
+
+        Raises:
+            ValueError: If checkpoint loading fails.
+        """
         X, y = to_tensor(X).to(self.device), to_tensor(y).to(self.device)
         if y.ndimension() == 1:
             y = y.unsqueeze(1)
@@ -127,6 +165,18 @@ class NormalizingFlow(nn.Module):
             os.remove(checkpoint_path)
 
     def sample(self, features, num_samples, return_type="numpy"):
+        """
+        Generates samples from the trained normalizing flow model.
+
+        Args:
+            features (array-like or torch.Tensor): Input features to condition the samples on.
+            num_samples (int): Number of samples to generate per input feature set.
+            return_type (str, optional): Return type, either "numpy" or "tensor". Defaults to "numpy".
+
+        Returns:
+            np.ndarray or torch.Tensor: Generated samples of shape (num_samples, output_size).
+        """
+
         features = to_tensor(features)
         samples = self.flow.sample(num_samples, context=features).reshape(features.shape[0], num_samples)
         if return_type == "numpy":
@@ -134,12 +184,36 @@ class NormalizingFlow(nn.Module):
         return samples
 
     def get_latent(self, x, latent_constant=0.0):
+        """
+        Computes the latent space representation of the given input.
+
+        Args:
+            x (array-like or torch.Tensor): Input data of shape (num_samples, num_features).
+            latent_constant (float, optional): Constant value used for latent variable sampling. Defaults to 0.0.
+
+        Returns:
+            torch.Tensor: Latent space representation of the input data.
+        """
+
         x = to_tensor(x).to(self.device)
         latent_constant_tensor = torch.ones((x.shape[0], 1)).to(self.device) * latent_constant
         z, _ = self.t(latent_constant_tensor.float(), context=x)
         return z
 
     def aleatoric(self, features, num_samples, batch_size=128):
+        """
+        Estimates aleatoric uncertainty by computing the standard deviation of multiple 
+        samples drawn from the normalizing flow model.
+
+        Args:
+            features (array-like or torch.Tensor): Input features for sampling.
+            num_samples (int): Number of samples per input feature set.
+            batch_size (int, optional): Batch size for processing features. Defaults to 128.
+
+        Returns:
+            np.ndarray: Aleatoric uncertainty estimates of shape (num_samples,).
+        """
+
         features = to_tensor(features)
         num_batches = (features.shape[0] + batch_size - 1) // batch_size
         aleatoric_uncertainty = []
@@ -156,6 +230,16 @@ class NormalizingFlow(nn.Module):
         return np.concatenate(aleatoric_uncertainty)
 
     def save(self, path):
+        """
+        Saves the trained model and its metadata.
+
+        Args:
+            path (str): Path to save the model checkpoint.
+
+        Raises:
+            ValueError: If the model has not been trained before saving.
+        """
+
         if not self.trained:
             raise ValueError("Train the model before saving.")
         metadata = {
@@ -179,6 +263,16 @@ class NormalizingFlow(nn.Module):
 
     @staticmethod
     def load(path):
+        """
+        Loads a trained normalizing flow model from a saved checkpoint.
+
+        Args:
+            path (str): Path to the saved model checkpoint.
+
+        Returns:
+            NormalizingFlow: A restored instance of the NormalizingFlow model.
+        """
+
         metadata_path = path + "_metadata.json"
         with open(metadata_path, "r") as f:
             metadata = json.load(f)

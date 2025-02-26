@@ -22,10 +22,33 @@ from ise.models.pretrained import ISEFlow_AIS_v1_0_0_path, ISEFlow_GrIS_v1_0_0_p
 
 class ISEFlow(torch.nn.Module):
     """
-    The ISEFlow (Flow-based Ice Sheet Emulator) that combines a deep ensemble and a normalizing flow model.
+    ISEFlow is a hybrid ice sheet emulator that combines a deep ensemble model and a normalizing flow model.
+
+    This class provides methods to train, predict, save, and load hybrid models for ice sheet emulation.
+    It integrates a deep ensemble to capture epistemic uncertainties and a normalizing flow to model aleatoric uncertainties.
+
+    Attributes:
+        device (str): The computing device ('cuda' if available, else 'cpu').
+        deep_ensemble (DeepEnsemble): The deep ensemble model for epistemic uncertainty.
+        normalizing_flow (NormalizingFlow): The normalizing flow model for aleatoric uncertainty.
+        trained (bool): Flag indicating whether the model has been trained.
+        scaler_path (str or None): Path to the scaler used for output transformation.
     """
 
+
     def __init__(self, deep_ensemble, normalizing_flow):
+        """
+        Initializes the ISEFlow model with a deep ensemble and a normalizing flow.
+
+        Args:
+            deep_ensemble (DeepEnsemble): A deep ensemble model for epistemic uncertainty estimation.
+            normalizing_flow (NormalizingFlow): A normalizing flow model for aleatoric uncertainty estimation.
+
+        Raises:
+            ValueError: If `deep_ensemble` is not an instance of DeepEnsemble.
+            ValueError: If `normalizing_flow` is not an instance of NormalizingFlow.
+        """
+
         super(ISEFlow, self).__init__()
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -44,8 +67,30 @@ class ISEFlow(torch.nn.Module):
     def fit(self, X, y, nf_epochs, de_epochs, batch_size=64, X_val=None, y_val=None, save_checkpoints=True, checkpoint_path='checkpoint_ensemble', early_stopping=True,  
              sequence_length=5, patience=10, verbose=True):
         """
-        Fits the hybrid emulator to the training data.
+        Trains the hybrid emulator using the provided data.
+
+        This method trains the normalizing flow model first, then uses its latent representations 
+        to train the deep ensemble model.
+
+        Args:
+            X (array-like): Input feature matrix.
+            y (array-like): Target values.
+            nf_epochs (int): Number of training epochs for the normalizing flow.
+            de_epochs (int): Number of training epochs for the deep ensemble.
+            batch_size (int, optional): Batch size for training. Defaults to 64.
+            X_val (array-like, optional): Validation feature matrix. Defaults to None.
+            y_val (array-like, optional): Validation target values. Defaults to None.
+            save_checkpoints (bool, optional): Whether to save training checkpoints. Defaults to True.
+            checkpoint_path (str, optional): Path prefix for saving model checkpoints. Defaults to 'checkpoint_ensemble'.
+            early_stopping (bool, optional): Whether to use early stopping. Defaults to True.
+            sequence_length (int, optional): Sequence length for recurrent architectures. Defaults to 5.
+            patience (int, optional): Number of epochs with no improvement before stopping. Defaults to 10.
+            verbose (bool, optional): Whether to print training progress. Defaults to True.
+
+        Raises:
+            Warning: If the model has already been trained.
         """
+
         
         if early_stopping is None:
             early_stopping = X_val is not None and y_val is not None
@@ -83,7 +128,23 @@ class ISEFlow(torch.nn.Module):
     def forward(self, x, smooth_projection=False):
         """
         Performs a forward pass through the hybrid emulator.
+
+        Args:
+            x (array-like): Input data.
+            smooth_projection (bool, optional): Whether to apply smoothing to projections. Defaults to False.
+
+        Returns:
+            tuple: A tuple containing:
+                - prediction (numpy.ndarray): Model predictions.
+                - uncertainties (dict): Dictionary with keys:
+                    - 'total' (numpy.ndarray): Total uncertainty.
+                    - 'epistemic' (numpy.ndarray): Epistemic uncertainty.
+                    - 'aleatoric' (numpy.ndarray): Aleatoric uncertainty.
+
+        Raises:
+            Warning: If the model has not been trained.
         """
+
         self.eval()
         x = to_tensor(x).to(self.device)
         if not self.trained:
@@ -102,6 +163,26 @@ class ISEFlow(torch.nn.Module):
         return prediction, uncertainties
 
     def predict(self, x, output_scaler=True, smooth_projection=False):
+        """
+        Makes predictions using the trained hybrid emulator.
+
+        Args:
+            x (array-like): Input data.
+            output_scaler (bool or str, optional): Path to the output scaler or whether to apply scaling. Defaults to True.
+            smooth_projection (bool, optional): Whether to apply smoothing. Defaults to False.
+
+        Returns:
+            tuple: A tuple containing:
+                - unscaled_predictions (numpy.ndarray): Model predictions in the original scale.
+                - uncertainties (dict): Dictionary with keys:
+                    - 'total' (numpy.ndarray): Total uncertainty.
+                    - 'epistemic' (numpy.ndarray): Epistemic uncertainty.
+                    - 'aleatoric' (numpy.ndarray): Aleatoric uncertainty.
+
+        Raises:
+            Warning: If no scaler path is provided.
+        """
+
         self.eval()
         if output_scaler is True:
             output_scaler = os.path.join(self.model_dir, "scaler_y.pkl")
@@ -134,8 +215,19 @@ class ISEFlow(torch.nn.Module):
 
     def save(self, save_dir, input_features=None, output_scaler_path=None):
         """
-        Saves the trained model to the specified directory.
+        Saves the trained model and related components to a specified directory.
+
+        Args:
+            save_dir (str): Directory where the model should be saved.
+            input_features (list, optional): List of input feature names. Defaults to None.
+            output_scaler_path (str, optional): Path to the output scaler. Defaults to None.
+
+        Raises:
+            ValueError: If the model has not been trained.
+            ValueError: If `save_dir` is a file instead of a directory.
+            ValueError: If `input_features` is not a list.
         """
+
         if not self.trained:
             raise ValueError("This model has not been trained yet. Train the model before saving.")
         if save_dir.endswith(".pth"):
@@ -160,8 +252,20 @@ class ISEFlow(torch.nn.Module):
     @staticmethod
     def load(model_dir=None, deep_ensemble_path=None, normalizing_flow_path=None,):
         """
-        Loads a trained model from the specified paths.
+        Loads a trained ISEFlow model from specified paths.
+
+        Args:
+            model_dir (str, optional): Directory containing the saved model. Defaults to None.
+            deep_ensemble_path (str, optional): Path to the saved deep ensemble model. Defaults to None.
+            normalizing_flow_path (str, optional): Path to the saved normalizing flow model. Defaults to None.
+
+        Returns:
+            ISEFlow: The loaded ISEFlow model.
+
+        Raises:
+            NotImplementedError: If an unsupported version is specified.
         """
+
             
         if model_dir:
             deep_ensemble_path = os.path.join(model_dir, "deep_ensemble.pth")
@@ -178,7 +282,21 @@ class ISEFlow(torch.nn.Module):
 
 
 class ISEFlow_AIS(ISEFlow):
+    """
+    ISEFlow_AIS is a specialized version of ISEFlow for the Antarctic Ice Sheet (AIS).
+
+    This subclass initializes the deep ensemble and normalizing flow models specifically
+    for AIS and provides a loading method with pre-trained model paths.
+    """
+
     def __init__(self,):
+        """
+        Initializes the ISEFlow_AIS model.
+
+        Sets the ice sheet type to 'AIS' and initializes pre-configured deep ensemble 
+        and normalizing flow models specific to AIS.
+        """
+
         self.ice_sheet = "AIS"
         deep_ensemble = ISEFlow_AIS_DE()
         normalizing_flow = ISEFlow_AIS_NF()
@@ -186,6 +304,24 @@ class ISEFlow_AIS(ISEFlow):
     
     @staticmethod
     def load(version="v1.0.0", model_dir=None, deep_ensemble_path=None, normalizing_flow_path=None):
+        """
+        Loads a trained ISEFlow_AIS model.
+
+        Args:
+            version (str, optional): Model version. Defaults to "v1.0.0".
+            model_dir (str, optional): Directory of the saved model. Defaults to None.
+            deep_ensemble_path (str, optional): Path to deep ensemble model. Defaults to None.
+            normalizing_flow_path (str, optional): Path to normalizing flow model. Defaults to None.
+
+        Returns:
+            ISEFlow_AIS: The loaded model.
+
+        Raises:
+            NotImplementedError: If an unsupported version is specified.
+        """
+        
+        # TODO: Add support for deep ensemble and normalizing flow paths
+
         if model_dir is None:
             if version == "v1.0.0":
                 model_dir = ISEFlow_AIS_v1_0_0_path
@@ -230,6 +366,39 @@ class ISEFlow_AIS(ISEFlow):
         standard_melt_type: str=None,
         
     ):
+        """
+        Processes input data for prediction by applying necessary transformations and encoding.
+
+        Args:
+            year (np.array): Years of the input data.
+            pr_anomaly (np.array): Precipitation anomaly data.
+            evspsbl_anomaly (np.array): Evaporation anomaly data.
+            mrro_anomaly (np.array): Runoff anomaly data.
+            smb_anomaly (np.array): Surface mass balance anomaly.
+            ts_anomaly (np.array): Surface temperature anomaly.
+            ocean_thermal_forcing (np.array): Ocean thermal forcing.
+            ocean_salinity (np.array): Ocean salinity.
+            ocean_temperature (np.array): Ocean temperature.
+            initial_year (int): Initial year for modeling.
+            numerics (str): Numerical scheme used.
+            stress_balance (str): Stress balance model.
+            resolution (int): Resolution of the model.
+            init_method (str): Initialization method.
+            melt_in_floating_cells (str): Melt treatment method.
+            icefront_migration (str): Ice front migration scheme.
+            ocean_forcing_type (str): Type of ocean forcing applied.
+            ocean_sensitivity (str): Ocean sensitivity setting.
+            ice_shelf_fracture (bool): Whether ice shelf fracture is considered.
+            open_melt_type (str, optional): Type of open melt model. Defaults to None.
+            standard_melt_type (str, optional): Type of standard melt model. Defaults to None.
+
+        Returns:
+            pd.DataFrame: Processed input data ready for prediction.
+
+        Raises:
+            ValueError: If any input arguments are invalid.
+        """
+
         
         if year[0] == 2015:
             year = year - 2015
@@ -458,6 +627,18 @@ class ISEFlow_AIS(ISEFlow):
         open_melt_type: str=None,
         standard_melt_type: str=None,   
     ):
+        """
+        Predicts ice sheet evolution using the trained ISEFlow_AIS model.
+
+        Args:
+            (Same as process method)
+
+        Returns:
+            tuple: A tuple containing:
+                - unscaled_predictions (numpy.ndarray): Model predictions in the original scale.
+                - uncertainties (dict): Dictionary containing different uncertainty components.
+        """
+
         
         data = self.process(
             year, pr_anomaly, evspsbl_anomaly, mrro_anomaly, smb_anomaly, ts_anomaly, ocean_thermal_forcing, ocean_salinity, ocean_temperature, initial_year, numerics, stress_balance, resolution, init_method, melt_in_floating_cells, icefront_migration, ocean_forcing_type, ocean_sensitivity, ice_shelf_fracture, open_melt_type, standard_melt_type
@@ -467,7 +648,21 @@ class ISEFlow_AIS(ISEFlow):
         return super().predict(X, output_scaler=f"{ISEFlow_AIS_v1_0_0_path}/scaler_y.pkl")
 
 class ISEFlow_GrIS(ISEFlow):
+    """
+    ISEFlow_GrIS is a specialized version of ISEFlow for the Greenland Ice Sheet (GrIS).
+
+    This subclass initializes the deep ensemble and normalizing flow models specifically
+    for GrIS and provides a loading method with pre-trained model paths.
+    """
+
     def __init__(self,):
+        """
+        Initializes the ISEFlow_GrIS model.
+
+        Sets the ice sheet type to 'GrIS' and initializes pre-configured deep ensemble 
+        and normalizing flow models specific to GrIS.
+        """
+
         self.ice_sheet = "GrIS"
         deep_ensemble = ISEFlow_GrIS_DE()
         normalizing_flow = ISEFlow_GrIS_NF()
@@ -475,9 +670,17 @@ class ISEFlow_GrIS(ISEFlow):
     
     @staticmethod
     def load(version="v1.0.0", model_dir=None, deep_ensemble_path=None, normalizing_flow_path=None,):
+        """
+        Loads a trained ISEFlow_GrIS model.
+
+        (Same arguments and return type as `ISEFlow_AIS.load`.)
+        """
+
         if model_dir is None:
             if version == "v1.0.0":
                 model_dir = ISEFlow_GrIS_v1_0_0_path
             else:
                 raise NotImplementedError("Only version v1.0.0 is supported")
         return super(ISEFlow_GrIS, ISEFlow_GrIS).load(model_dir, deep_ensemble_path, normalizing_flow_path)
+
+    # TODO: ISEFlow GrIS process, predict

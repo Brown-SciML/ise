@@ -8,6 +8,18 @@ from sklearn.metrics import r2_score
 
 
 class PowerExponentialKernel(RBF):
+    """
+    A modified Radial Basis Function (RBF) kernel with a power exponential component.
+
+    This kernel generalizes the standard RBF kernel by allowing a custom 
+    exponential factor in the distance computation.
+
+    Attributes:
+        exponential (float): The power to which distances are raised in the kernel function.
+        length_scale (float): Characteristic length scale for the kernel.
+        length_scale_bounds (tuple): Lower and upper bounds for the length scale.
+    """
+
     def __init__(
         self,
         exponential=2.0,
@@ -21,39 +33,23 @@ class PowerExponentialKernel(RBF):
         self.exponential = exponential
 
     # OVERWRITE CALL METHOD FROM SKLEARN.GAUSSIAN_PROCESS.KERNELS.RBF
-    def __call__(
-        self,
-        X,
-        Y=None,
-        eval_gradient=False,
-    ):
-        """Return the kernel k(X, Y) and optionally its gradient.
-
-        Parameters
-        ----------
-        X : ndarray of shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
-
-        Y : ndarray of shape (n_samples_Y, n_features), default=None
-            Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
-
-        eval_gradient : bool, default=False
-            Determines whether the gradient with respect to the log of
-            the kernel hyperparameter is computed.
-            Only supported when Y is None.
-
-        Returns
-        -------
-        K : ndarray of shape (n_samples_X, n_samples_Y)
-            Kernel k(X, Y)
-
-        K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims), \
-                optional
-            The gradient of the kernel k(X, X) with respect to the log of the
-            hyperparameter of the kernel. Only returned when `eval_gradient`
-            is True.
+    def __call__(self, X, Y=None, eval_gradient=False):
         """
+        Computes the kernel matrix between inputs X and Y.
+
+        Args:
+            X (np.ndarray): Input data of shape (n_samples_X, n_features).
+            Y (np.ndarray, optional): Input data of shape (n_samples_Y, n_features). If None, self-similarity is computed. Defaults to None.
+            eval_gradient (bool, optional): If True, computes the gradient of the kernel with respect to the log of the length scale. Defaults to False.
+
+        Returns:
+            np.ndarray: Computed kernel matrix of shape (n_samples_X, n_samples_Y).
+            np.ndarray (optional): Gradient of the kernel function, returned only if `eval_gradient=True`.
+
+        Raises:
+            ValueError: If `eval_gradient` is True but `Y` is not None.
+        """
+
         X = np.atleast_2d(X)
         length_scale = _check_length_scale(X, self.length_scale)
         if Y is None:
@@ -87,11 +83,33 @@ class PowerExponentialKernel(RBF):
 
 
 class NuggetKernel(WhiteKernel):
+    """
+    A noise kernel (White Kernel) that models independent noise in Gaussian Processes.
+
+    This kernel adds noise to the diagonal of the covariance matrix to account for 
+    observation noise.
+
+    Attributes:
+        noise_level (float): The variance of the noise.
+        noise_level_bounds (tuple): The bounds for the noise variance.
+    """
+
     def __init__(self, noise_level=1.0, noise_level_bounds=(1e-5, 1e5)):
         super().__init__(noise_level=noise_level, noise_level_bounds=noise_level_bounds)
 
 
 class GP(GaussianProcessRegressor):
+    """
+    Gaussian Process (GP) regression model with a specified kernel.
+
+    This class extends `GaussianProcessRegressor` from `sklearn` and allows 
+    training and testing with additional functionality.
+
+    Attributes:
+        kernel (sklearn.gaussian_process.kernels.Kernel): The kernel function used for regression.
+        verbose (bool): If True, prints progress and evaluation metrics.
+    """
+
     def __init__(self, kernel, verbose=True):
         super().__init__(
             n_restarts_optimizer=9,
@@ -99,19 +117,42 @@ class GP(GaussianProcessRegressor):
         self.kernel = kernel
         self.verbose = verbose
 
-    def train(
-        self,
-        train_features,
-        train_labels,
-    ):
+    def train(self, train_features, train_labels):
+        """
+        Trains the Gaussian Process regression model.
+
+        Args:
+            train_features (np.ndarray): Feature matrix of shape (n_samples, n_features).
+            train_labels (np.ndarray): Target values of shape (n_samples,).
+
+        Returns:
+            GP: The trained Gaussian Process model.
+        """
+
         self.train_features, self.train_labels = train_features, train_labels
         self.fit(
             train_features,
             train_labels,
         )
         return self
-
     def test(self, test_features, test_labels):
+        """
+        Evaluates the Gaussian Process regression model on test data.
+
+        Args:
+            test_features (np.ndarray): Feature matrix of shape (n_samples, n_features).
+            test_labels (np.ndarray): Ground truth target values of shape (n_samples,).
+
+        Returns:
+            tuple:
+                - np.ndarray: Predicted values.
+                - np.ndarray: Standard deviation of predictions.
+                - dict: Evaluation metrics including MSE, MAE, RMSE, and R².
+
+        Raises:
+            ValueError: If `test_features` or `test_labels` have incorrect dimensions.
+        """
+
         self.test_features, self.test_labels = test_features, test_labels
         preds, std_prediction = self.predict(test_features, return_std=True)
         test_labels = np.array(test_labels.squeeze())
@@ -133,13 +174,34 @@ R2: {r2:0.6f}"""
         return preds, std_prediction, metrics
 
     def save(self, path):
-        """Save model to path."""
+        """
+        Saves the trained Gaussian Process model to a file.
+
+        Args:
+            path (str): Path where the model should be saved. Must end with `.joblib`.
+
+        Raises:
+            ValueError: If the file path does not end with `.joblib`.
+        """
+
         if not path.endswith(".joblib"):
             raise ValueError("Path must end with .joblib")
         dump(self, path)
 
     def load(self, path):
-        """Load model from path."""
+        """
+        Loads a Gaussian Process model from a saved file.
+
+        Args:
+            path (str): Path to the saved model file. Must end with `.joblib`.
+
+        Returns:
+            GP: The loaded Gaussian Process model.
+
+        Raises:
+            ValueError: If the file path does not end with `.joblib`.
+        """
+
         if not path.endswith(".joblib"):
             raise ValueError("Path must end with .joblib")
         self = load(path)

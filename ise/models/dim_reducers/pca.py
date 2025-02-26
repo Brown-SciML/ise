@@ -6,20 +6,27 @@ import numpy as np
 from ise.data.scaler import LogScaler, RobustScaler, StandardScaler
 
 class PCA(nn.Module):
+    """
+    Principal Component Analysis (PCA) using PyTorch.
+
+    This class performs Principal Component Analysis (PCA) for dimensionality 
+    reduction, leveraging PyTorch's built-in operations. The model can be 
+    trained on input data to extract principal components and later transform 
+    new data into the reduced-dimensional space.
+
+    Attributes:
+        n_components (int or float): Number of principal components to keep. 
+            If an integer, it represents the exact number of components. 
+            If a float between 0 and 1, it represents the proportion of variance to retain.
+        mean (torch.Tensor): Mean of the input data, computed during fitting.
+        components (torch.Tensor): Principal components (eigenvectors) of the fitted data.
+        singular_values (torch.Tensor): Singular values from singular value decomposition.
+        explained_variance (torch.Tensor): Variance explained by each principal component.
+        explained_variance_ratio (torch.Tensor): Proportion of total variance explained by each component.
+        device (str): The computation device ('cuda' if available, otherwise 'cpu').
+    """
+
     def __init__(self, n_components):
-        """
-        Principal Component Analysis (PCA) model.
-
-        This class provides a PCA model which can be fit to data.
-
-        Attributes:
-            n_components (int or float): The number of components to keep. Can be an int or a float between 0 and 1.
-            mean (torch.Tensor): The mean of the input data. Calculated during fit.
-            components (torch.Tensor): The principal components. Calculated during fit.
-            singular_values (torch.Tensor): The singular values corresponding to each of the principal components. Calculated during fit.
-            explained_variance (torch.Tensor): The amount of variance explained by each of the selected components. Calculated during fit.
-            explained_variance_ratio (torch.Tensor): Percentage of variance explained by each of the selected components. Calculated during fit.
-        """
         super(PCA, self).__init__()
         self.n_components = n_components
         self.mean = None
@@ -32,17 +39,21 @@ class PCA(nn.Module):
 
     def fit(self, X):
         """
-        Fit the PCA model to the input data.
+        Fits the PCA model to the input data.
+
+        Computes the principal components, singular values, explained variance, 
+        and variance ratios using singular value decomposition.
 
         Args:
-            X (np.array | pd.DataFrame): Input data, a tensor of shape (n_samples, n_features).
+            X (np.ndarray or pd.DataFrame): Input data of shape (n_samples, n_features).
 
         Returns:
-            self (PCModel): The fitted PCA model.
+            PCA: The fitted PCA model instance.
 
         Raises:
-            ValueError: If n_components is not a float in the range (0, 1) or an integer.
+            ValueError: If `n_components` is neither a valid float (0,1) nor an integer.
         """
+
         # Center the data
         X = self._to_tensor(X)
         self.mean = torch.mean(X, dim=0)
@@ -78,17 +89,19 @@ class PCA(nn.Module):
 
     def transform(self, X):
         """
-        Apply dimensionality reduction to the input data using the fitted PCA model.
+        Transforms input data into the principal component space.
 
         Args:
-            X (np.array | pd.DataFrame): Input data, a tensor of shape (n_samples, n_features).
+            X (np.ndarray or pd.DataFrame): Input data of shape (n_samples, n_features).
 
         Returns:
-            torch.Tensor: Transformed data, a tensor of shape (n_samples, n_components).
+            torch.Tensor: Transformed data in the principal component space, 
+            with shape (n_samples, n_components).
 
         Raises:
-            RuntimeError: If the PCA model has not been fitted yet.
+            RuntimeError: If the PCA model has not been fitted.
         """
+
         X = self._to_tensor(X)
         if self.mean is None or self.components is None:
             raise RuntimeError("PCA model has not been fitted yet.")
@@ -97,17 +110,19 @@ class PCA(nn.Module):
 
     def inverse_transform(self, X):
         """
-        Apply inverse dimensionality reduction to the input data using the fitted PCA model.
+        Reconstructs the original data from the principal component space.
 
         Args:
-            X (np.array | pd.DataFrame): Transformed data, a tensor of shape (n_samples, n_components).
+            X (np.ndarray or pd.DataFrame): Transformed data in the reduced space,
+                with shape (n_samples, n_components).
 
         Returns:
-            torch.Tensor: Inverse transformed data, a tensor of shape (n_samples, n_features).
+            torch.Tensor: Reconstructed data in the original feature space.
 
         Raises:
-            RuntimeError: If the PCA model has not been fitted yet.
+            RuntimeError: If the PCA model has not been fitted.
         """
+
         X = self._to_tensor(X)
 
         if self.mean is None or self.components is None:
@@ -117,14 +132,15 @@ class PCA(nn.Module):
 
     def save(self, path):
         """
-        Save the PCA model to a file.
+        Saves the fitted PCA model to a specified file.
 
         Args:
-            path (str): The path to save the model.
+            path (str): File path where the model should be saved.
 
         Raises:
-            RuntimeError: If the PCA model has not been fitted yet.
+            RuntimeError: If the PCA model has not been fitted before saving.
         """
+
         if self.mean is None or self.components is None:
             raise RuntimeError("PCA model has not been fitted yet.")
         torch.save(
@@ -141,17 +157,18 @@ class PCA(nn.Module):
 
     def _to_tensor(self, x):
         """
-        Converts the input data to a PyTorch tensor.
+        Converts input data into a PyTorch tensor.
 
         Args:
-            x: The input data to be converted.
+            x (np.ndarray, pd.DataFrame, or torch.Tensor): Input data.
 
         Returns:
-            The converted PyTorch tensor.
+            torch.Tensor: Converted data as a PyTorch tensor.
 
         Raises:
-            ValueError: If the input data is not a pandas DataFrame, numpy array, or PyTorch tensor.
+            ValueError: If input data type is not supported.
         """
+
         if x is None:
             return None
         if isinstance(x, pd.DataFrame):
@@ -168,18 +185,19 @@ class PCA(nn.Module):
     @staticmethod
     def load(path):
         """
-        Load a saved PCA model from a file.
+        Loads a previously saved PCA model.
 
         Args:
-            path (str): The path to the saved model.
+            path (str): Path to the saved PCA model.
 
         Returns:
-            PCA: The loaded PCA model.
+            PCA: Loaded PCA model instance.
 
         Raises:
-            FileNotFoundError: If the file does not exist.
-            RuntimeError: If the loaded model is not a PCA model.
+            FileNotFoundError: If the specified file does not exist.
+            RuntimeError: If the loaded model is not a valid PCA instance.
         """
+
         checkpoint = torch.load(path)
         model = PCA(checkpoint["n_components"])
         model.mean = checkpoint["mean"]
@@ -192,23 +210,29 @@ class PCA(nn.Module):
 
 class DimensionProcessor(nn.Module):
     """
-    A class that performs dimension processing using PCA and scaling.
+    A pipeline for dimensionality reduction using PCA and data scaling.
+
+    This class integrates a PCA model for dimensionality reduction and a 
+    scaling method for normalization. It facilitates transformation between 
+    the original data space and the reduced PCA space.
 
     Args:
-        pca_model (str or PCA): The PCA model to use for dimension reduction. It can be either a path to a saved PCA model or an instance of the PCA class.
-        scaler_model (str or Scaler): The scaler model to use for scaling the data. It can be either a path to a saved scaler model or an instance of the scaler class.
-        scaler_method (str): The method to use for scaling. Must be one of 'standard', 'robust', or 'log'.
+        pca_model (str or PCA): A pre-trained PCA model or a file path to a saved PCA model.
+        scaler_model (str or StandardScaler, RobustScaler, LogScaler): 
+            A scaler model instance or a file path to a saved scaler model.
+        scaler_method (str, optional): Scaling method to use. 
+            Must be one of 'standard', 'robust', or 'log'. Defaults to 'standard'.
 
     Attributes:
-        device (str): The device to use for computation. It is set to 'cuda' if a CUDA-enabled GPU is available, otherwise it is set to 'cpu'.
-        pca (PCA): The PCA model used for dimension reduction.
-        scaler (Scaler): The scaler model used for scaling the data.
+        device (str): Computation device ('cuda' if available, otherwise 'cpu').
+        pca (PCA): PCA model used for dimensionality reduction.
+        scaler (StandardScaler, RobustScaler, or LogScaler): Scaling model for data normalization.
 
     Raises:
-        ValueError: If the `pca_model` is not a valid path or instance of PCA, or if the `scaler_model` is not a valid path or instance of the scaler class.
-        RuntimeError: If the PCA model has not been fitted yet.
-
+        ValueError: If the `pca_model` or `scaler_model` are invalid.
+        RuntimeError: If the PCA model has not been fitted.
     """
+
 
     def __init__(
         self,
@@ -254,31 +278,31 @@ class DimensionProcessor(nn.Module):
 
     def to_pca(self, data):
         """
-        Transforms the input data to the PCA space.
+        Applies PCA transformation to the input data.
 
         Args:
-            data (torch.Tensor or pd.DataFrame): The input data to transform.
+            data (torch.Tensor or pd.DataFrame): Input data for transformation.
 
         Returns:
-            torch.Tensor: The transformed data in the PCA space.
-
+            torch.Tensor: Data transformed into the PCA space.
         """
+
         data = data.to(self.device)
         scaled = self.scaler.transform(data)  # scale
         return self.pca.transform(scaled)  # convert to pca
 
     def to_grid(self, pcs, unscale=True):
         """
-        Transforms the input principal components (pcs) to the original data space.
+        Converts PCA-transformed data back to the original feature space.
 
         Args:
-            pcs (torch.Tensor or pd.DataFrame): The principal components to transform.
-            unscale (bool): Whether to unscale the transformed data. If True, the data will be unscaled using the scaler model.
+            pcs (torch.Tensor or pd.DataFrame): Principal components to transform.
+            unscale (bool, optional): Whether to apply inverse scaling. Defaults to True.
 
         Returns:
-            torch.Tensor or pd.DataFrame: The transformed data in the original data space.
-
+            torch.Tensor or pd.DataFrame: Reconstructed data in the original feature space.
         """
+
         if not isinstance(pcs, torch.Tensor):
             if isinstance(pcs, pd.DataFrame):
                 pcs = pcs.values
