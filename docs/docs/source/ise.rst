@@ -1,21 +1,21 @@
-ise package
+ise documentation
 ===========
 
 Subpackages
 -----------
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 3
 
    ise.data
    ise.evaluation
    ise.models
    ise.utils
 
-Module contents
----------------
+.. Module contents
+.. ---------------
 
-.. automodule:: ise
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. .. automodule:: ise
+..    :members:
+..    :undoc-members:
+..    :show-inheritance:

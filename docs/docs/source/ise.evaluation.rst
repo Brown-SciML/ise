@@ -1,10 +1,10 @@
-ise.evaluation package
+ise.evaluation
 ======================
 
-Submodules
-----------
+.. Submodules
+.. ----------
 
-ise.evaluation.metrics module
+ise.evaluation.metrics
 -----------------------------
 
 .. automodule:: ise.evaluation.metrics
@@ -12,18 +12,11 @@ ise.evaluation.metrics module
    :undoc-members:
    :show-inheritance:
 
-ise.evaluation.plots module
----------------------------
 
-.. automodule:: ise.evaluation.plots
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. Module contents
+.. ---------------
 
-Module contents
----------------
-
-.. automodule:: ise.evaluation
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. .. automodule:: ise.evaluation
+..    :members:
+..    :undoc-members:
+..    :show-inheritance:

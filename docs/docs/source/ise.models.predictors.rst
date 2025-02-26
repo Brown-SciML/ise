@@ -1,10 +1,10 @@
-ise.models.predictors package
+ise.models.predictors
 =============================
 
-Submodules
-----------
+.. Submodules
+.. ----------
 
-ise.models.predictors.deep\_ensemble module
+ise.models.predictors.deep\_ensemble
 -------------------------------------------
 
 .. automodule:: ise.models.predictors.deep_ensemble
@@ -12,7 +12,7 @@ ise.models.predictors.deep\_ensemble module
    :undoc-members:
    :show-inheritance:
 
-ise.models.predictors.lstm module
+ise.models.predictors.lstm
 ---------------------------------
 
 .. automodule:: ise.models.predictors.lstm
@@ -20,10 +20,10 @@ ise.models.predictors.lstm module
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
+.. Module contents
+.. ---------------
 
-.. automodule:: ise.models.predictors
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. .. automodule:: ise.models.predictors
+..    :members:
+..    :undoc-members:
+..    :show-inheritance:

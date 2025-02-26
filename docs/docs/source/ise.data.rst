@@ -1,10 +1,10 @@
-ise.data package
+ise.data
 ================
 
-Submodules
-----------
+.. Submodules
+.. ----------
 
-ise.data.dataclasses module
+ise.data.dataclasses
 ---------------------------
 
 .. automodule:: ise.data.dataclasses
@@ -12,7 +12,7 @@ ise.data.dataclasses module
    :undoc-members:
    :show-inheritance:
 
-ise.data.feature\_engineer module
+ise.data.feature\_engineer
 ---------------------------------
 
 .. automodule:: ise.data.feature_engineer
@@ -20,7 +20,7 @@ ise.data.feature\_engineer module
    :undoc-members:
    :show-inheritance:
 
-ise.data.process module
+ise.data.process
 -----------------------
 
 .. automodule:: ise.data.process
@@ -28,7 +28,7 @@ ise.data.process module
    :undoc-members:
    :show-inheritance:
 
-ise.data.scaler module
+ise.data.scaler
 ----------------------
 
 .. automodule:: ise.data.scaler
@@ -36,10 +36,10 @@ ise.data.scaler module
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
+.. Module contents
+.. ---------------
 
-.. automodule:: ise.data
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. .. automodule:: ise.data
+..    :members:
+..    :undoc-members:
+..    :show-inheritance:

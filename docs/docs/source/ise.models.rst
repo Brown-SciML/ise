@@ -1,4 +1,4 @@
-ise.models package
+ise.models
 ==================
 
 Subpackages
@@ -15,7 +15,7 @@ Subpackages
 Submodules
 ----------
 
-ise.models.loss module
+ise.models.loss
 ----------------------
 
 .. automodule:: ise.models.loss
@@ -23,7 +23,7 @@ ise.models.loss module
    :undoc-members:
    :show-inheritance:
 
-ise.models.scenario module
+ise.models.scenario
 --------------------------
 
 .. automodule:: ise.models.scenario
@@ -31,7 +31,7 @@ ise.models.scenario module
    :undoc-members:
    :show-inheritance:
 
-ise.models.variational\_lstm\_emulator module
+ise.models.variational\_lstm\_emulator
 ---------------------------------------------
 
 .. automodule:: ise.models.variational_lstm_emulator
@@ -39,10 +39,10 @@ ise.models.variational\_lstm\_emulator module
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
+.. Module contents
+.. ---------------
 
-.. automodule:: ise.models
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. .. automodule:: ise.models
+..    :members:
+..    :undoc-members:
+..    :show-inheritance:

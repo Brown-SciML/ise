@@ -8,6 +8,20 @@ import properscoring as ps
 
 
 def sum_by_sector(array, grid_file):
+    """
+    Computes the sum of values in a given array by predefined sectors using a grid file.
+
+    Args:
+        array (numpy.ndarray or torch.Tensor): A 2D or 3D array containing values to be summed by sector.
+        grid_file (str or xarray.Dataset): Path to the grid file defining sector boundaries or an xarray dataset.
+
+    Returns:
+        numpy.ndarray: A 2D array where each row represents a timestep and each column represents a sector.
+
+    Raises:
+        ValueError: If grid_file is not a valid string or xarray dataset.
+    """
+
     if isinstance(array, torch.Tensor):
         array = array.cpu().detach().numpy()
     if isinstance(grid_file, str):
@@ -38,15 +52,51 @@ def sum_by_sector(array, grid_file):
     return sums_by_sector
 
 def r2_score(y_true, y_pred):
+    """
+    Computes the coefficient of determination (R² score).
+
+    Args:
+        y_true (numpy.ndarray or list): The true values.
+        y_pred (numpy.ndarray or list): The predicted values.
+
+    Returns:
+        float: The R² score, where 1 indicates perfect predictions.
+    """
+
     return r2(y_true, y_pred)
     
 
 def mean_squared_error_sector(sum_sectors_true, sum_sectors_pred):
+    """
+    Computes the mean squared error (MSE) between true and predicted sector-wise sums.
+
+    Args:
+        sum_sectors_true (numpy.ndarray): The true summed sector values.
+        sum_sectors_pred (numpy.ndarray): The predicted summed sector values.
+
+    Returns:
+        float: The mean squared error (MSE).
+    """
+
     return np.mean((sum_sectors_true - sum_sectors_pred) ** 2)
 
 
 def kl_divergence(p: np.ndarray, q: np.ndarray):
-    """Calculates the Kullback-Leibler Divergence between two distributions."""
+    """
+    Computes the Kullback-Leibler (KL) Divergence between two probability distributions.
+
+    Args:
+        p (numpy.ndarray): The first probability distribution.
+        q (numpy.ndarray): The second probability distribution.
+
+    Returns:
+        float: The KL divergence value.
+
+    Notes:
+        - The distributions p and q must be normalized (i.e., sum to 1).
+        - Small epsilon values are used to avoid numerical instability.
+    """
+
     p = np.asarray(p, dtype=np.float64)
     q = np.asarray(q, dtype=np.float64)
     
@@ -65,7 +115,21 @@ def kl_divergence(p: np.ndarray, q: np.ndarray):
 
 
 def js_divergence(p: np.ndarray, q: np.ndarray):
-    """Calculates the Jensen-Shannon Divergence between two distributions."""
+    """
+    Computes the Jensen-Shannon Divergence (JSD) between two probability distributions.
+
+    Args:
+        p (numpy.ndarray): The first probability distribution.
+        q (numpy.ndarray): The second probability distribution.
+
+    Returns:
+        float: The Jensen-Shannon divergence value.
+
+    Notes:
+        - JSD is a smoothed and symmetric version of KL divergence.
+        - The function normalizes the distributions before computation.
+    """
+
     p = np.asarray(p, dtype=np.float64)
     q = np.asarray(q, dtype=np.float64)
     
@@ -84,19 +148,36 @@ def js_divergence(p: np.ndarray, q: np.ndarray):
     return jsd
 
 def crps(y_true, y_pred, y_std):
+    """
+    Computes the Continuous Ranked Probability Score (CRPS) for a Gaussian distribution.
+
+    Args:
+        y_true (numpy.ndarray): The true values.
+        y_pred (numpy.ndarray): The predicted mean values.
+        y_std (numpy.ndarray): The predicted standard deviations.
+
+    Returns:
+        numpy.ndarray: The computed CRPS values for each prediction.
+    """
+
     return ps.crps_gaussian(y_true, mu=y_pred, sig=y_std)
 
 def mape(y_true, y_pred):
     """
-    Calculate Mean Absolute Percentage Error (MAPE).
+    Computes the Mean Absolute Percentage Error (MAPE).
 
     Args:
-    - y_true: numpy array or a list of actual numbers
-    - y_pred: numpy array or a list of predicted numbers
+        y_true (numpy.ndarray or list): The true values.
+        y_pred (numpy.ndarray or list): The predicted values.
 
     Returns:
-    - mape: Mean Absolute Percentage Error
+        float: The MAPE value, expressed as a percentage.
+
+    Notes:
+        - MAPE ignores zero values in y_true to prevent division by zero.
+        - If all true values are zero, returns infinity.
     """
+
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     # Avoid division by zero
     non_zero_mask = y_true != 0
@@ -111,15 +192,19 @@ def mape(y_true, y_pred):
 
 def relative_squared_error(y_true, y_pred):
     """
-    Calculate Relative Squared Error (RSE).
+    Computes the Relative Squared Error (RSE), measuring the error relative to the variance in y_true.
 
     Args:
-    - y_true: numpy array or a list of actual numbers
-    - y_pred: numpy array or a list of predicted numbers
+        y_true (numpy.ndarray or list): The true values.
+        y_pred (numpy.ndarray or list): The predicted values.
 
     Returns:
-    - rse: Relative Squared Error
+        float: The computed RSE value.
+
+    Notes:
+        - A lower RSE indicates better performance, with RSE=0 indicating perfect predictions.
     """
+
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     ss_res = np.sum((y_true - y_pred) ** 2)
     ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
@@ -128,28 +213,55 @@ def relative_squared_error(y_true, y_pred):
 
 
 def kolmogorov_smirnov(x1, x2):
+    """
+    Computes the Kolmogorov-Smirnov (KS) statistic to compare two distributions.
+
+    Args:
+        x1 (numpy.ndarray or list): The first dataset.
+        x2 (numpy.ndarray or list): The second dataset.
+
+    Returns:
+        tuple: (KS statistic, p-value).
+    """
+
     res = kstest(x1, x2)
     return res.statistic, res.pvalue
 
 
 def t_test(x1, x2):
+    """
+    Performs an independent two-sample t-test to compare the means of two distributions.
+
+    Args:
+        x1 (numpy.ndarray or list): The first dataset.
+        x2 (numpy.ndarray or list): The second dataset.
+
+    Returns:
+        tuple: (t-statistic, p-value).
+    """
+
     res = ttest_ind(x1, x2)
     return res.statistic, res.pvalue
 
 
 def calculate_ece(predictions, uncertainties, true_values, bins=10):
     """
-    Calculate the Expected Calibration Error (ECE) for regression model predictions.
-    
+    Computes the Expected Calibration Error (ECE) for a regression model.
+
     Args:
-    predictions (numpy.ndarray): Array of predicted means by the model.
-    uncertainties (numpy.ndarray): Array of predicted standard deviations (uncertainty estimates).
-    true_values (numpy.ndarray): Array of actual values.
-    bins (int): Number of bins to use for grouping predictions by their uncertainty.
+        predictions (numpy.ndarray): The predicted mean values.
+        uncertainties (numpy.ndarray): The predicted standard deviations.
+        true_values (numpy.ndarray): The true values.
+        bins (int, optional): The number of bins for uncertainty grouping. Defaults to 10.
 
     Returns:
-    float: The Expected Calibration Error.
+        float: The Expected Calibration Error (ECE).
+
+    Notes:
+        - ECE measures how well predicted uncertainties align with actual errors.
+        - A lower ECE indicates better-calibrated uncertainty estimates.
     """
+
     bin_limits = np.linspace(np.min(uncertainties), np.max(uncertainties), bins+1)
     ece = 0.0
     total_count = len(predictions)
@@ -176,30 +288,32 @@ def calculate_ece(predictions, uncertainties, true_values, bins=10):
 
 def mean_squared_error(y_true, y_pred):
     """
-    Calculate Mean Squared Error (MSE).
+    Computes the Mean Squared Error (MSE).
 
     Args:
-    - y_true: numpy array or a list of actual numbers
-    - y_pred: numpy array or a list of predicted numbers
+        y_true (numpy.ndarray or list): The true values.
+        y_pred (numpy.ndarray or list): The predicted values.
 
     Returns:
-    - mse: Mean Squared Error
+        float: The Mean Squared Error (MSE).
     """
+
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     mse = np.mean((y_true - y_pred) ** 2)
     return mse
 
 def mean_absolute_error(y_true, y_pred):
     """
-    Calculate Mean Absolute Error (MAE).
+    Computes the Mean Absolute Error (MAE).
 
     Args:
-    - y_true: numpy array or a list of actual numbers
-    - y_pred: numpy array or a list of predicted numbers
+        y_true (numpy.ndarray or list): The true values.
+        y_pred (numpy.ndarray or list): The predicted values.
 
     Returns:
-    - mae: Mean Absolute Error
+        float: The Mean Absolute Error (MAE).
     """
+
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     mae = np.mean(np.abs(y_true - y_pred))
     return mae

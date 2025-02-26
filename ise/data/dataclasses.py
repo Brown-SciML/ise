@@ -1,5 +1,4 @@
 import warnings
-
 import numpy as np
 import pandas as pd
 import torch
@@ -8,22 +7,27 @@ from torch.utils.data import Dataset
 
 class EmulatorDataset(Dataset):
     """
-    A PyTorch dataset for loading emulator data.
+    A PyTorch dataset for loading emulator data, designed to handle sequence-based inputs and projections.
 
     Args:
         X (pandas.DataFrame, numpy.ndarray, or torch.Tensor): The input data.
         y (pandas.DataFrame, numpy.ndarray, or torch.Tensor): The target data.
-        sequence_length (int): The length of the input sequence.
+        sequence_length (int, optional): The length of the input sequence. Default is 5.
+        projection_length (int or tuple, optional): The length of the projection period. Default is 86.
 
     Attributes:
-        X (torch.Tensor): The input data as a PyTorch tensor.
-        y (torch.Tensor): The target data as a PyTorch tensor.
+        X (torch.Tensor): The input data converted to a PyTorch tensor.
+        y (torch.Tensor): The target data converted to a PyTorch tensor.
         sequence_length (int): The length of the input sequence.
+        xdim (int): The number of dimensions in X.
+        num_projections (int): The number of projections in the dataset.
+        num_timesteps (int): The number of timesteps per projection.
+        num_features (int): The number of features in the dataset.
 
     Methods:
-        __to_tensor(x): Converts input data to a PyTorch tensor.
-        __len__(): Returns the length of the dataset.
-        __getitem__(i): Returns the i-th item in the dataset.
+        _to_tensor(x): Converts input data to a PyTorch tensor.
+        __len__(): Returns the total number of samples.
+        __getitem__(i): Retrieves the i-th sample from the dataset, including proper padding.
     """
 
     def __init__(self, X, y, sequence_length=5, projection_length=86):
@@ -43,23 +47,22 @@ class EmulatorDataset(Dataset):
         self.sequence_length = sequence_length
         self.xdim = len(X.shape)
 
-        if self.xdim == 3:  # batched by projection
+        if self.xdim == 3:  # Batched by projection
             self.num_projections, self.num_timesteps, self.num_features = X.shape
-        elif self.xdim == 2:  # unbatched (rows of projections*timestamps)
+        elif self.xdim == 2:  # Unbatched (rows of projections*timestamps)
             self.projections_and_timesteps, self.features = X.shape
             self.num_timesteps = projection_length
             self.num_projections = self.projections_and_timesteps // self.num_timesteps
-        # self.num_sequences = self.timesteps - sequence_length + 1
 
     def _to_tensor(self, x):
         """
         Converts input data to a PyTorch tensor of type float.
 
         Args:
-            x: Input data to be converted. Must be a pandas dataframe, numpy array, or PyTorch tensor.
+            x (pandas.DataFrame, numpy.ndarray, or torch.Tensor): The input data.
 
         Returns:
-            A PyTorch tensor of type float.
+            torch.Tensor: A PyTorch tensor of type float.
         """
         if x is None:
             return None
@@ -74,6 +77,12 @@ class EmulatorDataset(Dataset):
         return x.float()
 
     def __len__(self):
+        """
+        Returns the total number of samples in the dataset.
+
+        Returns:
+            int: The dataset length.
+        """
         if self.xdim == 2:
             return self.X.shape[0]
         else:
@@ -81,14 +90,13 @@ class EmulatorDataset(Dataset):
 
     def __getitem__(self, i):
         """
-        Returns the i-th item in the dataset.
+        Retrieves the i-th sample from the dataset, applying padding if necessary.
 
         Args:
-            i (int): Index of the item to retrieve.
+            i (int): The index of the item to retrieve.
 
         Returns:
-            If `y` is None, returns the input sequence at index `i` as a PyTorch tensor.
-            Otherwise, returns a tuple containing the input sequence at index `i` and the corresponding target value.
+            tuple: A tuple containing the input sequence and corresponding target value (if available).
         """
         # Calculate projection index and timestep index
         projection_index = i // self.num_timesteps
@@ -97,7 +105,7 @@ class EmulatorDataset(Dataset):
         # Initialize a sequence with zeros for padding
         sequence = torch.zeros((self.sequence_length, self.features))
 
-        # Calculate start and end points for the data to copy from the original dataset
+        # Calculate start and end points for copying data
         start_point = max(0, time_step_index - self.sequence_length + 1)
         end_point = time_step_index + 1
         length_of_data = end_point - start_point
@@ -120,15 +128,15 @@ class EmulatorDataset(Dataset):
 
 class PyTorchDataset(Dataset):
     """
-    A PyTorch dataset for general data loading.
+    A PyTorch dataset for general-purpose data loading.
 
     Args:
-        X (pandas.DataFrame, numpy.ndarray, or torch.Tensor): The input data.
-        y (pandas.DataFrame, numpy.ndarray, or torch.Tensor): The target data.
+        X (torch.Tensor): The input data.
+        y (torch.Tensor): The target data.
 
     Methods:
-        __getitem__(index): Returns the item at the given index.
-        __len__(): Returns the length of the dataset.
+        __getitem__(index): Retrieves the sample at the specified index.
+        __len__(): Returns the total dataset length.
     """
 
     def __init__(self, X, y):
@@ -137,14 +145,13 @@ class PyTorchDataset(Dataset):
 
     def __getitem__(self, index):
         """
-        Returns the item at the given index.
+        Retrieves the sample at the specified index.
 
         Args:
-            index (int): Index of the item to retrieve.
+            index (int): The index of the sample.
 
         Returns:
-            If `y` is None, returns the input data at index `index`.
-            Otherwise, returns a tuple containing the input data at index `index` and the corresponding target value.
+            tuple: The input data and corresponding target (if available).
         """
         if self.y_data is None:
             return self.X_data[index]
@@ -152,31 +159,31 @@ class PyTorchDataset(Dataset):
 
     def __len__(self):
         """
-        Returns the length of the dataset.
+        Returns the total number of samples.
 
         Returns:
-            The length of the dataset.
+            int: The dataset length.
         """
         return len(self.X_data)
 
 
 class TSDataset(Dataset):
     """
-    A PyTorch dataset for time series data.
+    A PyTorch dataset for handling time series data with sequence-based input.
 
     Args:
-        X (pandas.DataFrame, numpy.ndarray, or torch.Tensor): The input data.
-        y (pandas.DataFrame, numpy.ndarray, or torch.Tensor): The target data.
-        sequence_length (int): The length of the input sequence.
+        X (torch.Tensor): The input data.
+        y (torch.Tensor): The target data.
+        sequence_length (int, optional): The length of the input sequence. Default is 5.
 
     Attributes:
-        X (torch.Tensor): The input data as a PyTorch tensor.
-        y (torch.Tensor): The target data as a PyTorch tensor.
-        sequence_length (int): The length of the input sequence.
+        X (torch.Tensor): The input data.
+        y (torch.Tensor): The target data.
+        sequence_length (int): The sequence length.
 
     Methods:
-        __len__(): Returns the length of the dataset.
-        __getitem__(i): Returns the i-th item in the dataset.
+        __len__(): Returns the dataset length.
+        __getitem__(i): Retrieves the i-th time series sample.
     """
 
     def __init__(self, X, y, sequence_length=5):
@@ -190,20 +197,19 @@ class TSDataset(Dataset):
         Returns the length of the dataset.
 
         Returns:
-            The length of the dataset.
+            int: The dataset length.
         """
         return len(self.X)
 
     def __getitem__(self, i):
         """
-        Returns the i-th item in the dataset.
+        Retrieves the i-th sample, applying padding if needed.
 
         Args:
-            i (int): Index of the item to retrieve.
+            i (int): The index of the sample.
 
         Returns:
-            If `y` is None, returns the input sequence at index `i` as a PyTorch tensor.
-            Otherwise, returns a tuple containing the input sequence at index `i` and the corresponding target value.
+            tuple: A tuple containing the input sequence and corresponding target value (if available).
         """
         if i >= self.sequence_length - 1:
             i_start = i - self.sequence_length + 1
@@ -217,15 +223,46 @@ class TSDataset(Dataset):
             return x
 
         return x, self.y[i]
-    
+
 
 class ScenarioDataset(Dataset):
-    def __init__(self, features, labels, ):
+    """
+    A PyTorch dataset designed for scenario-based data loading.
+
+    Args:
+        features (torch.Tensor): The input features.
+        labels (torch.Tensor): The target labels.
+
+    Attributes:
+        features (torch.Tensor): The input features.
+        labels (torch.Tensor): The target labels.
+
+    Methods:
+        __len__(): Returns the dataset length.
+        __getitem__(idx): Retrieves the sample at the given index.
+    """
+
+    def __init__(self, features, labels):
         self.features = features
         self.labels = labels
 
     def __len__(self):
+        """
+        Returns the total number of samples.
+
+        Returns:
+            int: The dataset length.
+        """
         return len(self.features)
 
     def __getitem__(self, idx):
+        """
+        Retrieves the sample at the given index.
+
+        Args:
+            idx (int): The index of the sample.
+
+        Returns:
+            tuple: A tuple containing the input features and corresponding labels.
+        """
         return self.features[idx], self.labels[idx]

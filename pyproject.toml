@@ -62,6 +62,7 @@ dependencies = [
     "slicer==0.0.8 ; python_full_version >= '3.9' and python_full_version < '4.0'",
     "sphinx>=8.2.1",
     "sphinx-autobuild>=2024.10.3",
+    "sphinx-rtd-theme>=3.0.2",
     "sympy==1.13.1 ; python_full_version >= '3.9' and python_full_version < '4.0'",
     "tensorboard==2.18.0 ; python_full_version >= '3.9' and python_full_version < '4.0'",
     "tensorboard-data-server==0.7.2 ; python_full_version >= '3.9' and python_full_version < '4.0'",

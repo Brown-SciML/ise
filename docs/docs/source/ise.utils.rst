@@ -1,10 +1,10 @@
 ise.utils package
 =================
 
-Submodules
-----------
+.. Submodules
+.. ----------
 
-ise.utils.functions module
+ise.utils.functions
 --------------------------
 
 .. automodule:: ise.utils.functions
@@ -12,7 +12,7 @@ ise.utils.functions module
    :undoc-members:
    :show-inheritance:
 
-ise.utils.training module
+ise.utils.training
 -------------------------
 
 .. automodule:: ise.utils.training
@@ -20,10 +20,10 @@ ise.utils.training module
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
+.. Module contents
+.. ---------------
 
-.. automodule:: ise.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. .. automodule:: ise.utils
+..    :members:
+..    :undoc-members:
+..    :show-inheritance:

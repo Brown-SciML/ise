@@ -134,6 +134,26 @@ class StandardScaler(nn.Module):
 
 
 class RobustScaler(nn.Module):
+    """
+    A class for scaling input data using the median and interquartile range (IQR),
+    making it robust to outliers.
+
+    Args:
+        nn.Module: The base class for all neural network modules in PyTorch.
+
+    Attributes:
+        median_ (torch.Tensor): The median values of the input data.
+        iqr_ (torch.Tensor): The interquartile range (IQR) values of the input data.
+        device (torch.device): The device (CPU or GPU) on which the calculations are performed.
+
+    Methods:
+        fit(X): Computes the median and IQR of the input data.
+        transform(X): Scales the input data using the computed median and IQR.
+        inverse_transform(X): Reverses the scaling operation on the input data.
+        save(path): Saves the median and IQR to a file.
+        load(path): Loads the median and IQR from a file.
+    """
+
     def __init__(self):
         super(RobustScaler, self).__init__()
         self.median_ = None
@@ -142,18 +162,51 @@ class RobustScaler(nn.Module):
         self.to(self.device)
 
     def fit(self, X):
+        """
+        Computes the median and interquartile range (IQR) of the input data.
+
+        Args:
+            X (torch.Tensor): The input data to be scaled.
+        """
+
         X = to_tensor(X).to(self.device)
         self.median_ = torch.median(X, dim=0).values
         q75, q25 = torch.quantile(X, 0.75, dim=0), torch.quantile(X, 0.25, dim=0)
         self.iqr_ = q75 - q25
 
     def transform(self, X):
+        """
+        Scales the input data using the computed median and IQR.
+
+        Args:
+            X (torch.Tensor): The input data to be scaled.
+
+        Returns:
+            torch.Tensor: The scaled input data.
+
+        Raises:
+            RuntimeError: If the RobustScaler instance is not fitted yet.
+        """
+
         X = to_tensor(X).to(self.device)
         if self.median_ is None or self.iqr_ is None:
             raise RuntimeError("This RobustScaler instance is not fitted yet.")
         return (X - self.median_) / (self.iqr_ + 1e-8)
 
     def inverse_transform(self, X):
+        """
+        Reverses the scaling operation on the input data.
+
+        Args:
+            X (torch.Tensor): The scaled input data to be transformed back.
+
+        Returns:
+            torch.Tensor: The transformed input data.
+
+        Raises:
+            RuntimeError: If the RobustScaler instance is not fitted yet.
+        """
+
         X = to_tensor(X).to(self.device)
         if self.median_ is None or self.iqr_ is None:
             raise RuntimeError("This RobustScaler instance is not fitted yet.")
@@ -178,6 +231,26 @@ class RobustScaler(nn.Module):
 
 
 class LogScaler(nn.Module):
+    """
+    A class for scaling input data using a logarithmic transformation,
+    ensuring all values are positive by applying a shift.
+
+    Args:
+        epsilon (float, optional): A small constant to avoid log(0) errors. Defaults to 1e-8.
+
+    Attributes:
+        epsilon (float): A small constant to avoid log(0) errors.
+        min_value (float): The minimum value in the dataset used for shifting.
+        device (torch.device): The device (CPU or GPU) on which calculations are performed.
+
+    Methods:
+        fit(X): Computes the minimum value of the input data for shifting.
+        transform(X): Applies the logarithmic transformation.
+        inverse_transform(X): Reverses the log transformation.
+        save(path): Saves the scaler parameters to a file.
+        load(path): Loads the scaler parameters from a file.
+    """
+
     def __init__(self, epsilon=1e-8):
         super(LogScaler, self).__init__()
         self.epsilon = epsilon
@@ -186,6 +259,13 @@ class LogScaler(nn.Module):
         self.min_value = None
 
     def fit(self, X):
+        """
+        Computes the minimum value in the dataset to ensure all values remain positive during transformation.
+
+        Args:
+            X (torch.Tensor): The input data to be scaled.
+        """
+
         X = to_tensor(X).to(self.device)
         dataset_min = torch.min(X) - self.epsilon
         if dataset_min >= 0:
@@ -194,11 +274,31 @@ class LogScaler(nn.Module):
             self.min_value = dataset_min
 
     def transform(self, X):
+        """
+        Applies the logarithmic transformation to the input data.
+
+        Args:
+            X (torch.Tensor): The input data to be transformed.
+
+        Returns:
+            torch.Tensor: The log-transformed input data.
+        """
+
         X = to_tensor(X).to(self.device)
         X_shifted = X - self.min_value  # adding shift (subtracting negative or zero)
         return torch.log(X_shifted + self.epsilon)
 
     def inverse_transform(self, X):
+        """
+        Reverses the log transformation to recover the original scale of the data.
+
+        Args:
+            X (torch.Tensor): The log-transformed input data.
+
+        Returns:
+            torch.Tensor: The transformed input data in its original scale.
+        """
+
         X = to_tensor(X).to(self.device)
         X_exp = torch.exp(X) - self.epsilon
         return X_exp + self.min_value
@@ -218,45 +318,4 @@ class LogScaler(nn.Module):
         scaler = LogScaler()
         scaler.epsilon = checkpoint["epsilon"]
         scaler.min_value = checkpoint["min_value"]
-        return scaler
-
-
-class YeoJohnsonScaler(nn.Module):
-    def __init__(self):
-        super(YeoJohnsonScaler, self).__init__()
-        self.lambdas_ = None
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.to(self.device)
-
-    def fit(self, X):
-        X_np = X.cpu().numpy() if isinstance(X, torch.Tensor) else np.array(X)
-        _, self.lambdas_ = yeojohnson(X_np)
-        self.lambdas_ = torch.tensor(self.lambdas_, dtype=torch.float32).to(self.device)
-
-    def transform(self, X):
-        X = to_tensor(X, self.device)
-        if self.lambdas_ is None:
-            raise RuntimeError("This YeoJohnsonScaler instance is not fitted yet.")
-        # Transformation logic here...
-
-    def inverse_transform(self, X):
-        raise NotImplementedError(
-            "Inverse transform is not implemented due to its complexity and dependency on the original data scale."
-        )
-
-    def save(self, path):
-        torch.save(
-            {
-                "lambdas_": self.lambdas_,
-            },
-            path,
-        )
-
-    @staticmethod
-    def load(path, device=None):
-        device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        checkpoint = torch.load(path, map_location=device)
-        scaler = YeoJohnsonScaler()
-        scaler.lambdas_ = checkpoint["lambdas_"]
-        scaler.to(device)
         return scaler

@@ -1,10 +1,10 @@
-ise.models.pretrained package
+ise.models.pretrained
 =============================
 
-Module contents
----------------
+.. Module contents
+.. ---------------
 
-.. automodule:: ise.models.pretrained
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. .. automodule:: ise.models.pretrained
+..    :members:
+..    :undoc-members:
+..    :show-inheritance:

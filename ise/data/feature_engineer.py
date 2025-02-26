@@ -12,16 +12,43 @@ from tqdm import tqdm
 
 class FeatureEngineer:
     """
-    A class for feature engineering operations on a given dataset.
+    A class for performing feature engineering on a given dataset, including preprocessing,
+    scaling, dataset splitting, and outlier handling.
 
     Args:
+        ice_sheet (str): The name of the ice sheet being analyzed.
         data (pd.DataFrame): The input dataset.
-        fill_mrro_nans (bool, optional): Flag indicating whether to fill missing values in the 'mrro' column. Defaults to False.
-        split_dataset (bool, optional): Flag indicating whether to split the dataset into training, validation, and test sets. Defaults to False.
-        train_size (float, optional): The proportion of the dataset to be used for training. Defaults to 0.7.
-        val_size (float, optional): The proportion of the dataset to be used for validation. Defaults to 0.15.
-        test_size (float, optional): The proportion of the dataset to be used for testing. Defaults to 0.15.
-        output_directory (str, optional): The directory to save the split datasets. Defaults to None.
+        fill_mrro_nans (bool, optional): Whether to fill missing values in the 'mrro' column. Defaults to False.
+        split_dataset (bool, optional): Whether to split the dataset into training, validation, and test sets. Defaults to False.
+        train_size (float, optional): Proportion of data to use for training. Defaults to 0.7.
+        val_size (float, optional): Proportion of data to use for validation. Defaults to 0.15.
+        test_size (float, optional): Proportion of data to use for testing. Defaults to 0.15.
+        output_directory (str, optional): Directory to save the split datasets. Defaults to None.
+
+    Attributes:
+        data (pd.DataFrame): The input dataset.
+        train_size (float): Proportion of training data.
+        val_size (float): Proportion of validation data.
+        test_size (float): Proportion of testing data.
+        output_directory (str): Directory to save datasets.
+        scaler_X_path (str): Path to the saved input feature scaler.
+        scaler_y_path (str): Path to the saved target variable scaler.
+        scaler_X (scaler object): Scaler for input features.
+        scaler_y (scaler object): Scaler for target variables.
+        train (pd.DataFrame): Training dataset.
+        val (pd.DataFrame): Validation dataset.
+        test (pd.DataFrame): Test dataset.
+        _including_model_characteristics (bool): Whether model characteristics have been included.
+
+    Methods:
+        split_data: Splits dataset into train, validation, and test sets.
+        fill_mrro_nans: Fills missing values in the 'mrro' column.
+        scale_data: Scales input and target variables using a specified method.
+        unscale_data: Reverses the scaling transformation.
+        add_lag_variables: Adds lag features to the dataset.
+        backfill_outliers: Replaces extreme values in target variables.
+        drop_outliers: Removes outliers based on specified criteria.
+        add_model_characteristics: Merges model characteristics into the dataset.
     """
 
     def __init__(
@@ -77,15 +104,15 @@ class FeatureEngineer:
         Splits the dataset into training, validation, and test sets.
 
         Args:
-            data (pd.DataFrame, optional): The input dataset. If not provided, the class attribute 'data' will be used. Defaults to None.
-            train_size (float, optional): The proportion of the dataset to be used for training. If not provided, the class attribute 'train_size' will be used. Defaults to None.
-            val_size (float, optional): The proportion of the dataset to be used for validation. If not provided, the class attribute 'val_size' will be used. Defaults to None.
-            test_size (float, optional): The proportion of the dataset to be used for testing. If not provided, the class attribute 'test_size' will be used. Defaults to None.
-            output_directory (str, optional): The directory to save the split datasets. If not provided, the class attribute 'output_directory' will be used. Defaults to None.
-            random_state (int, optional): The random seed for reproducibility. Defaults to 42.
+            data (pd.DataFrame, optional): The input dataset. Defaults to None.
+            train_size (float, optional): Proportion of training data. Defaults to None.
+            val_size (float, optional): Proportion of validation data. Defaults to None.
+            test_size (float, optional): Proportion of testing data. Defaults to None.
+            output_directory (str, optional): Directory to save split datasets. Defaults to None.
+            random_state (int, optional): Random seed for reproducibility. Defaults to 42.
 
         Returns:
-            tuple: A tuple containing the training, validation, and test sets.
+            tuple: Training, validation, and test datasets as pandas DataFrames.
         """
         if data is not None:
             self.data = data
@@ -108,14 +135,14 @@ class FeatureEngineer:
 
     def fill_mrro_nans(self, method, data=None):
         """
-        Fills missing values in the 'mrro' column of the dataset.
+        Fills missing values in the 'mrro' column.
 
         Args:
-            method (str): The method to use for filling missing values.
-            data (pd.DataFrame, optional): The input dataset. If not provided, the class attribute 'data' will be used. Defaults to None.
+            method (str): The method used to fill missing values.
+            data (pd.DataFrame, optional): The dataset. Defaults to None.
 
         Returns:
-            pd.DataFrame: The dataset with missing values in the 'mrro' column filled.
+            pd.DataFrame: The dataset with missing values filled.
         """
         if data is not None:
             self.data = data
@@ -128,6 +155,19 @@ class FeatureEngineer:
         return self.data
 
     def scale_data(self, X=None, y=None, method="standard", save_dir=None):
+        """
+        Scales input (X) and target (y) variables using a specified scaling method.
+
+        Args:
+            X (pd.DataFrame or np.ndarray, optional): Input data. Defaults to None.
+            y (pd.DataFrame or np.ndarray, optional): Target data. Defaults to None.
+            method (str, optional): Scaling method ('standard', 'minmax', 'robust'). Defaults to 'standard'.
+            save_dir (str, optional): Directory to save scalers. Defaults to None.
+
+        Returns:
+            tuple: Scaled X and y values.
+        """
+        
         if X is not None:
             self.X = X
         else:
@@ -255,7 +295,18 @@ class FeatureEngineer:
         return X_scaled, y_scaled
 
     def unscale_data(self, X=None, y=None, scaler_X_path=None, scaler_y_path=None):
+        """
+        Reverses the scaling transformation for input (X) and target (y) variables.
 
+        Args:
+            X (pd.DataFrame or np.ndarray, optional): The input data to be unscaled. Defaults to None.
+            y (pd.DataFrame, np.ndarray, or torch.Tensor, optional): The target data to be unscaled. Defaults to None.
+            scaler_X_path (str, optional): Path to the stored input scaler. Defaults to None.
+            scaler_y_path (str, optional): Path to the stored target scaler. Defaults to None.
+
+        Returns:
+            tuple: Unscaled X and y data.
+        """
         if scaler_X_path is not None:
             self.scaler_X_path = scaler_X_path
         if scaler_y_path is not None:
@@ -291,18 +342,51 @@ class FeatureEngineer:
         return X_unscaled, y_unscaled
 
     def add_lag_variables(self, lag, data=None):
+        """
+        Adds lagged versions of predictor variables to the dataset.
+
+        Args:
+            lag (int): Number of time steps to lag the variables.
+            data (pd.DataFrame, optional): The dataset. If not provided, the class attribute 'data' is used.
+
+        Returns:
+            FeatureEngineer: The modified instance with lag variables added.
+        """
         if data is not None:
             self.data = data
         self.data = add_lag_variables(self.data, lag)
         return self
 
     def backfill_outliers(self, percentile=99.999, data=None):
+        """
+        Replaces extreme values in target variables with the previous row's value.
+
+        Args:
+            percentile (float, optional): Percentile threshold for identifying outliers. Defaults to 99.999.
+            data (pd.DataFrame, optional): The dataset. If not provided, the class attribute 'data' is used.
+
+        Returns:
+            FeatureEngineer: The modified instance with outliers handled.
+        """
         if data is not None:
             self.data = data
         self.data = backfill_outliers(self.data, percentile=percentile)
         return self
 
     def drop_outliers(self, method, column, expression=None, quantiles=[0.01, 0.99], data=None):
+        """
+        Drops simulations that are outliers based on the provided method.
+
+        Args:
+            method (str): Method of outlier deletion ('quantile' or 'explicit').
+            column (str): Column used for detecting outliers.
+            expression (list[tuple], optional): List of filtering expressions in the form [(column, operator, value)]. Defaults to None.
+            quantiles (list[float], optional): Quantiles for 'quantile' method. Defaults to [0.01, 0.99].
+            data (pd.DataFrame, optional): The dataset. If not provided, the class attribute 'data' is used.
+
+        Returns:
+            FeatureEngineer: The modified instance with outliers removed.
+        """
         if data is not None:
             self.data = data
         self.data = drop_outliers(self.data, column, method, expression, quantiles)
@@ -315,6 +399,18 @@ class FeatureEngineer:
         encode=True,
         ids_path=None,
     ):
+        """
+        Merges model characteristic data with the dataset.
+
+        Args:
+            data (pd.DataFrame, optional): The dataset. If not provided, the class attribute 'data' is used.
+            model_char_path (str, optional): Path to the model characteristics file. Defaults to the internal path.
+            encode (bool, optional): Whether to one-hot encode categorical characteristics. Defaults to True.
+            ids_path (str, optional): Path to an additional ID mapping file. Defaults to None.
+
+        Returns:
+            FeatureEngineer: The modified instance with model characteristics added.
+        """
         
         if data is not None:
             self.data = data
@@ -327,7 +423,16 @@ class FeatureEngineer:
     
     
 def scale_data(data, scaler_path, ):
+    """
+    Scales the provided dataset using a pre-trained scaler.
 
+    Args:
+        data (pd.DataFrame): The dataset to be scaled.
+        scaler_path (str): Path to the saved scaler.
+
+    Returns:
+        pd.DataFrame: The scaled dataset.
+    """
     dropped_columns = [
         "id",
         "cmip_model",
@@ -360,6 +465,18 @@ def scale_data(data, scaler_path, ):
 def add_model_characteristics(
     data, model_char_path=r"./ise/utils/model_characteristics.csv", encode=True, ids_path=None
 ) -> pd.DataFrame:
+    """
+    Adds model characteristics to the dataset.
+
+    Args:
+        data (pd.DataFrame): The input dataset.
+        model_char_path (str, optional): Path to the model characteristics file. Defaults to internal path.
+        encode (bool, optional): Whether to one-hot encode categorical characteristics. Defaults to True.
+        ids_path (str, optional): Path to an additional ID mapping file. Defaults to None.
+
+    Returns:
+        pd.DataFrame: The dataset with model characteristics added.
+    """
     model_chars = pd.read_csv(model_char_path)
     all_data = pd.merge(data, model_chars, on="model", how="left")
     existing_char_columns = [
@@ -399,8 +516,13 @@ def backfill_outliers(data, percentile=99.999):
     with the value from the previous row.
 
     Args:
-        percentile (float): The percentile to use for defining upper extreme values across all y-values. Defaults to 99.999.
+        data (pd.DataFrame): The dataset containing y-values.
+        percentile (float, optional): The percentile threshold to define upper extreme values. Defaults to 99.999.
+
+    Returns:
+        pd.DataFrame: The dataset with extreme values replaced using backfill.
     """
+
     # Assuming y-values are in columns named with 'sle' as mentioned in other methods
     y_columns = [col for col in data.columns if "sle" in col]
 
@@ -426,15 +548,17 @@ def backfill_outliers(data, percentile=99.999):
 
 def add_lag_variables(data: pd.DataFrame, lag: int, verbose=True) -> pd.DataFrame:
     """
-    Adds lag variables to the input DataFrame.
+    Adds lagged variables to the input dataset, creating time-shifted versions of the predictor variables.
 
     Args:
-        data (pd.DataFrame): The input DataFrame.
+        data (pd.DataFrame): The dataset containing time series data.
         lag (int): The number of time steps to lag the variables.
+        verbose (bool, optional): Whether to display a progress bar. Defaults to True.
 
     Returns:
-        pd.DataFrame: The DataFrame with lag variables added.
+        pd.DataFrame: The dataset with lagged variables added.
     """
+
 
     # Separate columns that won't be lagged and shouldn't be dropped
     # cols_to_exclude = [
@@ -540,24 +664,24 @@ def split_training_data(
     data, train_size, val_size, test_size=None, output_directory=None, random_state=42
 ):
     """
-    Splits the input data into training, validation, and test sets based on the specified sizes.
+    Splits the dataset into training, validation, and test sets.
 
     Args:
-        data (str or pandas.DataFrame): The input data to be split. It can be either a file path (str) or a pandas DataFrame.
-        train_size (float): The proportion of data to be used for training.
-        val_size (float): The proportion of data to be used for validation.
-        test_size (float, optional): The proportion of data to be used for testing. If not provided, the remaining data after training and validation will be used for testing. Defaults to None.
-        output_directory (str, optional): The directory where the split data will be saved as CSV files. Defaults to None.
-        random_state (int, optional): The random seed for shuffling the data. Defaults to 42.
+        data (str or pd.DataFrame): The dataset or path to the dataset to be split.
+        train_size (float): Proportion of data to use for training.
+        val_size (float): Proportion of data to use for validation.
+        test_size (float, optional): Proportion of data to use for testing. Defaults to the remainder.
+        output_directory (str, optional): Directory to save the split datasets as CSV files. Defaults to None.
+        random_state (int, optional): Seed for reproducibility. Defaults to 42.
 
     Returns:
-        tuple: A tuple containing the training, validation, and test sets as pandas DataFrames.
+        tuple: Training, validation, and test datasets as pandas DataFrames.
 
     Raises:
-        ValueError: If the length of data is not divisible by 86, indicating incomplete projections.
-        ValueError: If the data does not have a column named 'id'.
-
+        ValueError: If the dataset length is not divisible by 86, indicating incomplete projections.
+        ValueError: If the dataset does not contain an 'id' column.
     """
+
 
     if isinstance(data, str):
         data = pd.read_csv(data)
@@ -613,24 +737,24 @@ def drop_outliers(
     quantiles: List[float] = [0.01, 0.99],
 ):
     """
-    Drops simulations that are outliers based on the provided method and expression.
-    Extra complexity is handled due to the necessity of removing the entire 86 row series from
-    the dataset rather than simply removing the rows with given conditions. Note that the
-    condition indicates rows to be DROPPED, not kept (e.g. 'sle', '>', '20' would drop all
-    simulations containing sle values over 20). If quantile method is used, outliers are dropped
-    from the SLE column based on the provided quantile in the quantiles argument. If explicit is
-    chosen, expression must contain a list of tuples such that the tuple contains
-    [(column, operator, expression)] of the subset, e.g. [("sle", ">", 20), ("sle", "<", -20)].
+    Removes outliers from the dataset based on a specified method.
 
     Args:
-        data (pd.DataFrame): The input DataFrame.
-        method (str): Method of outlier deletion, must be in [quantile, explicit]
-        expression (list[tuple]): List of subset expressions in the form [column, operator, value], defaults to None.
-        quantiles (list[float]): List of quantiles for quantile method, defaults to [0.01, 0.99].
+        data (pd.DataFrame): The dataset containing the column with potential outliers.
+        column (str): The column to assess for outliers.
+        method (str): The method of outlier detection ('quantile' or 'explicit').
+        expression (list of tuples, optional): A list of conditions in the format [(column, operator, value)] for explicit filtering. Defaults to None.
+        quantiles (list of float, optional): Quantiles for filtering when using the 'quantile' method. Defaults to [0.01, 0.99].
 
     Returns:
-        data (pd.DataFrame): having outliers dropped.
+        pd.DataFrame: The dataset with outliers removed.
+
+    Raises:
+        AttributeError: If the method is 'quantile' but no quantiles are provided.
+        AttributeError: If the method is 'explicit' but no expression is provided.
+        ValueError: If the operator in the expression is not recognized.
     """
+
 
     # Check if method is quantile
     if method.lower() == "quantile":

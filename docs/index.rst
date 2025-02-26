@@ -5,12 +5,9 @@ ISE, or ice-sheet emulators, is a package for end-to-end creation and analysis o
 
 The main features of ISE include loading and processing of ISMIP6 sea level contribution simulations,
 data preparation and feature engineering for machine learning, and training and testing of trained neural network emulators.
-The package is divided into two sections: `sectors` and `grids`. The sectors module provides all necessary functions for
-creating and training emulators based on the 18 ISMIP6 sectors, while the grids module provides the same functionality
-for smaller kilometer-scale grids.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
    docs/source/ise.rst

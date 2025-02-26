@@ -1,10 +1,10 @@
-ise.models.ISEFlow package
+ise.models.ISEFlow
 ==========================
 
-Submodules
-----------
+.. Submodules
+.. ----------
 
-ise.models.ISEFlow.ISEFlow module
+ise.models.ISEFlow.ISEFlow
 ---------------------------------
 
 .. automodule:: ise.models.ISEFlow.ISEFlow
@@ -12,7 +12,7 @@ ise.models.ISEFlow.ISEFlow module
    :undoc-members:
    :show-inheritance:
 
-ise.models.ISEFlow.de module
+ise.models.ISEFlow.de
 ----------------------------
 
 .. automodule:: ise.models.ISEFlow.de
@@ -20,7 +20,7 @@ ise.models.ISEFlow.de module
    :undoc-members:
    :show-inheritance:
 
-ise.models.ISEFlow.nf module
+ise.models.ISEFlow.nf
 ----------------------------
 
 .. automodule:: ise.models.ISEFlow.nf
@@ -28,10 +28,10 @@ ise.models.ISEFlow.nf module
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
+.. Module contents
+.. ---------------
 
-.. automodule:: ise.models.ISEFlow
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. .. automodule:: ise.models.ISEFlow
+..    :members:
+..    :undoc-members:
+..    :show-inheritance:

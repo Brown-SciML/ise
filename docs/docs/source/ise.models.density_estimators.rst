@@ -1,10 +1,10 @@
-ise.models.density\_estimators package
+ise.models.density\_estimators
 ======================================
 
-Submodules
-----------
+.. Submodules
+.. ----------
 
-ise.models.density\_estimators.normalizing\_flow module
+ise.models.density\_estimators.normalizing\_flow
 -------------------------------------------------------
 
 .. automodule:: ise.models.density_estimators.normalizing_flow
@@ -12,10 +12,10 @@ ise.models.density\_estimators.normalizing\_flow module
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
+.. Module contents
+.. ---------------
 
-.. automodule:: ise.models.density_estimators
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. .. automodule:: ise.models.density_estimators
+..    :members:
+..    :undoc-members:
+..    :show-inheritance:
