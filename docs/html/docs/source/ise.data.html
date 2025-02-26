@@ -1,0 +1,1167 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ise.data package &mdash; ise 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="/docs/source/ise.data.html" />
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            ise
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">ise.data package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-ise.data.dataclasses">ise.data.dataclasses module</a><ul>
+<li><a class="reference internal" href="#ise.data.dataclasses.EmulatorDataset"><code class="docutils literal notranslate"><span class="pre">EmulatorDataset</span></code></a><ul>
+<li><a class="reference internal" href="#ise.data.dataclasses.EmulatorDataset.X"><code class="docutils literal notranslate"><span class="pre">EmulatorDataset.X</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.dataclasses.EmulatorDataset.y"><code class="docutils literal notranslate"><span class="pre">EmulatorDataset.y</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.dataclasses.EmulatorDataset.sequence_length"><code class="docutils literal notranslate"><span class="pre">EmulatorDataset.sequence_length</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.dataclasses.EmulatorDataset.__to_tensor"><code class="docutils literal notranslate"><span class="pre">EmulatorDataset.__to_tensor()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.dataclasses.EmulatorDataset.__len__"><code class="docutils literal notranslate"><span class="pre">EmulatorDataset.__len__()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.dataclasses.EmulatorDataset.__getitem__"><code class="docutils literal notranslate"><span class="pre">EmulatorDataset.__getitem__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ise.data.dataclasses.PyTorchDataset"><code class="docutils literal notranslate"><span class="pre">PyTorchDataset</span></code></a><ul>
+<li><a class="reference internal" href="#ise.data.dataclasses.PyTorchDataset.__getitem__"><code class="docutils literal notranslate"><span class="pre">PyTorchDataset.__getitem__()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.dataclasses.PyTorchDataset.__len__"><code class="docutils literal notranslate"><span class="pre">PyTorchDataset.__len__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ise.data.dataclasses.ScenarioDataset"><code class="docutils literal notranslate"><span class="pre">ScenarioDataset</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.dataclasses.TSDataset"><code class="docutils literal notranslate"><span class="pre">TSDataset</span></code></a><ul>
+<li><a class="reference internal" href="#ise.data.dataclasses.TSDataset.X"><code class="docutils literal notranslate"><span class="pre">TSDataset.X</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.dataclasses.TSDataset.y"><code class="docutils literal notranslate"><span class="pre">TSDataset.y</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.dataclasses.TSDataset.sequence_length"><code class="docutils literal notranslate"><span class="pre">TSDataset.sequence_length</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.dataclasses.TSDataset.__len__"><code class="docutils literal notranslate"><span class="pre">TSDataset.__len__()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.dataclasses.TSDataset.__getitem__"><code class="docutils literal notranslate"><span class="pre">TSDataset.__getitem__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ise.data.feature_engineer">ise.data.feature_engineer module</a><ul>
+<li><a class="reference internal" href="#ise.data.feature_engineer.FeatureEngineer"><code class="docutils literal notranslate"><span class="pre">FeatureEngineer</span></code></a><ul>
+<li><a class="reference internal" href="#ise.data.feature_engineer.FeatureEngineer.add_lag_variables"><code class="docutils literal notranslate"><span class="pre">FeatureEngineer.add_lag_variables()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.feature_engineer.FeatureEngineer.add_model_characteristics"><code class="docutils literal notranslate"><span class="pre">FeatureEngineer.add_model_characteristics()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.feature_engineer.FeatureEngineer.backfill_outliers"><code class="docutils literal notranslate"><span class="pre">FeatureEngineer.backfill_outliers()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.feature_engineer.FeatureEngineer.drop_outliers"><code class="docutils literal notranslate"><span class="pre">FeatureEngineer.drop_outliers()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.feature_engineer.FeatureEngineer.fill_mrro_nans"><code class="docutils literal notranslate"><span class="pre">FeatureEngineer.fill_mrro_nans()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.feature_engineer.FeatureEngineer.scale_data"><code class="docutils literal notranslate"><span class="pre">FeatureEngineer.scale_data()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.feature_engineer.FeatureEngineer.split_data"><code class="docutils literal notranslate"><span class="pre">FeatureEngineer.split_data()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.feature_engineer.FeatureEngineer.unscale_data"><code class="docutils literal notranslate"><span class="pre">FeatureEngineer.unscale_data()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ise.data.feature_engineer.add_lag_variables"><code class="docutils literal notranslate"><span class="pre">add_lag_variables()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.feature_engineer.add_model_characteristics"><code class="docutils literal notranslate"><span class="pre">add_model_characteristics()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.feature_engineer.backfill_outliers"><code class="docutils literal notranslate"><span class="pre">backfill_outliers()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.feature_engineer.drop_outliers"><code class="docutils literal notranslate"><span class="pre">drop_outliers()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.feature_engineer.fill_mrro_nans"><code class="docutils literal notranslate"><span class="pre">fill_mrro_nans()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.feature_engineer.scale_data"><code class="docutils literal notranslate"><span class="pre">scale_data()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.feature_engineer.split_training_data"><code class="docutils literal notranslate"><span class="pre">split_training_data()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ise.data.process">ise.data.process module</a><ul>
+<li><a class="reference internal" href="#ise.data.process.DatasetMerger"><code class="docutils literal notranslate"><span class="pre">DatasetMerger</span></code></a><ul>
+<li><a class="reference internal" href="#ise.data.process.DatasetMerger.merge_dataset"><code class="docutils literal notranslate"><span class="pre">DatasetMerger.merge_dataset()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.process.DatasetMerger.merge_sectors"><code class="docutils literal notranslate"><span class="pre">DatasetMerger.merge_sectors()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ise.data.process.DimensionalityReducer"><code class="docutils literal notranslate"><span class="pre">DimensionalityReducer</span></code></a><ul>
+<li><a class="reference internal" href="#ise.data.process.DimensionalityReducer.convert_forcings"><code class="docutils literal notranslate"><span class="pre">DimensionalityReducer.convert_forcings()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.process.DimensionalityReducer.convert_projections"><code class="docutils literal notranslate"><span class="pre">DimensionalityReducer.convert_projections()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.process.DimensionalityReducer.generate_pca_models"><code class="docutils literal notranslate"><span class="pre">DimensionalityReducer.generate_pca_models()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.process.DimensionalityReducer.invert"><code class="docutils literal notranslate"><span class="pre">DimensionalityReducer.invert()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.process.DimensionalityReducer.transform"><code class="docutils literal notranslate"><span class="pre">DimensionalityReducer.transform()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ise.data.process.GridProcessor"><code class="docutils literal notranslate"><span class="pre">GridProcessor</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.process.ProjectionProcessor"><code class="docutils literal notranslate"><span class="pre">ProjectionProcessor</span></code></a><ul>
+<li><a class="reference internal" href="#ise.data.process.ProjectionProcessor.process"><code class="docutils literal notranslate"><span class="pre">ProjectionProcessor.process()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ise.data.process.SectorProcessor"><code class="docutils literal notranslate"><span class="pre">SectorProcessor</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.process.combine_gris_forcings"><code class="docutils literal notranslate"><span class="pre">combine_gris_forcings()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.process.convert_and_subset_times"><code class="docutils literal notranslate"><span class="pre">convert_and_subset_times()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.process.format_GrIS_atmospheric_aogcm_name"><code class="docutils literal notranslate"><span class="pre">format_GrIS_atmospheric_aogcm_name()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.process.get_model_densities"><code class="docutils literal notranslate"><span class="pre">get_model_densities()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.process.get_xarray_data"><code class="docutils literal notranslate"><span class="pre">get_xarray_data()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.process.interpolate_values"><code class="docutils literal notranslate"><span class="pre">interpolate_values()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.process.merge_datasets"><code class="docutils literal notranslate"><span class="pre">merge_datasets()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.process.process_AIS_atmospheric_sectors"><code class="docutils literal notranslate"><span class="pre">process_AIS_atmospheric_sectors()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.process.process_AIS_oceanic_sectors"><code class="docutils literal notranslate"><span class="pre">process_AIS_oceanic_sectors()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.process.process_AIS_outputs"><code class="docutils literal notranslate"><span class="pre">process_AIS_outputs()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.process.process_GrIS_atmospheric_sectors"><code class="docutils literal notranslate"><span class="pre">process_GrIS_atmospheric_sectors()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.process.process_GrIS_oceanic_sectors"><code class="docutils literal notranslate"><span class="pre">process_GrIS_oceanic_sectors()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.process.process_GrIS_outputs"><code class="docutils literal notranslate"><span class="pre">process_GrIS_outputs()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.process.process_sectors"><code class="docutils literal notranslate"><span class="pre">process_sectors()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ise.data.scaler">ise.data.scaler module</a><ul>
+<li><a class="reference internal" href="#ise.data.scaler.LogScaler"><code class="docutils literal notranslate"><span class="pre">LogScaler</span></code></a><ul>
+<li><a class="reference internal" href="#ise.data.scaler.LogScaler.fit"><code class="docutils literal notranslate"><span class="pre">LogScaler.fit()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.scaler.LogScaler.inverse_transform"><code class="docutils literal notranslate"><span class="pre">LogScaler.inverse_transform()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.scaler.LogScaler.load"><code class="docutils literal notranslate"><span class="pre">LogScaler.load()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.scaler.LogScaler.save"><code class="docutils literal notranslate"><span class="pre">LogScaler.save()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.scaler.LogScaler.transform"><code class="docutils literal notranslate"><span class="pre">LogScaler.transform()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ise.data.scaler.RobustScaler"><code class="docutils literal notranslate"><span class="pre">RobustScaler</span></code></a><ul>
+<li><a class="reference internal" href="#ise.data.scaler.RobustScaler.fit"><code class="docutils literal notranslate"><span class="pre">RobustScaler.fit()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.scaler.RobustScaler.inverse_transform"><code class="docutils literal notranslate"><span class="pre">RobustScaler.inverse_transform()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.scaler.RobustScaler.load"><code class="docutils literal notranslate"><span class="pre">RobustScaler.load()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.scaler.RobustScaler.save"><code class="docutils literal notranslate"><span class="pre">RobustScaler.save()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.scaler.RobustScaler.transform"><code class="docutils literal notranslate"><span class="pre">RobustScaler.transform()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ise.data.scaler.StandardScaler"><code class="docutils literal notranslate"><span class="pre">StandardScaler</span></code></a><ul>
+<li><a class="reference internal" href="#ise.data.scaler.StandardScaler.mean_"><code class="docutils literal notranslate"><span class="pre">StandardScaler.mean_</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.scaler.StandardScaler.scale_"><code class="docutils literal notranslate"><span class="pre">StandardScaler.scale_</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.scaler.StandardScaler.device"><code class="docutils literal notranslate"><span class="pre">StandardScaler.device</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.scaler.StandardScaler.fit"><code class="docutils literal notranslate"><span class="pre">StandardScaler.fit()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.scaler.StandardScaler.transform"><code class="docutils literal notranslate"><span class="pre">StandardScaler.transform()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.scaler.StandardScaler.inverse_transform"><code class="docutils literal notranslate"><span class="pre">StandardScaler.inverse_transform()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.scaler.StandardScaler.save"><code class="docutils literal notranslate"><span class="pre">StandardScaler.save()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.scaler.StandardScaler.load"><code class="docutils literal notranslate"><span class="pre">StandardScaler.load()</span></code></a></li>
+<li><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">StandardScaler.fit()</span></code></a></li>
+<li><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">StandardScaler.inverse_transform()</span></code></a></li>
+<li><a class="reference internal" href="#id2"><code class="docutils literal notranslate"><span class="pre">StandardScaler.load()</span></code></a></li>
+<li><a class="reference internal" href="#id3"><code class="docutils literal notranslate"><span class="pre">StandardScaler.save()</span></code></a></li>
+<li><a class="reference internal" href="#id4"><code class="docutils literal notranslate"><span class="pre">StandardScaler.transform()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ise.data.scaler.YeoJohnsonScaler"><code class="docutils literal notranslate"><span class="pre">YeoJohnsonScaler</span></code></a><ul>
+<li><a class="reference internal" href="#ise.data.scaler.YeoJohnsonScaler.fit"><code class="docutils literal notranslate"><span class="pre">YeoJohnsonScaler.fit()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.scaler.YeoJohnsonScaler.inverse_transform"><code class="docutils literal notranslate"><span class="pre">YeoJohnsonScaler.inverse_transform()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.scaler.YeoJohnsonScaler.load"><code class="docutils literal notranslate"><span class="pre">YeoJohnsonScaler.load()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.scaler.YeoJohnsonScaler.save"><code class="docutils literal notranslate"><span class="pre">YeoJohnsonScaler.save()</span></code></a></li>
+<li><a class="reference internal" href="#ise.data.scaler.YeoJohnsonScaler.transform"><code class="docutils literal notranslate"><span class="pre">YeoJohnsonScaler.transform()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ise.data">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ise</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">ise.data package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/ise.data.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ise-data-package">
+<h1>ise.data package<a class="headerlink" href="#ise-data-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-ise.data.dataclasses">
+<span id="ise-data-dataclasses-module"></span><h2>ise.data.dataclasses module<a class="headerlink" href="#module-ise.data.dataclasses" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.data.dataclasses.EmulatorDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.data.dataclasses.</span></span><span class="sig-name descname"><span class="pre">EmulatorDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequence_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">86</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/dataclasses.html#EmulatorDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.dataclasses.EmulatorDataset" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></p>
+<p>A PyTorch dataset for loading emulator data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) – The input data.</p></li>
+<li><p><strong>y</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) – The target data.</p></li>
+<li><p><strong>sequence_length</strong> (<em>int</em>) – The length of the input sequence.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.data.dataclasses.EmulatorDataset.X">
+<span class="sig-name descname"><span class="pre">X</span></span><a class="headerlink" href="#ise.data.dataclasses.EmulatorDataset.X" title="Link to this definition"></a></dt>
+<dd><p>The input data as a PyTorch tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.data.dataclasses.EmulatorDataset.y">
+<span class="sig-name descname"><span class="pre">y</span></span><a class="headerlink" href="#ise.data.dataclasses.EmulatorDataset.y" title="Link to this definition"></a></dt>
+<dd><p>The target data as a PyTorch tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.data.dataclasses.EmulatorDataset.sequence_length">
+<span class="sig-name descname"><span class="pre">sequence_length</span></span><a class="headerlink" href="#ise.data.dataclasses.EmulatorDataset.sequence_length" title="Link to this definition"></a></dt>
+<dd><p>The length of the input sequence.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.dataclasses.EmulatorDataset.__to_tensor">
+<span class="sig-name descname"><span class="pre">__to_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ise.data.dataclasses.EmulatorDataset.__to_tensor" title="Link to this definition"></a></dt>
+<dd><p>Converts input data to a PyTorch tensor.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.dataclasses.EmulatorDataset.__len__">
+<span class="sig-name descname"><span class="pre">__len__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/dataclasses.html#EmulatorDataset.__len__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.dataclasses.EmulatorDataset.__len__" title="Link to this definition"></a></dt>
+<dd><p>Returns the length of the dataset.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.dataclasses.EmulatorDataset.__getitem__">
+<span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/dataclasses.html#EmulatorDataset.__getitem__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.dataclasses.EmulatorDataset.__getitem__" title="Link to this definition"></a></dt>
+<dd><p>Returns the i-th item in the dataset.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.data.dataclasses.PyTorchDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.data.dataclasses.</span></span><span class="sig-name descname"><span class="pre">PyTorchDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/dataclasses.html#PyTorchDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.dataclasses.PyTorchDataset" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></p>
+<p>A PyTorch dataset for general data loading.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) – The input data.</p></li>
+<li><p><strong>y</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) – The target data.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.dataclasses.PyTorchDataset.__getitem__">
+<span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/dataclasses.html#PyTorchDataset.__getitem__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.dataclasses.PyTorchDataset.__getitem__" title="Link to this definition"></a></dt>
+<dd><p>Returns the item at the given index.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.dataclasses.PyTorchDataset.__len__">
+<span class="sig-name descname"><span class="pre">__len__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/dataclasses.html#PyTorchDataset.__len__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.dataclasses.PyTorchDataset.__len__" title="Link to this definition"></a></dt>
+<dd><p>Returns the length of the dataset.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.data.dataclasses.ScenarioDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.data.dataclasses.</span></span><span class="sig-name descname"><span class="pre">ScenarioDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/dataclasses.html#ScenarioDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.dataclasses.ScenarioDataset" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.data.dataclasses.TSDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.data.dataclasses.</span></span><span class="sig-name descname"><span class="pre">TSDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequence_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/dataclasses.html#TSDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.dataclasses.TSDataset" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></p>
+<p>A PyTorch dataset for time series data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) – The input data.</p></li>
+<li><p><strong>y</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) – The target data.</p></li>
+<li><p><strong>sequence_length</strong> (<em>int</em>) – The length of the input sequence.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.data.dataclasses.TSDataset.X">
+<span class="sig-name descname"><span class="pre">X</span></span><a class="headerlink" href="#ise.data.dataclasses.TSDataset.X" title="Link to this definition"></a></dt>
+<dd><p>The input data as a PyTorch tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.data.dataclasses.TSDataset.y">
+<span class="sig-name descname"><span class="pre">y</span></span><a class="headerlink" href="#ise.data.dataclasses.TSDataset.y" title="Link to this definition"></a></dt>
+<dd><p>The target data as a PyTorch tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.data.dataclasses.TSDataset.sequence_length">
+<span class="sig-name descname"><span class="pre">sequence_length</span></span><a class="headerlink" href="#ise.data.dataclasses.TSDataset.sequence_length" title="Link to this definition"></a></dt>
+<dd><p>The length of the input sequence.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.dataclasses.TSDataset.__len__">
+<span class="sig-name descname"><span class="pre">__len__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/dataclasses.html#TSDataset.__len__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.dataclasses.TSDataset.__len__" title="Link to this definition"></a></dt>
+<dd><p>Returns the length of the dataset.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.dataclasses.TSDataset.__getitem__">
+<span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/dataclasses.html#TSDataset.__getitem__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.dataclasses.TSDataset.__getitem__" title="Link to this definition"></a></dt>
+<dd><p>Returns the i-th item in the dataset.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-ise.data.feature_engineer">
+<span id="ise-data-feature-engineer-module"></span><h2>ise.data.feature_engineer module<a class="headerlink" href="#module-ise.data.feature_engineer" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.data.feature_engineer.FeatureEngineer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.data.feature_engineer.</span></span><span class="sig-name descname"><span class="pre">FeatureEngineer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ice_sheet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_mrro_nans</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.7</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/feature_engineer.html#FeatureEngineer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.feature_engineer.FeatureEngineer" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class for feature engineering operations on a given dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – The input dataset.</p></li>
+<li><p><strong>fill_mrro_nans</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag indicating whether to fill missing values in the ‘mrro’ column. Defaults to False.</p></li>
+<li><p><strong>split_dataset</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag indicating whether to split the dataset into training, validation, and test sets. Defaults to False.</p></li>
+<li><p><strong>train_size</strong> (<em>float</em><em>, </em><em>optional</em>) – The proportion of the dataset to be used for training. Defaults to 0.7.</p></li>
+<li><p><strong>val_size</strong> (<em>float</em><em>, </em><em>optional</em>) – The proportion of the dataset to be used for validation. Defaults to 0.15.</p></li>
+<li><p><strong>test_size</strong> (<em>float</em><em>, </em><em>optional</em>) – The proportion of the dataset to be used for testing. Defaults to 0.15.</p></li>
+<li><p><strong>output_directory</strong> (<em>str</em><em>, </em><em>optional</em>) – The directory to save the split datasets. Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.feature_engineer.FeatureEngineer.add_lag_variables">
+<span class="sig-name descname"><span class="pre">add_lag_variables</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/feature_engineer.html#FeatureEngineer.add_lag_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.feature_engineer.FeatureEngineer.add_lag_variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.feature_engineer.FeatureEngineer.add_model_characteristics">
+<span class="sig-name descname"><span class="pre">add_model_characteristics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_char_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ids_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/feature_engineer.html#FeatureEngineer.add_model_characteristics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.feature_engineer.FeatureEngineer.add_model_characteristics" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.feature_engineer.FeatureEngineer.backfill_outliers">
+<span class="sig-name descname"><span class="pre">backfill_outliers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">percentile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">99.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/feature_engineer.html#FeatureEngineer.backfill_outliers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.feature_engineer.FeatureEngineer.backfill_outliers" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.feature_engineer.FeatureEngineer.drop_outliers">
+<span class="sig-name descname"><span class="pre">drop_outliers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expression</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.01,</span> <span class="pre">0.99]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/feature_engineer.html#FeatureEngineer.drop_outliers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.feature_engineer.FeatureEngineer.drop_outliers" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.feature_engineer.FeatureEngineer.fill_mrro_nans">
+<span class="sig-name descname"><span class="pre">fill_mrro_nans</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/feature_engineer.html#FeatureEngineer.fill_mrro_nans"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.feature_engineer.FeatureEngineer.fill_mrro_nans" title="Link to this definition"></a></dt>
+<dd><p>Fills missing values in the ‘mrro’ column of the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>method</strong> (<em>str</em>) – The method to use for filling missing values.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) – The input dataset. If not provided, the class attribute ‘data’ will be used. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The dataset with missing values in the ‘mrro’ column filled.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.feature_engineer.FeatureEngineer.scale_data">
+<span class="sig-name descname"><span class="pre">scale_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'standard'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/feature_engineer.html#FeatureEngineer.scale_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.feature_engineer.FeatureEngineer.scale_data" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.feature_engineer.FeatureEngineer.split_data">
+<span class="sig-name descname"><span class="pre">split_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/feature_engineer.html#FeatureEngineer.split_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.feature_engineer.FeatureEngineer.split_data" title="Link to this definition"></a></dt>
+<dd><p>Splits the dataset into training, validation, and test sets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) – The input dataset. If not provided, the class attribute ‘data’ will be used. Defaults to None.</p></li>
+<li><p><strong>train_size</strong> (<em>float</em><em>, </em><em>optional</em>) – The proportion of the dataset to be used for training. If not provided, the class attribute ‘train_size’ will be used. Defaults to None.</p></li>
+<li><p><strong>val_size</strong> (<em>float</em><em>, </em><em>optional</em>) – The proportion of the dataset to be used for validation. If not provided, the class attribute ‘val_size’ will be used. Defaults to None.</p></li>
+<li><p><strong>test_size</strong> (<em>float</em><em>, </em><em>optional</em>) – The proportion of the dataset to be used for testing. If not provided, the class attribute ‘test_size’ will be used. Defaults to None.</p></li>
+<li><p><strong>output_directory</strong> (<em>str</em><em>, </em><em>optional</em>) – The directory to save the split datasets. If not provided, the class attribute ‘output_directory’ will be used. Defaults to None.</p></li>
+<li><p><strong>random_state</strong> (<em>int</em><em>, </em><em>optional</em>) – The random seed for reproducibility. Defaults to 42.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing the training, validation, and test sets.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.feature_engineer.FeatureEngineer.unscale_data">
+<span class="sig-name descname"><span class="pre">unscale_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaler_X_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaler_y_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/feature_engineer.html#FeatureEngineer.unscale_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.feature_engineer.FeatureEngineer.unscale_data" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.feature_engineer.add_lag_variables">
+<span class="sig-prename descclassname"><span class="pre">ise.data.feature_engineer.</span></span><span class="sig-name descname"><span class="pre">add_lag_variables</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="../../_modules/ise/data/feature_engineer.html#add_lag_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.feature_engineer.add_lag_variables" title="Link to this definition"></a></dt>
+<dd><p>Adds lag variables to the input DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – The input DataFrame.</p></li>
+<li><p><strong>lag</strong> (<em>int</em>) – The number of time steps to lag the variables.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The DataFrame with lag variables added.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.feature_engineer.add_model_characteristics">
+<span class="sig-prename descclassname"><span class="pre">ise.data.feature_engineer.</span></span><span class="sig-name descname"><span class="pre">add_model_characteristics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_char_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./ise/utils/model_characteristics.csv'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ids_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="../../_modules/ise/data/feature_engineer.html#add_model_characteristics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.feature_engineer.add_model_characteristics" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.feature_engineer.backfill_outliers">
+<span class="sig-prename descclassname"><span class="pre">ise.data.feature_engineer.</span></span><span class="sig-name descname"><span class="pre">backfill_outliers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percentile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">99.999</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/feature_engineer.html#backfill_outliers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.feature_engineer.backfill_outliers" title="Link to this definition"></a></dt>
+<dd><p>Replaces extreme values in y-values (above the specified percentile and below the 1-percentile across all y-values)
+with the value from the previous row.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>percentile</strong> (<em>float</em>) – The percentile to use for defining upper extreme values across all y-values. Defaults to 99.999.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.feature_engineer.drop_outliers">
+<span class="sig-prename descclassname"><span class="pre">ise.data.feature_engineer.</span></span><span class="sig-name descname"><span class="pre">drop_outliers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expression</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[0.01,</span> <span class="pre">0.99]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/feature_engineer.html#drop_outliers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.feature_engineer.drop_outliers" title="Link to this definition"></a></dt>
+<dd><p>Drops simulations that are outliers based on the provided method and expression.
+Extra complexity is handled due to the necessity of removing the entire 86 row series from
+the dataset rather than simply removing the rows with given conditions. Note that the
+condition indicates rows to be DROPPED, not kept (e.g. ‘sle’, ‘&gt;’, ‘20’ would drop all
+simulations containing sle values over 20). If quantile method is used, outliers are dropped
+from the SLE column based on the provided quantile in the quantiles argument. If explicit is
+chosen, expression must contain a list of tuples such that the tuple contains
+[(column, operator, expression)] of the subset, e.g. [(“sle”, “&gt;”, 20), (“sle”, “&lt;”, -20)].</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – The input DataFrame.</p></li>
+<li><p><strong>method</strong> (<em>str</em>) – Method of outlier deletion, must be in [quantile, explicit]</p></li>
+<li><p><strong>expression</strong> (<em>list</em><em>[</em><em>tuple</em><em>]</em>) – List of subset expressions in the form [column, operator, value], defaults to None.</p></li>
+<li><p><strong>quantiles</strong> (<em>list</em><em>[</em><em>float</em><em>]</em>) – List of quantiles for quantile method, defaults to [0.01, 0.99].</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>having outliers dropped.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>data (pd.DataFrame)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.feature_engineer.fill_mrro_nans">
+<span class="sig-prename descclassname"><span class="pre">ise.data.feature_engineer.</span></span><span class="sig-name descname"><span class="pre">fill_mrro_nans</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="../../_modules/ise/data/feature_engineer.html#fill_mrro_nans"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.feature_engineer.fill_mrro_nans" title="Link to this definition"></a></dt>
+<dd><p>Fills the NaN values in the specified columns with the given method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – The input DataFrame.</p></li>
+<li><p><strong>method</strong> (<em>str</em><em> or </em><em>int</em>) – The method to fill NaN values. Must be one of ‘zero’, ‘mean’, ‘median’, or ‘drop’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The DataFrame with NaN values filled according to the specified method.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the method is not one of ‘zero’, ‘mean’, ‘median’, or ‘drop’.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.feature_engineer.scale_data">
+<span class="sig-prename descclassname"><span class="pre">ise.data.feature_engineer.</span></span><span class="sig-name descname"><span class="pre">scale_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaler_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/feature_engineer.html#scale_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.feature_engineer.scale_data" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.feature_engineer.split_training_data">
+<span class="sig-prename descclassname"><span class="pre">ise.data.feature_engineer.</span></span><span class="sig-name descname"><span class="pre">split_training_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/feature_engineer.html#split_training_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.feature_engineer.split_training_data" title="Link to this definition"></a></dt>
+<dd><p>Splits the input data into training, validation, and test sets based on the specified sizes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>str</em><em> or </em><em>pandas.DataFrame</em>) – The input data to be split. It can be either a file path (str) or a pandas DataFrame.</p></li>
+<li><p><strong>train_size</strong> (<em>float</em>) – The proportion of data to be used for training.</p></li>
+<li><p><strong>val_size</strong> (<em>float</em>) – The proportion of data to be used for validation.</p></li>
+<li><p><strong>test_size</strong> (<em>float</em><em>, </em><em>optional</em>) – The proportion of data to be used for testing. If not provided, the remaining data after training and validation will be used for testing. Defaults to None.</p></li>
+<li><p><strong>output_directory</strong> (<em>str</em><em>, </em><em>optional</em>) – The directory where the split data will be saved as CSV files. Defaults to None.</p></li>
+<li><p><strong>random_state</strong> (<em>int</em><em>, </em><em>optional</em>) – The random seed for shuffling the data. Defaults to 42.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing the training, validation, and test sets as pandas DataFrames.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If the length of data is not divisible by 86, indicating incomplete projections.</p></li>
+<li><p><strong>ValueError</strong> – If the data does not have a column named ‘id’.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-ise.data.process">
+<span id="ise-data-process-module"></span><h2>ise.data.process module<a class="headerlink" href="#module-ise.data.process" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.data.process.DatasetMerger">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.data.process.</span></span><span class="sig-name descname"><span class="pre">DatasetMerger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ice_sheet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forcings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projections</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">experiment_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#DatasetMerger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.DatasetMerger" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class for merging datasets from forcing and projection files.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.process.DatasetMerger.merge_dataset">
+<span class="sig-name descname"><span class="pre">merge_dataset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#DatasetMerger.merge_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.DatasetMerger.merge_dataset" title="Link to this definition"></a></dt>
+<dd><p>Merges the forcing and projection files and creates a dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Returns 0 after successfully merging and saving the dataset.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.process.DatasetMerger.merge_sectors">
+<span class="sig-name descname"><span class="pre">merge_sectors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forcings_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projections_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#DatasetMerger.merge_sectors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.DatasetMerger.merge_sectors" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.data.process.DimensionalityReducer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.data.process.</span></span><span class="sig-name descname"><span class="pre">DimensionalityReducer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forcing_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ice_sheet</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaling_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#DimensionalityReducer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.DimensionalityReducer" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.process.DimensionalityReducer.convert_forcings">
+<span class="sig-name descname"><span class="pre">convert_forcings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forcing_files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pca_model_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaling_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#DimensionalityReducer.convert_forcings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.DimensionalityReducer.convert_forcings" title="Link to this definition"></a></dt>
+<dd><p>Converts atmospheric and oceanic forcing files to PCA space using pretrained PCA models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>forcing_files</strong> (<em>list</em><em>, </em><em>optional</em>) – List of specific forcing files to convert. If not provided, all files in the directory will be used. Default is None.</p></li>
+<li><p><strong>pca_model_directory</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory containing the pretrained PCA models. If not provided, the directory specified during object initialization will be used. Default is None.</p></li>
+<li><p><strong>output_dir</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory to save the converted files. If not provided, the directory specified during object initialization will be used. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>0 indicating successful conversion.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.process.DimensionalityReducer.convert_projections">
+<span class="sig-name descname"><span class="pre">convert_projections</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">projection_files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pca_model_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaling_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#DimensionalityReducer.convert_projections"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.DimensionalityReducer.convert_projections" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.process.DimensionalityReducer.generate_pca_models">
+<span class="sig-name descname"><span class="pre">generate_pca_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_forcing_pcs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_projection_pcs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaling_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'standard'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#DimensionalityReducer.generate_pca_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.DimensionalityReducer.generate_pca_models" title="Link to this definition"></a></dt>
+<dd><p>Generate principal component analysis (PCA) models for atmosphere and ocean variables.</p>
+<p>Parameters:
+- atmosphere_fps (list): List of file paths for atmosphere data.
+- ocean_fps (list): List of file paths for ocean data.
+- save_dir (str): Directory to save the generated PCA models and results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>0 if successful.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.process.DimensionalityReducer.invert">
+<span class="sig-name descname"><span class="pre">invert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pca_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pca_model_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaler_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#DimensionalityReducer.invert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.DimensionalityReducer.invert" title="Link to this definition"></a></dt>
+<dd><p>Invert the given variable from PCA space.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pca_x</strong> (<em>array-like</em>) – The input array containing the variables in PCA space.</p></li>
+<li><p><strong>variable</strong> (<em>str</em>) – The name of the variable to transform.</p></li>
+<li><p><strong>pca_models_paths</strong> (<em>dict</em>) – A dictionary containing the filepaths for the PCA models.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The inverted array.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.process.DimensionalityReducer.transform">
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_pcs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pca_model_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaler_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaling_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'standard'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#DimensionalityReducer.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.DimensionalityReducer.transform" title="Link to this definition"></a></dt>
+<dd><p>Transform the given variable into PCA space.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array-like</em>) – The input array containing the variables.</p></li>
+<li><p><strong>variable</strong> (<em>str</em>) – The name of the variable to transform.</p></li>
+<li><p><strong>pca_models_paths</strong> (<em>dict</em>) – A dictionary containing the filepaths for the PCA models.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The transformed array.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.data.process.GridProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.data.process.</span></span><span class="sig-name descname"><span class="pre">GridProcessor</span></span><a class="reference internal" href="../../_modules/ise/data/process.html#GridProcessor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.GridProcessor" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.data.process.ProjectionProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.data.process.</span></span><span class="sig-name descname"><span class="pre">ProjectionProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ice_sheet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forcings_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projections_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scalefac_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">densities_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#ProjectionProcessor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.ProjectionProcessor" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class for processing ice sheet data.</p>
+<p>Attributes:
+- ice_sheet (str): Ice sheet to be processed. Must be ‘AIS’ or ‘GIS’.
+- forcings_directory (str): The path to the directory containing the forcings data.
+- projections_directory (str): The path to the directory containing the projections data.
+- scalefac_path (str): The path to the netCDF file containing scaling factors for each grid cell.
+- densities_path (str): The path to the CSV file containing ice and ocean density (rhow/rhoi) data for each experiment.</p>
+<p>Methods:
+- __init__(self, ice_sheet, forcings_directory, projections_directory, scalefac_path=None, densities_path=None): Initializes the Processor object.
+- process_forcings(self): Processes the forcings data.
+- process_projections(self, output_directory): Processes the projections data.
+- _calculate_ivaf_minus_control(self, data_directory, densities_fp, scalefac_path): Calculates the ice volume above flotation (IVAF) for each file in the given data directory, subtracting out the control projection IVAF if applicable.
+- _calculate_ivaf_single_file(self, directory, densities, scalefac_model, ctrl_proj=False): Calculates the ice volume above flotation (IVAF) for a single file.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.process.ProjectionProcessor.process">
+<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#ProjectionProcessor.process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.ProjectionProcessor.process" title="Link to this definition"></a></dt>
+<dd><p>Process the ISMIP6 projections by calculating IVAF for both control
+and experiments, subtracting out the control IVAF from experiments,
+and exporting ivaf files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>output_directory</strong> (<em>str</em>) – The directory to save the processed projections.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If projections_directory or output_directory is not specified.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>1 indicating successful processing.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.data.process.SectorProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.data.process.</span></span><span class="sig-name descname"><span class="pre">SectorProcessor</span></span><a class="reference internal" href="../../_modules/ise/data/process.html#SectorProcessor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.SectorProcessor" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.process.combine_gris_forcings">
+<span class="sig-prename descclassname"><span class="pre">ise.data.process.</span></span><span class="sig-name descname"><span class="pre">combine_gris_forcings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forcing_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#combine_gris_forcings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.combine_gris_forcings" title="Link to this definition"></a></dt>
+<dd><p>Combine GrIS forcings from multiple CMIP directories into a single NetCDF file.</p>
+<p>Parameters:
+- forcing_dir (str): The directory containing the GrIS forcings.</p>
+<p>Returns:
+- int: 0 indicating successful completion of the function.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.process.convert_and_subset_times">
+<span class="sig-prename descclassname"><span class="pre">ise.data.process.</span></span><span class="sig-name descname"><span class="pre">convert_and_subset_times</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#convert_and_subset_times"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.convert_and_subset_times" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.process.format_GrIS_atmospheric_aogcm_name">
+<span class="sig-prename descclassname"><span class="pre">ise.data.process.</span></span><span class="sig-name descname"><span class="pre">format_GrIS_atmospheric_aogcm_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aogcm</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#format_GrIS_atmospheric_aogcm_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.format_GrIS_atmospheric_aogcm_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.process.get_model_densities">
+<span class="sig-prename descclassname"><span class="pre">ise.data.process.</span></span><span class="sig-name descname"><span class="pre">get_model_densities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">zenodo_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#get_model_densities"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.get_model_densities" title="Link to this definition"></a></dt>
+<dd><p>Extracts values for rhoi and rhow from NetCDF files in the specified directory and returns a pandas DataFrame
+containing the group, model, rhoi, and rhow values for each file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>zenodo_directory</strong> (<em>str</em>) – The path to the directory containing the NetCDF files.</p></li>
+<li><p><strong>output_path</strong> (<em>str</em><em>, </em><em>optional</em>) – The path to save the resulting DataFrame as a CSV file.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A DataFrame containing the group, model, rhoi, and rhow values for each file.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.process.get_xarray_data">
+<span class="sig-prename descclassname"><span class="pre">ise.data.process.</span></span><span class="sig-name descname"><span class="pre">get_xarray_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_fp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ice_sheet</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'AIS'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">convert_and_subset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#get_xarray_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.get_xarray_data" title="Link to this definition"></a></dt>
+<dd><p>Retrieves data from an xarray dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset_fp</strong> (<em>str</em>) – The file path to the xarray dataset.</p></li>
+<li><p><strong>var_name</strong> (<em>str</em><em>, </em><em>optional</em>) – The name of the variable to retrieve from the dataset. Defaults to None.</p></li>
+<li><p><strong>ice_sheet</strong> (<em>str</em><em>, </em><em>optional</em>) – The ice sheet type. Defaults to ‘AIS’.</p></li>
+<li><p><strong>convert_and_subset</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag indicating whether to convert and subset the dataset. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The retrieved data from the dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray or xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.process.interpolate_values">
+<span class="sig-prename descclassname"><span class="pre">ise.data.process.</span></span><span class="sig-name descname"><span class="pre">interpolate_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#interpolate_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.interpolate_values" title="Link to this definition"></a></dt>
+<dd><p>Interpolates missing values in the x and y dimensions of the input NetCDF data using linear interpolation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> – A NetCDF file containing x and y dimensions with missing values.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing the interpolated x and y arrays.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.process.merge_datasets">
+<span class="sig-prename descclassname"><span class="pre">ise.data.process.</span></span><span class="sig-name descname"><span class="pre">merge_datasets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forcings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projections</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">experiments_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ice_sheet</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'AIS'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">export_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#merge_datasets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.merge_datasets" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.process.process_AIS_atmospheric_sectors">
+<span class="sig-prename descclassname"><span class="pre">ise.data.process.</span></span><span class="sig-name descname"><span class="pre">process_AIS_atmospheric_sectors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forcing_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#process_AIS_atmospheric_sectors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.process_AIS_atmospheric_sectors" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.process.process_AIS_oceanic_sectors">
+<span class="sig-prename descclassname"><span class="pre">ise.data.process.</span></span><span class="sig-name descname"><span class="pre">process_AIS_oceanic_sectors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forcing_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#process_AIS_oceanic_sectors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.process_AIS_oceanic_sectors" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.process.process_AIS_outputs">
+<span class="sig-prename descclassname"><span class="pre">ise.data.process.</span></span><span class="sig-name descname"><span class="pre">process_AIS_outputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">zenodo_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_ctrl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#process_AIS_outputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.process_AIS_outputs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.process.process_GrIS_atmospheric_sectors">
+<span class="sig-prename descclassname"><span class="pre">ise.data.process.</span></span><span class="sig-name descname"><span class="pre">process_GrIS_atmospheric_sectors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forcing_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#process_GrIS_atmospheric_sectors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.process_GrIS_atmospheric_sectors" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.process.process_GrIS_oceanic_sectors">
+<span class="sig-prename descclassname"><span class="pre">ise.data.process.</span></span><span class="sig-name descname"><span class="pre">process_GrIS_oceanic_sectors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forcing_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#process_GrIS_oceanic_sectors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.process_GrIS_oceanic_sectors" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.process.process_GrIS_outputs">
+<span class="sig-prename descclassname"><span class="pre">ise.data.process.</span></span><span class="sig-name descname"><span class="pre">process_GrIS_outputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">zenodo_directory</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#process_GrIS_outputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.process_GrIS_outputs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.data.process.process_sectors">
+<span class="sig-prename descclassname"><span class="pre">ise.data.process.</span></span><span class="sig-name descname"><span class="pre">process_sectors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ice_sheet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forcing_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zenodo_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">experiments_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">export_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_ctrl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/process.html#process_sectors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.process.process_sectors" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-ise.data.scaler">
+<span id="ise-data-scaler-module"></span><h2>ise.data.scaler module<a class="headerlink" href="#module-ise.data.scaler" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.data.scaler.LogScaler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.data.scaler.</span></span><span class="sig-name descname"><span class="pre">LogScaler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#LogScaler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.LogScaler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.scaler.LogScaler.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#LogScaler.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.LogScaler.fit" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.scaler.LogScaler.inverse_transform">
+<span class="sig-name descname"><span class="pre">inverse_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#LogScaler.inverse_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.LogScaler.inverse_transform" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.scaler.LogScaler.load">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#LogScaler.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.LogScaler.load" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.scaler.LogScaler.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#LogScaler.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.LogScaler.save" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.scaler.LogScaler.transform">
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#LogScaler.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.LogScaler.transform" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.data.scaler.RobustScaler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.data.scaler.</span></span><span class="sig-name descname"><span class="pre">RobustScaler</span></span><a class="reference internal" href="../../_modules/ise/data/scaler.html#RobustScaler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.RobustScaler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.scaler.RobustScaler.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#RobustScaler.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.RobustScaler.fit" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.scaler.RobustScaler.inverse_transform">
+<span class="sig-name descname"><span class="pre">inverse_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#RobustScaler.inverse_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.RobustScaler.inverse_transform" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.scaler.RobustScaler.load">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#RobustScaler.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.RobustScaler.load" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.scaler.RobustScaler.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#RobustScaler.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.RobustScaler.save" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.scaler.RobustScaler.transform">
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#RobustScaler.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.RobustScaler.transform" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.data.scaler.StandardScaler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.data.scaler.</span></span><span class="sig-name descname"><span class="pre">StandardScaler</span></span><a class="reference internal" href="../../_modules/ise/data/scaler.html#StandardScaler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.StandardScaler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>A class for scaling input data using mean and standard deviation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>nn.Module</strong> – The base class for all neural network modules in PyTorch.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.data.scaler.StandardScaler.mean_">
+<span class="sig-name descname"><span class="pre">mean_</span></span><a class="headerlink" href="#ise.data.scaler.StandardScaler.mean_" title="Link to this definition"></a></dt>
+<dd><p>The mean values of the input data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.data.scaler.StandardScaler.scale_">
+<span class="sig-name descname"><span class="pre">scale_</span></span><a class="headerlink" href="#ise.data.scaler.StandardScaler.scale_" title="Link to this definition"></a></dt>
+<dd><p>The standard deviation values of the input data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.data.scaler.StandardScaler.device">
+<span class="sig-name descname"><span class="pre">device</span></span><a class="headerlink" href="#ise.data.scaler.StandardScaler.device" title="Link to this definition"></a></dt>
+<dd><p>The device (CPU or GPU) on which the calculations are performed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.device</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.scaler.StandardScaler.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#StandardScaler.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.StandardScaler.fit" title="Link to this definition"></a></dt>
+<dd><p>Computes the mean and standard deviation of the input data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.scaler.StandardScaler.transform">
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#StandardScaler.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.StandardScaler.transform" title="Link to this definition"></a></dt>
+<dd><p>Scales the input data using the computed mean and standard deviation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.scaler.StandardScaler.inverse_transform">
+<span class="sig-name descname"><span class="pre">inverse_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#StandardScaler.inverse_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.StandardScaler.inverse_transform" title="Link to this definition"></a></dt>
+<dd><p>Reverses the scaling operation on the input data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.scaler.StandardScaler.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#StandardScaler.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.StandardScaler.save" title="Link to this definition"></a></dt>
+<dd><p>Saves the mean and standard deviation to a file.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.scaler.StandardScaler.load">
+<span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#StandardScaler.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.StandardScaler.load" title="Link to this definition"></a></dt>
+<dd><p>Loads the mean and standard deviation from a file.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#StandardScaler.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id0" title="Link to this definition"></a></dt>
+<dd><p>Computes the mean and standard deviation of the input data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – The input data to be scaled.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">inverse_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#StandardScaler.inverse_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id1" title="Link to this definition"></a></dt>
+<dd><p>Reverses the scaling operation on the input data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – The scaled input data to be transformed back.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The transformed input data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>RuntimeError</strong> – If the Scaler instance is not fitted yet.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id2">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#StandardScaler.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id2" title="Link to this definition"></a></dt>
+<dd><p>Loads the mean and standard deviation from a file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – The path to load the file from.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A Scaler instance with the loaded mean and standard deviation.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Scaler</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#StandardScaler.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id3" title="Link to this definition"></a></dt>
+<dd><p>Saves the mean and standard deviation to a file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – The path to save the file.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#StandardScaler.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id4" title="Link to this definition"></a></dt>
+<dd><p>Scales the input data using the computed mean and standard deviation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – The input data to be scaled.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The scaled input data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>RuntimeError</strong> – If the Scaler instance is not fitted yet.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.data.scaler.YeoJohnsonScaler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.data.scaler.</span></span><span class="sig-name descname"><span class="pre">YeoJohnsonScaler</span></span><a class="reference internal" href="../../_modules/ise/data/scaler.html#YeoJohnsonScaler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.YeoJohnsonScaler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.scaler.YeoJohnsonScaler.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#YeoJohnsonScaler.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.YeoJohnsonScaler.fit" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.scaler.YeoJohnsonScaler.inverse_transform">
+<span class="sig-name descname"><span class="pre">inverse_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#YeoJohnsonScaler.inverse_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.YeoJohnsonScaler.inverse_transform" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.scaler.YeoJohnsonScaler.load">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#YeoJohnsonScaler.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.YeoJohnsonScaler.load" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.scaler.YeoJohnsonScaler.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#YeoJohnsonScaler.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.YeoJohnsonScaler.save" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.data.scaler.YeoJohnsonScaler.transform">
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/data/scaler.html#YeoJohnsonScaler.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.data.scaler.YeoJohnsonScaler.transform" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-ise.data">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-ise.data" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Peter Van Katwyk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

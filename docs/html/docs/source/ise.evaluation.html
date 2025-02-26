@@ -1,0 +1,401 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ise.evaluation package &mdash; ise 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="/docs/source/ise.evaluation.html" />
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            ise
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">ise.evaluation package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-ise.evaluation.metrics">ise.evaluation.metrics module</a><ul>
+<li><a class="reference internal" href="#ise.evaluation.metrics.calculate_ece"><code class="docutils literal notranslate"><span class="pre">calculate_ece()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.metrics.crps"><code class="docutils literal notranslate"><span class="pre">crps()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.metrics.js_divergence"><code class="docutils literal notranslate"><span class="pre">js_divergence()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.metrics.kl_divergence"><code class="docutils literal notranslate"><span class="pre">kl_divergence()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.metrics.kolmogorov_smirnov"><code class="docutils literal notranslate"><span class="pre">kolmogorov_smirnov()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.metrics.mape"><code class="docutils literal notranslate"><span class="pre">mape()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.metrics.mean_absolute_error"><code class="docutils literal notranslate"><span class="pre">mean_absolute_error()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.metrics.mean_squared_error"><code class="docutils literal notranslate"><span class="pre">mean_squared_error()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.metrics.mean_squared_error_sector"><code class="docutils literal notranslate"><span class="pre">mean_squared_error_sector()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.metrics.r2_score"><code class="docutils literal notranslate"><span class="pre">r2_score()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.metrics.relative_squared_error"><code class="docutils literal notranslate"><span class="pre">relative_squared_error()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.metrics.sum_by_sector"><code class="docutils literal notranslate"><span class="pre">sum_by_sector()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.metrics.t_test"><code class="docutils literal notranslate"><span class="pre">t_test()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ise.evaluation.plots">ise.evaluation.plots module</a><ul>
+<li><a class="reference internal" href="#ise.evaluation.plots.EvaluationPlotter"><code class="docutils literal notranslate"><span class="pre">EvaluationPlotter</span></code></a><ul>
+<li><a class="reference internal" href="#ise.evaluation.plots.EvaluationPlotter.sector_side_by_side"><code class="docutils literal notranslate"><span class="pre">EvaluationPlotter.sector_side_by_side()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.plots.EvaluationPlotter.spatial_side_by_side"><code class="docutils literal notranslate"><span class="pre">EvaluationPlotter.spatial_side_by_side()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ise.evaluation.plots.SectorPlotter"><code class="docutils literal notranslate"><span class="pre">SectorPlotter</span></code></a><ul>
+<li><a class="reference internal" href="#ise.evaluation.plots.SectorPlotter.plot_callibration"><code class="docutils literal notranslate"><span class="pre">SectorPlotter.plot_callibration()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.plots.SectorPlotter.plot_distributions"><code class="docutils literal notranslate"><span class="pre">SectorPlotter.plot_distributions()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.plots.SectorPlotter.plot_ensemble"><code class="docutils literal notranslate"><span class="pre">SectorPlotter.plot_ensemble()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.plots.SectorPlotter.plot_ensemble_mean"><code class="docutils literal notranslate"><span class="pre">SectorPlotter.plot_ensemble_mean()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.plots.SectorPlotter.plot_histograms"><code class="docutils literal notranslate"><span class="pre">SectorPlotter.plot_histograms()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.plots.SectorPlotter.plot_test_series"><code class="docutils literal notranslate"><span class="pre">SectorPlotter.plot_test_series()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ise.evaluation.plots.UncertaintyBounds"><code class="docutils literal notranslate"><span class="pre">UncertaintyBounds</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.plots.plot_callibration"><code class="docutils literal notranslate"><span class="pre">plot_callibration()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.plots.plot_distributions"><code class="docutils literal notranslate"><span class="pre">plot_distributions()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.plots.plot_ensemble"><code class="docutils literal notranslate"><span class="pre">plot_ensemble()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.plots.plot_ensemble_mean"><code class="docutils literal notranslate"><span class="pre">plot_ensemble_mean()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.plots.plot_histograms"><code class="docutils literal notranslate"><span class="pre">plot_histograms()</span></code></a></li>
+<li><a class="reference internal" href="#ise.evaluation.plots.plot_test_series"><code class="docutils literal notranslate"><span class="pre">plot_test_series()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ise.evaluation">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ise</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">ise.evaluation package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/ise.evaluation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ise-evaluation-package">
+<h1>ise.evaluation package<a class="headerlink" href="#ise-evaluation-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-ise.evaluation.metrics">
+<span id="ise-evaluation-metrics-module"></span><h2>ise.evaluation.metrics module<a class="headerlink" href="#module-ise.evaluation.metrics" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.calculate_ece">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">calculate_ece</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainties</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#calculate_ece"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.calculate_ece" title="Link to this definition"></a></dt>
+<dd><p>Calculate the Expected Calibration Error (ECE) for regression model predictions.</p>
+<p>Args:
+predictions (numpy.ndarray): Array of predicted means by the model.
+uncertainties (numpy.ndarray): Array of predicted standard deviations (uncertainty estimates).
+true_values (numpy.ndarray): Array of actual values.
+bins (int): Number of bins to use for grouping predictions by their uncertainty.</p>
+<p>Returns:
+float: The Expected Calibration Error.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.crps">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">crps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_std</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#crps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.crps" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.js_divergence">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">js_divergence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#js_divergence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.js_divergence" title="Link to this definition"></a></dt>
+<dd><p>Calculates the Jensen-Shannon Divergence between two distributions.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.kl_divergence">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">kl_divergence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#kl_divergence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.kl_divergence" title="Link to this definition"></a></dt>
+<dd><p>Calculates the Kullback-Leibler Divergence between two distributions.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.kolmogorov_smirnov">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">kolmogorov_smirnov</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#kolmogorov_smirnov"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.kolmogorov_smirnov" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.mape">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">mape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#mape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.mape" title="Link to this definition"></a></dt>
+<dd><p>Calculate Mean Absolute Percentage Error (MAPE).</p>
+<p>Args:
+- y_true: numpy array or a list of actual numbers
+- y_pred: numpy array or a list of predicted numbers</p>
+<p>Returns:
+- mape: Mean Absolute Percentage Error</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.mean_absolute_error">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">mean_absolute_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#mean_absolute_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.mean_absolute_error" title="Link to this definition"></a></dt>
+<dd><p>Calculate Mean Absolute Error (MAE).</p>
+<p>Args:
+- y_true: numpy array or a list of actual numbers
+- y_pred: numpy array or a list of predicted numbers</p>
+<p>Returns:
+- mae: Mean Absolute Error</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.mean_squared_error">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">mean_squared_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#mean_squared_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.mean_squared_error" title="Link to this definition"></a></dt>
+<dd><p>Calculate Mean Squared Error (MSE).</p>
+<p>Args:
+- y_true: numpy array or a list of actual numbers
+- y_pred: numpy array or a list of predicted numbers</p>
+<p>Returns:
+- mse: Mean Squared Error</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.mean_squared_error_sector">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">mean_squared_error_sector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sum_sectors_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sum_sectors_pred</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#mean_squared_error_sector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.mean_squared_error_sector" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.r2_score">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">r2_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#r2_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.r2_score" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.relative_squared_error">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">relative_squared_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#relative_squared_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.relative_squared_error" title="Link to this definition"></a></dt>
+<dd><p>Calculate Relative Squared Error (RSE).</p>
+<p>Args:
+- y_true: numpy array or a list of actual numbers
+- y_pred: numpy array or a list of predicted numbers</p>
+<p>Returns:
+- rse: Relative Squared Error</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.sum_by_sector">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">sum_by_sector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#sum_by_sector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.sum_by_sector" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.t_test">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">t_test</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#t_test"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.t_test" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-ise.evaluation.plots">
+<span id="ise-evaluation-plots-module"></span><h2>ise.evaluation.plots module<a class="headerlink" href="#module-ise.evaluation.plots" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.evaluation.plots.EvaluationPlotter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.evaluation.plots.</span></span><span class="sig-name descname"><span class="pre">EvaluationPlotter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/plots.html#EvaluationPlotter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.plots.EvaluationPlotter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.evaluation.plots.EvaluationPlotter.sector_side_by_side">
+<span class="sig-name descname"><span class="pre">sector_side_by_side</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outline_array_true=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outline_array_pred=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestep=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap=&lt;matplotlib.colors.LinearSegmentedColormap</span> <span class="pre">object&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/plots.html#EvaluationPlotter.sector_side_by_side"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.plots.EvaluationPlotter.sector_side_by_side" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.evaluation.plots.EvaluationPlotter.spatial_side_by_side">
+<span class="sig-name descname"><span class="pre">spatial_side_by_side</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestep=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap=&lt;matplotlib.colors.LinearSegmentedColormap</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">video=False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/plots.html#EvaluationPlotter.spatial_side_by_side"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.plots.EvaluationPlotter.spatial_side_by_side" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.evaluation.plots.SectorPlotter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.evaluation.plots.</span></span><span class="sig-name descname"><span class="pre">SectorPlotter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results_dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/plots.html#SectorPlotter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.plots.SectorPlotter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.evaluation.plots.SectorPlotter.plot_callibration">
+<span class="sig-name descname"><span class="pre">plot_callibration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">color_by</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/plots.html#SectorPlotter.plot_callibration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.plots.SectorPlotter.plot_callibration" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.evaluation.plots.SectorPlotter.plot_distributions">
+<span class="sig-name descname"><span class="pre">plot_distributions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/plots.html#SectorPlotter.plot_distributions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.plots.SectorPlotter.plot_distributions" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.evaluation.plots.SectorPlotter.plot_ensemble">
+<span class="sig-name descname"><span class="pre">plot_ensemble</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uncertainty</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'quantiles'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/plots.html#SectorPlotter.plot_ensemble"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.plots.SectorPlotter.plot_ensemble" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.evaluation.plots.SectorPlotter.plot_ensemble_mean">
+<span class="sig-name descname"><span class="pre">plot_ensemble_mean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uncertainty</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/plots.html#SectorPlotter.plot_ensemble_mean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.plots.SectorPlotter.plot_ensemble_mean" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.evaluation.plots.SectorPlotter.plot_histograms">
+<span class="sig-name descname"><span class="pre">plot_histograms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/plots.html#SectorPlotter.plot_histograms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.plots.SectorPlotter.plot_histograms" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.evaluation.plots.SectorPlotter.plot_test_series">
+<span class="sig-name descname"><span class="pre">plot_test_series</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_series</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approx_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mc_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'95'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'random'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/plots.html#SectorPlotter.plot_test_series"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.plots.SectorPlotter.plot_test_series" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.evaluation.plots.UncertaintyBounds">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.evaluation.plots.</span></span><span class="sig-name descname"><span class="pre">UncertaintyBounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'95'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/plots.html#UncertaintyBounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.plots.UncertaintyBounds" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.plots.plot_callibration">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.plots.</span></span><span class="sig-name descname"><span class="pre">plot_callibration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_by</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/plots.html#plot_callibration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.plots.plot_callibration" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.plots.plot_distributions">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.plots.</span></span><span class="sig-name descname"><span class="pre">plot_distributions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/plots.html#plot_distributions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.plots.plot_distributions" title="Link to this definition"></a></dt>
+<dd><p>Generates a plot of comparison of distributions at a given time slice (year) from the true simulations and the predicted emulation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) – testing results dataframe, result from [ise.utils.data.combine_testing_results](<a class="reference external" href="https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#combine_testing_results">https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#combine_testing_results</a>).</p></li>
+<li><p><strong>year</strong> (<em>int</em><em>, </em><em>optional</em>) – Distribution year (time slice). Defaults to 2100.</p></li>
+<li><p><strong>column</strong> (<em>str</em><em>, </em><em>optional</em>) – Column to subset on, used in [ise.utils.data.group_by_run](<a class="reference external" href="https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#group_by_run">https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#group_by_run</a>). Defaults to None.</p></li>
+<li><p><strong>condition</strong> (<em>str</em><em>, </em><em>optional</em>) – Condition to subset with, used in [ise.utils.data.group_by_run](<a class="reference external" href="https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#group_by_run">https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#group_by_run</a>). Can be int, str, float, etc. Defaults to None.</p></li>
+<li><p><strong>save</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to save plot. Defaults to None.</p></li>
+<li><p><strong>cache</strong> (<em>dict</em><em>, </em><em>optional</em>) – Cached results from previous calculation, used internally in [ise.visualization.Plotter](<a class="reference external" href="https://brown-sciml.github.io/ise/ise/sectors/visualization/Plotter.html#Plotter">https://brown-sciml.github.io/ise/ise/sectors/visualization/Plotter.html#Plotter</a>). Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.plots.plot_ensemble">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.plots.</span></span><span class="sig-name descname"><span class="pre">plot_ensemble</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'quantiles'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/plots.html#plot_ensemble"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.plots.plot_ensemble" title="Link to this definition"></a></dt>
+<dd><p>Generates a plot of the comparison of ensemble results from the true simulations and the predicted emulation.
+Adds uncertainty bounds and plots them side-by-side.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) – testing results dataframe, result from [ise.utils.data.combine_testing_results](<a class="reference external" href="https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#combine_testing_results">https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#combine_testing_results</a>).</p></li>
+<li><p><strong>uncertainty</strong> (<em>str</em><em>, </em><em>optional</em>) – Type of uncertainty for creating bounds, must be in [quantiles, confidence]. Defaults to ‘quantiles’.</p></li>
+<li><p><strong>column</strong> (<em>str</em><em>, </em><em>optional</em>) – Column to subset on, used in [ise.utils.data.group_by_run](<a class="reference external" href="https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#group_by_run">https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#group_by_run</a>). Defaults to None.</p></li>
+<li><p><strong>condition</strong> (<em>str</em><em>, </em><em>optional</em>) – Condition to subset with, used in [ise.utils.data.group_by_run](<a class="reference external" href="https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#group_by_run">https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#group_by_run</a>). Can be int, str, float, etc. Defaults to None.</p></li>
+<li><p><strong>save</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to save plot. Defaults to None.</p></li>
+<li><p><strong>cache</strong> (<em>dict</em><em>, </em><em>optional</em>) – Cached results from previous calculation, used internally in [ise.visualization.Plotter](<a class="reference external" href="https://brown-sciml.github.io/ise/ise/sectors/visualization/Plotter.html#Plotter">https://brown-sciml.github.io/ise/ise/sectors/visualization/Plotter.html#Plotter</a>). Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.plots.plot_ensemble_mean">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.plots.</span></span><span class="sig-name descname"><span class="pre">plot_ensemble_mean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/plots.html#plot_ensemble_mean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.plots.plot_ensemble_mean" title="Link to this definition"></a></dt>
+<dd><p>Generates a plot of the mean sea level contribution from the true simulations and the predicted emulation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) – testing results dataframe, result from [ise.utils.data.combine_testing_results](<a class="reference external" href="https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#combine_testing_results">https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#combine_testing_results</a>).</p></li>
+<li><p><strong>uncertainty</strong> (<em>str</em><em>, </em><em>optional</em>) – Type of uncertainty for creating bounds. If not None/False, must be in [quantiles, confidence]. Defaults to ‘quantiles’.</p></li>
+<li><p><strong>column</strong> (<em>str</em><em>, </em><em>optional</em>) – Column to subset on, used in [ise.utils.data.group_by_run](<a class="reference external" href="https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#group_by_run">https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#group_by_run</a>). Defaults to None.</p></li>
+<li><p><strong>condition</strong> (<em>str</em><em>, </em><em>optional</em>) – Condition to subset with, used in [ise.utils.data.group_by_run](<a class="reference external" href="https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#group_by_run">https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#group_by_run</a>). Can be int, str, float, etc. Defaults to None.</p></li>
+<li><p><strong>save</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to save plot. Defaults to None.</p></li>
+<li><p><strong>cache</strong> (<em>dict</em><em>, </em><em>optional</em>) – Cached results from previous calculation, used internally in [ise.visualization.Plotter](<a class="reference external" href="https://brown-sciml.github.io/ise/ise/sectors/visualization/Plotter.html#Plotter">https://brown-sciml.github.io/ise/ise/sectors/visualization/Plotter.html#Plotter</a>). Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.plots.plot_histograms">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.plots.</span></span><span class="sig-name descname"><span class="pre">plot_histograms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/plots.html#plot_histograms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.plots.plot_histograms" title="Link to this definition"></a></dt>
+<dd><p>Generates a plot of comparison of histograms at a given time slice (year) from the true simulations and the predicted emulation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) – testing results dataframe, result from [ise.utils.data.combine_testing_results](<a class="reference external" href="https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#combine_testing_results">https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#combine_testing_results</a>).</p></li>
+<li><p><strong>year</strong> (<em>int</em><em>, </em><em>optional</em>) – Histogram year (time slice). Defaults to 2100.</p></li>
+<li><p><strong>column</strong> (<em>str</em><em>, </em><em>optional</em>) – Column to subset on, used in [ise.utils.data.group_by_run](<a class="reference external" href="https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#group_by_run">https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#group_by_run</a>). Defaults to None.</p></li>
+<li><p><strong>condition</strong> (<em>str</em><em>, </em><em>optional</em>) – Condition to subset with, used in [ise.utils.data.group_by_run](<a class="reference external" href="https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#group_by_run">https://brown-sciml.github.io/ise/ise/sectors/utils/data.html#group_by_run</a>). Can be int, str, float, etc. Defaults to None.</p></li>
+<li><p><strong>save</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to save plot. Defaults to None.</p></li>
+<li><p><strong>cache</strong> (<em>dict</em><em>, </em><em>optional</em>) – Cached results from previous calculation, used internally in [ise.visualization.Plotter](<a class="reference external" href="https://brown-sciml.github.io/ise/ise/sectors/visualization/Plotter.html#Plotter">https://brown-sciml.github.io/ise/ise/sectors/visualization/Plotter.html#Plotter</a>). Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.plots.plot_test_series">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.plots.</span></span><span class="sig-name descname"><span class="pre">plot_test_series</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approx_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mc_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'95'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'random'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/plots.html#plot_test_series"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.plots.plot_test_series" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-ise.evaluation">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-ise.evaluation" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Peter Van Katwyk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

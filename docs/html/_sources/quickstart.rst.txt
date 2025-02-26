@@ -1,0 +1,16 @@
+Quickstart Guide
+=================
+
+To get started, you must first have access to the Globus Archive containing the ISMIP6 climate
+forcings and ISMIP6 model outputs. For information on gaining access to these datasets, see the 
+`ISMIP wiki page <https://theghub.org/groups/ismip6/wiki>`_.
+
+Clone the repository:
+.. code-block:: shell
+
+   git clone https://github.com/Brown-SciML/ise.git
+
+Install the package:
+.. code-block:: shell
+
+   pip install -e .

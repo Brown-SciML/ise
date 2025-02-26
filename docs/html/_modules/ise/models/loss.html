@@ -1,0 +1,515 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ise.models.loss &mdash; ise 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="/_modules/ise/models/loss.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ise
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ise</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ise.models.loss</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ise.models.loss</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;This module contains custom loss functions for training neural network emulators.</span>
+
+<span class="sd">Classes:</span>
+<span class="sd">    - WeightedGridLoss: Custom loss function that penalizes errors based on the total variation of a grid.</span>
+<span class="sd">    - WeightedMSELoss: Custom loss function that penalizes errors on extreme values more.</span>
+<span class="sd">    - WeightedMSEPCALoss: Custom loss function that penalizes errors on extreme values more and allows for custom weighting of each prediction in a batched manner.</span>
+<span class="sd">    - WeightedMSELossWithSignPenalty: Custom loss function that penalizes errors on extreme values more and adds a penalty for opposite sign predictions.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">torch</span>
+
+
+<div class="viewcode-block" id="WeightedGridLoss">
+<a class="viewcode-back" href="../../../docs/source/ise.models.html#ise.models.loss.WeightedGridLoss">[docs]</a>
+<span class="k">class</span> <span class="nc">WeightedGridLoss</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">WeightedGridLoss</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+<div class="viewcode-block" id="WeightedGridLoss.total_variation_regularization">
+<a class="viewcode-back" href="../../../docs/source/ise.models.html#ise.models.loss.WeightedGridLoss.total_variation_regularization">[docs]</a>
+    <span class="k">def</span> <span class="nf">total_variation_regularization</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">grid</span><span class="p">):</span>
+        <span class="c1"># Calculate the sum of horizontal and vertical differences</span>
+        <span class="n">horizontal_diff</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">vertical_diff</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">total_variation</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">horizontal_diff</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+            <span class="n">vertical_diff</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">total_variation</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="WeightedGridLoss.weighted_pixelwise_mse">
+<a class="viewcode-back" href="../../../docs/source/ise.models.html#ise.models.loss.WeightedGridLoss.weighted_pixelwise_mse">[docs]</a>
+    <span class="k">def</span> <span class="nf">weighted_pixelwise_mse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="n">predicted</span><span class="p">,</span> <span class="n">weights</span><span class="p">):</span>
+        <span class="c1"># Compute the squared error</span>
+        <span class="n">squared_error</span> <span class="o">=</span> <span class="p">(</span><span class="n">true</span> <span class="o">-</span> <span class="n">predicted</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="c1"># Apply weights</span>
+        <span class="n">weighted_error</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">*</span> <span class="n">squared_error</span>
+        <span class="c1"># Return the mean of the weighted error</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">weighted_error</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="WeightedGridLoss.forward">
+<a class="viewcode-back" href="../../../docs/source/ise.models.html#ise.models.loss.WeightedGridLoss.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="n">predicted</span><span class="p">,</span> <span class="n">smoothness_weight</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">extreme_value_threshold</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">):</span>
+        <span class="n">true</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">true</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">predicted</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">predicted</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Determine weights based on extreme values</span>
+        <span class="k">if</span> <span class="n">extreme_value_threshold</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Identify extreme values in the true data</span>
+            <span class="n">extreme_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">true</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">extreme_value_threshold</span>
+            <span class="c1"># Assign higher weight to extreme values, 1 to others</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">extreme_mask</span><span class="p">,</span> <span class="mf">10.0</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">true</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">true</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># If no threshold is provided, use uniform weights</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">true</span><span class="p">)</span>
+
+        <span class="n">pixelwise_mse</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weighted_pixelwise_mse</span><span class="p">(</span><span class="n">true</span><span class="p">,</span> <span class="n">predicted</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
+        <span class="n">tvr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_variation_regularization</span><span class="p">(</span><span class="n">predicted</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pixelwise_mse</span> <span class="o">+</span> <span class="n">smoothness_weight</span> <span class="o">*</span> <span class="n">tvr</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WeightedMSELoss">
+<a class="viewcode-back" href="../../../docs/source/ise.models.html#ise.models.loss.WeightedMSELoss">[docs]</a>
+<span class="k">class</span> <span class="nc">WeightedMSELoss</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_mean</span><span class="p">,</span> <span class="n">data_std</span><span class="p">,</span> <span class="n">weight_factor</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Custom loss function that penalizes errors on extreme values more.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data_mean (float): Mean of the target variable in the training set.</span>
+<span class="sd">            data_std (float): Standard deviation of the target variable in the training set.</span>
+<span class="sd">            weight_factor (float): Factor to adjust the weighting. Higher values will increase</span>
+<span class="sd">                                   the penalty on extremes. Default is 1.0.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">WeightedMSELoss</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">data_mean</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_std</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">data_std</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weight_factor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">weight_factor</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+<div class="viewcode-block" id="WeightedMSELoss.forward">
+<a class="viewcode-back" href="../../../docs/source/ise.models.html#ise.models.loss.WeightedMSELoss.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the Weighted MSE Loss.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            input (tensor): Predicted values.</span>
+<span class="sd">            target (tensor): Actual values.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tensor: Computed loss.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Ensure data_mean, data_std, and weight_factor are on the same device as input</span>
+        <span class="nb">input</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Calculate the deviation of each target value from the mean</span>
+        <span class="n">deviation</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">target</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_mean</span><span class="p">)</span>
+
+        <span class="c1"># Scale deviations by the standard deviation to normalize them</span>
+        <span class="c1"># normalized_deviation = torch.tensor(deviation / self.data_std, dtype=torch.float32, device=self.device)</span>
+        <span class="n">normalized_deviation</span> <span class="o">=</span> <span class="n">deviation</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_std</span>
+
+        <span class="c1"># Compute weights: increase penalty for extreme values</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">normalized_deviation</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_factor</span><span class="p">)</span>
+
+        <span class="c1"># Compute the squared error</span>
+        <span class="n">squared_error</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">reduction</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Apply the weights and take the mean to get the final loss</span>
+        <span class="n">weighted_squared_error</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">*</span> <span class="n">squared_error</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">weighted_squared_error</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">loss</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WeightedMSEPCALoss">
+<a class="viewcode-back" href="../../../docs/source/ise.models.html#ise.models.loss.WeightedMSEPCALoss">[docs]</a>
+<span class="k">class</span> <span class="nc">WeightedMSEPCALoss</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_mean</span><span class="p">,</span> <span class="n">data_std</span><span class="p">,</span> <span class="n">weight_factor</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">custom_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Custom loss function that penalizes errors on extreme values more and allows for custom weighting of each prediction</span>
+<span class="sd">        in a batched manner.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data_mean (float): Mean of the target variable in the training set.</span>
+<span class="sd">            data_std (float): Standard deviation of the target variable in the training set.</span>
+<span class="sd">            weight_factor (float): Factor to adjust the weighting. Higher values will increase the penalty on extremes. Default is 1.0.</span>
+<span class="sd">            custom_weights (torch.Tensor, optional): A tensor of weights corresponding to each y-value in the batch. Default is None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">WeightedMSEPCALoss</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">data_mean</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_std</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">data_std</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weight_factor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">weight_factor</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">custom_weights</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">custom_weights</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">custom_weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="WeightedMSEPCALoss.forward">
+<a class="viewcode-back" href="../../../docs/source/ise.models.html#ise.models.loss.WeightedMSEPCALoss.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the Weighted MSE Loss for batched inputs and outputs.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            input (tensor): Predicted values with shape (batch_size, num_targets).</span>
+<span class="sd">            target (tensor): Actual values with shape (batch_size, num_targets).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tensor: Computed loss.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">input</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Ensure input and target are of the same shape</span>
+        <span class="k">if</span> <span class="nb">input</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">target</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Input and target must have the same shape.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Calculate the deviation of each target value from the mean</span>
+        <span class="n">deviation</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">target</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_mean</span><span class="p">)</span>
+
+        <span class="c1"># Scale deviations by the standard deviation to normalize them</span>
+        <span class="n">normalized_deviation</span> <span class="o">=</span> <span class="n">deviation</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_std</span>
+
+        <span class="c1"># Compute weights: increase penalty for extreme values</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">normalized_deviation</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_factor</span><span class="p">)</span>
+
+        <span class="c1"># If custom weights are provided, multiply them by the calculated weights</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Expand custom weights to match batch size if necessary</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_weights</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">custom_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_weights</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Make it a 2D tensor</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_weights</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Custom weights shape must match input/target shape.&quot;</span><span class="p">)</span>
+            <span class="n">weights</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_weights</span>
+
+        <span class="c1"># Compute the squared error for each element in the batch without reducing</span>
+        <span class="n">squared_error</span> <span class="o">=</span> <span class="p">(</span><span class="nb">input</span> <span class="o">-</span> <span class="n">target</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+
+        <span class="c1"># Apply the weights to the squared error</span>
+        <span class="n">weighted_squared_error</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">*</span> <span class="n">squared_error</span>
+
+        <span class="c1"># Take the mean across all dimensions to get the final loss</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">weighted_squared_error</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">loss</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WeightedMSELossWithSignPenalty">
+<a class="viewcode-back" href="../../../docs/source/ise.models.html#ise.models.loss.WeightedMSELossWithSignPenalty">[docs]</a>
+<span class="k">class</span> <span class="nc">WeightedMSELossWithSignPenalty</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_mean</span><span class="p">,</span> <span class="n">data_std</span><span class="p">,</span> <span class="n">weight_factor</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">sign_penalty_factor</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Custom loss function that penalizes errors on extreme values more and adds a penalty for opposite sign predictions.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data_mean (float): Mean of the target variable in the training set.</span>
+<span class="sd">            data_std (float): Standard deviation of the target variable in the training set.</span>
+<span class="sd">            weight_factor (float): Factor to adjust the weighting for extremes. Higher values will increase</span>
+<span class="sd">                                   the penalty on extremes. Default is 1.0.</span>
+<span class="sd">            sign_penalty_factor (float): Factor to adjust the penalty for opposite sign predictions.</span>
+<span class="sd">                                         Higher values increase the penalty. Default is 1.0.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">WeightedMSELossWithSignPenalty</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">data_mean</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_std</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">data_std</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weight_factor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">weight_factor</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sign_penalty_factor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+            <span class="n">sign_penalty_factor</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+<div class="viewcode-block" id="WeightedMSELossWithSignPenalty.forward">
+<a class="viewcode-back" href="../../../docs/source/ise.models.html#ise.models.loss.WeightedMSELossWithSignPenalty.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the Weighted MSE Loss with an additional penalty for opposite sign predictions.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            input (tensor): Predicted values.</span>
+<span class="sd">            target (tensor): Actual values.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tensor: Computed loss.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Calculate the deviation of each target value from the mean</span>
+        <span class="n">deviation</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">target</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_mean</span><span class="p">)</span>
+
+        <span class="c1"># Scale deviations by the standard deviation to normalize them</span>
+        <span class="n">normalized_deviation</span> <span class="o">=</span> <span class="n">deviation</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_std</span>
+
+        <span class="c1"># Compute weights: increase penalty for extreme values</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">normalized_deviation</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_factor</span><span class="p">)</span>
+
+        <span class="c1"># Compute the squared error</span>
+        <span class="n">squared_error</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">reduction</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Calculate sign penalty</span>
+        <span class="n">sign_penalty</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span> <span class="o">!=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">target</span><span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="nb">input</span> <span class="o">-</span> <span class="n">target</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sign_penalty_factor</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="nb">input</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Apply the weights and sign penalty, then take the mean to get the final loss</span>
+        <span class="n">weighted_squared_error</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">*</span> <span class="p">(</span><span class="n">squared_error</span> <span class="o">+</span> <span class="n">sign_penalty</span><span class="p">)</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">weighted_squared_error</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">loss</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="GridCriterion">
+<a class="viewcode-back" href="../../../docs/source/ise.models.html#ise.models.loss.GridCriterion">[docs]</a>
+<span class="k">class</span> <span class="nc">GridCriterion</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">GridCriterion</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+<div class="viewcode-block" id="GridCriterion.total_variation_regularization">
+<a class="viewcode-back" href="../../../docs/source/ise.models.html#ise.models.loss.GridCriterion.total_variation_regularization">[docs]</a>
+    <span class="k">def</span> <span class="nf">total_variation_regularization</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">grid</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="c1"># Calculate the sum of horizontal and vertical differences</span>
+        <span class="n">horizontal_diff</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">vertical_diff</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">total_variation</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">horizontal_diff</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+            <span class="n">vertical_diff</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">total_variation</span><span class="p">)</span></div>
+
+
+    <span class="c1"># def spatial_loss(self, true, predicted, smoothness_weight=0.001):</span>
+<div class="viewcode-block" id="GridCriterion.forward">
+<a class="viewcode-back" href="../../../docs/source/ise.models.html#ise.models.loss.GridCriterion.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="n">predicted</span><span class="p">,</span> <span class="n">smoothness_weight</span><span class="o">=</span><span class="mf">0.001</span><span class="p">):</span>
+        <span class="n">pixelwise_mse</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">true</span> <span class="o">-</span> <span class="n">predicted</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>  <span class="c1"># loss for each image in the batch (batch_size,)</span>
+        <span class="n">tvr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_variation_regularization</span><span class="p">(</span>
+            <span class="n">predicted</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">pixelwise_mse</span> <span class="o">+</span> <span class="n">smoothness_weight</span> <span class="o">*</span> <span class="n">tvr</span></div>
+</div>
+
+
+    <span class="c1"># def forward(self, true, predicted, x, y, flow, predictor_weight=0.5, nf_weight=0.5,):</span>
+    <span class="c1">#     if predictor_weight + nf_weight != 1:</span>
+    <span class="c1">#         raise ValueError(&quot;The sum of predictor_weight and nf_weight must be 1&quot;)</span>
+    <span class="c1">#     predictor_loss = self.spatial_loss(true, predicted, smoothness_weight=0.2)</span>
+    <span class="c1">#     nf_loss = -flow.log_prob(inputs=y, context=x)</span>
+    <span class="c1">#     return predictor_weight*predictor_loss + nf_weight*nf_loss</span>
+
+
+<div class="viewcode-block" id="WeightedPCALoss">
+<a class="viewcode-back" href="../../../docs/source/ise.models.html#ise.models.loss.WeightedPCALoss">[docs]</a>
+<span class="k">class</span> <span class="nc">WeightedPCALoss</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">component_weights</span><span class="p">,</span> <span class="n">reduction</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Custom loss function that applies different weights to the error of each principal component prediction.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            component_weights (list or torch.Tensor): Weights for each principal component&#39;s error,</span>
+<span class="sd">                                                      where the first component has the highest weight.</span>
+<span class="sd">            reduction (str): Specifies the reduction to apply to the output: &#39;none&#39; | &#39;mean&#39; | &#39;sum&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">WeightedPCALoss</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">component_weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+            <span class="n">component_weights</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">component_weights</span><span class="o">.</span><span class="n">size</span><span class="p">())</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">component_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">component_weights</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Make it a row vector</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reduction</span> <span class="o">=</span> <span class="n">reduction</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+<div class="viewcode-block" id="WeightedPCALoss.forward">
+<a class="viewcode-back" href="../../../docs/source/ise.models.html#ise.models.loss.WeightedPCALoss.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the weighted loss for principal component predictions.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            input (tensor): Predicted principal components.</span>
+<span class="sd">            target (tensor): Actual principal components.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tensor: Computed Weighted PCA Loss.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">input</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Ensure input and target are of the same shape</span>
+        <span class="k">if</span> <span class="nb">input</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">target</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Input and target must have the same shape&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Calculate the squared error</span>
+        <span class="n">squared_error</span> <span class="o">=</span> <span class="p">(</span><span class="nb">input</span> <span class="o">-</span> <span class="n">target</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+
+        <span class="c1"># Apply weights to the squared error</span>
+        <span class="n">weighted_error</span> <span class="o">=</span> <span class="n">squared_error</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">component_weights</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Apply reduction</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduction</span> <span class="o">==</span> <span class="s2">&quot;mean&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">weighted_error</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduction</span> <span class="o">==</span> <span class="s2">&quot;sum&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">weighted_error</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">weighted_error</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MSEDeviationLoss">
+<a class="viewcode-back" href="../../../docs/source/ise.models.html#ise.models.loss.MSEDeviationLoss">[docs]</a>
+<span class="k">class</span> <span class="nc">MSEDeviationLoss</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">penalty_multiplier</span><span class="o">=</span><span class="mf">2.0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Custom MSE Loss with an additional penalty for large deviations.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">        - threshold: The error magnitude beyond which the penalty is applied.</span>
+<span class="sd">        - penalty_multiplier: Multiplier for the penalty term for errors exceeding the threshold.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MSEDeviationLoss</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">threshold</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">penalty_multiplier</span> <span class="o">=</span> <span class="n">penalty_multiplier</span>
+
+<div class="viewcode-block" id="MSEDeviationLoss.forward">
+<a class="viewcode-back" href="../../../docs/source/ise.models.html#ise.models.loss.MSEDeviationLoss.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">targets</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the custom loss.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">        - predictions: The predicted values.</span>
+<span class="sd">        - targets: The ground truth values.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">        - loss: The computed custom loss.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mse_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">predictions</span> <span class="o">-</span> <span class="n">targets</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">large_deviation_penalty</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">predictions</span> <span class="o">-</span> <span class="n">targets</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">penalty_multiplier</span> <span class="o">*</span> <span class="p">(</span><span class="n">predictions</span> <span class="o">-</span> <span class="n">targets</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">predictions</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">mse_loss</span> <span class="o">+</span> <span class="n">large_deviation_penalty</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Peter Van Katwyk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

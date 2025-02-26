@@ -14,31 +14,9 @@ from ise.models.dim_reducers.pca import PCA
 from ise.utils.functions import get_all_filepaths
 
 
-class GridProcessor:
-    pass
-
-
-class SectorProcessor:
-    pass
-
-
 class ProjectionProcessor:
     """
-    A class for processing ice sheet data.
-
-    Attributes:
-    - ice_sheet (str): Ice sheet to be processed. Must be 'AIS' or 'GIS'.
-    - forcings_directory (str): The path to the directory containing the forcings data.
-    - projections_directory (str): The path to the directory containing the projections data.
-    - scalefac_path (str): The path to the netCDF file containing scaling factors for each grid cell.
-    - densities_path (str): The path to the CSV file containing ice and ocean density (rhow/rhoi) data for each experiment.
-
-    Methods:
-    - __init__(self, ice_sheet, forcings_directory, projections_directory, scalefac_path=None, densities_path=None): Initializes the Processor object.
-    - process_forcings(self): Processes the forcings data.
-    - process_projections(self, output_directory): Processes the projections data.
-    - _calculate_ivaf_minus_control(self, data_directory, densities_fp, scalefac_path): Calculates the ice volume above flotation (IVAF) for each file in the given data directory, subtracting out the control projection IVAF if applicable.
-    - _calculate_ivaf_single_file(self, directory, densities, scalefac_model, ctrl_proj=False): Calculates the ice volume above flotation (IVAF) for a single file.
+    A class for processing projections (outputs) for ISMIP6 ice sheet models.
     """
 
     def __init__(
@@ -102,15 +80,15 @@ class ProjectionProcessor:
         subtracting out the control projection IVAF if applicable.
 
         Args:
-        - data_directory (str): path to directory containing the data files to process
-        - densities_fp (str or pd.DataFrame): filepath to CSV file containing density data, or a pandas DataFrame
-        - scalefac_path (str): path to netCDF file containing scaling factors for each grid cell
+          data_directory (str): path to directory containing the data files to process
+          densities_fp (str or pd.DataFrame): filepath to CSV file containing density data, or a pandas DataFrame
+          scalefac_path (str): path to netCDF file containing scaling factors for each grid cell
 
         Returns:
-        - int: 1 indicating successful calculation.
+          int: 1 indicating successful calculation.
 
         Raises:
-        - ValueError: if densities_fp is None or not a string or pandas DataFrame
+          ValueError: if densities_fp is None or not a string or pandas DataFrame
 
         """
 

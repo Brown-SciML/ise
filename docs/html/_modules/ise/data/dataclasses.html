@@ -1,0 +1,360 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ise.data.dataclasses &mdash; ise 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="/_modules/ise/data/dataclasses.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ise
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ise</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ise.data.dataclasses</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ise.data.dataclasses</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">Dataset</span>
+
+
+<div class="viewcode-block" id="EmulatorDataset">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.dataclasses.EmulatorDataset">[docs]</a>
+<span class="k">class</span> <span class="nc">EmulatorDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A PyTorch dataset for loading emulator data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X (pandas.DataFrame, numpy.ndarray, or torch.Tensor): The input data.</span>
+<span class="sd">        y (pandas.DataFrame, numpy.ndarray, or torch.Tensor): The target data.</span>
+<span class="sd">        sequence_length (int): The length of the input sequence.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        X (torch.Tensor): The input data as a PyTorch tensor.</span>
+<span class="sd">        y (torch.Tensor): The target data as a PyTorch tensor.</span>
+<span class="sd">        sequence_length (int): The length of the input sequence.</span>
+
+<span class="sd">    Methods:</span>
+<span class="sd">        __to_tensor(x): Converts input data to a PyTorch tensor.</span>
+<span class="sd">        __len__(): Returns the length of the dataset.</span>
+<span class="sd">        __getitem__(i): Returns the i-th item in the dataset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">sequence_length</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">projection_length</span><span class="o">=</span><span class="mi">86</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">projection_length</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">projection_length</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">projection_length</span> <span class="o">=</span> <span class="n">projection_length</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Projection length must be a single integer or a tuple of two integers.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">projection_length</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Full projections of </span><span class="si">{</span><span class="n">projection_length</span><span class="si">}</span><span class="s2"> timesteps are not present in the dataset. This may lead to unexpected behavior.&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_to_tensor</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_to_tensor</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sequence_length</span> <span class="o">=</span> <span class="n">sequence_length</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xdim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">xdim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>  <span class="c1"># batched by projection</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_projections</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_timesteps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_features</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">xdim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># unbatched (rows of projections*timestamps)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">projections_and_timesteps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_timesteps</span> <span class="o">=</span> <span class="n">projection_length</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_projections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">projections_and_timesteps</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_timesteps</span>
+        <span class="c1"># self.num_sequences = self.timesteps - sequence_length + 1</span>
+
+    <span class="k">def</span> <span class="nf">_to_tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts input data to a PyTorch tensor of type float.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x: Input data to be converted. Must be a pandas dataframe, numpy array, or PyTorch tensor.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A PyTorch tensor of type float.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Data must be a pandas dataframe, numpy array, or PyTorch tensor&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+
+<div class="viewcode-block" id="EmulatorDataset.__len__">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.dataclasses.EmulatorDataset.__len__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">xdim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="EmulatorDataset.__getitem__">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.dataclasses.EmulatorDataset.__getitem__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the i-th item in the dataset.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            i (int): Index of the item to retrieve.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            If `y` is None, returns the input sequence at index `i` as a PyTorch tensor.</span>
+<span class="sd">            Otherwise, returns a tuple containing the input sequence at index `i` and the corresponding target value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Calculate projection index and timestep index</span>
+        <span class="n">projection_index</span> <span class="o">=</span> <span class="n">i</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_timesteps</span>
+        <span class="n">time_step_index</span> <span class="o">=</span> <span class="n">i</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_timesteps</span>
+
+        <span class="c1"># Initialize a sequence with zeros for padding</span>
+        <span class="n">sequence</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">sequence_length</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">))</span>
+
+        <span class="c1"># Calculate start and end points for the data to copy from the original dataset</span>
+        <span class="n">start_point</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">time_step_index</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">sequence_length</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">end_point</span> <span class="o">=</span> <span class="n">time_step_index</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">length_of_data</span> <span class="o">=</span> <span class="n">end_point</span> <span class="o">-</span> <span class="n">start_point</span>
+
+        <span class="c1"># Copy the data from the dataset to the end of the sequence to preserve recent data at the end</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">xdim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">sequence</span><span class="p">[</span><span class="o">-</span><span class="n">length_of_data</span><span class="p">:]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">[</span><span class="n">projection_index</span><span class="p">,</span> <span class="n">start_point</span><span class="p">:</span><span class="n">end_point</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">xdim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">sequence</span><span class="p">[</span><span class="o">-</span><span class="n">length_of_data</span><span class="p">:]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">[</span>
+                <span class="n">projection_index</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_timesteps</span>
+                <span class="o">+</span> <span class="n">start_point</span> <span class="p">:</span> <span class="n">projection_index</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_timesteps</span>
+                <span class="o">+</span> <span class="n">end_point</span>
+            <span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">sequence</span>
+
+        <span class="k">return</span> <span class="n">sequence</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="PyTorchDataset">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.dataclasses.PyTorchDataset">[docs]</a>
+<span class="k">class</span> <span class="nc">PyTorchDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A PyTorch dataset for general data loading.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X (pandas.DataFrame, numpy.ndarray, or torch.Tensor): The input data.</span>
+<span class="sd">        y (pandas.DataFrame, numpy.ndarray, or torch.Tensor): The target data.</span>
+
+<span class="sd">    Methods:</span>
+<span class="sd">        __getitem__(index): Returns the item at the given index.</span>
+<span class="sd">        __len__(): Returns the length of the dataset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X_data</span> <span class="o">=</span> <span class="n">X</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_data</span> <span class="o">=</span> <span class="n">y</span>
+
+<div class="viewcode-block" id="PyTorchDataset.__getitem__">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.dataclasses.PyTorchDataset.__getitem__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the item at the given index.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            index (int): Index of the item to retrieve.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            If `y` is None, returns the input data at index `index`.</span>
+<span class="sd">            Otherwise, returns a tuple containing the input data at index `index` and the corresponding target value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_data</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_data</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_data</span><span class="p">[</span><span class="n">index</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="PyTorchDataset.__len__">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.dataclasses.PyTorchDataset.__len__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the length of the dataset.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The length of the dataset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_data</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TSDataset">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.dataclasses.TSDataset">[docs]</a>
+<span class="k">class</span> <span class="nc">TSDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A PyTorch dataset for time series data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X (pandas.DataFrame, numpy.ndarray, or torch.Tensor): The input data.</span>
+<span class="sd">        y (pandas.DataFrame, numpy.ndarray, or torch.Tensor): The target data.</span>
+<span class="sd">        sequence_length (int): The length of the input sequence.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        X (torch.Tensor): The input data as a PyTorch tensor.</span>
+<span class="sd">        y (torch.Tensor): The target data as a PyTorch tensor.</span>
+<span class="sd">        sequence_length (int): The length of the input sequence.</span>
+
+<span class="sd">    Methods:</span>
+<span class="sd">        __len__(): Returns the length of the dataset.</span>
+<span class="sd">        __getitem__(i): Returns the i-th item in the dataset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">sequence_length</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">y</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sequence_length</span> <span class="o">=</span> <span class="n">sequence_length</span>
+
+<div class="viewcode-block" id="TSDataset.__len__">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.dataclasses.TSDataset.__len__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the length of the dataset.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The length of the dataset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TSDataset.__getitem__">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.dataclasses.TSDataset.__getitem__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the i-th item in the dataset.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            i (int): Index of the item to retrieve.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            If `y` is None, returns the input sequence at index `i` as a PyTorch tensor.</span>
+<span class="sd">            Otherwise, returns a tuple containing the input sequence at index `i` and the corresponding target value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sequence_length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">i_start</span> <span class="o">=</span> <span class="n">i</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">sequence_length</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">[</span><span class="n">i_start</span> <span class="p">:</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="p">:]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">padding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sequence_length</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">[</span><span class="mi">0</span> <span class="p">:</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="p">:]</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">padding</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">x</span>
+
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span></div>
+</div>
+
+    
+
+<div class="viewcode-block" id="ScenarioDataset">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.dataclasses.ScenarioDataset">[docs]</a>
+<span class="k">class</span> <span class="nc">ScenarioDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">features</span> <span class="o">=</span> <span class="n">features</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Peter Van Katwyk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

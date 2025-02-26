@@ -1,0 +1,343 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ise.evaluation.metrics &mdash; ise 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="/_modules/ise/evaluation/metrics.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ise
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ise</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ise.evaluation.metrics</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ise.evaluation.metrics</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial.distance</span> <span class="kn">import</span> <span class="n">jensenshannon</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">kstest</span><span class="p">,</span> <span class="n">ttest_ind</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">r2_score</span> <span class="k">as</span> <span class="n">r2</span>
+<span class="kn">import</span> <span class="nn">properscoring</span> <span class="k">as</span> <span class="nn">ps</span>
+
+
+<div class="viewcode-block" id="sum_by_sector">
+<a class="viewcode-back" href="../../../docs/source/ise.evaluation.html#ise.evaluation.metrics.sum_by_sector">[docs]</a>
+<span class="k">def</span> <span class="nf">sum_by_sector</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">grid_file</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">grid_file</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">grids</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">grid_file</span><span class="p">)</span>
+        <span class="n">sector_name</span> <span class="o">=</span> <span class="s2">&quot;sectors&quot;</span> <span class="k">if</span> <span class="s2">&quot;ais&quot;</span> <span class="ow">in</span> <span class="n">grid_file</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;ID&quot;</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">grid_file</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+        <span class="n">sector_name</span> <span class="o">=</span> <span class="s2">&quot;ID&quot;</span> <span class="k">if</span> <span class="s2">&quot;Rignot&quot;</span> <span class="ow">in</span> <span class="n">grids</span><span class="o">.</span><span class="n">Description</span> <span class="k">else</span> <span class="s2">&quot;sectors&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;grid_file must be a string or an xarray Dataset.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">num_timesteps</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">num_timesteps</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+    <span class="c1"># if len(array.shape) == 3:</span>
+    <span class="c1">#     grids = grids.expand_dims(dim={&#39;time&#39;: num_timesteps})</span>
+    <span class="n">sectors</span> <span class="o">=</span> <span class="n">grids</span><span class="p">[</span><span class="n">sector_name</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="n">ice_sheet</span> <span class="o">=</span> <span class="s2">&quot;AIS&quot;</span> <span class="k">if</span> <span class="mi">761</span> <span class="ow">in</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span> <span class="k">else</span> <span class="s2">&quot;GIS&quot;</span>
+    <span class="n">num_sectors</span> <span class="o">=</span> <span class="mi">18</span> <span class="k">if</span> <span class="n">ice_sheet</span> <span class="o">==</span> <span class="s2">&quot;AIS&quot;</span> <span class="k">else</span> <span class="mi">6</span>
+
+    <span class="n">sums_by_sector</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_timesteps</span><span class="p">,</span> <span class="n">num_sectors</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="k">for</span> <span class="n">sector</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_sectors</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">sums_by_sector</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">sector</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">array</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:][</span><span class="n">sectors</span> <span class="o">==</span> <span class="n">sector</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">sums_by_sector</span></div>
+
+
+<div class="viewcode-block" id="r2_score">
+<a class="viewcode-back" href="../../../docs/source/ise.evaluation.html#ise.evaluation.metrics.r2_score">[docs]</a>
+<span class="k">def</span> <span class="nf">r2_score</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">r2</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span></div>
+
+    
+
+<div class="viewcode-block" id="mean_squared_error_sector">
+<a class="viewcode-back" href="../../../docs/source/ise.evaluation.html#ise.evaluation.metrics.mean_squared_error_sector">[docs]</a>
+<span class="k">def</span> <span class="nf">mean_squared_error_sector</span><span class="p">(</span><span class="n">sum_sectors_true</span><span class="p">,</span> <span class="n">sum_sectors_pred</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">sum_sectors_true</span> <span class="o">-</span> <span class="n">sum_sectors_pred</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="kl_divergence">
+<a class="viewcode-back" href="../../../docs/source/ise.evaluation.html#ise.evaluation.metrics.kl_divergence">[docs]</a>
+<span class="k">def</span> <span class="nf">kl_divergence</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculates the Kullback-Leibler Divergence between two distributions.&quot;&quot;&quot;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    
+    <span class="c1"># Normalize p and q to ensure they are probability distributions</span>
+    <span class="n">p</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">q</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+    
+    <span class="c1"># Clip values to avoid numerical instability</span>
+    <span class="n">epsilon</span> <span class="o">=</span> <span class="mf">1e-10</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    
+    <span class="c1"># Compute KL divergence</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">p</span> <span class="o">/</span> <span class="n">q</span><span class="p">))</span></div>
+
+
+
+
+<div class="viewcode-block" id="js_divergence">
+<a class="viewcode-back" href="../../../docs/source/ise.evaluation.html#ise.evaluation.metrics.js_divergence">[docs]</a>
+<span class="k">def</span> <span class="nf">js_divergence</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculates the Jensen-Shannon Divergence between two distributions.&quot;&quot;&quot;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    
+    <span class="c1"># Normalize p and q to ensure they are probability distributions</span>
+    <span class="n">p</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">q</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+    
+    <span class="c1"># Clip values to avoid numerical instability</span>
+    <span class="n">epsilon</span> <span class="o">=</span> <span class="mf">1e-10</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    
+    <span class="c1"># Calculate the Jensen-Shannon Divergence</span>
+    <span class="n">jsd</span> <span class="o">=</span> <span class="n">jensenshannon</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>  <span class="c1"># The function returns the square root, so square it for the divergence</span>
+    
+    <span class="k">return</span> <span class="n">jsd</span></div>
+
+
+<div class="viewcode-block" id="crps">
+<a class="viewcode-back" href="../../../docs/source/ise.evaluation.html#ise.evaluation.metrics.crps">[docs]</a>
+<span class="k">def</span> <span class="nf">crps</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">y_std</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">ps</span><span class="o">.</span><span class="n">crps_gaussian</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">sig</span><span class="o">=</span><span class="n">y_std</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="mape">
+<a class="viewcode-back" href="../../../docs/source/ise.evaluation.html#ise.evaluation.metrics.mape">[docs]</a>
+<span class="k">def</span> <span class="nf">mape</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate Mean Absolute Percentage Error (MAPE).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">    - y_true: numpy array or a list of actual numbers</span>
+<span class="sd">    - y_pred: numpy array or a list of predicted numbers</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">    - mape: Mean Absolute Percentage Error</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y_true</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span>
+    <span class="c1"># Avoid division by zero</span>
+    <span class="n">non_zero_mask</span> <span class="o">=</span> <span class="n">y_true</span> <span class="o">!=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">non_zero_mask</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+    <span class="n">mape</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">((</span><span class="n">y_true</span><span class="p">[</span><span class="n">non_zero_mask</span><span class="p">]</span> <span class="o">-</span> <span class="n">y_pred</span><span class="p">[</span><span class="n">non_zero_mask</span><span class="p">])</span> <span class="o">/</span> <span class="n">y_true</span><span class="p">[</span><span class="n">non_zero_mask</span><span class="p">]))</span>
+        <span class="o">*</span> <span class="mi">100</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">mape</span></div>
+
+
+
+<div class="viewcode-block" id="relative_squared_error">
+<a class="viewcode-back" href="../../../docs/source/ise.evaluation.html#ise.evaluation.metrics.relative_squared_error">[docs]</a>
+<span class="k">def</span> <span class="nf">relative_squared_error</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate Relative Squared Error (RSE).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">    - y_true: numpy array or a list of actual numbers</span>
+<span class="sd">    - y_pred: numpy array or a list of predicted numbers</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">    - rse: Relative Squared Error</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y_true</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span>
+    <span class="n">ss_res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">y_true</span> <span class="o">-</span> <span class="n">y_pred</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">ss_tot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">y_true</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">y_true</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">rse</span> <span class="o">=</span> <span class="n">ss_res</span> <span class="o">/</span> <span class="n">ss_tot</span>
+    <span class="k">return</span> <span class="n">rse</span></div>
+
+
+
+<div class="viewcode-block" id="kolmogorov_smirnov">
+<a class="viewcode-back" href="../../../docs/source/ise.evaluation.html#ise.evaluation.metrics.kolmogorov_smirnov">[docs]</a>
+<span class="k">def</span> <span class="nf">kolmogorov_smirnov</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">):</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">kstest</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">statistic</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">pvalue</span></div>
+
+
+
+<div class="viewcode-block" id="t_test">
+<a class="viewcode-back" href="../../../docs/source/ise.evaluation.html#ise.evaluation.metrics.t_test">[docs]</a>
+<span class="k">def</span> <span class="nf">t_test</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">):</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">ttest_ind</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">statistic</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">pvalue</span></div>
+
+
+
+<div class="viewcode-block" id="calculate_ece">
+<a class="viewcode-back" href="../../../docs/source/ise.evaluation.html#ise.evaluation.metrics.calculate_ece">[docs]</a>
+<span class="k">def</span> <span class="nf">calculate_ece</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">uncertainties</span><span class="p">,</span> <span class="n">true_values</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate the Expected Calibration Error (ECE) for regression model predictions.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">    predictions (numpy.ndarray): Array of predicted means by the model.</span>
+<span class="sd">    uncertainties (numpy.ndarray): Array of predicted standard deviations (uncertainty estimates).</span>
+<span class="sd">    true_values (numpy.ndarray): Array of actual values.</span>
+<span class="sd">    bins (int): Number of bins to use for grouping predictions by their uncertainty.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">    float: The Expected Calibration Error.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bin_limits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">uncertainties</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">uncertainties</span><span class="p">),</span> <span class="n">bins</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">ece</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">total_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">bins</span><span class="p">):</span>
+        <span class="n">bin_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">uncertainties</span> <span class="o">&gt;=</span> <span class="n">bin_limits</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">uncertainties</span> <span class="o">&lt;</span> <span class="n">bin_limits</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">bin_mask</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">bin_predictions</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[</span><span class="n">bin_mask</span><span class="p">]</span>
+        <span class="n">bin_uncertainties</span> <span class="o">=</span> <span class="n">uncertainties</span><span class="p">[</span><span class="n">bin_mask</span><span class="p">]</span>
+        <span class="n">bin_true_values</span> <span class="o">=</span> <span class="n">true_values</span><span class="p">[</span><span class="n">bin_mask</span><span class="p">]</span>
+
+        <span class="c1"># Assume Gaussian distribution: about 95.4% of data should fall within ±2 standard deviations</span>
+        <span class="n">lower_bounds</span> <span class="o">=</span> <span class="n">bin_predictions</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">bin_uncertainties</span>
+        <span class="n">upper_bounds</span> <span class="o">=</span> <span class="n">bin_predictions</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">bin_uncertainties</span>
+        <span class="n">in_range</span> <span class="o">=</span> <span class="p">(</span><span class="n">bin_true_values</span> <span class="o">&gt;=</span> <span class="n">lower_bounds</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">bin_true_values</span> <span class="o">&lt;=</span> <span class="n">upper_bounds</span><span class="p">)</span>
+        <span class="n">observed_probability</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">in_range</span><span class="p">)</span>
+        <span class="n">expected_probability</span> <span class="o">=</span> <span class="mf">0.954</span>  <span class="c1"># For ±2 standard deviations in Gaussian distribution</span>
+
+        <span class="c1"># Calculate the absolute difference weighted by the number of elements in the bin</span>
+        <span class="n">ece</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">observed_probability</span> <span class="o">-</span> <span class="n">expected_probability</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">bin_mask</span><span class="p">)</span> <span class="o">/</span> <span class="n">total_count</span>
+
+    <span class="k">return</span> <span class="n">ece</span></div>
+
+
+<div class="viewcode-block" id="mean_squared_error">
+<a class="viewcode-back" href="../../../docs/source/ise.evaluation.html#ise.evaluation.metrics.mean_squared_error">[docs]</a>
+<span class="k">def</span> <span class="nf">mean_squared_error</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate Mean Squared Error (MSE).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">    - y_true: numpy array or a list of actual numbers</span>
+<span class="sd">    - y_pred: numpy array or a list of predicted numbers</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">    - mse: Mean Squared Error</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y_true</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span>
+    <span class="n">mse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">y_true</span> <span class="o">-</span> <span class="n">y_pred</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mse</span></div>
+
+
+<div class="viewcode-block" id="mean_absolute_error">
+<a class="viewcode-back" href="../../../docs/source/ise.evaluation.html#ise.evaluation.metrics.mean_absolute_error">[docs]</a>
+<span class="k">def</span> <span class="nf">mean_absolute_error</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate Mean Absolute Error (MAE).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">    - y_true: numpy array or a list of actual numbers</span>
+<span class="sd">    - y_pred: numpy array or a list of predicted numbers</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">    - mae: Mean Absolute Error</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y_true</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span>
+    <span class="n">mae</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y_true</span> <span class="o">-</span> <span class="n">y_pred</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">mae</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Peter Van Katwyk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,249 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ise.models.ISEFlow package &mdash; ise 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="/docs/source/ise.models.ISEFlow.html" />
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            ise
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">ise.models.ISEFlow package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-ise.models.ISEFlow.ISEFlow">ise.models.ISEFlow.ISEFlow module</a><ul>
+<li><a class="reference internal" href="#ise.models.ISEFlow.ISEFlow.ISEFlow"><code class="docutils literal notranslate"><span class="pre">ISEFlow</span></code></a><ul>
+<li><a class="reference internal" href="#ise.models.ISEFlow.ISEFlow.ISEFlow.fit"><code class="docutils literal notranslate"><span class="pre">ISEFlow.fit()</span></code></a></li>
+<li><a class="reference internal" href="#ise.models.ISEFlow.ISEFlow.ISEFlow.forward"><code class="docutils literal notranslate"><span class="pre">ISEFlow.forward()</span></code></a></li>
+<li><a class="reference internal" href="#ise.models.ISEFlow.ISEFlow.ISEFlow.load"><code class="docutils literal notranslate"><span class="pre">ISEFlow.load()</span></code></a></li>
+<li><a class="reference internal" href="#ise.models.ISEFlow.ISEFlow.ISEFlow.predict"><code class="docutils literal notranslate"><span class="pre">ISEFlow.predict()</span></code></a></li>
+<li><a class="reference internal" href="#ise.models.ISEFlow.ISEFlow.ISEFlow.save"><code class="docutils literal notranslate"><span class="pre">ISEFlow.save()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ise.models.ISEFlow.ISEFlow.ISEFlow_AIS"><code class="docutils literal notranslate"><span class="pre">ISEFlow_AIS</span></code></a><ul>
+<li><a class="reference internal" href="#ise.models.ISEFlow.ISEFlow.ISEFlow_AIS.load"><code class="docutils literal notranslate"><span class="pre">ISEFlow_AIS.load()</span></code></a></li>
+<li><a class="reference internal" href="#ise.models.ISEFlow.ISEFlow.ISEFlow_AIS.predict"><code class="docutils literal notranslate"><span class="pre">ISEFlow_AIS.predict()</span></code></a></li>
+<li><a class="reference internal" href="#ise.models.ISEFlow.ISEFlow.ISEFlow_AIS.process"><code class="docutils literal notranslate"><span class="pre">ISEFlow_AIS.process()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ise.models.ISEFlow.ISEFlow.ISEFlow_GrIS"><code class="docutils literal notranslate"><span class="pre">ISEFlow_GrIS</span></code></a><ul>
+<li><a class="reference internal" href="#ise.models.ISEFlow.ISEFlow.ISEFlow_GrIS.load"><code class="docutils literal notranslate"><span class="pre">ISEFlow_GrIS.load()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ise.models.ISEFlow.de">ise.models.ISEFlow.de module</a><ul>
+<li><a class="reference internal" href="#ise.models.ISEFlow.de.ISEFlow_AIS_DE"><code class="docutils literal notranslate"><span class="pre">ISEFlow_AIS_DE</span></code></a></li>
+<li><a class="reference internal" href="#ise.models.ISEFlow.de.ISEFlow_GrIS_DE"><code class="docutils literal notranslate"><span class="pre">ISEFlow_GrIS_DE</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ise.models.ISEFlow.nf">ise.models.ISEFlow.nf module</a><ul>
+<li><a class="reference internal" href="#ise.models.ISEFlow.nf.ISEFlow_AIS_NF"><code class="docutils literal notranslate"><span class="pre">ISEFlow_AIS_NF</span></code></a></li>
+<li><a class="reference internal" href="#ise.models.ISEFlow.nf.ISEFlow_GrIS_NF"><code class="docutils literal notranslate"><span class="pre">ISEFlow_GrIS_NF</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ise.models.ISEFlow">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ise</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">ise.models.ISEFlow package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/ise.models.ISEFlow.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ise-models-iseflow-package">
+<h1>ise.models.ISEFlow package<a class="headerlink" href="#ise-models-iseflow-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-ise.models.ISEFlow.ISEFlow">
+<span id="ise-models-iseflow-iseflow-module"></span><h2>ise.models.ISEFlow.ISEFlow module<a class="headerlink" href="#module-ise.models.ISEFlow.ISEFlow" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.models.ISEFlow.ISEFlow.ISEFlow">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.models.ISEFlow.ISEFlow.</span></span><span class="sig-name descname"><span class="pre">ISEFlow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">deep_ensemble</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalizing_flow</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/ISEFlow/ISEFlow.html#ISEFlow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.ISEFlow.ISEFlow.ISEFlow" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>The ISEFlow (Flow-based Ice Sheet Emulator) that combines a deep ensemble and a normalizing flow model.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.ISEFlow.ISEFlow.ISEFlow.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nf_epochs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">de_epochs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_val</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_val</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_checkpoints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'checkpoint_ensemble'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_stopping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequence_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patience</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/ISEFlow/ISEFlow.html#ISEFlow.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.ISEFlow.ISEFlow.ISEFlow.fit" title="Link to this definition"></a></dt>
+<dd><p>Fits the hybrid emulator to the training data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.ISEFlow.ISEFlow.ISEFlow.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth_projection</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/ISEFlow/ISEFlow.html#ISEFlow.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.ISEFlow.ISEFlow.ISEFlow.forward" title="Link to this definition"></a></dt>
+<dd><p>Performs a forward pass through the hybrid emulator.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.ISEFlow.ISEFlow.ISEFlow.load">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deep_ensemble_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalizing_flow_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/ISEFlow/ISEFlow.html#ISEFlow.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.ISEFlow.ISEFlow.ISEFlow.load" title="Link to this definition"></a></dt>
+<dd><p>Loads a trained model from the specified paths.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.ISEFlow.ISEFlow.ISEFlow.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_scaler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth_projection</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/ISEFlow/ISEFlow.html#ISEFlow.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.ISEFlow.ISEFlow.ISEFlow.predict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.ISEFlow.ISEFlow.ISEFlow.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_scaler_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/ISEFlow/ISEFlow.html#ISEFlow.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.ISEFlow.ISEFlow.ISEFlow.save" title="Link to this definition"></a></dt>
+<dd><p>Saves the trained model to the specified directory.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.models.ISEFlow.ISEFlow.ISEFlow_AIS">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.models.ISEFlow.ISEFlow.</span></span><span class="sig-name descname"><span class="pre">ISEFlow_AIS</span></span><a class="reference internal" href="../../_modules/ise/models/ISEFlow/ISEFlow.html#ISEFlow_AIS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.ISEFlow.ISEFlow.ISEFlow_AIS" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ise.models.ISEFlow.ISEFlow.ISEFlow" title="ise.models.ISEFlow.ISEFlow.ISEFlow"><code class="xref py py-class docutils literal notranslate"><span class="pre">ISEFlow</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.ISEFlow.ISEFlow.ISEFlow_AIS.load">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'v1.0.0'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deep_ensemble_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalizing_flow_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/ISEFlow/ISEFlow.html#ISEFlow_AIS.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.ISEFlow.ISEFlow.ISEFlow_AIS.load" title="Link to this definition"></a></dt>
+<dd><p>Loads a trained model from the specified paths.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.ISEFlow.ISEFlow.ISEFlow_AIS.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pr_anomaly</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evspsbl_anomaly</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mrro_anomaly</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smb_anomaly</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts_anomaly</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocean_thermal_forcing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocean_salinity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocean_temperature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numerics</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stress_balance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">melt_in_floating_cells</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">icefront_migration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocean_forcing_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocean_sensitivity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ice_shelf_fracture</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">open_melt_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standard_melt_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/ISEFlow/ISEFlow.html#ISEFlow_AIS.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.ISEFlow.ISEFlow.ISEFlow_AIS.predict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.ISEFlow.ISEFlow.ISEFlow_AIS.process">
+<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pr_anomaly</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evspsbl_anomaly</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mrro_anomaly</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smb_anomaly</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts_anomaly</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocean_thermal_forcing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocean_salinity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocean_temperature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numerics</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stress_balance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">melt_in_floating_cells</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">icefront_migration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocean_forcing_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocean_sensitivity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ice_shelf_fracture</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">open_melt_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standard_melt_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/ISEFlow/ISEFlow.html#ISEFlow_AIS.process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.ISEFlow.ISEFlow.ISEFlow_AIS.process" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.models.ISEFlow.ISEFlow.ISEFlow_GrIS">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.models.ISEFlow.ISEFlow.</span></span><span class="sig-name descname"><span class="pre">ISEFlow_GrIS</span></span><a class="reference internal" href="../../_modules/ise/models/ISEFlow/ISEFlow.html#ISEFlow_GrIS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.ISEFlow.ISEFlow.ISEFlow_GrIS" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ise.models.ISEFlow.ISEFlow.ISEFlow" title="ise.models.ISEFlow.ISEFlow.ISEFlow"><code class="xref py py-class docutils literal notranslate"><span class="pre">ISEFlow</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.ISEFlow.ISEFlow.ISEFlow_GrIS.load">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'v1.0.0'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deep_ensemble_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalizing_flow_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/ISEFlow/ISEFlow.html#ISEFlow_GrIS.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.ISEFlow.ISEFlow.ISEFlow_GrIS.load" title="Link to this definition"></a></dt>
+<dd><p>Loads a trained model from the specified paths.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-ise.models.ISEFlow.de">
+<span id="ise-models-iseflow-de-module"></span><h2>ise.models.ISEFlow.de module<a class="headerlink" href="#module-ise.models.ISEFlow.de" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.models.ISEFlow.de.ISEFlow_AIS_DE">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.models.ISEFlow.de.</span></span><span class="sig-name descname"><span class="pre">ISEFlow_AIS_DE</span></span><a class="reference internal" href="../../_modules/ise/models/ISEFlow/de.html#ISEFlow_AIS_DE"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.ISEFlow.de.ISEFlow_AIS_DE" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.deep_ensemble.DeepEnsemble" title="ise.models.predictors.deep_ensemble.DeepEnsemble"><code class="xref py py-class docutils literal notranslate"><span class="pre">DeepEnsemble</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.models.ISEFlow.de.ISEFlow_GrIS_DE">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.models.ISEFlow.de.</span></span><span class="sig-name descname"><span class="pre">ISEFlow_GrIS_DE</span></span><a class="reference internal" href="../../_modules/ise/models/ISEFlow/de.html#ISEFlow_GrIS_DE"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.ISEFlow.de.ISEFlow_GrIS_DE" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.deep_ensemble.DeepEnsemble" title="ise.models.predictors.deep_ensemble.DeepEnsemble"><code class="xref py py-class docutils literal notranslate"><span class="pre">DeepEnsemble</span></code></a></p>
+</dd></dl>
+
+</section>
+<section id="module-ise.models.ISEFlow.nf">
+<span id="ise-models-iseflow-nf-module"></span><h2>ise.models.ISEFlow.nf module<a class="headerlink" href="#module-ise.models.ISEFlow.nf" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.models.ISEFlow.nf.ISEFlow_AIS_NF">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.models.ISEFlow.nf.</span></span><span class="sig-name descname"><span class="pre">ISEFlow_AIS_NF</span></span><a class="reference internal" href="../../_modules/ise/models/ISEFlow/nf.html#ISEFlow_AIS_NF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.ISEFlow.nf.ISEFlow_AIS_NF" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow" title="ise.models.density_estimators.normalizing_flow.NormalizingFlow"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizingFlow</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.models.ISEFlow.nf.ISEFlow_GrIS_NF">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.models.ISEFlow.nf.</span></span><span class="sig-name descname"><span class="pre">ISEFlow_GrIS_NF</span></span><a class="reference internal" href="../../_modules/ise/models/ISEFlow/nf.html#ISEFlow_GrIS_NF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.ISEFlow.nf.ISEFlow_GrIS_NF" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow" title="ise.models.density_estimators.normalizing_flow.NormalizingFlow"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizingFlow</span></code></a></p>
+</dd></dl>
+
+</section>
+<section id="module-ise.models.ISEFlow">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-ise.models.ISEFlow" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Peter Van Katwyk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,446 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ise.utils package &mdash; ise 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="/docs/source/ise.utils.html" />
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            ise
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">ise.utils package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-ise.utils.functions">ise.utils.functions module</a><ul>
+<li><a class="reference internal" href="#ise.utils.functions.add_variable_to_nc"><code class="docutils literal notranslate"><span class="pre">add_variable_to_nc()</span></code></a></li>
+<li><a class="reference internal" href="#ise.utils.functions.calculate_distribution_metrics"><code class="docutils literal notranslate"><span class="pre">calculate_distribution_metrics()</span></code></a></li>
+<li><a class="reference internal" href="#ise.utils.functions.check_input"><code class="docutils literal notranslate"><span class="pre">check_input()</span></code></a></li>
+<li><a class="reference internal" href="#ise.utils.functions.combine_testing_results"><code class="docutils literal notranslate"><span class="pre">combine_testing_results()</span></code></a></li>
+<li><a class="reference internal" href="#ise.utils.functions.create_distribution"><code class="docutils literal notranslate"><span class="pre">create_distribution()</span></code></a></li>
+<li><a class="reference internal" href="#ise.utils.functions.get_X_y"><code class="docutils literal notranslate"><span class="pre">get_X_y()</span></code></a></li>
+<li><a class="reference internal" href="#ise.utils.functions.get_all_filepaths"><code class="docutils literal notranslate"><span class="pre">get_all_filepaths()</span></code></a></li>
+<li><a class="reference internal" href="#ise.utils.functions.get_data"><code class="docutils literal notranslate"><span class="pre">get_data()</span></code></a></li>
+<li><a class="reference internal" href="#ise.utils.functions.get_uncertainty_bands"><code class="docutils literal notranslate"><span class="pre">get_uncertainty_bands()</span></code></a></li>
+<li><a class="reference internal" href="#ise.utils.functions.group_by_run"><code class="docutils literal notranslate"><span class="pre">group_by_run()</span></code></a></li>
+<li><a class="reference internal" href="#ise.utils.functions.load_ml_data"><code class="docutils literal notranslate"><span class="pre">load_ml_data()</span></code></a></li>
+<li><a class="reference internal" href="#ise.utils.functions.load_model"><code class="docutils literal notranslate"><span class="pre">load_model()</span></code></a></li>
+<li><a class="reference internal" href="#ise.utils.functions.to_tensor"><code class="docutils literal notranslate"><span class="pre">to_tensor()</span></code></a></li>
+<li><a class="reference internal" href="#ise.utils.functions.undummify"><code class="docutils literal notranslate"><span class="pre">undummify()</span></code></a></li>
+<li><a class="reference internal" href="#ise.utils.functions.unscale"><code class="docutils literal notranslate"><span class="pre">unscale()</span></code></a></li>
+<li><a class="reference internal" href="#ise.utils.functions.unscale_column"><code class="docutils literal notranslate"><span class="pre">unscale_column()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ise.utils.training">ise.utils.training module</a><ul>
+<li><a class="reference internal" href="#ise.utils.training.CheckpointSaver"><code class="docutils literal notranslate"><span class="pre">CheckpointSaver</span></code></a><ul>
+<li><a class="reference internal" href="#ise.utils.training.CheckpointSaver.load_checkpoint"><code class="docutils literal notranslate"><span class="pre">CheckpointSaver.load_checkpoint()</span></code></a></li>
+<li><a class="reference internal" href="#ise.utils.training.CheckpointSaver.save_checkpoint"><code class="docutils literal notranslate"><span class="pre">CheckpointSaver.save_checkpoint()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ise.utils.training.EarlyStoppingCheckpointer"><code class="docutils literal notranslate"><span class="pre">EarlyStoppingCheckpointer</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ise.utils">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ise</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">ise.utils package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/ise.utils.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ise-utils-package">
+<h1>ise.utils package<a class="headerlink" href="#ise-utils-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-ise.utils.functions">
+<span id="ise-utils-functions-module"></span><h2>ise.utils.functions module<a class="headerlink" href="#module-ise.utils.functions" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.utils.functions.add_variable_to_nc">
+<span class="sig-prename descclassname"><span class="pre">ise.utils.functions.</span></span><span class="sig-name descname"><span class="pre">add_variable_to_nc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variable_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/utils/functions.html#add_variable_to_nc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.utils.functions.add_variable_to_nc" title="Link to this definition"></a></dt>
+<dd><p>Copies a variable from a source NetCDF file to a target NetCDF file.</p>
+<p>Parameters:
+- source_file_path: Path to the source NetCDF file.
+- target_file_path: Path to the target NetCDF file.
+- variable_name: Name of the variable to be copied.</p>
+<p>Both files are assumed to have matching dimensions for the variable.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.utils.functions.calculate_distribution_metrics">
+<span class="sig-prename descclassname"><span class="pre">ise.utils.functions.</span></span><span class="sig-name descname"><span class="pre">calculate_distribution_metrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/utils/functions.html#calculate_distribution_metrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.utils.functions.calculate_distribution_metrics" title="Link to this definition"></a></dt>
+<dd><p>Wrapper for calculating distribution metrics from a dataset. Includes ise.utils.data.group_by_run to
+group the true values and predicted values into NXM matrices (with N=number of samples and
+M=85, or the number of years in the series). Then, it uses ise.utils.data.create_distribution to
+calculate individual distributions from the arrays and calculates the divergences.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) – Dataset to be grouped</p></li>
+<li><p><strong>column</strong> (<em>str</em><em>, </em><em>optional</em>) – Column to subset on. Defaults to None.</p></li>
+<li><p><strong>condition</strong> (<em>str</em><em>, </em><em>optional</em>) – Condition to subset with. Can be int, str, float, etc. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary containing dict[‘kl’] for the KL-Divergence and dict[‘js’] for the Jensen-Shannon Divergence.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.utils.functions.check_input">
+<span class="sig-prename descclassname"><span class="pre">ise.utils.functions.</span></span><span class="sig-name descname"><span class="pre">check_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">argname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/utils/functions.html#check_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.utils.functions.check_input" title="Link to this definition"></a></dt>
+<dd><p>Checks validity of input argument. Not used frequently due to error raising being better practice.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input</strong> (<em>str</em>) – Input value.</p></li>
+<li><p><strong>options</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – Valid options for the input value.</p></li>
+<li><p><strong>argname</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the argument being tested. Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.utils.functions.combine_testing_results">
+<span class="sig-prename descclassname"><span class="pre">ise.utils.functions.</span></span><span class="sig-name descname"><span class="pre">combine_testing_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_series</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/utils/functions.html#combine_testing_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.utils.functions.combine_testing_results" title="Link to this definition"></a></dt>
+<dd><p>Creates testing results dataframe that reverts input data to original formatting and adds on
+predictions, losses, and uncertainty bounds. Useful for plotting purposes and overall analysis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_directory</strong> (<em>str</em>) – Directory containing training and testing data.</p></li>
+<li><p><strong>preds</strong> (<em>np.ndarray</em><em> | </em><em>pd.Series</em><em> | </em><em>str</em>) – Array/Series of neural network predictions, or the path to the csv containing predictions.</p></li>
+<li><p><strong>bounds</strong> (<em>dict</em><em> | </em><em>pd.DataFrame</em>) – Dictionary or pd.DataFrame of uncertainty bounds to be added to the dataframe, generally outputted from ise.models.testing.pretrained.test_pretrained_model. Defaults to None.</p></li>
+<li><p><strong>gp_data</strong> (<em>dict</em><em> | </em><em>pd.DataFrame</em>) – Dictionary or pd.DataFrame containing gaussian process predictions to add to the dataset. Columns/keys must be <cite>preds</cite> and <cite>std</cite>. Defaults to None.</p></li>
+<li><p><strong>time_series</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag denoting whether to process the data as a time-series dataset or traditional non-time dataset. Defaults to True.</p></li>
+<li><p><strong>save_directory</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory where output files will be saved. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>test results dataframe.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.utils.functions.create_distribution">
+<span class="sig-prename descclassname"><span class="pre">ise.utils.functions.</span></span><span class="sig-name descname"><span class="pre">create_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/utils/functions.html#create_distribution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.utils.functions.create_distribution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.utils.functions.get_X_y">
+<span class="sig-prename descclassname"><span class="pre">ise.utils.functions.</span></span><span class="sig-name descname"><span class="pre">get_X_y</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sectors'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_chars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/utils/functions.html#get_X_y"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.utils.functions.get_X_y" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.utils.functions.get_all_filepaths">
+<span class="sig-prename descclassname"><span class="pre">ise.utils.functions.</span></span><span class="sig-name descname"><span class="pre">get_all_filepaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filetype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contains</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">not_contains</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/utils/functions.html#get_all_filepaths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.utils.functions.get_all_filepaths" title="Link to this definition"></a></dt>
+<dd><p>Retrieves all filepaths for files within a directory. Supports subsetting based on filetype
+and substring search.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to directory to be searched.</p></li>
+<li><p><strong>filetype</strong> (<em>str</em><em>, </em><em>optional</em>) – File type to be returned (e.g. csv, nc). Defaults to None.</p></li>
+<li><p><strong>contains</strong> (<em>str</em><em>, </em><em>optional</em>) – Substring that files found must contain. Defaults to None.</p></li>
+<li><p><strong>not_contains</strong> (<em>str</em><em>, </em><em>optional</em>) – Substring that files found must NOT contain. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>list of files within the directory matching the input criteria.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.utils.functions.get_data">
+<span class="sig-prename descclassname"><span class="pre">ise.utils.functions.</span></span><span class="sig-name descname"><span class="pre">get_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sectors'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'tensor'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/utils/functions.html#get_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.utils.functions.get_data" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.utils.functions.get_uncertainty_bands">
+<span class="sig-prename descclassname"><span class="pre">ise.utils.functions.</span></span><span class="sig-name descname"><span class="pre">get_uncertainty_bands</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'95'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[0.05,</span> <span class="pre">0.95]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/utils/functions.html#get_uncertainty_bands"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.utils.functions.get_uncertainty_bands" title="Link to this definition"></a></dt>
+<dd><p>Calculates uncertainty bands on the monte carlo dropout protocol. Includes traditional
+confidence interval calculation as well as a quantile-based approach.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – Dataframe or array of NXM, typically from ise.utils.functions.group_by_run.</p></li>
+<li><p><strong>confidence</strong> (<em>str</em><em>, </em><em>optional</em>) – Confidence level, must be in [95, 99]. Defaults to ‘95’.</p></li>
+<li><p><strong>quantiles</strong> (<em>list</em><em>[</em><em>float</em><em>]</em><em>, </em><em>optional</em>) – Quantiles of uncertainty bands. Defaults to [0.05, 0.95].</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple containing [mean, sd, upper_ci, lower_ci, upper_q, lower_q], or the mean prediction, standard deviation, and the lower and upper confidence interval and quantile bands.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.utils.functions.group_by_run">
+<span class="sig-prename descclassname"><span class="pre">ise.utils.functions.</span></span><span class="sig-name descname"><span class="pre">group_by_run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/utils/functions.html#group_by_run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.utils.functions.group_by_run" title="Link to this definition"></a></dt>
+<dd><p>Groups the dataset into each individual simulation series by both the true value of the
+simulated SLE as well as the model predicted SLE. The resulting arrays are NXM matrices with
+N being the number of simulations and M being 85, or the length of the series.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) – Dataset to be grouped</p></li>
+<li><p><strong>column</strong> (<em>str</em><em>, </em><em>optional</em>) – Column to subset on. Defaults to None.</p></li>
+<li><p><strong>condition</strong> (<em>str</em><em>, </em><em>optional</em>) – Condition to subset with. Can be int, str, float, etc. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple containing [all_trues, all_preds], or NXM matrices of each series corresponding to true values and predicted values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.utils.functions.load_ml_data">
+<span class="sig-prename descclassname"><span class="pre">ise.utils.functions.</span></span><span class="sig-name descname"><span class="pre">load_ml_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_series</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/utils/functions.html#load_ml_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.utils.functions.load_ml_data" title="Link to this definition"></a></dt>
+<dd><p>Loads training and testing data for machine learning models. These files are generated using
+functions in the ise.data.processing modules or process_data in the ise.pipelines.processing module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_directory</strong> (<em>str</em>) – Directory containing processed files.</p></li>
+<li><p><strong>time_series</strong> (<em>bool</em>) – Flag denoting whether to load the time-series version of the data.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple containing [train features, train_labels, test_features, test_labels, test_scenarios], or the training and testing datasets including the scenarios used in testing.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.utils.functions.load_model">
+<span class="sig-prename descclassname"><span class="pre">ise.utils.functions.</span></span><span class="sig-name descname"><span class="pre">load_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">architecture</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mc_dropout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_prob</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/utils/functions.html#load_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.utils.functions.load_model" title="Link to this definition"></a></dt>
+<dd><p>Loads PyTorch model from saved state_dict.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_path</strong> (<em>str</em>) – Filepath to model state_dict.</p></li>
+<li><p><strong>model_class</strong> (<em>Model</em>) – Model class.</p></li>
+<li><p><strong>architecture</strong> (<em>dict</em>) – Defined architecture of pretrained model.</p></li>
+<li><p><strong>mc_dropout</strong> (<em>bool</em>) – Flag denoting wether the model was trained using MC Dropout.</p></li>
+<li><p><strong>dropout_prob</strong> (<em>float</em>) – Value between 0 and 1 denoting the dropout probability.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Pretrained model.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>model (Model)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.utils.functions.to_tensor">
+<span class="sig-prename descclassname"><span class="pre">ise.utils.functions.</span></span><span class="sig-name descname"><span class="pre">to_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/utils/functions.html#to_tensor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.utils.functions.to_tensor" title="Link to this definition"></a></dt>
+<dd><p>Converts input data to a PyTorch tensor of type float.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> – Input data to be converted. Must be a pandas dataframe, numpy array, or PyTorch tensor.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A PyTorch tensor of type float.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.utils.functions.undummify">
+<span class="sig-prename descclassname"><span class="pre">ise.utils.functions.</span></span><span class="sig-name descname"><span class="pre">undummify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix_sep</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'-'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/utils/functions.html#undummify"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.utils.functions.undummify" title="Link to this definition"></a></dt>
+<dd><p>Undummifies, or reverses pd.get_dummies, a dataframe. Includes taking encoded categorical
+variable columns (boolean indices), and converts them back into the original data format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – Dataframe to be converted.</p></li>
+<li><p><strong>prefix_sep</strong> (<em>str</em><em>, </em><em>optional</em>) – Prefix separator used in pd.get_dummies. Recommended not to change this. Defaults to “-“.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>_description_</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>_type_</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.utils.functions.unscale">
+<span class="sig-prename descclassname"><span class="pre">ise.utils.functions.</span></span><span class="sig-name descname"><span class="pre">unscale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaler_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/utils/functions.html#unscale"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.utils.functions.unscale" title="Link to this definition"></a></dt>
+<dd><p>Unscale the output data using the scaler saved during training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y</strong> – Input data to be unscaled.</p></li>
+<li><p><strong>scaler_path</strong> – Path to the scaler used for scaling the data.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The unscaled data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.utils.functions.unscale_column">
+<span class="sig-prename descclassname"><span class="pre">ise.utils.functions.</span></span><span class="sig-name descname"><span class="pre">unscale_column</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'year'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/utils/functions.html#unscale_column"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.utils.functions.unscale_column" title="Link to this definition"></a></dt>
+<dd><p>Unscale column in dataset, particularly for unscaling year and sectors column given that
+they have a known range of values (2016-2100 and 1-18 respectively).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) – Dataset containing columns to unscale.</p></li>
+<li><p><strong>column</strong> (<em>str</em><em> | </em><em>list</em><em>, </em><em>optional</em>) – Columns to be unscaled, must be in [year, sectors]. Can be both. Defaults to ‘year’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>dataset containing unscaled columns.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-ise.utils.training">
+<span id="ise-utils-training-module"></span><h2>ise.utils.training module<a class="headerlink" href="#module-ise.utils.training" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.utils.training.CheckpointSaver">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.utils.training.</span></span><span class="sig-name descname"><span class="pre">CheckpointSaver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/utils/training.html#CheckpointSaver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.utils.training.CheckpointSaver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.utils.training.CheckpointSaver.load_checkpoint">
+<span class="sig-name descname"><span class="pre">load_checkpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/utils/training.html#CheckpointSaver.load_checkpoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.utils.training.CheckpointSaver.load_checkpoint" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.utils.training.CheckpointSaver.save_checkpoint">
+<span class="sig-name descname"><span class="pre">save_checkpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epoch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/utils/training.html#CheckpointSaver.save_checkpoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.utils.training.CheckpointSaver.save_checkpoint" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.utils.training.EarlyStoppingCheckpointer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.utils.training.</span></span><span class="sig-name descname"><span class="pre">EarlyStoppingCheckpointer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'checkpoint.pt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patience</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/utils/training.html#EarlyStoppingCheckpointer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.utils.training.EarlyStoppingCheckpointer" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ise.utils.training.CheckpointSaver" title="ise.utils.training.CheckpointSaver"><code class="xref py py-class docutils literal notranslate"><span class="pre">CheckpointSaver</span></code></a></p>
+</dd></dl>
+
+</section>
+<section id="module-ise.utils">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-ise.utils" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Peter Van Katwyk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
