@@ -1,4 +1,4 @@
-ise.utils package
+ise.utils
 =================
 
 .. Submodules

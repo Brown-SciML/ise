@@ -8,7 +8,6 @@ setup(
     author_email="pvankatwyk@gmail.com",
     packages=find_packages(),
     install_requires=[
-        "pdoc",
         "numpy",
         "pandas",
         "scikit-learn",
