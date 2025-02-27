@@ -8,6 +8,7 @@ import pandas as pd
 import torch
 from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
 from tqdm import tqdm
+import warnings
 
 
 class FeatureEngineer:
@@ -317,10 +318,13 @@ class FeatureEngineer:
 
         # Load scaler for X
         if X is not None:
-            if self.scaler_X_path is None:
-                raise ValueError("scaler_X_path must be provided if X is not None.")
-            with open(self.scaler_X_path, "rb") as f:
-                scaler_X = pickle.load(f)
+            if self.scaler_X_path is None and self.scaler_X is None:
+                raise ValueError("scaler_X_path must be provided if X is not None and self.scaler_X is None.")
+            if self.scaler_X is None:
+                with open(self.scaler_X_path, "rb") as f:
+                    scaler_X = pickle.load(f)
+            else:
+                scaler_X = self.scaler_X
             X_unscaled = scaler_X.inverse_transform(X)
             if isinstance(X, pd.DataFrame):
                 X_unscaled = pd.DataFrame(X_unscaled, columns=X.columns, index=X.index)
@@ -329,10 +333,13 @@ class FeatureEngineer:
 
         # Load scaler for y
         if y is not None:
-            if self.scaler_y_path is None:
-                raise ValueError("scaler_y_path must be provided if y is not None.")
-            with open(self.scaler_y_path, "rb") as f:
-                scaler_y = pickle.load(f)
+            if self.scaler_y_path is None and self.scaler_y is None:
+                raise ValueError("scaler_y_path must be provided if y is not None and self.scaler_y is None.")
+            if self.scaler_y is None:
+                with open(self.scaler_y_path, "rb") as f:
+                    scaler_y = pickle.load(f)
+            else:
+                scaler_y = self.scaler_y
             y_unscaled = scaler_y.inverse_transform(y)
             if isinstance(y, pd.DataFrame):
                 y_unscaled = pd.DataFrame(y_unscaled, columns=y.columns, index=y.index)
@@ -541,7 +548,7 @@ def backfill_outliers(data, percentile=99.999):
         data.loc[lower_extreme_value_mask, col] = np.nan
 
         # Use backfill method to fill NaN values
-        data[col] = data[col].fillna(method="bfill")
+        data[col] = data[col].bfill()
 
     return data
 
@@ -689,9 +696,8 @@ def split_training_data(
         raise ValueError("data must be a path (str) or a pandas DataFrame")
 
     if not len(data) % 86 == 0:
-        raise ValueError(
-            "Length of data must be divisible by 86, if not there are incomplete projections."
-        )
+        warnings.warn(
+            "Length of data must be divisible by 86, if not there are incomplete projections.")
 
     if "id" not in data.columns:
         raise ValueError("data must have a column named 'id'")
@@ -714,8 +720,9 @@ def split_training_data(
         "test_ids": list(test_ids),
     }
 
-    with open(f"{output_directory}/ids.json", "w") as file:
-        json.dump(split_data, file)
+    if output_directory is not None:
+        with open(f"{output_directory}/ids.json", "w") as file:
+            json.dump(split_data, file)
 
     train = data[data["id"].isin(train_ids)]
     val = data[data["id"].isin(val_ids)]

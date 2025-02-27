@@ -51,6 +51,7 @@ dependencies = [
     "protobuf==5.28.2 ; python_full_version >= '3.9' and python_full_version < '4.0'",
     "pygments==2.18.0 ; python_full_version >= '3.9' and python_full_version < '4.0'",
     "pyparsing==3.2.0 ; python_full_version >= '3.9' and python_full_version < '4.0'",
+    "pytest>=8.3.4",
     "python-dateutil==2.9.0.post0 ; python_full_version >= '3.9' and python_full_version < '4.0'",
     "pytz==2024.2 ; python_full_version >= '3.9' and python_full_version < '4.0'",
     "scikit-learn==1.5.2 ; python_full_version >= '3.9' and python_full_version < '4.0'",
