@@ -1,0 +1,2 @@
+h5py  # Ensures HDF5 support
+netcdf4>=1.6.0  # Uses a prebuilt binary version
