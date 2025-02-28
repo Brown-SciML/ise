@@ -20,7 +20,7 @@ supplemental/
 *.pkl
 # *.pt
 # *.pth
-*.csv
+# *.csv
 release.sh
 
 .vscode/
