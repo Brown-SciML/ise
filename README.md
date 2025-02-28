@@ -162,9 +162,9 @@ pytest tests/
 ---
 
 ## 📌 **Known Issues & Future Work**
-- Improving **uncertainty quantification** in ISEFlow.
-- Expanding **support for additional climate scenarios**.
-- Optimization for **real-time emulation**.
+- Creating more unit tests. I know, maybe one day I'll get around it.
+- Expanding **support for additional climate scenarios** and additional ISM runs (ISMIP7).
+- Better documentation and improvements to the readthedocs page.
 
 ---
 

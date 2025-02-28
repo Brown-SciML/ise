@@ -12,8 +12,8 @@ Subpackages
    ise.models.predictors
    ise.models.pretrained
 
-Submodules
-----------
+.. Submodules
+.. ----------
 
 ise.models.loss
 ----------------------
