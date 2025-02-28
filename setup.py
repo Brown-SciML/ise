@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="ise",
-    version="2.0.0",
+    version="1.0.1",
     description="Package for creating ice sheet emulators predicting future sea level rise.",
     author="Peter Van Katwyk",
     author_email="pvankatwyk@gmail.com",

@@ -18,8 +18,10 @@ supplemental/
 *.svg
 *.pdf
 *.pkl
-*.pt
-*.pth
+# *.pt
+# *.pth
+*.csv
+release.sh
 
 .vscode/
 .vscode
