@@ -1,0 +1,416 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ise.evaluation &mdash; ise 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="/docs/source/ise.evaluation.html" />
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="ise.models" href="ise.models.html" />
+    <link rel="prev" title="ise.data" href="ise.data.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            ise
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="ise.html">ise documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="ise.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="ise.data.html">ise.data</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">ise.evaluation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#module-ise.evaluation.metrics">ise.evaluation.metrics</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ise.models.html">ise.models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ise.utils.html">ise.utils</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ise</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="ise.html">ise documentation</a></li>
+      <li class="breadcrumb-item active">ise.evaluation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/ise.evaluation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ise-evaluation">
+<h1>ise.evaluation<a class="headerlink" href="#ise-evaluation" title="Link to this heading"></a></h1>
+<section id="module-ise.evaluation.metrics">
+<span id="ise-evaluation-metrics"></span><h2>ise.evaluation.metrics<a class="headerlink" href="#module-ise.evaluation.metrics" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.calculate_ece">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">calculate_ece</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainties</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#calculate_ece"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.calculate_ece" title="Link to this definition"></a></dt>
+<dd><p>Computes the Expected Calibration Error (ECE) for a regression model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>predictions</strong> (<em>numpy.ndarray</em>) – The predicted mean values.</p></li>
+<li><p><strong>uncertainties</strong> (<em>numpy.ndarray</em>) – The predicted standard deviations.</p></li>
+<li><p><strong>true_values</strong> (<em>numpy.ndarray</em>) – The true values.</p></li>
+<li><p><strong>bins</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of bins for uncertainty grouping. Defaults to 10.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The Expected Calibration Error (ECE).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>ECE measures how well predicted uncertainties align with actual errors.</p></li>
+<li><p>A lower ECE indicates better-calibrated uncertainty estimates.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.crps">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">crps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_std</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#crps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.crps" title="Link to this definition"></a></dt>
+<dd><p>Computes the Continuous Ranked Probability Score (CRPS) for a Gaussian distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_true</strong> (<em>numpy.ndarray</em>) – The true values.</p></li>
+<li><p><strong>y_pred</strong> (<em>numpy.ndarray</em>) – The predicted mean values.</p></li>
+<li><p><strong>y_std</strong> (<em>numpy.ndarray</em>) – The predicted standard deviations.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The computed CRPS values for each prediction.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.js_divergence">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">js_divergence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#js_divergence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.js_divergence" title="Link to this definition"></a></dt>
+<dd><p>Computes the Jensen-Shannon Divergence (JSD) between two probability distributions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>numpy.ndarray</em>) – The first probability distribution.</p></li>
+<li><p><strong>q</strong> (<em>numpy.ndarray</em>) – The second probability distribution.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The Jensen-Shannon divergence value.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>JSD is a smoothed and symmetric version of KL divergence.</p></li>
+<li><p>The function normalizes the distributions before computation.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.kl_divergence">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">kl_divergence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#kl_divergence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.kl_divergence" title="Link to this definition"></a></dt>
+<dd><p>Computes the Kullback-Leibler (KL) Divergence between two probability distributions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>numpy.ndarray</em>) – The first probability distribution.</p></li>
+<li><p><strong>q</strong> (<em>numpy.ndarray</em>) – The second probability distribution.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The KL divergence value.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The distributions p and q must be normalized (i.e., sum to 1).</p></li>
+<li><p>Small epsilon values are used to avoid numerical instability.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.kolmogorov_smirnov">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">kolmogorov_smirnov</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#kolmogorov_smirnov"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.kolmogorov_smirnov" title="Link to this definition"></a></dt>
+<dd><p>Computes the Kolmogorov-Smirnov (KS) statistic to compare two distributions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x1</strong> (<em>numpy.ndarray</em><em> or </em><em>list</em>) – The first dataset.</p></li>
+<li><p><strong>x2</strong> (<em>numpy.ndarray</em><em> or </em><em>list</em>) – The second dataset.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(KS statistic, p-value).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.mape">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">mape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#mape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.mape" title="Link to this definition"></a></dt>
+<dd><p>Computes the Mean Absolute Percentage Error (MAPE).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_true</strong> (<em>numpy.ndarray</em><em> or </em><em>list</em>) – The true values.</p></li>
+<li><p><strong>y_pred</strong> (<em>numpy.ndarray</em><em> or </em><em>list</em>) – The predicted values.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The MAPE value, expressed as a percentage.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>MAPE ignores zero values in y_true to prevent division by zero.</p></li>
+<li><p>If all true values are zero, returns infinity.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.mean_absolute_error">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">mean_absolute_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#mean_absolute_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.mean_absolute_error" title="Link to this definition"></a></dt>
+<dd><p>Computes the Mean Absolute Error (MAE).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_true</strong> (<em>numpy.ndarray</em><em> or </em><em>list</em>) – The true values.</p></li>
+<li><p><strong>y_pred</strong> (<em>numpy.ndarray</em><em> or </em><em>list</em>) – The predicted values.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The Mean Absolute Error (MAE).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.mean_squared_error">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">mean_squared_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#mean_squared_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.mean_squared_error" title="Link to this definition"></a></dt>
+<dd><p>Computes the Mean Squared Error (MSE).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_true</strong> (<em>numpy.ndarray</em><em> or </em><em>list</em>) – The true values.</p></li>
+<li><p><strong>y_pred</strong> (<em>numpy.ndarray</em><em> or </em><em>list</em>) – The predicted values.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The Mean Squared Error (MSE).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.mean_squared_error_sector">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">mean_squared_error_sector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sum_sectors_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sum_sectors_pred</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#mean_squared_error_sector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.mean_squared_error_sector" title="Link to this definition"></a></dt>
+<dd><p>Computes the mean squared error (MSE) between true and predicted sector-wise sums.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sum_sectors_true</strong> (<em>numpy.ndarray</em>) – The true summed sector values.</p></li>
+<li><p><strong>sum_sectors_pred</strong> (<em>numpy.ndarray</em>) – The predicted summed sector values.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The mean squared error (MSE).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.r2_score">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">r2_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#r2_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.r2_score" title="Link to this definition"></a></dt>
+<dd><p>Computes the coefficient of determination (R² score).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_true</strong> (<em>numpy.ndarray</em><em> or </em><em>list</em>) – The true values.</p></li>
+<li><p><strong>y_pred</strong> (<em>numpy.ndarray</em><em> or </em><em>list</em>) – The predicted values.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The R² score, where 1 indicates perfect predictions.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.relative_squared_error">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">relative_squared_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#relative_squared_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.relative_squared_error" title="Link to this definition"></a></dt>
+<dd><p>Computes the Relative Squared Error (RSE), measuring the error relative to the variance in y_true.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_true</strong> (<em>numpy.ndarray</em><em> or </em><em>list</em>) – The true values.</p></li>
+<li><p><strong>y_pred</strong> (<em>numpy.ndarray</em><em> or </em><em>list</em>) – The predicted values.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The computed RSE value.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>A lower RSE indicates better performance, with RSE=0 indicating perfect predictions.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.sum_by_sector">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">sum_by_sector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#sum_by_sector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.sum_by_sector" title="Link to this definition"></a></dt>
+<dd><p>Computes the sum of values in a given array by predefined sectors using a grid file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>array</strong> (<em>numpy.ndarray</em><em> or </em><em>torch.Tensor</em>) – A 2D or 3D array containing values to be summed by sector.</p></li>
+<li><p><strong>grid_file</strong> (<em>str</em><em> or </em><em>xarray.Dataset</em>) – Path to the grid file defining sector boundaries or an xarray dataset.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A 2D array where each row represents a timestep and each column represents a sector.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If grid_file is not a valid string or xarray dataset.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ise.evaluation.metrics.t_test">
+<span class="sig-prename descclassname"><span class="pre">ise.evaluation.metrics.</span></span><span class="sig-name descname"><span class="pre">t_test</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/evaluation/metrics.html#t_test"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.evaluation.metrics.t_test" title="Link to this definition"></a></dt>
+<dd><p>Performs an independent two-sample t-test to compare the means of two distributions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x1</strong> (<em>numpy.ndarray</em><em> or </em><em>list</em>) – The first dataset.</p></li>
+<li><p><strong>x2</strong> (<em>numpy.ndarray</em><em> or </em><em>list</em>) – The second dataset.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(t-statistic, p-value).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ise.data.html" class="btn btn-neutral float-left" title="ise.data" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ise.models.html" class="btn btn-neutral float-right" title="ise.models" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Peter Van Katwyk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

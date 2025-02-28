@@ -1,0 +1,232 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ISE Documentation &mdash; ise 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="/index.html" />
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=fc837d61"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="ise documentation" href="docs/source/ise.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            ise
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="docs/source/ise.html">ise documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">ise</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">ISE Documentation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ise-documentation">
+<h1>ISE Documentation<a class="headerlink" href="#ise-documentation" title="Link to this heading"></a></h1>
+<a class="reference external image-reference" href="https://ise.readthedocs.io/en/latest/"><img alt="https://readthedocs.org/projects/ise/badge/?version=latest" src="https://readthedocs.org/projects/ise/badge/?version=latest" />
+</a>
+<p>ISE (<strong>Ice Sheet Emulator</strong>) is a Python package for training and analyzing <strong>ice sheet emulators</strong>, including <strong>ISEFlow</strong>, a flow-based neural network emulator designed for improved <strong>sea level projections</strong> and <strong>uncertainty quantification</strong>.</p>
+<p>This repository supports emulation for both the <strong>Antarctic</strong> and <strong>Greenland ice sheets</strong>, enabling efficient predictions of <strong>ice volume above flotation (IVAF)</strong> changes using machine learning models.</p>
+</section>
+<section id="about">
+<h1>About<a class="headerlink" href="#about" title="Link to this heading"></a></h1>
+<p>ISEFlow and other emulators in this package process <strong>climate forcings</strong> and <strong>IVAF projections</strong> from the <a class="reference external" href="https://app.globus.org/file-manager?origin_id=ad1a6ed8-4de0-4490-93a9-8258931766c7&amp;origin_path=%2FAIS%2F">ISMIP6 simulations</a>.</p>
+<p>This codebase has been used in <strong>peer-reviewed research</strong>, including:</p>
+<ul class="simple">
+<li><p><em>“A Variational LSTM Emulator of Sea Level Contribution From the Antarctic Ice Sheet”</em></p></li>
+<li><p><em>“ISEFlow: A Flow-Based Neural Network Emulator for Improved Sea Level Projections and Uncertainty Quantification”</em></p></li>
+</ul>
+<p>🔎 <strong>For details on replication</strong>, refer to the <a class="reference external" href="https://github.com/Brown-SciML/ise/releases">Releases</a> section.</p>
+<p>📚 <strong>Documentation:</strong> <a class="reference external" href="https://ise.readthedocs.io/">ISE ReadTheDocs</a></p>
+</section>
+<section id="quickstart">
+<h1>Quickstart<a class="headerlink" href="#quickstart" title="Link to this heading"></a></h1>
+<p>To get started, you must first have access to the Globus Archive containing the ISMIP6 climate forcings and ISMIP6 model outputs. For information on gaining access to these datasets, see the <a class="reference external" href="https://theghub.org/groups/ismip6/wiki">ISMIP wiki page</a>.</p>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<p>ISE uses <a class="reference external" href="https://github.com/astral-sh/uv">uv</a> for dependency management. To set up the environment:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>venv
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+<p>or using <strong>pip</strong> directly:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+<p>To install in <strong>editable mode</strong> (for development):</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</pre></div>
+</div>
+</section>
+<section id="cloning-the-repository">
+<h2>Cloning the Repository<a class="headerlink" href="#cloning-the-repository" title="Link to this heading"></a></h2>
+<p>To use it as a package, clone the repository by running:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Brown-SciML/ise.git
+</pre></div>
+</div>
+<p>Then navigate to the cloned directory:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>ise
+</pre></div>
+</div>
+</section>
+</section>
+<section id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h1>
+<section id="loading-a-pretrained-iseflow-ais-model">
+<h2>Loading a Pretrained ISEFlow-AIS Model<a class="headerlink" href="#loading-a-pretrained-iseflow-ais-model" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">ise.models.ISEFlow</span> <span class="kn">import</span> <span class="n">ISEFlow_AIS</span>
+
+<span class="c1"># Load v1.0.0 of ISEFlow-AIS</span>
+<span class="n">iseflowais</span> <span class="o">=</span> <span class="n">ISEFlow_AIS</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="s2">&quot;v1.0.0&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="running-predictions">
+<h2>Running Predictions<a class="headerlink" href="#running-predictions" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="c1"># Define Climate Forcings</span>
+<span class="n">year</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2015</span><span class="p">,</span> <span class="mi">2101</span><span class="p">)</span>
+<span class="n">pr_anomaly</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">...</span><span class="p">])</span>
+<span class="n">evspsbl_anomaly</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">...</span><span class="p">])</span>
+<span class="n">smb_anomaly</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">...</span><span class="p">])</span>
+<span class="n">ts_anomaly</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">...</span><span class="p">])</span>
+<span class="n">ocean_thermal_forcing</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">...</span><span class="p">])</span>
+<span class="n">ocean_salinity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">...</span><span class="p">])</span>
+<span class="n">ocean_temp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">...</span><span class="p">])</span>
+
+<span class="c1"># Ice Sheet Model Characteristics</span>
+<span class="n">initial_year</span> <span class="o">=</span> <span class="mi">1980</span>
+<span class="n">numerics</span> <span class="o">=</span> <span class="s1">&#39;fd&#39;</span>
+<span class="n">stress_balance</span> <span class="o">=</span> <span class="s1">&#39;ho&#39;</span>
+<span class="n">resolution</span> <span class="o">=</span> <span class="mi">16</span>
+<span class="n">init_method</span> <span class="o">=</span> <span class="s2">&quot;da&quot;</span>
+
+<span class="n">prediction</span><span class="p">,</span> <span class="n">uq</span> <span class="o">=</span> <span class="n">iseflowais</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span>
+    <span class="n">year</span><span class="p">,</span> <span class="n">pr_anomaly</span><span class="p">,</span> <span class="n">evspsbl_anomaly</span><span class="p">,</span> <span class="n">smb_anomaly</span><span class="p">,</span> <span class="n">ts_anomaly</span><span class="p">,</span> <span class="n">ocean_thermal_forcing</span><span class="p">,</span> <span class="n">ocean_salinity</span><span class="p">,</span> <span class="n">ocean_temp</span><span class="p">,</span>
+    <span class="n">initial_year</span><span class="p">,</span> <span class="n">numerics</span><span class="p">,</span> <span class="n">stress_balance</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">init_method</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">prediction</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">uq</span><span class="p">[</span><span class="s1">&#39;aleatoric&#39;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">uq</span><span class="p">[</span><span class="s1">&#39;epistemic&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="contributing">
+<h1>Contributing<a class="headerlink" href="#contributing" title="Link to this heading"></a></h1>
+<p>We welcome contributions! To get started:</p>
+<ol class="arabic simple">
+<li><p><strong>Fork the repository</strong> on GitHub.</p></li>
+<li><p><strong>Create a new branch</strong> for your feature or bugfix.</p></li>
+<li><p><strong>Submit a pull request</strong> (PR) for review.</p></li>
+</ol>
+<p>Run tests before submitting:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/
+</pre></div>
+</div>
+</section>
+<section id="known-issues-future-work">
+<h1>Known Issues &amp; Future Work<a class="headerlink" href="#known-issues-future-work" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p>Creating more unit tests. I know, maybe one day I’ll get around it.</p></li>
+<li><p>Expanding <strong>support for additional climate scenarios</strong> and additional ISM runs (ISMIP7).</p></li>
+<li><p>Better documentation and improvements to the readthedocs page.</p></li>
+</ul>
+</section>
+<section id="contact-support">
+<h1>Contact &amp; Support<a class="headerlink" href="#contact-support" title="Link to this heading"></a></h1>
+<p>This repository is actively maintained by <strong>Peter Van Katwyk</strong>, Ph.D. student at <strong>Brown University</strong>.</p>
+<p>📩 <strong>Email:</strong> <a class="reference external" href="mailto:peter_van_katwyk&#37;&#52;&#48;brown&#46;edu">peter_van_katwyk<span>&#64;</span>brown<span>&#46;</span>edu</a>
+🐙 <strong>GitHub Issues:</strong> <a class="reference external" href="https://github.com/Brown-SciML/ise/issues">Report a bug</a></p>
+<p>🚀 <strong>ISE is a work in progress!</strong> If you use this in research, please consider citing our work. See <cite>CITATION.md</cite> for details.</p>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="docs/source/ise.html">ise documentation</a></li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="docs/source/ise.html" class="btn btn-neutral float-right" title="ise documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Peter Van Katwyk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

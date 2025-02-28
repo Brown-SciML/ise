@@ -1,0 +1,390 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ise.models.density_estimators &mdash; ise 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="/docs/source/ise.models.density_estimators.html" />
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="ise.models.predictors" href="ise.models.predictors.html" />
+    <link rel="prev" title="ise.models.ISEFlow" href="ise.models.ISEFlow.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            ise
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="ise.html">ise documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="ise.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="ise.data.html">ise.data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ise.evaluation.html">ise.evaluation</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="ise.models.html">ise.models</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="ise.models.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.html#module-ise.models.loss">ise.models.loss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.html#module-ise.models.scenario">ise.models.scenario</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.html#module-ise.models.variational_lstm_emulator">ise.models.variational_lstm_emulator</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ise.utils.html">ise.utils</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ise</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="ise.html">ise documentation</a></li>
+          <li class="breadcrumb-item"><a href="ise.models.html">ise.models</a></li>
+      <li class="breadcrumb-item active">ise.models.density_estimators</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/ise.models.density_estimators.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ise-models-density-estimators">
+<h1>ise.models.density_estimators<a class="headerlink" href="#ise-models-density-estimators" title="Link to this heading"></a></h1>
+<section id="module-ise.models.density_estimators.normalizing_flow">
+<span id="ise-models-density-estimators-normalizing-flow"></span><h2>ise.models.density_estimators.normalizing_flow<a class="headerlink" href="#module-ise.models.density_estimators.normalizing_flow" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.models.density_estimators.normalizing_flow.NormalizingFlow">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.models.density_estimators.normalizing_flow.</span></span><span class="sig-name descname"><span class="pre">NormalizingFlow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">43</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_sequence_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">86</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_flow_transforms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/density_estimators/normalizing_flow.html#NormalizingFlow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.density_estimators.normalizing_flow.NormalizingFlow" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>A normalizing flow model for probabilistic modeling using invertible transformations.</p>
+<p>This model utilizes a sequence of invertible transformations to model complex probability
+distributions. It is built with a base distribution and a series of transformations,
+leveraging autoregressive neural networks.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.density_estimators.normalizing_flow.NormalizingFlow.num_flow_transforms">
+<span class="sig-name descname"><span class="pre">num_flow_transforms</span></span><a class="headerlink" href="#ise.models.density_estimators.normalizing_flow.NormalizingFlow.num_flow_transforms" title="Link to this definition"></a></dt>
+<dd><p>Number of flow transformations in the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.density_estimators.normalizing_flow.NormalizingFlow.num_input_features">
+<span class="sig-name descname"><span class="pre">num_input_features</span></span><a class="headerlink" href="#ise.models.density_estimators.normalizing_flow.NormalizingFlow.num_input_features" title="Link to this definition"></a></dt>
+<dd><p>Number of input features.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.density_estimators.normalizing_flow.NormalizingFlow.num_predicted_sle">
+<span class="sig-name descname"><span class="pre">num_predicted_sle</span></span><a class="headerlink" href="#ise.models.density_estimators.normalizing_flow.NormalizingFlow.num_predicted_sle" title="Link to this definition"></a></dt>
+<dd><p>Number of predicted sea-level equivalent values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.density_estimators.normalizing_flow.NormalizingFlow.flow_hidden_features">
+<span class="sig-name descname"><span class="pre">flow_hidden_features</span></span><a class="headerlink" href="#ise.models.density_estimators.normalizing_flow.NormalizingFlow.flow_hidden_features" title="Link to this definition"></a></dt>
+<dd><p>Number of hidden features in the flow model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.density_estimators.normalizing_flow.NormalizingFlow.output_sequence_length">
+<span class="sig-name descname"><span class="pre">output_sequence_length</span></span><a class="headerlink" href="#ise.models.density_estimators.normalizing_flow.NormalizingFlow.output_sequence_length" title="Link to this definition"></a></dt>
+<dd><p>Length of the output sequence.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.density_estimators.normalizing_flow.NormalizingFlow.device">
+<span class="sig-name descname"><span class="pre">device</span></span><a class="headerlink" href="#ise.models.density_estimators.normalizing_flow.NormalizingFlow.device" title="Link to this definition"></a></dt>
+<dd><p>Device on which the model is run (“cuda” or “cpu”).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.density_estimators.normalizing_flow.NormalizingFlow.base_distribution">
+<span class="sig-name descname"><span class="pre">base_distribution</span></span><a class="headerlink" href="#ise.models.density_estimators.normalizing_flow.NormalizingFlow.base_distribution" title="Link to this definition"></a></dt>
+<dd><p>The base normal distribution conditioned on input features.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>distributions.normal.ConditionalDiagonalNormal</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.density_estimators.normalizing_flow.NormalizingFlow.t">
+<span class="sig-name descname"><span class="pre">t</span></span><a class="headerlink" href="#ise.models.density_estimators.normalizing_flow.NormalizingFlow.t" title="Link to this definition"></a></dt>
+<dd><p>Composite transformation for the normalizing flow.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>transforms.base.CompositeTransform</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.density_estimators.normalizing_flow.NormalizingFlow.flow">
+<span class="sig-name descname"><span class="pre">flow</span></span><a class="headerlink" href="#ise.models.density_estimators.normalizing_flow.NormalizingFlow.flow" title="Link to this definition"></a></dt>
+<dd><p>The normalizing flow model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>flows.base.Flow</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.density_estimators.normalizing_flow.NormalizingFlow.optimizer">
+<span class="sig-name descname"><span class="pre">optimizer</span></span><a class="headerlink" href="#ise.models.density_estimators.normalizing_flow.NormalizingFlow.optimizer" title="Link to this definition"></a></dt>
+<dd><p>Optimizer for training the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.optim.Adam</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.density_estimators.normalizing_flow.NormalizingFlow.criterion">
+<span class="sig-name descname"><span class="pre">criterion</span></span><a class="headerlink" href="#ise.models.density_estimators.normalizing_flow.NormalizingFlow.criterion" title="Link to this definition"></a></dt>
+<dd><p>Log probability function used as the loss criterion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>callable</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.density_estimators.normalizing_flow.NormalizingFlow.trained">
+<span class="sig-name descname"><span class="pre">trained</span></span><a class="headerlink" href="#ise.models.density_estimators.normalizing_flow.NormalizingFlow.trained" title="Link to this definition"></a></dt>
+<dd><p>Flag indicating if the model has been trained.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.density_estimators.normalizing_flow.NormalizingFlow.aleatoric">
+<span class="sig-name descname"><span class="pre">aleatoric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/density_estimators/normalizing_flow.html#NormalizingFlow.aleatoric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.density_estimators.normalizing_flow.NormalizingFlow.aleatoric" title="Link to this definition"></a></dt>
+<dd><p>Estimates aleatoric uncertainty by computing the standard deviation of multiple
+samples drawn from the normalizing flow model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>features</strong> (<em>array-like</em><em> or </em><em>torch.Tensor</em>) – Input features for sampling.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – Number of samples per input feature set.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Batch size for processing features. Defaults to 128.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Aleatoric uncertainty estimates of shape (num_samples,).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.density_estimators.normalizing_flow.NormalizingFlow.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_checkpoints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'checkpoint.pt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_stopping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patience</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/density_estimators/normalizing_flow.html#NormalizingFlow.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.density_estimators.normalizing_flow.NormalizingFlow.fit" title="Link to this definition"></a></dt>
+<dd><p>Trains the normalizing flow model using maximum likelihood estimation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>array-like</em>) – Input features of shape (num_samples, num_features).</p></li>
+<li><p><strong>y</strong> (<em>array-like</em>) – Target values of shape (num_samples, output_size).</p></li>
+<li><p><strong>epochs</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of training epochs. Defaults to 100.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Batch size for training. Defaults to 64.</p></li>
+<li><p><strong>save_checkpoints</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to save model checkpoints. Defaults to True.</p></li>
+<li><p><strong>checkpoint_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to save model checkpoints. Defaults to ‘checkpoint.pt’.</p></li>
+<li><p><strong>early_stopping</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to use early stopping. Defaults to True.</p></li>
+<li><p><strong>patience</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of epochs to wait before early stopping. Defaults to 10.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to print training progress. Defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If checkpoint loading fails.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.density_estimators.normalizing_flow.NormalizingFlow.get_latent">
+<span class="sig-name descname"><span class="pre">get_latent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latent_constant</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/density_estimators/normalizing_flow.html#NormalizingFlow.get_latent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.density_estimators.normalizing_flow.NormalizingFlow.get_latent" title="Link to this definition"></a></dt>
+<dd><p>Computes the latent space representation of the given input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array-like</em><em> or </em><em>torch.Tensor</em>) – Input data of shape (num_samples, num_features).</p></li>
+<li><p><strong>latent_constant</strong> (<em>float</em><em>, </em><em>optional</em>) – Constant value used for latent variable sampling. Defaults to 0.0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Latent space representation of the input data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.density_estimators.normalizing_flow.NormalizingFlow.load">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/density_estimators/normalizing_flow.html#NormalizingFlow.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.density_estimators.normalizing_flow.NormalizingFlow.load" title="Link to this definition"></a></dt>
+<dd><p>Loads a trained normalizing flow model from a saved checkpoint.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – Path to the saved model checkpoint.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A restored instance of the NormalizingFlow model.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#ise.models.density_estimators.normalizing_flow.NormalizingFlow" title="ise.models.density_estimators.normalizing_flow.NormalizingFlow">NormalizingFlow</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.density_estimators.normalizing_flow.NormalizingFlow.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'numpy'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/density_estimators/normalizing_flow.html#NormalizingFlow.sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.density_estimators.normalizing_flow.NormalizingFlow.sample" title="Link to this definition"></a></dt>
+<dd><p>Generates samples from the trained normalizing flow model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>features</strong> (<em>array-like</em><em> or </em><em>torch.Tensor</em>) – Input features to condition the samples on.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – Number of samples to generate per input feature set.</p></li>
+<li><p><strong>return_type</strong> (<em>str</em><em>, </em><em>optional</em>) – Return type, either “numpy” or “tensor”. Defaults to “numpy”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Generated samples of shape (num_samples, output_size).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray or torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.density_estimators.normalizing_flow.NormalizingFlow.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/density_estimators/normalizing_flow.html#NormalizingFlow.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.density_estimators.normalizing_flow.NormalizingFlow.save" title="Link to this definition"></a></dt>
+<dd><p>Saves the trained model and its metadata.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – Path to save the model checkpoint.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the model has not been trained before saving.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ise.models.ISEFlow.html" class="btn btn-neutral float-left" title="ise.models.ISEFlow" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ise.models.predictors.html" class="btn btn-neutral float-right" title="ise.models.predictors" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Peter Van Katwyk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

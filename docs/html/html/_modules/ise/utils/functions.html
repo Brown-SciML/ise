@@ -1,0 +1,963 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ise.utils.functions &mdash; ise 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="/_modules/ise/utils/functions.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ise
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/ise.html">ise documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ise</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ise.utils.functions</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ise.utils.functions</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pickle</span> <span class="k">as</span> <span class="nn">pkl</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">netCDF4</span> <span class="kn">import</span> <span class="n">Dataset</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">gaussian_kde</span>
+<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">MinMaxScaler</span>
+
+<span class="kn">from</span> <span class="nn">ise.evaluation.metrics</span> <span class="kn">import</span> <span class="n">js_divergence</span><span class="p">,</span> <span class="n">kl_divergence</span>
+
+
+<div class="viewcode-block" id="load_model">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.functions.load_model">[docs]</a>
+<span class="k">def</span> <span class="nf">load_model</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">model_class</span><span class="p">,</span> <span class="n">architecture</span><span class="p">,</span> <span class="n">mc_dropout</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Loads a PyTorch model from a saved state_dict file.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model_path (str): Path to the model&#39;s state dictionary file.</span>
+<span class="sd">        model_class (type): Class reference of the model to be loaded.</span>
+<span class="sd">        architecture (dict): Dictionary specifying the architecture of the model.</span>
+<span class="sd">        mc_dropout (bool, optional): Whether the model uses Monte Carlo Dropout. Defaults to False.</span>
+<span class="sd">        dropout_prob (float, optional): Dropout probability if MC Dropout is used. Defaults to 0.1.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        torch.nn.Module: The loaded PyTorch model set to the available device (CPU/GPU).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">model_class</span><span class="p">(</span><span class="n">architecture</span><span class="p">,</span> <span class="n">mc_dropout</span><span class="o">=</span><span class="n">mc_dropout</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="o">=</span><span class="n">dropout_prob</span><span class="p">)</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda:0&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="n">device</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">get_all_filepaths</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">filetype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">contains</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">not_contains</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieves all file paths in a directory, with optional filtering.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path (str): The directory path to search for files.</span>
+<span class="sd">        filetype (str, optional): Filter files by extension (e.g., &#39;csv&#39;, &#39;nc&#39;). Defaults to None.</span>
+<span class="sd">        contains (str, optional): Only include files that contain this substring. Defaults to None.</span>
+<span class="sd">        not_contains (str, optional): Exclude files that contain this substring. Defaults to None.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List[str]: A list of file paths that match the specified criteria.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">all_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">dirpath</span><span class="p">,</span> <span class="n">dirnames</span><span class="p">,</span> <span class="n">filenames</span><span class="p">)</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="n">all_files</span> <span class="o">+=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dirpath</span><span class="p">,</span> <span class="n">file</span><span class="p">)</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">filenames</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">filetype</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">filetype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+            <span class="n">all_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">file</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">all_files</span> <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">filetype</span><span class="p">)]</span>
+
+    <span class="k">if</span> <span class="n">contains</span><span class="p">:</span>
+        <span class="n">all_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">file</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">all_files</span> <span class="k">if</span> <span class="n">contains</span> <span class="ow">in</span> <span class="n">file</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">not_contains</span><span class="p">:</span>
+        <span class="n">all_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">file</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">all_files</span> <span class="k">if</span> <span class="n">not_contains</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">file</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">all_files</span>
+
+
+<div class="viewcode-block" id="add_variable_to_nc">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.functions.add_variable_to_nc">[docs]</a>
+<span class="k">def</span> <span class="nf">add_variable_to_nc</span><span class="p">(</span><span class="n">source_file_path</span><span class="p">,</span> <span class="n">target_file_path</span><span class="p">,</span> <span class="n">variable_name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Copies a variable from a source NetCDF file to a target NetCDF file.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        source_file_path (str): Path to the source NetCDF file.</span>
+<span class="sd">        target_file_path (str): Path to the target NetCDF file.</span>
+<span class="sd">        variable_name (str): Name of the variable to be copied.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        FileNotFoundError: If the specified variable is not found in the source file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Open the source NetCDF file in read mode</span>
+    <span class="k">with</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">source_file_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">src_nc</span><span class="p">:</span>
+        <span class="c1"># Check if the variable exists in the source file</span>
+        <span class="k">if</span> <span class="n">variable_name</span> <span class="ow">in</span> <span class="n">src_nc</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+            <span class="c1"># Read the variable data and attributes</span>
+            <span class="n">variable_data</span> <span class="o">=</span> <span class="n">src_nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">variable_name</span><span class="p">][:]</span>
+            <span class="n">variable_attributes</span> <span class="o">=</span> <span class="n">src_nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">variable_name</span><span class="p">]</span><span class="o">.</span><span class="n">ncattrs</span><span class="p">()</span>
+
+            <span class="c1"># Open the target NetCDF file in append mode</span>
+            <span class="k">with</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">target_file_path</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">target_nc</span><span class="p">:</span>
+                <span class="c1"># Create or overwrite the variable in the target file</span>
+                <span class="k">if</span> <span class="n">variable_name</span> <span class="ow">in</span> <span class="n">target_nc</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;The &#39;</span><span class="si">{</span><span class="n">variable_name</span><span class="si">}</span><span class="s2">&#39; variable already exists in the target file. Overwriting data.&quot;</span>
+                    <span class="p">)</span>
+                    <span class="n">target_nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">variable_name</span><span class="p">][:]</span> <span class="o">=</span> <span class="n">variable_data</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Create the variable with the same datatype and dimensions</span>
+                    <span class="n">variable</span> <span class="o">=</span> <span class="n">target_nc</span><span class="o">.</span><span class="n">createVariable</span><span class="p">(</span>
+                        <span class="n">variable_name</span><span class="p">,</span>
+                        <span class="n">src_nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">variable_name</span><span class="p">]</span><span class="o">.</span><span class="n">datatype</span><span class="p">,</span>
+                        <span class="n">src_nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">variable_name</span><span class="p">]</span><span class="o">.</span><span class="n">dimensions</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+                    <span class="c1"># Copy the variable attributes</span>
+                    <span class="k">for</span> <span class="n">attr_name</span> <span class="ow">in</span> <span class="n">variable_attributes</span><span class="p">:</span>
+                        <span class="n">variable</span><span class="o">.</span><span class="n">setncattr</span><span class="p">(</span>
+                            <span class="n">attr_name</span><span class="p">,</span> <span class="n">src_nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">variable_name</span><span class="p">]</span><span class="o">.</span><span class="n">getncattr</span><span class="p">(</span><span class="n">attr_name</span><span class="p">)</span>
+                        <span class="p">)</span>
+
+                    <span class="c1"># Assign the data to the new variable</span>
+                    <span class="n">variable</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">variable_data</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">variable_name</span><span class="si">}</span><span class="s2">&#39; variable not found in the source file.&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="load_ml_data">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.functions.load_ml_data">[docs]</a>
+<span class="k">def</span> <span class="nf">load_ml_data</span><span class="p">(</span><span class="n">data_directory</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">time_series</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Loads machine learning training and testing data from CSV files.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data_directory (str): Directory containing the processed data files.</span>
+<span class="sd">        time_series (bool, optional): Whether to load the time-series version of the data. Defaults to True.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: A tuple containing:</span>
+<span class="sd">            - train_features (pd.DataFrame): Training feature set.</span>
+<span class="sd">            - train_labels (pd.Series): Training labels.</span>
+<span class="sd">            - test_features (pd.DataFrame): Testing feature set.</span>
+<span class="sd">            - test_labels (pd.Series): Testing labels.</span>
+<span class="sd">            - test_scenarios (list): List of test scenarios.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">time_series</span><span class="p">:</span>
+        <span class="c1"># TODO: Test scenarios has no use, get rid of it</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">test_features</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_directory</span><span class="si">}</span><span class="s2">/ts_test_features.csv&quot;</span><span class="p">)</span>
+            <span class="n">train_features</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_directory</span><span class="si">}</span><span class="s2">/ts_train_features.csv&quot;</span><span class="p">)</span>
+            <span class="n">test_labels</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_directory</span><span class="si">}</span><span class="s2">/ts_test_labels.csv&quot;</span><span class="p">)</span>
+            <span class="n">train_labels</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_directory</span><span class="si">}</span><span class="s2">/ts_train_labels.csv&quot;</span><span class="p">)</span>
+            <span class="n">test_scenarios</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_directory</span><span class="si">}</span><span class="s2">/ts_test_scenarios.csv&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">test_features</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_directory</span><span class="si">}</span><span class="s2">/val_features.csv&quot;</span><span class="p">)</span>
+                <span class="n">train_features</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_directory</span><span class="si">}</span><span class="s2">/train_features.csv&quot;</span><span class="p">)</span>
+                <span class="n">test_labels</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_directory</span><span class="si">}</span><span class="s2">/val_labels.csv&quot;</span><span class="p">)</span>
+                <span class="n">train_labels</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_directory</span><span class="si">}</span><span class="s2">/train_labels.csv&quot;</span><span class="p">)</span>
+                <span class="n">test_scenarios</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_directory</span><span class="si">}</span><span class="s2">/ts_test_scenarios.csv&quot;</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;Files not found at </span><span class="si">{</span><span class="n">data_directory</span><span class="si">}</span><span class="s1">. Format must be in format &quot;ts_train_features.csv&quot;&#39;</span>
+                <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">test_features</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_directory</span><span class="si">}</span><span class="s2">/traditional_test_features.csv&quot;</span><span class="p">)</span>
+            <span class="n">train_features</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_directory</span><span class="si">}</span><span class="s2">/traditional_train_features.csv&quot;</span><span class="p">)</span>
+            <span class="n">test_labels</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_directory</span><span class="si">}</span><span class="s2">/traditional_test_labels.csv&quot;</span><span class="p">)</span>
+            <span class="n">train_labels</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_directory</span><span class="si">}</span><span class="s2">/traditional_train_labels.csv&quot;</span><span class="p">)</span>
+            <span class="n">test_scenarios</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_directory</span><span class="si">}</span><span class="s2">/traditional_test_scenarios.csv&quot;</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Files not found at </span><span class="si">{</span><span class="n">data_directory</span><span class="si">}</span><span class="s1">. Format must be in format &quot;traditional_train_features.csv&quot;&#39;</span>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">train_features</span><span class="p">,</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">train_labels</span><span class="p">[</span><span class="s2">&quot;sle&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;sle&quot;</span><span class="p">),</span>
+        <span class="n">test_features</span><span class="p">,</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">test_labels</span><span class="p">[</span><span class="s2">&quot;sle&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;sle&quot;</span><span class="p">),</span>
+        <span class="n">test_scenarios</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="undummify">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.functions.undummify">[docs]</a>
+<span class="k">def</span> <span class="nf">undummify</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">prefix_sep</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a one-hot encoded dataframe back to its categorical form.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        df (pd.DataFrame): DataFrame containing one-hot encoded categorical columns.</span>
+<span class="sd">        prefix_sep (str, optional): Separator used in column names to identify categories. Defaults to &quot;-&quot;.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.DataFrame: DataFrame with categorical values restored.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">cols2collapse</span> <span class="o">=</span> <span class="p">{</span><span class="n">item</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">prefix_sep</span><span class="p">)[</span><span class="mi">0</span><span class="p">]:</span> <span class="p">(</span><span class="n">prefix_sep</span> <span class="ow">in</span> <span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">}</span>
+
+    <span class="n">series_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">needs_to_collapse</span> <span class="ow">in</span> <span class="n">cols2collapse</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">needs_to_collapse</span><span class="p">:</span>
+            <span class="n">undummified</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">df</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">like</span><span class="o">=</span><span class="n">col</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">idxmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">prefix_sep</span><span class="p">,</span> <span class="n">maxsplit</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">series_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">undummified</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">series_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">])</span>
+    <span class="n">undummified_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">series_list</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">undummified_df</span></div>
+
+
+
+<div class="viewcode-block" id="combine_testing_results">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.functions.combine_testing_results">[docs]</a>
+<span class="k">def</span> <span class="nf">combine_testing_results</span><span class="p">(</span>
+    <span class="n">data_directory</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">preds</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">sd</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">gp_data</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">time_series</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">save_directory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Combines test results into a DataFrame with predictions, uncertainties, and true values.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data_directory (str): Directory containing training and testing data.</span>
+<span class="sd">        preds (np.ndarray | pd.Series | str): Predictions array, Series, or path to a CSV file with predictions.</span>
+<span class="sd">        sd (dict | pd.DataFrame, optional): Standard deviations for uncertainty estimation. Defaults to None.</span>
+<span class="sd">        gp_data (dict | pd.DataFrame, optional): Gaussian process predictions and standard deviations. Defaults to None.</span>
+<span class="sd">        time_series (bool, optional): Whether to process time-series data. Defaults to True.</span>
+<span class="sd">        save_directory (str, optional): Directory where results should be saved. Defaults to None.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.DataFrame: DataFrame containing test results with true values, predictions, errors, and uncertainty bounds.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="p">(</span>
+        <span class="n">train_features</span><span class="p">,</span>
+        <span class="n">train_labels</span><span class="p">,</span>
+        <span class="n">test_features</span><span class="p">,</span>
+        <span class="n">test_labels</span><span class="p">,</span>
+        <span class="n">test_scenarios</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">load_ml_data</span><span class="p">(</span><span class="n">data_directory</span><span class="p">,</span> <span class="n">time_series</span><span class="o">=</span><span class="n">time_series</span><span class="p">)</span>
+
+    <span class="n">X_test</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">test_features</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">test_labels</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+        <span class="n">y_test</span> <span class="o">=</span> <span class="n">test_labels</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">test_labels</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="n">y_test</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">test_labels</span><span class="p">[</span><span class="s2">&quot;sle&quot;</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">y_test</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">test_labels</span><span class="p">)</span>
+
+    <span class="n">test</span> <span class="o">=</span> <span class="n">X_test</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">X_test</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="s2">&quot;lag&quot;</span> <span class="ow">in</span> <span class="n">col</span><span class="p">])</span>
+    <span class="n">test</span><span class="p">[</span><span class="s2">&quot;true&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_test</span>
+    <span class="n">test</span><span class="p">[</span><span class="s2">&quot;pred&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">preds</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">preds</span>
+    <span class="n">test</span><span class="p">[</span><span class="s2">&quot;mse&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">true</span> <span class="o">-</span> <span class="n">test</span><span class="o">.</span><span class="n">pred</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">test</span><span class="p">[</span><span class="s2">&quot;mae&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">true</span> <span class="o">-</span> <span class="n">test</span><span class="o">.</span><span class="n">pred</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">gp_data</span><span class="p">:</span>
+        <span class="n">test</span><span class="p">[</span><span class="s2">&quot;gp_preds&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gp_data</span><span class="p">[</span><span class="s2">&quot;preds&quot;</span><span class="p">]</span>
+        <span class="n">test</span><span class="p">[</span><span class="s2">&quot;gp_std&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gp_data</span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+        <span class="n">test</span><span class="p">[</span><span class="s2">&quot;gp_upper_bound&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">test</span><span class="o">.</span><span class="n">gp_preds</span> <span class="o">+</span> <span class="mf">1.96</span> <span class="o">*</span> <span class="n">test</span><span class="o">.</span><span class="n">gp_std</span>
+        <span class="n">test</span><span class="p">[</span><span class="s2">&quot;gp_lower_bound&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">test</span><span class="o">.</span><span class="n">gp_preds</span> <span class="o">-</span> <span class="mf">1.96</span> <span class="o">*</span> <span class="n">test</span><span class="o">.</span><span class="n">gp_std</span>
+
+    <span class="n">test</span> <span class="o">=</span> <span class="n">undummify</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
+    <span class="n">test</span> <span class="o">=</span> <span class="n">unscale_column</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;year&quot;</span><span class="p">,</span> <span class="s2">&quot;sector&quot;</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">sd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">test</span><span class="p">[</span><span class="s2">&quot;sd&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sd</span>
+        <span class="n">test</span><span class="p">[</span><span class="s2">&quot;upper_bound&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">preds</span> <span class="o">+</span> <span class="mf">1.96</span> <span class="o">*</span> <span class="n">sd</span>
+        <span class="n">test</span><span class="p">[</span><span class="s2">&quot;lower_bound&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">preds</span> <span class="o">-</span> <span class="mf">1.96</span> <span class="o">*</span> <span class="n">sd</span>
+
+    <span class="k">if</span> <span class="n">save_directory</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">save_directory</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">save_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">save_directory</span><span class="si">}</span><span class="s2">/results.csv&quot;</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">save_directory</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="n">save_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;results.csv&quot;</span>
+
+        <span class="n">test</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">test</span></div>
+
+
+
+<div class="viewcode-block" id="group_by_run">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.functions.group_by_run">[docs]</a>
+<span class="k">def</span> <span class="nf">group_by_run</span><span class="p">(</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">condition</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Groups dataset simulations into structured matrices for true and predicted values.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dataset (pd.DataFrame): Dataset containing simulation results.</span>
+<span class="sd">        column (str, optional): Column name to subset on. Defaults to None.</span>
+<span class="sd">        condition (str, optional): Condition for filtering the dataset. Defaults to None.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: A tuple containing:</span>
+<span class="sd">            - all_trues (np.ndarray): Matrix of true values (N x M, where N is the number of simulations and M is time steps).</span>
+<span class="sd">            - all_preds (np.ndarray): Matrix of predicted values.</span>
+<span class="sd">            - scenarios (list): List of scenario information for each simulation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="n">modelnames</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">modelname</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+    <span class="n">exp_ids</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">exp_id</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+    <span class="n">sectors</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">sectors</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+
+    <span class="n">all_runs</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">product</span><span class="p">(</span><span class="n">modelnames</span><span class="p">,</span> <span class="n">exp_ids</span><span class="p">,</span> <span class="n">sectors</span><span class="p">))]</span>
+
+    <span class="n">all_trues</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">all_preds</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">scenarios</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">run</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">all_runs</span><span class="p">):</span>
+        <span class="n">modelname</span> <span class="o">=</span> <span class="n">run</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">exp</span> <span class="o">=</span> <span class="n">run</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">sector</span> <span class="o">=</span> <span class="n">run</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">column</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">condition</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">subset</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span>
+                <span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">modelname</span> <span class="o">==</span> <span class="n">modelname</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">exp_id</span> <span class="o">==</span> <span class="n">exp</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">sectors</span> <span class="o">==</span> <span class="n">sector</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="k">elif</span> <span class="n">column</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">condition</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">subset</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span>
+                <span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">modelname</span> <span class="o">==</span> <span class="n">modelname</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">exp_id</span> <span class="o">==</span> <span class="n">exp</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">sectors</span> <span class="o">==</span> <span class="n">sector</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">==</span> <span class="n">condition</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Column and condition type must be the same (None &amp; None, not None &amp; not None).&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">subset</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="n">scenarios</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">modelname</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">sector</span><span class="p">])</span>
+            <span class="n">all_trues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subset</span><span class="o">.</span><span class="n">true</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">())</span>
+            <span class="n">all_preds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subset</span><span class="o">.</span><span class="n">pred</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">())</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">all_trues</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">all_preds</span><span class="p">),</span> <span class="n">scenarios</span></div>
+
+
+
+<div class="viewcode-block" id="get_uncertainty_bands">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.functions.get_uncertainty_bands">[docs]</a>
+<span class="k">def</span> <span class="nf">get_uncertainty_bands</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">confidence</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;95&quot;</span><span class="p">,</span> <span class="n">quantiles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes uncertainty bands using confidence intervals and quantiles.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (pd.DataFrame): Data matrix of shape (N, M), where N is samples and M is time steps.</span>
+<span class="sd">        confidence (str, optional): Confidence level (&#39;95&#39; or &#39;99&#39;). Defaults to &quot;95&quot;.</span>
+<span class="sd">        quantiles (List[float], optional): Quantiles for uncertainty bands. Defaults to [0.05, 0.95].</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: A tuple containing:</span>
+<span class="sd">            - mean (np.ndarray): Mean values.</span>
+<span class="sd">            - sd (np.ndarray): Standard deviation values.</span>
+<span class="sd">            - upper_ci (np.ndarray): Upper confidence interval.</span>
+<span class="sd">            - lower_ci (np.ndarray): Lower confidence interval.</span>
+<span class="sd">            - upper_q (np.ndarray): Upper quantile bound.</span>
+<span class="sd">            - lower_q (np.ndarray): Lower quantile bound.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">z</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;95&quot;</span><span class="p">:</span> <span class="mf">1.96</span><span class="p">,</span> <span class="s2">&quot;99&quot;</span><span class="p">:</span> <span class="mf">2.58</span><span class="p">}</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">sd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+    <span class="n">upper_ci</span> <span class="o">=</span> <span class="n">mean</span> <span class="o">+</span> <span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="n">confidence</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">sd</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+    <span class="n">lower_ci</span> <span class="o">=</span> <span class="n">mean</span> <span class="o">-</span> <span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="n">confidence</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">sd</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+    <span class="n">quantiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">quantiles</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">upper_q</span> <span class="o">=</span> <span class="n">quantiles</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">lower_q</span> <span class="o">=</span> <span class="n">quantiles</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="k">return</span> <span class="n">mean</span><span class="p">,</span> <span class="n">sd</span><span class="p">,</span> <span class="n">upper_ci</span><span class="p">,</span> <span class="n">lower_ci</span><span class="p">,</span> <span class="n">upper_q</span><span class="p">,</span> <span class="n">lower_q</span></div>
+
+
+
+<div class="viewcode-block" id="create_distribution">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.functions.create_distribution">[docs]</a>
+<span class="k">def</span> <span class="nf">create_distribution</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">min_range</span><span class="o">=-</span><span class="mi">30</span><span class="p">,</span> <span class="n">max_range</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a probability density function (PDF) using Gaussian kernel density estimation (KDE).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dataset (np.ndarray): Input data for KDE.</span>
+<span class="sd">        min_range (float, optional): Minimum range for support values. Defaults to -30.</span>
+<span class="sd">        max_range (float, optional): Maximum range for support values. Defaults to 20.</span>
+<span class="sd">        step (float, optional): Step size for the support values. Defaults to 0.01.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: A tuple containing:</span>
+<span class="sd">            - density (np.ndarray): Density values from KDE.</span>
+<span class="sd">            - support (np.ndarray): Support values for the density function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">kde</span> <span class="o">=</span> <span class="n">gaussian_kde</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">bw_method</span><span class="o">=</span><span class="s2">&quot;silverman&quot;</span><span class="p">)</span>
+    <span class="n">support</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">min_range</span><span class="p">,</span> <span class="n">max_range</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+    <span class="n">density</span> <span class="o">=</span> <span class="n">kde</span><span class="p">(</span><span class="n">support</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">density</span><span class="p">,</span> <span class="n">support</span></div>
+
+
+
+<div class="viewcode-block" id="calculate_distribution_metrics">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.functions.calculate_distribution_metrics">[docs]</a>
+<span class="k">def</span> <span class="nf">calculate_distribution_metrics</span><span class="p">(</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">condition</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes distribution divergence metrics between true and predicted values.</span>
+
+<span class="sd">    This function groups the dataset by simulation runs, creates probability </span>
+<span class="sd">    distributions for true and predicted values, and calculates the </span>
+<span class="sd">    Kullback-Leibler (KL) and Jensen-Shannon (JS) divergences.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dataset (pd.DataFrame): The dataset containing true and predicted values.</span>
+<span class="sd">        column (str, optional): Column name to subset on. Defaults to None.</span>
+<span class="sd">        condition (str, optional): Value to filter the dataset based on the specified column. Defaults to None.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: A dictionary containing:</span>
+<span class="sd">            - &#39;kl&#39; (float): KL-Divergence value.</span>
+<span class="sd">            - &#39;js&#39; (float): Jensen-Shannon Divergence value.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">trues</span><span class="p">,</span> <span class="n">preds</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">group_by_run</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="n">column</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">condition</span><span class="p">)</span>
+    <span class="n">true_distribution</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">create_distribution</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="mi">2100</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">trues</span><span class="p">)</span>
+    <span class="n">pred_distribution</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">create_distribution</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="mi">2100</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">preds</span><span class="p">)</span>
+    <span class="n">distribution_metrics</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;kl&quot;</span><span class="p">:</span> <span class="n">kl_divergence</span><span class="p">(</span><span class="n">pred_distribution</span><span class="p">,</span> <span class="n">true_distribution</span><span class="p">),</span>
+        <span class="s2">&quot;js&quot;</span><span class="p">:</span> <span class="n">js_divergence</span><span class="p">(</span><span class="n">pred_distribution</span><span class="p">,</span> <span class="n">true_distribution</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">distribution_metrics</span></div>
+
+
+
+<div class="viewcode-block" id="unscale_column">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.functions.unscale_column">[docs]</a>
+<span class="k">def</span> <span class="nf">unscale_column</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;year&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Unscales specified columns back to their original range using known value distributions.</span>
+
+<span class="sd">    This function is specifically used to revert the normalization of &#39;year&#39; and </span>
+<span class="sd">    &#39;sectors&#39; columns since they have known value ranges.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dataset (pd.DataFrame): Dataset containing the scaled columns.</span>
+<span class="sd">        column (str or list, optional): Column(s) to be unscaled. </span>
+<span class="sd">            Can be &#39;year&#39;, &#39;sectors&#39;, or a list containing both. Defaults to &quot;year&quot;.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.DataFrame: Dataset with the specified column(s) unscaled.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">column</span> <span class="o">=</span> <span class="p">[</span><span class="n">column</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="s2">&quot;sectors&quot;</span> <span class="ow">in</span> <span class="n">column</span><span class="p">:</span>
+        <span class="n">sectors_scaler</span> <span class="o">=</span> <span class="n">MinMaxScaler</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">19</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">dataset</span><span class="p">[</span><span class="s2">&quot;sectors&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sectors_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">sectors</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">dataset</span><span class="p">[</span><span class="s2">&quot;sectors&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">sectors</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s2">&quot;year&quot;</span> <span class="ow">in</span> <span class="n">column</span><span class="p">:</span>
+        <span class="n">year_scaler</span> <span class="o">=</span> <span class="n">MinMaxScaler</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2016</span><span class="p">,</span> <span class="mi">2101</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">dataset</span><span class="p">[</span><span class="s2">&quot;year&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">year_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">year</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">dataset</span><span class="p">[</span><span class="s2">&quot;year&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">year</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">dataset</span></div>
+
+
+<span class="n">file_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="check_input">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.functions.check_input">[docs]</a>
+<span class="k">def</span> <span class="nf">check_input</span><span class="p">(</span><span class="nb">input</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">argname</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Validates whether a given input string is within an expected list of options.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        input (str): The input value to validate.</span>
+<span class="sd">        options (List[str]): A list of valid options.</span>
+<span class="sd">        argname (str, optional): Name of the argument being checked for better error messaging. Defaults to None.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the input is not in the list of allowed options.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># simple assert that input is in the designated options (readability purposes only)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="nb">input</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">input</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">argname</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">argname</span><span class="si">}</span><span class="s2"> must be in </span><span class="si">{</span><span class="n">options</span><span class="si">}</span><span class="s2">, received </span><span class="si">{</span><span class="nb">input</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;input must be in </span><span class="si">{</span><span class="n">options</span><span class="si">}</span><span class="s2">, received </span><span class="si">{</span><span class="nb">input</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_all_filepaths">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.functions.get_all_filepaths">[docs]</a>
+<span class="k">def</span> <span class="nf">get_all_filepaths</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">filetype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">contains</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">not_contains</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieves all filepaths for files within a directory. Supports subsetting based on filetype</span>
+<span class="sd">    and substring search.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path (str): Path to directory to be searched.</span>
+<span class="sd">        filetype (str, optional): File type to be returned (e.g. csv, nc). Defaults to None.</span>
+<span class="sd">        contains (str, optional): Substring that files found must contain. Defaults to None.</span>
+<span class="sd">        not_contains(str, optional): Substring that files found must NOT contain. Defaults to None.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List[str]: list of files within the directory matching the input criteria.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">all_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">dirpath</span><span class="p">,</span> <span class="n">dirnames</span><span class="p">,</span> <span class="n">filenames</span><span class="p">)</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="n">all_files</span> <span class="o">+=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dirpath</span><span class="p">,</span> <span class="n">file</span><span class="p">)</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">filenames</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">filetype</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">filetype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+            <span class="n">all_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">file</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">all_files</span> <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">filetype</span><span class="p">)]</span>
+
+    <span class="k">if</span> <span class="n">contains</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">contains</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">contains</span> <span class="o">=</span> <span class="p">[</span><span class="n">contains</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">substr</span> <span class="ow">in</span> <span class="n">contains</span><span class="p">:</span>
+            <span class="n">all_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">file</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">all_files</span> <span class="k">if</span> <span class="n">substr</span> <span class="ow">in</span> <span class="n">file</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">not_contains</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">not_contains</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">not_contains</span> <span class="o">=</span> <span class="p">[</span><span class="n">not_contains</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">substr</span> <span class="ow">in</span> <span class="n">not_contains</span><span class="p">:</span>
+            <span class="n">all_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">file</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">all_files</span> <span class="k">if</span> <span class="n">substr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">file</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">all_files</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_structure_emulatordata_args</span><span class="p">(</span><span class="n">input_args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">time_series</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Formats the keyword arguments for processing EmulatorData, applying default values if needed.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        input_args (dict): Dictionary of keyword arguments for EmulatorData processing.</span>
+<span class="sd">        time_series (bool): Whether the processing is for time-series data.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: A dictionary of EmulatorData processing arguments with applied defaults.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">emulator_data_defaults</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">target_column</span><span class="o">=</span><span class="s2">&quot;sle&quot;</span><span class="p">,</span>
+        <span class="n">drop_missing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">drop_columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;groupname&quot;</span><span class="p">,</span> <span class="s2">&quot;experiment&quot;</span><span class="p">],</span>
+        <span class="n">boolean_indices</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">split_type</span><span class="o">=</span><span class="s2">&quot;batch&quot;</span><span class="p">,</span>
+        <span class="n">drop_outliers</span><span class="o">=</span><span class="s2">&quot;explicit&quot;</span><span class="p">,</span>
+        <span class="n">drop_expression</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;sle&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mf">26.3</span><span class="p">)],</span>
+        <span class="n">time_series</span><span class="o">=</span><span class="n">time_series</span><span class="p">,</span>
+        <span class="n">lag</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">time_series</span><span class="p">:</span>
+        <span class="n">emulator_data_defaults</span><span class="p">[</span><span class="s2">&quot;lag&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5</span>
+
+    <span class="c1"># If no other args are supplied, use defaults</span>
+    <span class="k">if</span> <span class="n">input_args</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">emulator_data_defaults</span>
+    <span class="c1"># else, replace provided key value pairs in the default dict and reassign</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">input_args</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">emulator_data_defaults</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_args</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="n">output_args</span> <span class="o">=</span> <span class="n">emulator_data_defaults</span>
+
+    <span class="k">return</span> <span class="n">output_args</span>
+
+
+<span class="k">def</span> <span class="nf">_structure_architecture_args</span><span class="p">(</span><span class="n">architecture</span><span class="p">,</span> <span class="n">time_series</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Structures the architecture arguments for model training.</span>
+
+<span class="sd">    Ensures that the provided architecture dictionary is appropriate for either </span>
+<span class="sd">    time-series or traditional models.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        architecture (dict): Dictionary specifying model architecture parameters.</span>
+<span class="sd">        time_series (bool): Whether the model is for time-series data.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: A structured architecture dictionary.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        AttributeError: If incompatible architecture arguments are used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="c1"># Check to make sure inappropriate args are not used</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">time_series</span> <span class="ow">and</span> <span class="p">(</span>
+        <span class="s2">&quot;num_rnn_layers&quot;</span> <span class="ow">in</span> <span class="n">architecture</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">&quot;num_rnn_hidden&quot;</span> <span class="ow">in</span> <span class="n">architecture</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Time series architecture args must be in [num_linear_layers, nodes], received </span><span class="si">{</span><span class="n">architecture</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">time_series</span> <span class="ow">and</span> <span class="p">(</span>
+        <span class="s2">&quot;nodes&quot;</span> <span class="ow">in</span> <span class="n">architecture</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">&quot;num_linear_layers&quot;</span> <span class="ow">in</span> <span class="n">architecture</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Time series architecture args must be in [num_rnn_layers, num_rnn_hidden], received </span><span class="si">{</span><span class="n">architecture</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">architecture</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">time_series</span><span class="p">:</span>
+            <span class="n">architecture</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;num_rnn_layers&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+                <span class="s2">&quot;num_rnn_hidden&quot;</span><span class="p">:</span> <span class="mi">128</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">architecture</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;num_linear_layers&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+                <span class="s2">&quot;nodes&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">128</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">architecture</span>
+    <span class="k">return</span> <span class="n">architecture</span>
+
+
+<div class="viewcode-block" id="get_X_y">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.functions.get_X_y">[docs]</a>
+<span class="k">def</span> <span class="nf">get_X_y</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">,</span>
+    <span class="n">dataset_type</span><span class="o">=</span><span class="s2">&quot;sectors&quot;</span><span class="p">,</span>
+    <span class="n">return_format</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">cols</span><span class="o">=</span><span class="s2">&quot;all&quot;</span><span class="p">,</span>
+    <span class="n">with_chars</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">):</span>  
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extracts input features (X) and target labels (y) from a dataset.</span>
+
+<span class="sd">    Supports various dataset types (sectors, regions, scenarios) and formats </span>
+<span class="sd">    (numpy, tensor, pandas).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (str or pd.DataFrame): Filepath to the dataset CSV or a pandas DataFrame.</span>
+<span class="sd">        dataset_type (str, optional): The type of dataset (&#39;sectors&#39;, &#39;regions&#39;, &#39;scenarios&#39;). Defaults to &quot;sectors&quot;.</span>
+<span class="sd">        return_format (str, optional): Format of the returned data (&#39;numpy&#39;, &#39;tensor&#39;, or &#39;pandas&#39;). Defaults to None.</span>
+<span class="sd">        cols (str or list, optional): Columns to include in the features. Defaults to &quot;all&quot;.</span>
+<span class="sd">        with_chars (bool, optional): Whether to include characteristic columns in features. Defaults to True.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: A tuple containing:</span>
+<span class="sd">            - X (pd.DataFrame or np.ndarray or torch.Tensor): The input features.</span>
+<span class="sd">            - y (pd.DataFrame or np.ndarray or torch.Tensor): The target labels.</span>
+<span class="sd">            - scenarios (list, optional): Scenario identifiers if dataset type is &quot;regions&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    
+    <span class="n">ice_sheet</span> <span class="o">=</span> <span class="s2">&quot;AIS&quot;</span> <span class="k">if</span> <span class="n">dataset_type</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;regions&quot;</span> <span class="ow">and</span> <span class="s1">&#39;smb_anomaly&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">else</span> <span class="s1">&#39;GrIS&#39;</span>
+    <span class="n">regions</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">dataset_type</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;regions&quot;</span> <span class="k">else</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">dataset_type</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;sectors&quot;</span> <span class="ow">or</span> <span class="n">regions</span><span class="p">:</span>
+        
+        <span class="k">if</span> <span class="n">regions</span><span class="p">:</span>
+            <span class="n">sector_to_region</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="n">ice_sheet</span> <span class="o">==</span> <span class="s1">&#39;AIS&#39;</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sector</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">sector</span><span class="o">.</span><span class="n">unique</span><span class="p">()):</span>
+                    <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">6</span><span class="p">:</span>
+                        <span class="n">sector_to_region</span><span class="p">[</span><span class="n">sector</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                    <span class="k">elif</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">5</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">17</span><span class="p">:</span>
+                        <span class="n">sector_to_region</span><span class="p">[</span><span class="n">sector</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">sector_to_region</span><span class="p">[</span><span class="n">sector</span><span class="p">]</span> <span class="o">=</span> <span class="mi">3</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sector</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">sector</span><span class="o">.</span><span class="n">unique</span><span class="p">()):</span>
+                    <span class="n">sector_to_region</span><span class="p">[</span><span class="n">sector</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;region&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">sector</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">sector_to_region</span><span class="p">)</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s2">&quot;_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;Scenario&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">agg</span><span class="p">({</span>
+                <span class="s1">&#39;sle&#39;</span><span class="p">:</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span>   <span class="c1"># for GP, used mean instead of sum so that scales of errors are the same</span>
+                <span class="o">**</span><span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="s1">&#39;mean&#39;</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">difference</span><span class="p">([</span><span class="s1">&#39;sle&#39;</span><span class="p">])</span> <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s1">&#39;float64&#39;</span><span class="p">}</span>
+            <span class="p">},</span> <span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">])</span> <span class="c1"># drop year so that there aren&#39;t two year columns after reset_index()</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+            <span class="n">scenarios</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">Scenario</span>
+            
+        <span class="n">dropped_columns</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;cmip_model&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pathway&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;exp&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;ice_sheet&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Scenario&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Ocean forcing&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Ocean sensitivity&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Ice shelf fracture&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Tier&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;aogcm&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;exp&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;model&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;ivaf&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;outlier&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="n">dropped_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">dropped_columns</span><span class="p">]</span>
+        <span class="n">X_drop</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="s2">&quot;sle&quot;</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span> <span class="o">+</span> <span class="n">dropped_columns</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">X_drop</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">data</span><span class="p">[[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="s2">&quot;sle&quot;</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]]</span>
+    
+    <span class="k">elif</span> <span class="s1">&#39;scenario&#39;</span> <span class="ow">in</span> <span class="n">dataset_type</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+        <span class="n">dropped_columns</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">&#39;sector&#39;</span><span class="p">,</span> 
+            <span class="s1">&#39;year&#39;</span><span class="p">,</span>
+            <span class="s2">&quot;cmip_model&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pathway&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;exp&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;ice_sheet&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Ocean forcing&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Ocean sensitivity&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Ice shelf fracture&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Tier&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;aogcm&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;exp&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;model&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;ivaf&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;outlier&quot;</span><span class="p">,</span>
+            <span class="s1">&#39;sle&#39;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="n">dropped_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">dropped_columns</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="s1">&#39;lag&#39;</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span>
+        <span class="n">X_drop</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="s2">&quot;Scenario&quot;</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span> <span class="o">+</span> <span class="n">dropped_columns</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">X_drop</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">data</span><span class="p">[[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="s2">&quot;Scenario&quot;</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]]</span>
+        
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">cols</span><span class="p">:</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">cols</span><span class="p">)]</span>
+        
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">with_chars</span><span class="p">:</span>
+        <span class="n">char_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;initial&#39;</span><span class="p">,</span> <span class="s1">&#39;numerics&#39;</span><span class="p">,</span> <span class="s1">&#39;ice_flow&#39;</span><span class="p">,</span> <span class="s1">&#39;initialization&#39;</span><span class="p">,</span> <span class="s1">&#39;velocity&#39;</span><span class="p">,</span> <span class="s1">&#39;bed&#39;</span><span class="p">,</span> 
+                     <span class="s1">&#39;surface&#39;</span><span class="p">,</span> <span class="s1">&#39;ghf&#39;</span><span class="p">,</span> <span class="s1">&#39;res&#39;</span><span class="p">,</span> <span class="s1">&#39;Ocean&#39;</span><span class="p">,</span> <span class="s1">&#39;Ice shelf&#39;</span><span class="p">,</span> <span class="s1">&#39;stress&#39;</span><span class="p">,</span> <span class="s1">&#39;resolution&#39;</span><span class="p">,</span> <span class="s1">&#39;init&#39;</span><span class="p">,</span> 
+                     <span class="s1">&#39;melt&#39;</span><span class="p">,</span> <span class="s1">&#39;ice_front&#39;</span><span class="p">,</span> <span class="s1">&#39;open&#39;</span><span class="p">,</span> <span class="s1">&#39;standard&#39;</span><span class="p">,</span> <span class="p">]</span>
+        <span class="n">drop_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">substring</span> <span class="ow">in</span> <span class="n">col</span> <span class="k">for</span> <span class="n">substring</span> <span class="ow">in</span> <span class="n">char_cols</span><span class="p">)]</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">drop_cols</span><span class="p">)</span>
+        
+    <span class="k">if</span> <span class="n">return_format</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">return_format</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;numpy&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">X</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">y</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">elif</span> <span class="n">return_format</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;tensor&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">values</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">return_format</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;pandas&quot;</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;return_format must be in [&#39;numpy&#39;, &#39;tensor&#39;, &#39;pandas&#39;], received </span><span class="si">{</span><span class="n">return_format</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">regions</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">scenarios</span>
+
+    <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span></div>
+
+
+
+<div class="viewcode-block" id="to_tensor">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.functions.to_tensor">[docs]</a>
+<span class="k">def</span> <span class="nf">to_tensor</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts input data into a PyTorch tensor with float32 dtype.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x (pd.DataFrame, np.ndarray, or torch.Tensor): Input data.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        torch.Tensor: Converted tensor.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the input data type is not supported.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Data must be a pandas dataframe, numpy array, or PyTorch tensor&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">float</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="unscale">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.functions.unscale">[docs]</a>
+<span class="k">def</span> <span class="nf">unscale</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">scaler_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Unscales a dataset using a previously saved MinMaxScaler.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        y (np.ndarray): The scaled data.</span>
+<span class="sd">        scaler_path (str): Path to the saved MinMaxScaler object.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        np.ndarray: The unscaled data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">scaler</span> <span class="o">=</span> <span class="n">pkl</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">scaler_path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">))</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">y</span></div>
+
+
+<div class="viewcode-block" id="get_data">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.functions.get_data">[docs]</a>
+<span class="k">def</span> <span class="nf">get_data</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">dataset_type</span><span class="o">=</span><span class="s1">&#39;sectors&#39;</span><span class="p">,</span> <span class="n">return_format</span><span class="o">=</span><span class="s1">&#39;tensor&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Loads training, validation, and test datasets, formatting them for model training.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data_dir (str): Path to the directory containing the dataset files.</span>
+<span class="sd">        dataset_type (str, optional): Type of dataset (&#39;sectors&#39; or &#39;scenarios&#39;). Defaults to &#39;sectors&#39;.</span>
+<span class="sd">        return_format (str, optional): Format of the returned data (&#39;tensor&#39;, &#39;numpy&#39;, or &#39;pandas&#39;). Defaults to &#39;tensor&#39;.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: A tuple containing:</span>
+<span class="sd">            - X_train (pd.DataFrame, np.ndarray, or torch.Tensor): Training features.</span>
+<span class="sd">            - y_train (pd.DataFrame, np.ndarray, or torch.Tensor): Training labels.</span>
+<span class="sd">            - X_val (pd.DataFrame, np.ndarray, or torch.Tensor): Validation features.</span>
+<span class="sd">            - y_val (pd.DataFrame, np.ndarray, or torch.Tensor): Validation labels.</span>
+<span class="sd">            - X_test (pd.DataFrame, np.ndarray, or torch.Tensor): Testing features.</span>
+<span class="sd">            - y_test (pd.DataFrame, np.ndarray, or torch.Tensor): Testing labels.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span> <span class="o">=</span> <span class="n">get_X_y</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_dir</span><span class="si">}</span><span class="s2">/train.csv&quot;</span><span class="p">,</span> <span class="n">dataset_type</span><span class="o">=</span><span class="n">dataset_type</span><span class="p">,</span> <span class="n">return_format</span><span class="o">=</span><span class="n">return_format</span><span class="p">)</span>
+    <span class="n">X_val</span><span class="p">,</span> <span class="n">y_val</span> <span class="o">=</span> <span class="n">get_X_y</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_dir</span><span class="si">}</span><span class="s2">/val.csv&quot;</span><span class="p">,</span> <span class="n">dataset_type</span><span class="o">=</span><span class="n">dataset_type</span><span class="p">,</span> <span class="n">return_format</span><span class="o">=</span><span class="n">return_format</span><span class="p">)</span>
+    <span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">get_X_y</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_dir</span><span class="si">}</span><span class="s2">/test.csv&quot;</span><span class="p">,</span> <span class="n">dataset_type</span><span class="o">=</span><span class="n">dataset_type</span><span class="p">,</span> <span class="n">return_format</span><span class="o">=</span><span class="n">return_format</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">X_val</span><span class="p">,</span> <span class="n">y_val</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Peter Van Katwyk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

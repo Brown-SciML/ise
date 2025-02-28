@@ -1,0 +1,912 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ise.models &mdash; ise 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="/docs/source/ise.models.html" />
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="ise.models.ISEFlow" href="ise.models.ISEFlow.html" />
+    <link rel="prev" title="ise.evaluation" href="ise.evaluation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            ise
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="ise.html">ise documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="ise.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="ise.data.html">ise.data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ise.evaluation.html">ise.evaluation</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">ise.models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-ise.models.loss">ise.models.loss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-ise.models.scenario">ise.models.scenario</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-ise.models.variational_lstm_emulator">ise.models.variational_lstm_emulator</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ise.utils.html">ise.utils</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ise</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="ise.html">ise documentation</a></li>
+      <li class="breadcrumb-item active">ise.models</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/ise.models.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ise-models">
+<h1>ise.models<a class="headerlink" href="#ise-models" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ise.models.ISEFlow.html">ise.models.ISEFlow</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ise.models.ISEFlow.html#module-ise.models.ISEFlow.ISEFlow">ise.models.ISEFlow.ISEFlow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow"><code class="docutils literal notranslate"><span class="pre">ISEFlow</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow.device"><code class="docutils literal notranslate"><span class="pre">ISEFlow.device</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow.deep_ensemble"><code class="docutils literal notranslate"><span class="pre">ISEFlow.deep_ensemble</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow.normalizing_flow"><code class="docutils literal notranslate"><span class="pre">ISEFlow.normalizing_flow</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow.trained"><code class="docutils literal notranslate"><span class="pre">ISEFlow.trained</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow.scaler_path"><code class="docutils literal notranslate"><span class="pre">ISEFlow.scaler_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow.fit"><code class="docutils literal notranslate"><span class="pre">ISEFlow.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow.forward"><code class="docutils literal notranslate"><span class="pre">ISEFlow.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow.load"><code class="docutils literal notranslate"><span class="pre">ISEFlow.load()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow.predict"><code class="docutils literal notranslate"><span class="pre">ISEFlow.predict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow.save"><code class="docutils literal notranslate"><span class="pre">ISEFlow.save()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow_AIS"><code class="docutils literal notranslate"><span class="pre">ISEFlow_AIS</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow_AIS.load"><code class="docutils literal notranslate"><span class="pre">ISEFlow_AIS.load()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow_AIS.predict"><code class="docutils literal notranslate"><span class="pre">ISEFlow_AIS.predict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow_AIS.process"><code class="docutils literal notranslate"><span class="pre">ISEFlow_AIS.process()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow_GrIS"><code class="docutils literal notranslate"><span class="pre">ISEFlow_GrIS</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow_GrIS.load"><code class="docutils literal notranslate"><span class="pre">ISEFlow_GrIS.load()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ise.models.ISEFlow.html#module-ise.models.ISEFlow.de">ise.models.ISEFlow.de</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.de.ISEFlow_AIS_DE"><code class="docutils literal notranslate"><span class="pre">ISEFlow_AIS_DE</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.de.ISEFlow_AIS_DE.input_size"><code class="docutils literal notranslate"><span class="pre">ISEFlow_AIS_DE.input_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.de.ISEFlow_AIS_DE.output_size"><code class="docutils literal notranslate"><span class="pre">ISEFlow_AIS_DE.output_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.de.ISEFlow_AIS_DE.iseflow_ais_ensemble"><code class="docutils literal notranslate"><span class="pre">ISEFlow_AIS_DE.iseflow_ais_ensemble</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.de.ISEFlow_GrIS_DE"><code class="docutils literal notranslate"><span class="pre">ISEFlow_GrIS_DE</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.de.ISEFlow_GrIS_DE.input_size"><code class="docutils literal notranslate"><span class="pre">ISEFlow_GrIS_DE.input_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.de.ISEFlow_GrIS_DE.output_size"><code class="docutils literal notranslate"><span class="pre">ISEFlow_GrIS_DE.output_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.de.ISEFlow_GrIS_DE.iseflow_gris_ensemble"><code class="docutils literal notranslate"><span class="pre">ISEFlow_GrIS_DE.iseflow_gris_ensemble</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ise.models.ISEFlow.html#module-ise.models.ISEFlow.nf">ise.models.ISEFlow.nf</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.nf.ISEFlow_AIS_NF"><code class="docutils literal notranslate"><span class="pre">ISEFlow_AIS_NF</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ise.models.ISEFlow.html#ise.models.ISEFlow.nf.ISEFlow_GrIS_NF"><code class="docutils literal notranslate"><span class="pre">ISEFlow_GrIS_NF</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ise.models.density_estimators.html">ise.models.density_estimators</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ise.models.density_estimators.html#module-ise.models.density_estimators.normalizing_flow">ise.models.density_estimators.normalizing_flow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow"><code class="docutils literal notranslate"><span class="pre">NormalizingFlow</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow.num_flow_transforms"><code class="docutils literal notranslate"><span class="pre">NormalizingFlow.num_flow_transforms</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow.num_input_features"><code class="docutils literal notranslate"><span class="pre">NormalizingFlow.num_input_features</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow.num_predicted_sle"><code class="docutils literal notranslate"><span class="pre">NormalizingFlow.num_predicted_sle</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow.flow_hidden_features"><code class="docutils literal notranslate"><span class="pre">NormalizingFlow.flow_hidden_features</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow.output_sequence_length"><code class="docutils literal notranslate"><span class="pre">NormalizingFlow.output_sequence_length</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow.device"><code class="docutils literal notranslate"><span class="pre">NormalizingFlow.device</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow.base_distribution"><code class="docutils literal notranslate"><span class="pre">NormalizingFlow.base_distribution</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow.t"><code class="docutils literal notranslate"><span class="pre">NormalizingFlow.t</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow.flow"><code class="docutils literal notranslate"><span class="pre">NormalizingFlow.flow</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow.optimizer"><code class="docutils literal notranslate"><span class="pre">NormalizingFlow.optimizer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow.criterion"><code class="docutils literal notranslate"><span class="pre">NormalizingFlow.criterion</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow.trained"><code class="docutils literal notranslate"><span class="pre">NormalizingFlow.trained</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow.aleatoric"><code class="docutils literal notranslate"><span class="pre">NormalizingFlow.aleatoric()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow.fit"><code class="docutils literal notranslate"><span class="pre">NormalizingFlow.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow.get_latent"><code class="docutils literal notranslate"><span class="pre">NormalizingFlow.get_latent()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow.load"><code class="docutils literal notranslate"><span class="pre">NormalizingFlow.load()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow.sample"><code class="docutils literal notranslate"><span class="pre">NormalizingFlow.sample()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.density_estimators.html#ise.models.density_estimators.normalizing_flow.NormalizingFlow.save"><code class="docutils literal notranslate"><span class="pre">NormalizingFlow.save()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ise.models.predictors.html">ise.models.predictors</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ise.models.predictors.html#module-ise.models.predictors.deep_ensemble">ise.models.predictors.deep_ensemble</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.deep_ensemble.DeepEnsemble"><code class="docutils literal notranslate"><span class="pre">DeepEnsemble</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.deep_ensemble.DeepEnsemble.input_size"><code class="docutils literal notranslate"><span class="pre">DeepEnsemble.input_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.deep_ensemble.DeepEnsemble.output_size"><code class="docutils literal notranslate"><span class="pre">DeepEnsemble.output_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.deep_ensemble.DeepEnsemble.output_sequence_length"><code class="docutils literal notranslate"><span class="pre">DeepEnsemble.output_sequence_length</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.deep_ensemble.DeepEnsemble.loss_choices"><code class="docutils literal notranslate"><span class="pre">DeepEnsemble.loss_choices</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.deep_ensemble.DeepEnsemble.ensemble_members"><code class="docutils literal notranslate"><span class="pre">DeepEnsemble.ensemble_members</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.deep_ensemble.DeepEnsemble.trained"><code class="docutils literal notranslate"><span class="pre">DeepEnsemble.trained</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.deep_ensemble.DeepEnsemble.fit"><code class="docutils literal notranslate"><span class="pre">DeepEnsemble.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.deep_ensemble.DeepEnsemble.forward"><code class="docutils literal notranslate"><span class="pre">DeepEnsemble.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.deep_ensemble.DeepEnsemble.load"><code class="docutils literal notranslate"><span class="pre">DeepEnsemble.load()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.deep_ensemble.DeepEnsemble.predict"><code class="docutils literal notranslate"><span class="pre">DeepEnsemble.predict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.deep_ensemble.DeepEnsemble.save"><code class="docutils literal notranslate"><span class="pre">DeepEnsemble.save()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ise.models.predictors.html#module-ise.models.predictors.lstm">ise.models.predictors.lstm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.lstm.LSTM"><code class="docutils literal notranslate"><span class="pre">LSTM</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.lstm.LSTM.lstm_num_layers"><code class="docutils literal notranslate"><span class="pre">LSTM.lstm_num_layers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.lstm.LSTM.lstm_num_hidden"><code class="docutils literal notranslate"><span class="pre">LSTM.lstm_num_hidden</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.lstm.LSTM.input_size"><code class="docutils literal notranslate"><span class="pre">LSTM.input_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.lstm.LSTM.output_size"><code class="docutils literal notranslate"><span class="pre">LSTM.output_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.lstm.LSTM.output_sequence_length"><code class="docutils literal notranslate"><span class="pre">LSTM.output_sequence_length</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.lstm.LSTM.device"><code class="docutils literal notranslate"><span class="pre">LSTM.device</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.lstm.LSTM.lstm"><code class="docutils literal notranslate"><span class="pre">LSTM.lstm</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.lstm.LSTM.relu"><code class="docutils literal notranslate"><span class="pre">LSTM.relu</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.lstm.LSTM.linear1"><code class="docutils literal notranslate"><span class="pre">LSTM.linear1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.lstm.LSTM.linear_out"><code class="docutils literal notranslate"><span class="pre">LSTM.linear_out</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.lstm.LSTM.optimizer"><code class="docutils literal notranslate"><span class="pre">LSTM.optimizer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.lstm.LSTM.dropout"><code class="docutils literal notranslate"><span class="pre">LSTM.dropout</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.lstm.LSTM.criterion"><code class="docutils literal notranslate"><span class="pre">LSTM.criterion</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.lstm.LSTM.trained"><code class="docutils literal notranslate"><span class="pre">LSTM.trained</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.lstm.LSTM.fit"><code class="docutils literal notranslate"><span class="pre">LSTM.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.lstm.LSTM.forward"><code class="docutils literal notranslate"><span class="pre">LSTM.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.predictors.html#ise.models.predictors.lstm.LSTM.predict"><code class="docutils literal notranslate"><span class="pre">LSTM.predict()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ise.models.pretrained.html">ise.models.pretrained</a></li>
+</ul>
+</div>
+</section>
+<section id="module-ise.models.loss">
+<span id="ise-models-loss"></span><h2>ise.models.loss<a class="headerlink" href="#module-ise.models.loss" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.models.loss.GridCriterion">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.models.loss.</span></span><span class="sig-name descname"><span class="pre">GridCriterion</span></span><a class="reference internal" href="../../_modules/ise/models/loss.html#GridCriterion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.loss.GridCriterion" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Custom loss function enforcing spatial smoothness using total variation regularization.</p>
+<p>This function encourages smoothness in spatial predictions by penalizing large variations.</p>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">-</span> <span class="pre">total_variation_regularization</span></span></dt>
+<dd><p>Computes the smoothness loss.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">-</span> <span class="pre">forward</span></span></dt>
+<dd><p>Computes the final loss.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.loss.GridCriterion.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predicted</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smoothness_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/loss.html#GridCriterion.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.loss.GridCriterion.forward" title="Link to this definition"></a></dt>
+<dd><p>Computes the final loss by combining pixel-wise MSE and TVR.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>true</strong> (<em>Tensor</em>) – Ground truth values.</p></li>
+<li><p><strong>predicted</strong> (<em>Tensor</em>) – Model predictions.</p></li>
+<li><p><strong>smoothness_weight</strong> (<em>float</em><em>, </em><em>optional</em>) – Weight for TVR. Defaults to 0.001.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Computed loss.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.loss.GridCriterion.total_variation_regularization">
+<span class="sig-name descname"><span class="pre">total_variation_regularization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grid</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/loss.html#GridCriterion.total_variation_regularization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.loss.GridCriterion.total_variation_regularization" title="Link to this definition"></a></dt>
+<dd><p>Computes total variation regularization (TVR) loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>grid</strong> (<em>Tensor</em>) – A 2D tensor representing spatial data.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>TVR loss.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.models.loss.MSEDeviationLoss">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.models.loss.</span></span><span class="sig-name descname"><span class="pre">MSEDeviationLoss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty_multiplier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/loss.html#MSEDeviationLoss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.loss.MSEDeviationLoss" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Custom MSE Loss with an additional penalty for large deviations.</p>
+<p>This function penalizes predictions that deviate significantly from the target.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.loss.MSEDeviationLoss.threshold">
+<span class="sig-name descname"><span class="pre">threshold</span></span><a class="headerlink" href="#ise.models.loss.MSEDeviationLoss.threshold" title="Link to this definition"></a></dt>
+<dd><p>Deviation threshold for applying penalties.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.loss.MSEDeviationLoss.penalty_multiplier">
+<span class="sig-name descname"><span class="pre">penalty_multiplier</span></span><a class="headerlink" href="#ise.models.loss.MSEDeviationLoss.penalty_multiplier" title="Link to this definition"></a></dt>
+<dd><p>Multiplier controlling penalty severity.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">-</span> <span class="pre">forward</span></span></dt>
+<dd><p>Computes the loss with deviation penalties.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.loss.MSEDeviationLoss.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/loss.html#MSEDeviationLoss.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.loss.MSEDeviationLoss.forward" title="Link to this definition"></a></dt>
+<dd><p>Computes the MSE loss with an additional deviation penalty.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>predictions</strong> (<em>Tensor</em>) – Predicted values.</p></li>
+<li><p><strong>targets</strong> (<em>Tensor</em>) – Ground truth values.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Computed loss.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedGridLoss">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.models.loss.</span></span><span class="sig-name descname"><span class="pre">WeightedGridLoss</span></span><a class="reference internal" href="../../_modules/ise/models/loss.html#WeightedGridLoss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.loss.WeightedGridLoss" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Custom loss function that penalizes errors based on the total variation of a grid.</p>
+<p>This loss function consists of two components:
+1. <strong>Pixel-wise Weighted Mean Squared Error (MSE):</strong> Higher weight is assigned to extreme values.
+2. <strong>Total Variation Regularization (TVR):</strong> Enforces spatial smoothness by penalizing large differences</p>
+<blockquote>
+<div><p>between adjacent grid values.</p>
+</div></blockquote>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedGridLoss.device">
+<span class="sig-name descname"><span class="pre">device</span></span><a class="headerlink" href="#ise.models.loss.WeightedGridLoss.device" title="Link to this definition"></a></dt>
+<dd><p>The device on which the model runs (‘cuda’ or ‘cpu’).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">-</span> <span class="pre">total_variation_regularization</span></span></dt>
+<dd><p>Computes TVR penalty for smoothness.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">-</span> <span class="pre">weighted_pixelwise_mse</span></span></dt>
+<dd><p>Computes MSE loss with per-pixel weighting.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">-</span> <span class="pre">forward</span></span></dt>
+<dd><p>Computes the final weighted loss.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedGridLoss.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predicted</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smoothness_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extreme_value_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/loss.html#WeightedGridLoss.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.loss.WeightedGridLoss.forward" title="Link to this definition"></a></dt>
+<dd><p>Computes the final weighted loss combining pixel-wise MSE and TVR.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>true</strong> (<em>Tensor</em>) – Ground truth values.</p></li>
+<li><p><strong>predicted</strong> (<em>Tensor</em>) – Model predictions.</p></li>
+<li><p><strong>smoothness_weight</strong> (<em>float</em><em>, </em><em>optional</em>) – Weighting factor for the TVR loss. Defaults to 0.001.</p></li>
+<li><p><strong>extreme_value_threshold</strong> (<em>float</em><em>, </em><em>optional</em>) – Threshold to define extreme values. Defaults to 1e-6.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The total computed loss.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedGridLoss.total_variation_regularization">
+<span class="sig-name descname"><span class="pre">total_variation_regularization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grid</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/loss.html#WeightedGridLoss.total_variation_regularization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.loss.WeightedGridLoss.total_variation_regularization" title="Link to this definition"></a></dt>
+<dd><p>Computes the total variation regularization (TVR) loss for spatial smoothness.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>grid</strong> (<em>Tensor</em>) – A 2D tensor representing spatial data.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The total variation loss.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedGridLoss.weighted_pixelwise_mse">
+<span class="sig-name descname"><span class="pre">weighted_pixelwise_mse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predicted</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/loss.html#WeightedGridLoss.weighted_pixelwise_mse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.loss.WeightedGridLoss.weighted_pixelwise_mse" title="Link to this definition"></a></dt>
+<dd><p>Computes the pixel-wise mean squared error (MSE) with custom weights.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>true</strong> (<em>Tensor</em>) – Ground truth values.</p></li>
+<li><p><strong>predicted</strong> (<em>Tensor</em>) – Model predictions.</p></li>
+<li><p><strong>weights</strong> (<em>Tensor</em>) – Weighting factor for each pixel.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Weighted mean squared error.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedMSELoss">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.models.loss.</span></span><span class="sig-name descname"><span class="pre">WeightedMSELoss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_std</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/loss.html#WeightedMSELoss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.loss.WeightedMSELoss" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Custom loss function that applies a weighted penalty to extreme values.</p>
+<p>This function increases the weight of extreme values based on their deviation from the
+dataset mean, normalizing by the standard deviation.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedMSELoss.data_mean">
+<span class="sig-name descname"><span class="pre">data_mean</span></span><a class="headerlink" href="#ise.models.loss.WeightedMSELoss.data_mean" title="Link to this definition"></a></dt>
+<dd><p>Mean value of the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedMSELoss.data_std">
+<span class="sig-name descname"><span class="pre">data_std</span></span><a class="headerlink" href="#ise.models.loss.WeightedMSELoss.data_std" title="Link to this definition"></a></dt>
+<dd><p>Standard deviation of the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedMSELoss.weight_factor">
+<span class="sig-name descname"><span class="pre">weight_factor</span></span><a class="headerlink" href="#ise.models.loss.WeightedMSELoss.weight_factor" title="Link to this definition"></a></dt>
+<dd><p>Factor controlling how much extreme values are penalized.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">-</span> <span class="pre">forward</span></span></dt>
+<dd><p>Computes the weighted mean squared error loss.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedMSELoss.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/loss.html#WeightedMSELoss.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.loss.WeightedMSELoss.forward" title="Link to this definition"></a></dt>
+<dd><p>Computes the Weighted Mean Squared Error (MSE) Loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input</strong> (<em>Tensor</em>) – Predicted values.</p></li>
+<li><p><strong>target</strong> (<em>Tensor</em>) – Ground truth values.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Computed loss.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedMSELossWithSignPenalty">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.models.loss.</span></span><span class="sig-name descname"><span class="pre">WeightedMSELossWithSignPenalty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_std</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sign_penalty_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/loss.html#WeightedMSELossWithSignPenalty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.loss.WeightedMSELossWithSignPenalty" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Custom loss function that penalizes errors on extreme values and opposite sign predictions.</p>
+<p>This function extends WeightedMSELoss by adding a penalty when the sign of the prediction differs from the target.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedMSELossWithSignPenalty.data_mean">
+<span class="sig-name descname"><span class="pre">data_mean</span></span><a class="headerlink" href="#ise.models.loss.WeightedMSELossWithSignPenalty.data_mean" title="Link to this definition"></a></dt>
+<dd><p>Mean of the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedMSELossWithSignPenalty.data_std">
+<span class="sig-name descname"><span class="pre">data_std</span></span><a class="headerlink" href="#ise.models.loss.WeightedMSELossWithSignPenalty.data_std" title="Link to this definition"></a></dt>
+<dd><p>Standard deviation of the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedMSELossWithSignPenalty.weight_factor">
+<span class="sig-name descname"><span class="pre">weight_factor</span></span><a class="headerlink" href="#ise.models.loss.WeightedMSELossWithSignPenalty.weight_factor" title="Link to this definition"></a></dt>
+<dd><p>Factor controlling extreme value weighting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedMSELossWithSignPenalty.sign_penalty_factor">
+<span class="sig-name descname"><span class="pre">sign_penalty_factor</span></span><a class="headerlink" href="#ise.models.loss.WeightedMSELossWithSignPenalty.sign_penalty_factor" title="Link to this definition"></a></dt>
+<dd><p>Factor controlling penalty for opposite sign predictions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">-</span> <span class="pre">forward</span></span></dt>
+<dd><p>Computes the weighted loss with sign penalties.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedMSELossWithSignPenalty.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/loss.html#WeightedMSELossWithSignPenalty.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.loss.WeightedMSELossWithSignPenalty.forward" title="Link to this definition"></a></dt>
+<dd><p>Computes the Weighted MSE Loss with an additional sign penalty.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input</strong> (<em>Tensor</em>) – Predicted values.</p></li>
+<li><p><strong>target</strong> (<em>Tensor</em>) – Ground truth values.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Computed loss.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedMSEPCALoss">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.models.loss.</span></span><span class="sig-name descname"><span class="pre">WeightedMSEPCALoss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_std</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/loss.html#WeightedMSEPCALoss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.loss.WeightedMSEPCALoss" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Extension of WeightedMSELoss that allows for custom per-batch weighting.</p>
+<p>This loss function enables additional user-defined weights to further adjust penalties for different predictions.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedMSEPCALoss.data_mean">
+<span class="sig-name descname"><span class="pre">data_mean</span></span><a class="headerlink" href="#ise.models.loss.WeightedMSEPCALoss.data_mean" title="Link to this definition"></a></dt>
+<dd><p>Mean of the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedMSEPCALoss.data_std">
+<span class="sig-name descname"><span class="pre">data_std</span></span><a class="headerlink" href="#ise.models.loss.WeightedMSEPCALoss.data_std" title="Link to this definition"></a></dt>
+<dd><p>Standard deviation of the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedMSEPCALoss.weight_factor">
+<span class="sig-name descname"><span class="pre">weight_factor</span></span><a class="headerlink" href="#ise.models.loss.WeightedMSEPCALoss.weight_factor" title="Link to this definition"></a></dt>
+<dd><p>Controls the penalty for extreme values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedMSEPCALoss.custom_weights">
+<span class="sig-name descname"><span class="pre">custom_weights</span></span><a class="headerlink" href="#ise.models.loss.WeightedMSEPCALoss.custom_weights" title="Link to this definition"></a></dt>
+<dd><p>User-defined weight tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">-</span> <span class="pre">forward</span></span></dt>
+<dd><p>Computes the batch-weighted MSE loss.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedMSEPCALoss.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/loss.html#WeightedMSEPCALoss.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.loss.WeightedMSEPCALoss.forward" title="Link to this definition"></a></dt>
+<dd><p>Computes the batch-weighted mean squared error loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input</strong> (<em>Tensor</em>) – Predicted values.</p></li>
+<li><p><strong>target</strong> (<em>Tensor</em>) – Ground truth values.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Computed loss.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedPCALoss">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.models.loss.</span></span><span class="sig-name descname"><span class="pre">WeightedPCALoss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">component_weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/loss.html#WeightedPCALoss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.loss.WeightedPCALoss" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Custom loss function applying different weights to errors in principal component analysis.</p>
+<p>This function allows assigning higher penalties to the first components.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedPCALoss.component_weights">
+<span class="sig-name descname"><span class="pre">component_weights</span></span><a class="headerlink" href="#ise.models.loss.WeightedPCALoss.component_weights" title="Link to this definition"></a></dt>
+<dd><p>Weighting factors for each principal component.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedPCALoss.reduction">
+<span class="sig-name descname"><span class="pre">reduction</span></span><a class="headerlink" href="#ise.models.loss.WeightedPCALoss.reduction" title="Link to this definition"></a></dt>
+<dd><p>Specifies reduction mode (‘mean’, ‘sum’, or ‘none’).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">-</span> <span class="pre">forward</span></span></dt>
+<dd><p>Computes the weighted PCA loss.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.loss.WeightedPCALoss.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/loss.html#WeightedPCALoss.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.loss.WeightedPCALoss.forward" title="Link to this definition"></a></dt>
+<dd><p>Computes the weighted PCA loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input</strong> (<em>Tensor</em>) – Predicted principal components.</p></li>
+<li><p><strong>target</strong> (<em>Tensor</em>) – Actual principal components.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Computed loss.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-ise.models.scenario">
+<span id="ise-models-scenario"></span><h2>ise.models.scenario<a class="headerlink" href="#module-ise.models.scenario" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.models.scenario.ScenarioPredictor">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.models.scenario.</span></span><span class="sig-name descname"><span class="pre">ScenarioPredictor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[128,</span> <span class="pre">64]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/scenario.html#ScenarioPredictor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.scenario.ScenarioPredictor" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.scenario.ScenarioPredictor.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_loader</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/scenario.html#ScenarioPredictor.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.scenario.ScenarioPredictor.evaluate" title="Link to this definition"></a></dt>
+<dd><p>Evaluates the model on a dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data_loader</strong> (<em>torch.utils.data.DataLoader</em>) – DataLoader for the dataset to evaluate.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>A tuple containing:</dt><dd><ul class="simple">
+<li><p>avg_loss (float): Average loss over the dataset.</p></li>
+<li><p>accuracy (float): Accuracy of predictions (0 to 1).</p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.scenario.ScenarioPredictor.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_loader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_every</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_checkpoint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/scenario.html#ScenarioPredictor.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.scenario.ScenarioPredictor.fit" title="Link to this definition"></a></dt>
+<dd><p>Trains the model on the given dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_loader</strong> (<em>torch.utils.data.DataLoader</em>) – DataLoader for the training dataset.</p></li>
+<li><p><strong>val_loader</strong> (<em>torch.utils.data.DataLoader</em><em>, </em><em>optional</em>) – DataLoader for the validation dataset. Defaults to None.</p></li>
+<li><p><strong>epochs</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of epochs for training. Defaults to 10.</p></li>
+<li><p><strong>lr</strong> (<em>float</em><em>, </em><em>optional</em>) – Learning rate for the optimizer. Defaults to 1e-3.</p></li>
+<li><p><strong>print_every</strong> (<em>int</em><em>, </em><em>optional</em>) – Interval for printing training progress. Defaults to 1.</p></li>
+<li><p><strong>save_checkpoint</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to save model checkpoints based on validation loss. Defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.scenario.ScenarioPredictor.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/scenario.html#ScenarioPredictor.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.scenario.ScenarioPredictor.forward" title="Link to this definition"></a></dt>
+<dd><p>Forward pass through the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>torch.Tensor</em>) – Input tensor with shape (batch_size, input_size).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Output tensor with probabilities in the range [0,1].</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.scenario.ScenarioPredictor.load">
+<span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/scenario.html#ScenarioPredictor.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.scenario.ScenarioPredictor.load" title="Link to this definition"></a></dt>
+<dd><p>Loads the model state from a file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – Path to the file containing the model state.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.scenario.ScenarioPredictor.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/scenario.html#ScenarioPredictor.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.scenario.ScenarioPredictor.predict" title="Link to this definition"></a></dt>
+<dd><p>Predicts the output for a given input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>torch.Tensor</em>) – Input tensor.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Predicted output tensor with probabilities in the range [0,1].</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-ise.models.variational_lstm_emulator">
+<span id="ise-models-variational-lstm-emulator"></span><h2>ise.models.variational_lstm_emulator<a class="headerlink" href="#module-ise.models.variational_lstm_emulator" title="Link to this heading"></a></h2>
+<p>This module contains the VariationalLSTMEmulator, which is a class that contains the model architecture for the variational LSTM emulator presented in <a class="reference external" href="https://doi.org/10.1029/2023MS003899">https://doi.org/10.1029/2023MS003899</a>.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.models.variational_lstm_emulator.VariationalLSTMEmulator">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.models.variational_lstm_emulator.</span></span><span class="sig-name descname"><span class="pre">VariationalLSTMEmulator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">architecture</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mc_dropout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_prob</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/variational_lstm_emulator.html#VariationalLSTMEmulator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.variational_lstm_emulator.VariationalLSTMEmulator" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Variational LSTM Emulator model for time series data.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.variational_lstm_emulator.VariationalLSTMEmulator.enable_dropout">
+<span class="sig-name descname"><span class="pre">enable_dropout</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/variational_lstm_emulator.html#VariationalLSTMEmulator.enable_dropout"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.variational_lstm_emulator.VariationalLSTMEmulator.enable_dropout" title="Link to this definition"></a></dt>
+<dd><p>Enable dropout during model evaluation.</p>
+<p>This method turns on dropout for each layer that starts with “Dropout”.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.variational_lstm_emulator.VariationalLSTMEmulator.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/variational_lstm_emulator.html#VariationalLSTMEmulator.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.variational_lstm_emulator.VariationalLSTMEmulator.forward" title="Link to this definition"></a></dt>
+<dd><p>Forward pass of the VariationalLSTMEmulator model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>torch.Tensor</em>) – Input tensor.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Output tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.variational_lstm_emulator.VariationalLSTMEmulator.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approx_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mc_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantile_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.025,</span> <span class="pre">0.975]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'95'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/variational_lstm_emulator.html#VariationalLSTMEmulator.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.variational_lstm_emulator.VariationalLSTMEmulator.predict" title="Link to this definition"></a></dt>
+<dd><p>Make predictions using the VariationalLSTMEmulator model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>np.ndarray</em><em> or </em><em>torch.Tensor</em><em> or </em><em>pd.DataFrame</em>) – Input data.</p></li>
+<li><p><strong>approx_dist</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag indicating whether to approximate the distribution using MC Dropout. Defaults to None.</p></li>
+<li><p><strong>mc_iterations</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of MC iterations. Required if approx_dist is True.</p></li>
+<li><p><strong>quantile_range</strong> (<em>list</em><em>, </em><em>optional</em>) – Quantile range for prediction intervals. Defaults to [0.025, 0.975].</p></li>
+<li><p><strong>confidence</strong> (<em>str</em><em>, </em><em>optional</em>) – Confidence level for prediction intervals. Defaults to “95”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple containing the predictions, mean predictions, and standard deviations.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ise.evaluation.html" class="btn btn-neutral float-left" title="ise.evaluation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ise.models.ISEFlow.html" class="btn btn-neutral float-right" title="ise.models.ISEFlow" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Peter Van Katwyk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

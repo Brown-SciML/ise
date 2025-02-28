@@ -1,0 +1,622 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ise.models.predictors &mdash; ise 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="/docs/source/ise.models.predictors.html" />
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="ise.models.pretrained" href="ise.models.pretrained.html" />
+    <link rel="prev" title="ise.models.density_estimators" href="ise.models.density_estimators.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            ise
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="ise.html">ise documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="ise.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="ise.data.html">ise.data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ise.evaluation.html">ise.evaluation</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="ise.models.html">ise.models</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="ise.models.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.html#module-ise.models.loss">ise.models.loss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.html#module-ise.models.scenario">ise.models.scenario</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ise.models.html#module-ise.models.variational_lstm_emulator">ise.models.variational_lstm_emulator</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ise.utils.html">ise.utils</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ise</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="ise.html">ise documentation</a></li>
+          <li class="breadcrumb-item"><a href="ise.models.html">ise.models</a></li>
+      <li class="breadcrumb-item active">ise.models.predictors</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/ise.models.predictors.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ise-models-predictors">
+<h1>ise.models.predictors<a class="headerlink" href="#ise-models-predictors" title="Link to this heading"></a></h1>
+<section id="module-ise.models.predictors.deep_ensemble">
+<span id="ise-models-predictors-deep-ensemble"></span><h2>ise.models.predictors.deep_ensemble<a class="headerlink" href="#module-ise.models.predictors.deep_ensemble" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.models.predictors.deep_ensemble.DeepEnsemble">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.models.predictors.deep_ensemble.</span></span><span class="sig-name descname"><span class="pre">DeepEnsemble</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ensemble_members</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">83</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_ensemble_members</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_sequence_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">86</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latent_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/predictors/deep_ensemble.html#DeepEnsemble"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.predictors.deep_ensemble.DeepEnsemble" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Deep Ensemble Model using multiple LSTMs for time series forecasting.</p>
+<p>This class implements an ensemble of LSTM-based predictors. Each LSTM model is trained
+separately, and predictions from all ensemble members are aggregated to provide a mean
+prediction along with an epistemic uncertainty estimate.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.predictors.deep_ensemble.DeepEnsemble.input_size">
+<span class="sig-name descname"><span class="pre">input_size</span></span><a class="headerlink" href="#ise.models.predictors.deep_ensemble.DeepEnsemble.input_size" title="Link to this definition"></a></dt>
+<dd><p>Size of the input features.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.predictors.deep_ensemble.DeepEnsemble.output_size">
+<span class="sig-name descname"><span class="pre">output_size</span></span><a class="headerlink" href="#ise.models.predictors.deep_ensemble.DeepEnsemble.output_size" title="Link to this definition"></a></dt>
+<dd><p>Size of the output features.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.predictors.deep_ensemble.DeepEnsemble.output_sequence_length">
+<span class="sig-name descname"><span class="pre">output_sequence_length</span></span><a class="headerlink" href="#ise.models.predictors.deep_ensemble.DeepEnsemble.output_sequence_length" title="Link to this definition"></a></dt>
+<dd><p>Length of the predicted output sequence.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.predictors.deep_ensemble.DeepEnsemble.loss_choices">
+<span class="sig-name descname"><span class="pre">loss_choices</span></span><a class="headerlink" href="#ise.models.predictors.deep_ensemble.DeepEnsemble.loss_choices" title="Link to this definition"></a></dt>
+<dd><p>List of loss functions used for different ensemble members.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.predictors.deep_ensemble.DeepEnsemble.ensemble_members">
+<span class="sig-name descname"><span class="pre">ensemble_members</span></span><a class="headerlink" href="#ise.models.predictors.deep_ensemble.DeepEnsemble.ensemble_members" title="Link to this definition"></a></dt>
+<dd><p>List of LSTM models used as ensemble members.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.predictors.deep_ensemble.DeepEnsemble.trained">
+<span class="sig-name descname"><span class="pre">trained</span></span><a class="headerlink" href="#ise.models.predictors.deep_ensemble.DeepEnsemble.trained" title="Link to this definition"></a></dt>
+<dd><p>Indicates whether all ensemble members have been trained.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ensemble_members</strong> (<em>list</em><em>, </em><em>optional</em>) – Pretrained LSTM models. If None, a new ensemble is created.</p></li>
+<li><p><strong>input_size</strong> (<em>int</em>) – Number of input features.</p></li>
+<li><p><strong>output_size</strong> (<em>int</em>) – Number of output features.</p></li>
+<li><p><strong>num_ensemble_members</strong> (<em>int</em>) – Number of ensemble members to create if <cite>ensemble_members</cite> is None.</p></li>
+<li><p><strong>output_sequence_length</strong> (<em>int</em>) – Length of the output sequence to predict.</p></li>
+<li><p><strong>latent_dim</strong> (<em>int</em>) – Additional latent dimension added to the input.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <cite>ensemble_members</cite> is provided but does not contain only LSTM instances.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.predictors.deep_ensemble.DeepEnsemble.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_val</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_val</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_checkpoints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'checkpoint_ensemble'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_stopping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequence_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patience</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/predictors/deep_ensemble.html#DeepEnsemble.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.predictors.deep_ensemble.DeepEnsemble.fit" title="Link to this definition"></a></dt>
+<dd><p>Trains each ensemble member on the provided data.</p>
+<p>The ensemble members are trained separately, allowing for independent learning dynamics.
+Checkpoints can be saved for each model, and early stopping is available to prevent overfitting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – Training input data.</p></li>
+<li><p><strong>y</strong> (<em>Tensor</em>) – Training target data.</p></li>
+<li><p><strong>X_val</strong> (<em>Tensor</em><em>, </em><em>optional</em>) – Validation input data for early stopping.</p></li>
+<li><p><strong>y_val</strong> (<em>Tensor</em><em>, </em><em>optional</em>) – Validation target data for early stopping.</p></li>
+<li><p><strong>save_checkpoints</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to save checkpoints during training. Defaults to True.</p></li>
+<li><p><strong>checkpoint_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path prefix for saving model checkpoints.</p></li>
+<li><p><strong>early_stopping</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to use early stopping. Defaults to False.</p></li>
+<li><p><strong>epochs</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of training epochs. Defaults to 100.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Batch size for training. Defaults to 128.</p></li>
+<li><p><strong>sequence_length</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of input sequences. Defaults to 5.</p></li>
+<li><p><strong>patience</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of epochs to wait before early stopping. Defaults to 10.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to print training progress. Defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Warning</strong> – If the model has already been trained, a warning is issued before proceeding.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.predictors.deep_ensemble.DeepEnsemble.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/predictors/deep_ensemble.html#DeepEnsemble.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.predictors.deep_ensemble.DeepEnsemble.forward" title="Link to this definition"></a></dt>
+<dd><p>Performs a forward pass through the ensemble, aggregating predictions.</p>
+<p>Each ensemble member makes a prediction, and the mean and standard deviation
+of these predictions are computed to provide an estimate of epistemic uncertainty.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – Input tensor of shape (batch_size, sequence_length, input_size).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>Mean prediction across all ensemble members.</p></li>
+<li><p>Epistemic uncertainty (standard deviation of predictions).</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[Tensor, Tensor]</p>
+</dd>
+</dl>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<ul class="simple">
+<li><p>If the model is not trained, a warning is issued indicating that predictions
+may be unreliable.</p></li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.predictors.deep_ensemble.DeepEnsemble.load">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/predictors/deep_ensemble.html#DeepEnsemble.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.predictors.deep_ensemble.DeepEnsemble.load" title="Link to this definition"></a></dt>
+<dd><p>Loads a trained ensemble model from a file.</p>
+<p>This method restores the ensemble’s state, including the metadata and individual
+LSTM members. The ensemble members are reinitialized and their state dictionaries
+are loaded from disk.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model_path</strong> (<em>str</em>) – Path to the saved model file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An instance of the loaded ensemble model.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#ise.models.predictors.deep_ensemble.DeepEnsemble" title="ise.models.predictors.deep_ensemble.DeepEnsemble">DeepEnsemble</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>FileNotFoundError</strong> – If any ensemble member’s file is missing.</p></li>
+<li><p><strong>ValueError</strong> – If the saved model type does not match <cite>DeepEnsemble</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The method ensures compatibility between the saved metadata and the loaded model.</p></li>
+<li><p>Loss functions are restored using a predefined lookup.</p></li>
+<li><p>The model is set to evaluation mode after loading.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.predictors.deep_ensemble.DeepEnsemble.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/predictors/deep_ensemble.html#DeepEnsemble.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.predictors.deep_ensemble.DeepEnsemble.predict" title="Link to this definition"></a></dt>
+<dd><p>Makes predictions using the trained ensemble.</p>
+<p>This method calls <cite>forward</cite> while ensuring the model is in evaluation mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – Input tensor for prediction.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>Mean predictions across ensemble members.</p></li>
+<li><p>Uncertainty estimates (standard deviation of predictions).</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[Tensor, Tensor]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.predictors.deep_ensemble.DeepEnsemble.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/predictors/deep_ensemble.html#DeepEnsemble.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.predictors.deep_ensemble.DeepEnsemble.save" title="Link to this definition"></a></dt>
+<dd><p>Saves the ensemble model and its metadata.</p>
+<p>This method stores the model parameters, metadata, and each ensemble member’s state dictionary.
+The metadata includes information about the ensemble members, such as their architecture,
+loss function, and training status.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model_path</strong> (<em>str</em>) – File path to save the model.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If attempting to save the model before it has been trained.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The model directory is automatically created if it does not exist.</p></li>
+<li><p>Each ensemble member is saved in a separate subdirectory.</p></li>
+<li><p>After saving, any temporary checkpoint files are removed.</p></li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-ise.models.predictors.lstm">
+<span id="ise-models-predictors-lstm"></span><h2>ise.models.predictors.lstm<a class="headerlink" href="#module-ise.models.predictors.lstm" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="ise.models.predictors.lstm.LSTM">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ise.models.predictors.lstm.</span></span><span class="sig-name descname"><span class="pre">LSTM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lstm_num_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lstm_hidden_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_size=83</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_size=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion=MSELoss()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_sequence_length=86</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer=&lt;class</span> <span class="pre">'torch.optim.adam.Adam'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/predictors/lstm.html#LSTM"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.predictors.lstm.LSTM" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Long Short-Term Memory (LSTM) model for time series forecasting.</p>
+<p>This class implements an LSTM network with multiple layers, dropout, and fully connected
+layers to generate predictions for sequential data.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.predictors.lstm.LSTM.lstm_num_layers">
+<span class="sig-name descname"><span class="pre">lstm_num_layers</span></span><a class="headerlink" href="#ise.models.predictors.lstm.LSTM.lstm_num_layers" title="Link to this definition"></a></dt>
+<dd><p>Number of LSTM layers in the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.predictors.lstm.LSTM.lstm_num_hidden">
+<span class="sig-name descname"><span class="pre">lstm_num_hidden</span></span><a class="headerlink" href="#ise.models.predictors.lstm.LSTM.lstm_num_hidden" title="Link to this definition"></a></dt>
+<dd><p>Number of hidden units in each LSTM layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.predictors.lstm.LSTM.input_size">
+<span class="sig-name descname"><span class="pre">input_size</span></span><a class="headerlink" href="#ise.models.predictors.lstm.LSTM.input_size" title="Link to this definition"></a></dt>
+<dd><p>Number of input features.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.predictors.lstm.LSTM.output_size">
+<span class="sig-name descname"><span class="pre">output_size</span></span><a class="headerlink" href="#ise.models.predictors.lstm.LSTM.output_size" title="Link to this definition"></a></dt>
+<dd><p>Number of output features.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.predictors.lstm.LSTM.output_sequence_length">
+<span class="sig-name descname"><span class="pre">output_sequence_length</span></span><a class="headerlink" href="#ise.models.predictors.lstm.LSTM.output_sequence_length" title="Link to this definition"></a></dt>
+<dd><p>Number of time steps predicted by the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.predictors.lstm.LSTM.device">
+<span class="sig-name descname"><span class="pre">device</span></span><a class="headerlink" href="#ise.models.predictors.lstm.LSTM.device" title="Link to this definition"></a></dt>
+<dd><p>Device on which the model runs (‘cuda’ or ‘cpu’).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.predictors.lstm.LSTM.lstm">
+<span class="sig-name descname"><span class="pre">lstm</span></span><a class="headerlink" href="#ise.models.predictors.lstm.LSTM.lstm" title="Link to this definition"></a></dt>
+<dd><p>LSTM layer for sequence modeling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nn.LSTM</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.predictors.lstm.LSTM.relu">
+<span class="sig-name descname"><span class="pre">relu</span></span><a class="headerlink" href="#ise.models.predictors.lstm.LSTM.relu" title="Link to this definition"></a></dt>
+<dd><p>ReLU activation function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nn.ReLU</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.predictors.lstm.LSTM.linear1">
+<span class="sig-name descname"><span class="pre">linear1</span></span><a class="headerlink" href="#ise.models.predictors.lstm.LSTM.linear1" title="Link to this definition"></a></dt>
+<dd><p>Intermediate fully connected layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nn.Linear</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.predictors.lstm.LSTM.linear_out">
+<span class="sig-name descname"><span class="pre">linear_out</span></span><a class="headerlink" href="#ise.models.predictors.lstm.LSTM.linear_out" title="Link to this definition"></a></dt>
+<dd><p>Output layer mapping to final predictions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nn.Linear</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.predictors.lstm.LSTM.optimizer">
+<span class="sig-name descname"><span class="pre">optimizer</span></span><a class="headerlink" href="#ise.models.predictors.lstm.LSTM.optimizer" title="Link to this definition"></a></dt>
+<dd><p>Optimization algorithm used for training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.optim.Optimizer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.predictors.lstm.LSTM.dropout">
+<span class="sig-name descname"><span class="pre">dropout</span></span><a class="headerlink" href="#ise.models.predictors.lstm.LSTM.dropout" title="Link to this definition"></a></dt>
+<dd><p>Dropout layer to prevent overfitting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nn.Dropout</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.predictors.lstm.LSTM.criterion">
+<span class="sig-name descname"><span class="pre">criterion</span></span><a class="headerlink" href="#ise.models.predictors.lstm.LSTM.criterion" title="Link to this definition"></a></dt>
+<dd><p>Loss function used for training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.nn.modules.loss._Loss</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ise.models.predictors.lstm.LSTM.trained">
+<span class="sig-name descname"><span class="pre">trained</span></span><a class="headerlink" href="#ise.models.predictors.lstm.LSTM.trained" title="Link to this definition"></a></dt>
+<dd><p>Flag indicating whether the model has been trained.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lstm_num_layers</strong> (<em>int</em>) – Number of LSTM layers.</p></li>
+<li><p><strong>lstm_hidden_size</strong> (<em>int</em>) – Number of hidden units in each LSTM layer.</p></li>
+<li><p><strong>input_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of input features. Defaults to 83.</p></li>
+<li><p><strong>output_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of output features. Defaults to 1.</p></li>
+<li><p><strong>criterion</strong> (<em>torch.nn.modules.loss._Loss</em><em>, </em><em>optional</em>) – Loss function. Defaults to MSELoss.</p></li>
+<li><p><strong>output_sequence_length</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of output time steps. Defaults to 86.</p></li>
+<li><p><strong>optimizer</strong> (<em>torch.optim.Optimizer</em><em>, </em><em>optional</em>) – Optimizer type. Defaults to Adam.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.predictors.lstm.LSTM.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs=100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequence_length=5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size=64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_val=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_val=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_checkpoints=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_path='checkpoint.pt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_stopping=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patience=10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataclass=&lt;class</span> <span class="pre">'ise.data.dataclasses.EmulatorDataset'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/predictors/lstm.html#LSTM.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.predictors.lstm.LSTM.fit" title="Link to this definition"></a></dt>
+<dd><p>Trains the LSTM model on the provided data.</p>
+<p>Supports optional checkpointing and early stopping. If a checkpoint exists,
+training resumes from the last saved state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em><em> or </em><em>DataFrame</em>) – Input training data.</p></li>
+<li><p><strong>y</strong> (<em>Tensor</em><em> or </em><em>DataFrame</em>) – Target values corresponding to the input data.</p></li>
+<li><p><strong>epochs</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of epochs for training. Defaults to 100.</p></li>
+<li><p><strong>sequence_length</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of input sequences. Defaults to 5.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Batch size used in training. Defaults to 64.</p></li>
+<li><p><strong>criterion</strong> (<em>torch.nn.modules.loss._Loss</em><em>, </em><em>optional</em>) – Loss function. Defaults to None.</p></li>
+<li><p><strong>X_val</strong> (<em>Tensor</em><em> or </em><em>DataFrame</em><em>, </em><em>optional</em>) – Validation input data. Defaults to None.</p></li>
+<li><p><strong>y_val</strong> (<em>Tensor</em><em> or </em><em>DataFrame</em><em>, </em><em>optional</em>) – Validation target data. Defaults to None.</p></li>
+<li><p><strong>save_checkpoints</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to save model checkpoints. Defaults to True.</p></li>
+<li><p><strong>checkpoint_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to save model checkpoints. Defaults to ‘checkpoint.pt’.</p></li>
+<li><p><strong>early_stopping</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to enable early stopping. Defaults to False.</p></li>
+<li><p><strong>patience</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of epochs to wait before stopping. Defaults to 10.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to print training progress. Defaults to True.</p></li>
+<li><p><strong>dataclass</strong> (<em>type</em><em>, </em><em>optional</em>) – Dataset class for handling data. Defaults to EmulatorDataset.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If no loss function is provided.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>If validation data is provided but early stopping is disabled, a warning is issued.</p></li>
+<li><p>If a checkpoint exists, training resumes from the saved epoch.</p></li>
+<li><p>If early stopping is enabled, the model stops training when validation loss stops improving.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.predictors.lstm.LSTM.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/predictors/lstm.html#LSTM.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.predictors.lstm.LSTM.forward" title="Link to this definition"></a></dt>
+<dd><p>Performs a forward pass through the LSTM network.</p>
+<p>Given an input sequence, the LSTM processes the sequence to extract features,
+which are passed through a fully connected network to generate predictions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – Input tensor of shape (batch_size, sequence_length, input_size).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Output tensor of shape (batch_size, output_size), representing
+the model’s predictions.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ise.models.predictors.lstm.LSTM.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequence_length=5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size=64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataclass=&lt;class</span> <span class="pre">'ise.data.dataclasses.EmulatorDataset'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ise/models/predictors/lstm.html#LSTM.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ise.models.predictors.lstm.LSTM.predict" title="Link to this definition"></a></dt>
+<dd><p>Generates predictions using the trained LSTM model.</p>
+<p>The model processes input sequences and returns predictions. Predictions are computed
+in a batch-wise manner to optimize memory usage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em><em> or </em><em>DataFrame</em>) – Input data for prediction.</p></li>
+<li><p><strong>sequence_length</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of input sequences. Defaults to 5.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Batch size used for inference. Defaults to 64.</p></li>
+<li><p><strong>dataclass</strong> (<em>type</em><em>, </em><em>optional</em>) – Dataset class for handling data. Defaults to EmulatorDataset.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Predicted values for the input data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The model is set to evaluation mode before making predictions.</p></li>
+<li><p>Data is converted to tensors if initially provided as pandas DataFrames.</p></li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ise.models.density_estimators.html" class="btn btn-neutral float-left" title="ise.models.density_estimators" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ise.models.pretrained.html" class="btn btn-neutral float-right" title="ise.models.pretrained" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Peter Van Katwyk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

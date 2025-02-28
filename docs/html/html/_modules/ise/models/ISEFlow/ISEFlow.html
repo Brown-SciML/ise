@@ -1,0 +1,824 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ise.models.ISEFlow.ISEFlow &mdash; ise 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="/_modules/ise/models/ISEFlow/ISEFlow.html" />
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            ise
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/ise.html">ise documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">ise</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ise.models.ISEFlow.ISEFlow</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ise.models.ISEFlow.ISEFlow</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span><span class="p">,</span> <span class="n">optim</span>
+<span class="kn">from</span> <span class="nn">nflows</span> <span class="kn">import</span> <span class="n">distributions</span><span class="p">,</span> <span class="n">flows</span><span class="p">,</span> <span class="n">transforms</span>
+
+<span class="kn">from</span> <span class="nn">ise.data.dataclasses</span> <span class="kn">import</span> <span class="n">EmulatorDataset</span>
+<span class="kn">from</span> <span class="nn">ise.utils.functions</span> <span class="kn">import</span> <span class="n">to_tensor</span>
+<span class="kn">from</span> <span class="nn">ise.utils.training</span> <span class="kn">import</span> <span class="n">EarlyStoppingCheckpointer</span><span class="p">,</span> <span class="n">CheckpointSaver</span>
+<span class="kn">from</span> <span class="nn">ise.data</span> <span class="kn">import</span> <span class="n">feature_engineer</span> <span class="k">as</span> <span class="n">fe</span>
+<span class="kn">from</span> <span class="nn">ise.models.predictors.deep_ensemble</span> <span class="kn">import</span> <span class="n">DeepEnsemble</span>
+<span class="kn">from</span> <span class="nn">ise.models.density_estimators.normalizing_flow</span> <span class="kn">import</span> <span class="n">NormalizingFlow</span>
+<span class="kn">from</span> <span class="nn">.de</span> <span class="kn">import</span> <span class="n">ISEFlow_AIS_DE</span><span class="p">,</span> <span class="n">ISEFlow_GrIS_DE</span>
+<span class="kn">from</span> <span class="nn">.nf</span> <span class="kn">import</span> <span class="n">ISEFlow_AIS_NF</span><span class="p">,</span> <span class="n">ISEFlow_GrIS_NF</span>
+<span class="kn">from</span> <span class="nn">ise.models.pretrained</span> <span class="kn">import</span> <span class="n">ISEFlow_AIS_v1_0_0_path</span><span class="p">,</span> <span class="n">ISEFlow_GrIS_v1_0_0_path</span>
+
+<div class="viewcode-block" id="ISEFlow">
+<a class="viewcode-back" href="../../../../docs/source/ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow">[docs]</a>
+<span class="k">class</span> <span class="nc">ISEFlow</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    ISEFlow is a hybrid ice sheet emulator that combines a deep ensemble model and a normalizing flow model.</span>
+
+<span class="sd">    This class provides methods to train, predict, save, and load hybrid models for ice sheet emulation.</span>
+<span class="sd">    It integrates a deep ensemble to capture epistemic uncertainties and a normalizing flow to model aleatoric uncertainties.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        device (str): The computing device (&#39;cuda&#39; if available, else &#39;cpu&#39;).</span>
+<span class="sd">        deep_ensemble (DeepEnsemble): The deep ensemble model for epistemic uncertainty.</span>
+<span class="sd">        normalizing_flow (NormalizingFlow): The normalizing flow model for aleatoric uncertainty.</span>
+<span class="sd">        trained (bool): Flag indicating whether the model has been trained.</span>
+<span class="sd">        scaler_path (str or None): Path to the scaler used for output transformation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">deep_ensemble</span><span class="p">,</span> <span class="n">normalizing_flow</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the ISEFlow model with a deep ensemble and a normalizing flow.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            deep_ensemble (DeepEnsemble): A deep ensemble model for epistemic uncertainty estimation.</span>
+<span class="sd">            normalizing_flow (NormalizingFlow): A normalizing flow model for aleatoric uncertainty estimation.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If `deep_ensemble` is not an instance of DeepEnsemble.</span>
+<span class="sd">            ValueError: If `normalizing_flow` is not an instance of NormalizingFlow.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">ISEFlow</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">deep_ensemble</span><span class="p">,</span> <span class="n">DeepEnsemble</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;deep_ensemble must be a DeepEnsemble instance&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">normalizing_flow</span><span class="p">,</span> <span class="n">NormalizingFlow</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;normalizing_flow must be a NormalizingFlow instance&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">deep_ensemble</span> <span class="o">=</span> <span class="n">deep_ensemble</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">normalizing_flow</span> <span class="o">=</span> <span class="n">normalizing_flow</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trained</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">deep_ensemble</span><span class="o">.</span><span class="n">trained</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalizing_flow</span><span class="o">.</span><span class="n">trained</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scaler_path</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="ISEFlow.fit">
+<a class="viewcode-back" href="../../../../docs/source/ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow.fit">[docs]</a>
+    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">nf_epochs</span><span class="p">,</span> <span class="n">de_epochs</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">X_val</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y_val</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">save_checkpoints</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">checkpoint_path</span><span class="o">=</span><span class="s1">&#39;checkpoint_ensemble&#39;</span><span class="p">,</span> <span class="n">early_stopping</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  
+             <span class="n">sequence_length</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">patience</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Trains the hybrid emulator using the provided data.</span>
+
+<span class="sd">        This method trains the normalizing flow model first, then uses its latent representations </span>
+<span class="sd">        to train the deep ensemble model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X (array-like): Input feature matrix.</span>
+<span class="sd">            y (array-like): Target values.</span>
+<span class="sd">            nf_epochs (int): Number of training epochs for the normalizing flow.</span>
+<span class="sd">            de_epochs (int): Number of training epochs for the deep ensemble.</span>
+<span class="sd">            batch_size (int, optional): Batch size for training. Defaults to 64.</span>
+<span class="sd">            X_val (array-like, optional): Validation feature matrix. Defaults to None.</span>
+<span class="sd">            y_val (array-like, optional): Validation target values. Defaults to None.</span>
+<span class="sd">            save_checkpoints (bool, optional): Whether to save training checkpoints. Defaults to True.</span>
+<span class="sd">            checkpoint_path (str, optional): Path prefix for saving model checkpoints. Defaults to &#39;checkpoint_ensemble&#39;.</span>
+<span class="sd">            early_stopping (bool, optional): Whether to use early stopping. Defaults to True.</span>
+<span class="sd">            sequence_length (int, optional): Sequence length for recurrent architectures. Defaults to 5.</span>
+<span class="sd">            patience (int, optional): Number of epochs with no improvement before stopping. Defaults to 10.</span>
+<span class="sd">            verbose (bool, optional): Whether to print training progress. Defaults to True.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            Warning: If the model has already been trained.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        
+        <span class="k">if</span> <span class="n">early_stopping</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">early_stopping</span> <span class="o">=</span> <span class="n">X_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">y_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+        <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100000</span><span class="p">))</span>
+
+        <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">to_tensor</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">),</span> <span class="n">to_tensor</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">trained</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;This model has already been trained. Training again.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Train Normalizing Flow</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalizing_flow</span><span class="o">.</span><span class="n">trained</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Training Normalizing Flow (</span><span class="si">{</span><span class="s1">&#39;Maximum &#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">early_stopping</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="si">}{</span><span class="n">nf_epochs</span><span class="si">}</span><span class="s2"> epochs):&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">normalizing_flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">nf_epochs</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">save_checkpoints</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">checkpoint_path</span><span class="si">}</span><span class="s2">_nf.pth&quot;</span><span class="p">,</span> <span class="n">early_stopping</span><span class="p">,</span> <span class="n">patience</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>      
+
+        <span class="c1"># Latent representation</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalizing_flow</span><span class="o">.</span><span class="n">get_latent</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="n">X_latent</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">X</span><span class="p">,</span> <span class="n">z</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        
+        <span class="n">X_val_latent</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">X_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">y_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">X_val</span><span class="p">,</span> <span class="n">y_val</span> <span class="o">=</span> <span class="n">to_tensor</span><span class="p">(</span><span class="n">X_val</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">),</span> <span class="n">to_tensor</span><span class="p">(</span><span class="n">y_val</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">z_val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalizing_flow</span><span class="o">.</span><span class="n">get_latent</span><span class="p">(</span><span class="n">X_val</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+            <span class="n">X_val_latent</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">X_val</span><span class="p">,</span> <span class="n">z_val</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        
+        <span class="c1"># Train Deep Ensemble</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">deep_ensemble</span><span class="o">.</span><span class="n">trained</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Training Deep Ensemble (</span><span class="si">{</span><span class="s1">&#39;Maximum &#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">early_stopping</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="si">}{</span><span class="n">de_epochs</span><span class="si">}</span><span class="s2"> epochs):&quot;</span><span class="p">)</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">deep_ensemble</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_latent</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">X_val_latent</span><span class="p">,</span> <span class="n">y_val</span><span class="p">,</span> <span class="n">save_checkpoints</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">checkpoint_path</span><span class="si">}</span><span class="s2">_de&quot;</span><span class="p">,</span> <span class="n">early_stopping</span><span class="p">,</span> <span class="n">de_epochs</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">sequence_length</span><span class="p">,</span> <span class="n">patience</span><span class="p">,</span> <span class="n">verbose</span><span class="p">,)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">trained</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="ISEFlow.forward">
+<a class="viewcode-back" href="../../../../docs/source/ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">smooth_projection</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Performs a forward pass through the hybrid emulator.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x (array-like): Input data.</span>
+<span class="sd">            smooth_projection (bool, optional): Whether to apply smoothing to projections. Defaults to False.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple: A tuple containing:</span>
+<span class="sd">                - prediction (numpy.ndarray): Model predictions.</span>
+<span class="sd">                - uncertainties (dict): Dictionary with keys:</span>
+<span class="sd">                    - &#39;total&#39; (numpy.ndarray): Total uncertainty.</span>
+<span class="sd">                    - &#39;epistemic&#39; (numpy.ndarray): Epistemic uncertainty.</span>
+<span class="sd">                    - &#39;aleatoric&#39; (numpy.ndarray): Aleatoric uncertainty.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            Warning: If the model has not been trained.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">to_tensor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">trained</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;This model has not been trained. Predictions may not be accurate.&quot;</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalizing_flow</span><span class="o">.</span><span class="n">get_latent</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="n">X_latent</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">prediction</span><span class="p">,</span> <span class="n">epistemic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">deep_ensemble</span><span class="p">(</span><span class="n">X_latent</span><span class="p">)</span>
+        <span class="n">aleatoric</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalizing_flow</span><span class="o">.</span><span class="n">aleatoric</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+        <span class="n">prediction</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="n">epistemic</span> <span class="o">=</span> <span class="n">epistemic</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="n">uncertainties</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">total</span><span class="o">=</span><span class="n">aleatoric</span> <span class="o">+</span> <span class="n">epistemic</span><span class="p">,</span>
+            <span class="n">epistemic</span><span class="o">=</span><span class="n">epistemic</span><span class="p">,</span>
+            <span class="n">aleatoric</span><span class="o">=</span><span class="n">aleatoric</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">uncertainties</span></div>
+
+
+<div class="viewcode-block" id="ISEFlow.predict">
+<a class="viewcode-back" href="../../../../docs/source/ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow.predict">[docs]</a>
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">output_scaler</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">smooth_projection</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Makes predictions using the trained hybrid emulator.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x (array-like): Input data.</span>
+<span class="sd">            output_scaler (bool or str, optional): Path to the output scaler or whether to apply scaling. Defaults to True.</span>
+<span class="sd">            smooth_projection (bool, optional): Whether to apply smoothing. Defaults to False.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple: A tuple containing:</span>
+<span class="sd">                - unscaled_predictions (numpy.ndarray): Model predictions in the original scale.</span>
+<span class="sd">                - uncertainties (dict): Dictionary with keys:</span>
+<span class="sd">                    - &#39;total&#39; (numpy.ndarray): Total uncertainty.</span>
+<span class="sd">                    - &#39;epistemic&#39; (numpy.ndarray): Epistemic uncertainty.</span>
+<span class="sd">                    - &#39;aleatoric&#39; (numpy.ndarray): Aleatoric uncertainty.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            Warning: If no scaler path is provided.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">output_scaler</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">output_scaler</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_dir</span><span class="p">,</span> <span class="s2">&quot;scaler_y.pkl&quot;</span><span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_scaler</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">output_scaler</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">output_scaler</span> <span class="ow">is</span> <span class="kc">False</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;No scaler path provided, uncertainties are not in units of SLE.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">smooth_projection</span><span class="o">=</span><span class="n">smooth_projection</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output_scaler</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scaler_path</span> <span class="o">=</span> <span class="n">output_scaler</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scaler_path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">output_scaler</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+        <span class="n">predictions</span><span class="p">,</span> <span class="n">uncertainties</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">smooth_projection</span><span class="o">=</span><span class="n">smooth_projection</span><span class="p">)</span>
+        <span class="n">unscaled_predictions</span> <span class="o">=</span> <span class="n">output_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">predictions</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">bound_epistemic</span> <span class="o">=</span> <span class="n">predictions</span> <span class="o">+</span> <span class="n">uncertainties</span><span class="p">[</span><span class="s2">&quot;epistemic&quot;</span><span class="p">]</span>
+        <span class="n">bound_aleatoric</span> <span class="o">=</span> <span class="n">predictions</span> <span class="o">+</span> <span class="n">uncertainties</span><span class="p">[</span><span class="s2">&quot;aleatoric&quot;</span><span class="p">]</span>
+        <span class="n">unscaled_bound_epistemic</span> <span class="o">=</span> <span class="n">output_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">bound_epistemic</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">unscaled_bound_aleatoric</span> <span class="o">=</span> <span class="n">output_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">bound_aleatoric</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">epistemic</span> <span class="o">=</span> <span class="n">unscaled_bound_epistemic</span> <span class="o">-</span> <span class="n">unscaled_predictions</span>
+        <span class="n">aleatoric</span> <span class="o">=</span> <span class="n">unscaled_bound_aleatoric</span> <span class="o">-</span> <span class="n">unscaled_predictions</span>
+
+        <span class="n">uncertainties</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">total</span><span class="o">=</span><span class="n">epistemic</span> <span class="o">+</span> <span class="n">aleatoric</span><span class="p">,</span>
+            <span class="n">epistemic</span><span class="o">=</span><span class="n">epistemic</span><span class="p">,</span>
+            <span class="n">aleatoric</span><span class="o">=</span><span class="n">aleatoric</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">unscaled_predictions</span><span class="p">,</span> <span class="n">uncertainties</span></div>
+
+    
+
+<div class="viewcode-block" id="ISEFlow.save">
+<a class="viewcode-back" href="../../../../docs/source/ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow.save">[docs]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">,</span> <span class="n">input_features</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_scaler_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Saves the trained model and related components to a specified directory.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            save_dir (str): Directory where the model should be saved.</span>
+<span class="sd">            input_features (list, optional): List of input feature names. Defaults to None.</span>
+<span class="sd">            output_scaler_path (str, optional): Path to the output scaler. Defaults to None.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the model has not been trained.</span>
+<span class="sd">            ValueError: If `save_dir` is a file instead of a directory.</span>
+<span class="sd">            ValueError: If `input_features` is not a list.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">trained</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;This model has not been trained yet. Train the model before saving.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">save_dir</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.pth&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;save_dir must be a directory, not a file&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">deep_ensemble</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s2">&quot;deep_ensemble.pth&quot;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">normalizing_flow</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s2">&quot;normalizing_flow.pth&quot;</span><span class="p">))</span>
+        
+        <span class="k">if</span> <span class="n">input_features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_features</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;input_features must be a list of feature names&quot;</span><span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s2">&quot;input_features.json&quot;</span><span class="p">),</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">input_features</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">output_scaler_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">output_scaler_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.pkl&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scaler_path</span> <span class="o">=</span> <span class="n">output_scaler_path</span>
+            
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scaler_path</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s2">&quot;scaler_y.pkl&quot;</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="ISEFlow.load">
+<a class="viewcode-back" href="../../../../docs/source/ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow.load">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="n">model_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">deep_ensemble_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalizing_flow_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads a trained ISEFlow model from specified paths.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model_dir (str, optional): Directory containing the saved model. Defaults to None.</span>
+<span class="sd">            deep_ensemble_path (str, optional): Path to the saved deep ensemble model. Defaults to None.</span>
+<span class="sd">            normalizing_flow_path (str, optional): Path to the saved normalizing flow model. Defaults to None.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ISEFlow: The loaded ISEFlow model.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            NotImplementedError: If an unsupported version is specified.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+            
+        <span class="k">if</span> <span class="n">model_dir</span><span class="p">:</span>
+            <span class="n">deep_ensemble_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span> <span class="s2">&quot;deep_ensemble.pth&quot;</span><span class="p">)</span>
+            <span class="n">normalizing_flow_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span> <span class="s2">&quot;normalizing_flow.pth&quot;</span><span class="p">)</span>
+        
+        <span class="n">deep_ensemble</span> <span class="o">=</span> <span class="n">DeepEnsemble</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">deep_ensemble_path</span><span class="p">)</span>
+        <span class="n">normalizing_flow</span> <span class="o">=</span> <span class="n">NormalizingFlow</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">normalizing_flow_path</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">ISEFlow</span><span class="p">(</span><span class="n">deep_ensemble</span><span class="p">,</span> <span class="n">normalizing_flow</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">trained</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">model_dir</span> <span class="o">=</span> <span class="n">model_dir</span>
+        
+        <span class="k">return</span> <span class="n">model</span></div>
+</div>
+
+
+
+
+<div class="viewcode-block" id="ISEFlow_AIS">
+<a class="viewcode-back" href="../../../../docs/source/ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow_AIS">[docs]</a>
+<span class="k">class</span> <span class="nc">ISEFlow_AIS</span><span class="p">(</span><span class="n">ISEFlow</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    ISEFlow_AIS is a specialized version of ISEFlow for the Antarctic Ice Sheet (AIS).</span>
+
+<span class="sd">    This subclass initializes the deep ensemble and normalizing flow models specifically</span>
+<span class="sd">    for AIS and provides a loading method with pre-trained model paths.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the ISEFlow_AIS model.</span>
+
+<span class="sd">        Sets the ice sheet type to &#39;AIS&#39; and initializes pre-configured deep ensemble </span>
+<span class="sd">        and normalizing flow models specific to AIS.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ice_sheet</span> <span class="o">=</span> <span class="s2">&quot;AIS&quot;</span>
+        <span class="n">deep_ensemble</span> <span class="o">=</span> <span class="n">ISEFlow_AIS_DE</span><span class="p">()</span>
+        <span class="n">normalizing_flow</span> <span class="o">=</span> <span class="n">ISEFlow_AIS_NF</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ISEFlow_AIS</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">deep_ensemble</span><span class="p">,</span> <span class="n">normalizing_flow</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="ISEFlow_AIS.load">
+<a class="viewcode-back" href="../../../../docs/source/ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow_AIS.load">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="s2">&quot;v1.0.0&quot;</span><span class="p">,</span> <span class="n">model_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">deep_ensemble_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalizing_flow_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads a trained ISEFlow_AIS model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            version (str, optional): Model version. Defaults to &quot;v1.0.0&quot;.</span>
+<span class="sd">            model_dir (str, optional): Directory of the saved model. Defaults to None.</span>
+<span class="sd">            deep_ensemble_path (str, optional): Path to deep ensemble model. Defaults to None.</span>
+<span class="sd">            normalizing_flow_path (str, optional): Path to normalizing flow model. Defaults to None.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ISEFlow_AIS: The loaded model.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            NotImplementedError: If an unsupported version is specified.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="c1"># TODO: Add support for deep ensemble and normalizing flow paths</span>
+
+        <span class="k">if</span> <span class="n">model_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">version</span> <span class="o">==</span> <span class="s2">&quot;v1.0.0&quot;</span><span class="p">:</span>
+                <span class="n">model_dir</span> <span class="o">=</span> <span class="n">ISEFlow_AIS_v1_0_0_path</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Only version v1.0.0 is supported&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Load components using the parent class logic</span>
+        <span class="n">deep_ensemble</span> <span class="o">=</span> <span class="n">DeepEnsemble</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span> <span class="s2">&quot;deep_ensemble.pth&quot;</span><span class="p">))</span>
+        <span class="n">normalizing_flow</span> <span class="o">=</span> <span class="n">NormalizingFlow</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span> <span class="s2">&quot;normalizing_flow.pth&quot;</span><span class="p">))</span>
+
+        <span class="c1"># Return an instance of ISEFlow_AIS instead of ISEFlow</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">ISEFlow_AIS</span><span class="p">()</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">deep_ensemble</span> <span class="o">=</span> <span class="n">deep_ensemble</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">normalizing_flow</span> <span class="o">=</span> <span class="n">normalizing_flow</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">trained</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">model_dir</span> <span class="o">=</span> <span class="n">model_dir</span>
+
+        <span class="k">return</span> <span class="n">model</span></div>
+
+    
+<div class="viewcode-block" id="ISEFlow_AIS.process">
+<a class="viewcode-back" href="../../../../docs/source/ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow_AIS.process">[docs]</a>
+    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">year</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">pr_anomaly</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> 
+        <span class="n">evspsbl_anomaly</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">mrro_anomaly</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">smb_anomaly</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">ts_anomaly</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">ocean_thermal_forcing</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">ocean_salinity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">ocean_temperature</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">initial_year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">numerics</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">stress_balance</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">resolution</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">init_method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">melt_in_floating_cells</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">icefront_migration</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">ocean_forcing_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">ocean_sensitivity</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">ice_shelf_fracture</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">open_melt_type</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">standard_melt_type</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Processes input data for prediction by applying necessary transformations and encoding.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            year (np.array): Years of the input data.</span>
+<span class="sd">            pr_anomaly (np.array): Precipitation anomaly data.</span>
+<span class="sd">            evspsbl_anomaly (np.array): Evaporation anomaly data.</span>
+<span class="sd">            mrro_anomaly (np.array): Runoff anomaly data.</span>
+<span class="sd">            smb_anomaly (np.array): Surface mass balance anomaly.</span>
+<span class="sd">            ts_anomaly (np.array): Surface temperature anomaly.</span>
+<span class="sd">            ocean_thermal_forcing (np.array): Ocean thermal forcing.</span>
+<span class="sd">            ocean_salinity (np.array): Ocean salinity.</span>
+<span class="sd">            ocean_temperature (np.array): Ocean temperature.</span>
+<span class="sd">            initial_year (int): Initial year for modeling.</span>
+<span class="sd">            numerics (str): Numerical scheme used.</span>
+<span class="sd">            stress_balance (str): Stress balance model.</span>
+<span class="sd">            resolution (int): Resolution of the model.</span>
+<span class="sd">            init_method (str): Initialization method.</span>
+<span class="sd">            melt_in_floating_cells (str): Melt treatment method.</span>
+<span class="sd">            icefront_migration (str): Ice front migration scheme.</span>
+<span class="sd">            ocean_forcing_type (str): Type of ocean forcing applied.</span>
+<span class="sd">            ocean_sensitivity (str): Ocean sensitivity setting.</span>
+<span class="sd">            ice_shelf_fracture (bool): Whether ice shelf fracture is considered.</span>
+<span class="sd">            open_melt_type (str, optional): Type of open melt model. Defaults to None.</span>
+<span class="sd">            standard_melt_type (str, optional): Type of standard melt model. Defaults to None.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pd.DataFrame: Processed input data ready for prediction.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If any input arguments are invalid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        
+        <span class="k">if</span> <span class="n">year</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2015</span><span class="p">:</span>
+            <span class="n">year</span> <span class="o">=</span> <span class="n">year</span> <span class="o">-</span> <span class="mi">2015</span>
+            
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>    
+            <span class="s2">&quot;year&quot;</span><span class="p">:</span> <span class="n">year</span><span class="p">,</span>
+            <span class="s2">&quot;pr_anomaly&quot;</span><span class="p">:</span> <span class="n">pr_anomaly</span><span class="p">,</span>
+            <span class="s2">&quot;evspsbl_anomaly&quot;</span><span class="p">:</span> <span class="n">evspsbl_anomaly</span><span class="p">,</span>
+            <span class="s2">&quot;mrro_anomaly&quot;</span><span class="p">:</span> <span class="n">mrro_anomaly</span><span class="p">,</span>
+            <span class="s2">&quot;smb_anomaly&quot;</span><span class="p">:</span> <span class="n">smb_anomaly</span><span class="p">,</span>
+            <span class="s2">&quot;ts_anomaly&quot;</span><span class="p">:</span> <span class="n">ts_anomaly</span><span class="p">,</span>
+            <span class="s2">&quot;thermal_forcing&quot;</span><span class="p">:</span> <span class="n">ocean_thermal_forcing</span><span class="p">,</span>
+            <span class="s2">&quot;salinity&quot;</span><span class="p">:</span> <span class="n">ocean_salinity</span><span class="p">,</span>
+            <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="n">ocean_temperature</span><span class="p">,</span>
+            <span class="s2">&quot;initial_year&quot;</span><span class="p">:</span> <span class="n">initial_year</span><span class="p">,</span>
+            <span class="s2">&quot;numerics&quot;</span><span class="p">:</span> <span class="n">numerics</span><span class="p">,</span>
+            <span class="s2">&quot;stress_balance&quot;</span><span class="p">:</span> <span class="n">stress_balance</span><span class="p">,</span>
+            <span class="s2">&quot;resolution&quot;</span><span class="p">:</span> <span class="n">resolution</span><span class="p">,</span>
+            <span class="s2">&quot;init_method&quot;</span><span class="p">:</span> <span class="n">init_method</span><span class="p">,</span>
+            <span class="s2">&quot;melt&quot;</span><span class="p">:</span> <span class="n">melt_in_floating_cells</span><span class="p">,</span>
+            <span class="s2">&quot;ice_front&quot;</span><span class="p">:</span> <span class="n">icefront_migration</span><span class="p">,</span>
+            <span class="s2">&quot;Ocean sensitivity&quot;</span><span class="p">:</span> <span class="n">ocean_sensitivity</span><span class="p">,</span>
+            <span class="s2">&quot;Ice shelf fracture&quot;</span><span class="p">:</span> <span class="n">ice_shelf_fracture</span><span class="p">,</span>
+            <span class="s2">&quot;Ocean forcing&quot;</span><span class="p">:</span> <span class="n">ocean_forcing_type</span><span class="p">,</span>
+            <span class="s2">&quot;open_melt_param&quot;</span><span class="p">:</span> <span class="n">open_melt_type</span><span class="p">,</span>
+            <span class="s2">&quot;standard_melt_param&quot;</span><span class="p">:</span> <span class="n">standard_melt_type</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        
+        <span class="c1"># map from accepted input to how the model expects variable names</span>
+        <span class="n">arg_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;numerics&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;fe&#39;</span><span class="p">:</span> <span class="s1">&#39;FE&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;fd&#39;</span><span class="p">:</span> <span class="s1">&#39;FD&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;fe/fv&#39;</span><span class="p">:</span> <span class="s1">&#39;FE/FV&#39;</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="s1">&#39;stress_balance&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;ho&#39;</span><span class="p">:</span> <span class="s1">&#39;HO&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;hybrid&#39;</span><span class="p">:</span> <span class="s1">&#39;Hybrid&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;l1l2&#39;</span><span class="p">:</span> <span class="s1">&#39;L1L2&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;sia+ssa&#39;</span><span class="p">:</span> <span class="s1">&#39;SIA_SSA&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;ssa&#39;</span><span class="p">:</span> <span class="s1">&#39;SSA&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;stokes&#39;</span><span class="p">:</span> <span class="s1">&#39;Stokes&#39;</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;init_method&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;da&#39;</span><span class="p">:</span> <span class="s1">&#39;DA&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;da*&#39;</span><span class="p">:</span> <span class="s1">&#39;DA_geom&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;da+&#39;</span><span class="p">:</span> <span class="s1">&#39;DA_relax&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;eq&#39;</span><span class="p">:</span> <span class="s1">&#39;Eq&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;sp&#39;</span><span class="p">:</span> <span class="s1">&#39;SP&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;sp+&#39;</span><span class="p">:</span> <span class="s1">&#39;SP_icethickness&#39;</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;melt&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;floating condition&#39;</span><span class="p">:</span> <span class="s1">&#39;Floating condition&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;sub-grid&#39;</span><span class="p">:</span> <span class="s1">&#39;Sub-grid&#39;</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="s1">&#39;ice_front&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;str&#39;</span><span class="p">:</span> <span class="s1">&#39;StR&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;fix&#39;</span><span class="p">:</span> <span class="s1">&#39;Fix&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;mh&#39;</span><span class="p">:</span> <span class="s1">&#39;MH&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;ro&#39;</span><span class="p">:</span> <span class="s1">&#39;RO&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;div&#39;</span><span class="p">:</span> <span class="s1">&#39;Div&#39;</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="s1">&#39;Ocean forcing&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;standard&#39;</span><span class="p">:</span> <span class="s1">&#39;Standard&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;open&#39;</span><span class="p">:</span> <span class="s1">&#39;Open&#39;</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="s1">&#39;Ocean sensitivity&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;low&#39;</span><span class="p">:</span> <span class="s1">&#39;Low&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;medium&#39;</span><span class="p">:</span> <span class="s1">&#39;Medium&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;high&#39;</span><span class="p">:</span> <span class="s1">&#39;High&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;pigl&#39;</span><span class="p">:</span> <span class="s1">&#39;PIGL&#39;</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;open_melt_param&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;lin&#39;</span><span class="p">:</span> <span class="s1">&#39;Lin&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;quad&#39;</span><span class="p">:</span> <span class="s1">&#39;Quad&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;nonlocal+slope&#39;</span><span class="p">:</span> <span class="s1">&#39;Nonlocal_Slope&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;pico&#39;</span><span class="p">:</span> <span class="s1">&#39;PICO&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;picop&#39;</span><span class="p">:</span> <span class="s1">&#39;PICOP&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;plume&#39;</span><span class="p">:</span> <span class="s1">&#39;Plume&#39;</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;standard_melt_param&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;local&#39;</span><span class="p">:</span> <span class="s1">&#39;Local&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;nonlocal&#39;</span><span class="p">:</span> <span class="s1">&#39;Nonlocal&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;local anom&#39;</span><span class="p">:</span> <span class="s1">&#39;Local anom&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;nonlocal anom&#39;</span><span class="p">:</span> <span class="s1">&#39;Nonlocal anom&#39;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        
+        <span class="n">mrro_means</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">3.61493220e-08</span><span class="p">,</span> <span class="mf">2.77753815e-08</span><span class="p">,</span> <span class="mf">5.50841177e-08</span><span class="p">,</span> <span class="mf">4.17617754e-08</span><span class="p">,</span> <span class="mf">5.58558082e-08</span><span class="p">,</span> <span class="mf">5.74870861e-08</span><span class="p">,</span> <span class="mf">1.07017988e-07</span><span class="p">,</span> <span class="mf">7.72183085e-08</span><span class="p">,</span> <span class="mf">6.44275121e-08</span><span class="p">,</span> <span class="mf">2.10466987e-08</span><span class="p">,</span> <span class="mf">5.36071770e-08</span><span class="p">,</span> <span class="mf">8.32501757e-08</span><span class="p">,</span> <span class="mf">9.31873131e-08</span><span class="p">,</span> <span class="mf">7.84747761e-08</span><span class="p">,</span> <span class="mf">8.41751157e-08</span><span class="p">,</span> <span class="mf">8.56960829e-08</span><span class="p">,</span> <span class="mf">7.81743956e-08</span><span class="p">,</span> <span class="mf">9.74934761e-08</span><span class="p">,</span> <span class="mf">6.04155892e-08</span><span class="p">,</span> <span class="mf">8.31572351e-08</span><span class="p">,</span> <span class="mf">1.16800344e-07</span><span class="p">,</span> <span class="mf">9.96168899e-08</span><span class="p">,</span> <span class="mf">1.41262144e-07</span><span class="p">,</span> <span class="mf">8.76467771e-08</span><span class="p">,</span> <span class="mf">1.03335698e-07</span><span class="p">,</span> <span class="mf">1.23414214e-07</span><span class="p">,</span> <span class="mf">9.29483909e-08</span><span class="p">,</span> <span class="mf">1.95530928e-07</span><span class="p">,</span> <span class="mf">1.18321950e-07</span><span class="p">,</span> <span class="mf">1.68664275e-07</span><span class="p">,</span> <span class="mf">1.56460562e-07</span><span class="p">,</span> <span class="mf">1.40309916e-07</span><span class="p">,</span> <span class="mf">1.08267844e-07</span><span class="p">,</span> <span class="mf">1.85627395e-07</span><span class="p">,</span> <span class="mf">1.29400203e-07</span><span class="p">,</span> <span class="mf">1.98725020e-07</span><span class="p">,</span> <span class="mf">1.39994753e-07</span><span class="p">,</span> <span class="mf">1.86775688e-07</span><span class="p">,</span> <span class="mf">1.68388442e-07</span><span class="p">,</span> <span class="mf">2.04534154e-07</span><span class="p">,</span> <span class="mf">1.49715175e-07</span><span class="p">,</span> <span class="mf">1.50418319e-07</span><span class="p">,</span> <span class="mf">1.44444531e-07</span><span class="p">,</span> <span class="mf">1.67211070e-07</span><span class="p">,</span> <span class="mf">1.83698063e-07</span><span class="p">,</span> <span class="mf">2.05489898e-07</span><span class="p">,</span> <span class="mf">2.42246565e-07</span><span class="p">,</span> <span class="mf">1.98110423e-07</span><span class="p">,</span> <span class="mf">2.40505470e-07</span><span class="p">,</span> <span class="mf">2.37863389e-07</span><span class="p">,</span> <span class="mf">2.55668987e-07</span><span class="p">,</span> <span class="mf">2.93048624e-07</span><span class="p">,</span> <span class="mf">2.57849749e-07</span><span class="p">,</span> <span class="mf">2.72915753e-07</span><span class="p">,</span> <span class="mf">2.82135517e-07</span><span class="p">,</span> <span class="mf">2.27647208e-07</span><span class="p">,</span> <span class="mf">2.21859448e-07</span><span class="p">,</span> <span class="mf">2.07266200e-07</span><span class="p">,</span> <span class="mf">2.42241281e-07</span><span class="p">,</span> <span class="mf">2.55693726e-07</span><span class="p">,</span> <span class="mf">2.52039399e-07</span><span class="p">,</span> <span class="mf">2.82802604e-07</span><span class="p">,</span> <span class="mf">2.94193847e-07</span><span class="p">,</span> <span class="mf">3.00380753e-07</span><span class="p">,</span> <span class="mf">3.60152406e-07</span><span class="p">,</span> <span class="mf">3.47886784e-07</span><span class="p">,</span> <span class="mf">3.58344925e-07</span><span class="p">,</span> <span class="mf">3.84398045e-07</span><span class="p">,</span> <span class="mf">4.41053179e-07</span><span class="p">,</span> <span class="mf">3.84072892e-07</span><span class="p">,</span> <span class="mf">4.42520286e-07</span><span class="p">,</span> <span class="mf">4.30170222e-07</span><span class="p">,</span> <span class="mf">4.34444387e-07</span><span class="p">,</span> <span class="mf">4.77483307e-07</span><span class="p">,</span> <span class="mf">3.52802246e-07</span><span class="p">,</span> <span class="mf">4.96503280e-07</span><span class="p">,</span> <span class="mf">5.22078462e-07</span><span class="p">,</span> <span class="mf">4.78644041e-07</span><span class="p">,</span> <span class="mf">4.86755806e-07</span><span class="p">,</span> <span class="mf">5.04600526e-07</span><span class="p">,</span> <span class="mf">4.80814514e-07</span><span class="p">,</span> <span class="mf">5.38276914e-07</span><span class="p">,</span> <span class="mf">5.91539053e-07</span><span class="p">,</span> <span class="mf">5.84794672e-07</span><span class="p">,</span> <span class="mf">5.33792907e-07</span><span class="p">,</span> <span class="mf">5.37435986e-07</span><span class="p">])</span>
+        
+
+        <span class="c1"># check inputs</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">initial_year</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;initial_year must be an integer&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">numerics</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;fe&#39;</span><span class="p">,</span> <span class="s1">&#39;fd&#39;</span><span class="p">,</span> <span class="s1">&#39;fe/fv&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;numerics must be one of &#39;fe&#39;, &#39;fd&#39;, or &#39;fe/fv&#39;&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">stress_balance</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;ho&#39;</span><span class="p">,</span> <span class="s1">&#39;hybrid&#39;</span><span class="p">,</span> <span class="s2">&quot;l1l2&quot;</span><span class="p">,</span> <span class="s1">&#39;sia+ssa&#39;</span><span class="p">,</span> <span class="s1">&#39;ssa&#39;</span><span class="p">,</span> <span class="s1">&#39;stokes&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;stress_balance must be one of &#39;ho&#39;, &#39;hybrid&#39;, &#39;l1l2&#39;, &#39;sia+ssa&#39;, &#39;ssa&#39;, or &#39;stokes&#39;&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">resolution</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;16&#39;</span><span class="p">,</span> <span class="s1">&#39;20&#39;</span><span class="p">,</span> <span class="s1">&#39;32&#39;</span><span class="p">,</span> <span class="s1">&#39;4&#39;</span><span class="p">,</span> <span class="s1">&#39;8&#39;</span><span class="p">,</span> <span class="s1">&#39;variable&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;resolution must be one of &#39;16&#39;, &#39;20&#39;, &#39;32&#39;, &#39;4&#39;, &#39;8&#39;, or &#39;variable&#39;&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">init_method</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;da&#39;</span><span class="p">,</span> <span class="s1">&#39;da*&#39;</span><span class="p">,</span> <span class="s1">&#39;da+&#39;</span><span class="p">,</span> <span class="s1">&#39;eq&#39;</span><span class="p">,</span> <span class="s1">&#39;sp&#39;</span><span class="p">,</span> <span class="s1">&#39;sp+&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;init_method must be one of &#39;da&#39;, &#39;da*&#39;, &#39;da+&#39;, &#39;eq&#39;, &#39;sp&#39;, or &#39;sp+&#39;&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">melt_in_floating_cells</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;floating condition&#39;</span><span class="p">,</span> <span class="s1">&#39;sub-grid&#39;</span><span class="p">,</span> <span class="s1">&#39;None&#39;</span><span class="p">,</span> <span class="s1">&#39;False&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;melt_in_floating_cells must be one of &#39;floating condition&#39;, &#39;sub-grid&#39;, &#39;None&#39;, or &#39;False&#39;&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">icefront_migration</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;str&#39;</span><span class="p">,</span> <span class="s1">&#39;fix&#39;</span><span class="p">,</span> <span class="s1">&#39;mh&#39;</span><span class="p">,</span> <span class="s1">&#39;ro&#39;</span><span class="p">,</span> <span class="s1">&#39;div&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;icefront_migration must be one of &#39;str&#39;, &#39;fix&#39;, &#39;mh&#39;, &#39;ro&#39;, or &#39;div&#39;&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">ocean_forcing_type</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;standard&#39;</span><span class="p">,</span> <span class="s1">&#39;open&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;ocean_forcing_type must be one of &#39;standard&#39; or &#39;open&#39;&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">ocean_forcing_type</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;standard&#39;</span> <span class="ow">and</span> <span class="n">standard_melt_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;standard_melt_type must be provided if ocean_forcing_type is &#39;standard&#39;&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">str</span><span class="p">(</span><span class="n">ocean_forcing_type</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;standard&#39;</span> <span class="ow">and</span> <span class="n">standard_melt_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;local&quot;</span><span class="p">,</span> <span class="s2">&quot;nonlocal&quot;</span><span class="p">,</span> <span class="s2">&quot;local anom&quot;</span><span class="p">,</span> <span class="s2">&quot;nonlocal anom&quot;</span><span class="p">,</span> <span class="s2">&quot;None&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;standard_melt_type must be one of &#39;local&#39;, &#39;nonlocal&#39;, &#39;local anom&#39;, &#39;nonlocal anom&#39;, or None&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">ocean_forcing_type</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;open&#39;</span> <span class="ow">and</span> <span class="n">open_melt_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;open_melt_type must be provided if ocean_forcing_type is &#39;open&#39;&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">str</span><span class="p">(</span><span class="n">ocean_forcing_type</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;open&#39;</span> <span class="ow">and</span> <span class="n">open_melt_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;lin&quot;</span><span class="p">,</span> <span class="s2">&quot;quad&quot;</span><span class="p">,</span> <span class="s2">&quot;nonlocal+slope&quot;</span><span class="p">,</span> <span class="s2">&quot;pico&quot;</span><span class="p">,</span> <span class="s2">&quot;picop&quot;</span><span class="p">,</span> <span class="s2">&quot;plume&quot;</span><span class="p">,</span> <span class="s2">&quot;None&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;open_melt_type must be one of &#39;lin&#39;, &#39;quad&#39;, &#39;nonlocal+slope&#39;, &#39;pico&#39;, &#39;picop&#39;, &#39;plume&#39;, or None&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">ocean_sensitivity</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;low&#39;</span><span class="p">,</span> <span class="s1">&#39;medium&#39;</span><span class="p">,</span> <span class="s1">&#39;high&#39;</span><span class="p">,</span> <span class="s1">&#39;pigl&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;ocean_sensitivity must be one of &#39;low&#39;, &#39;medium&#39;, &#39;high&#39;, or &#39;pigl&#39;&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ice_shelf_fracture</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;ice_shelf_fracture must be a boolean&quot;</span><span class="p">)</span>
+        
+        
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="c1"># make sure forcings are numpy arrays           </span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;year&quot;</span><span class="p">,</span> <span class="s2">&quot;pr_anomaly&quot;</span><span class="p">,</span> <span class="s2">&quot;evspsbl_anomaly&quot;</span><span class="p">,</span> <span class="s2">&quot;mrro_anomaly&quot;</span><span class="p">,</span> <span class="s2">&quot;smb_anomaly&quot;</span><span class="p">,</span> <span class="s2">&quot;ts_anomaly&quot;</span><span class="p">,</span> <span class="s2">&quot;thermal_forcing&quot;</span><span class="p">,</span> <span class="s2">&quot;salinity&quot;</span><span class="p">,</span> <span class="s2">&quot;temperature&quot;</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Variable </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be a numpy array.&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+            <span class="c1"># remap args</span>
+            <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">arg_map</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">arg_map</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                    <span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg_map</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">value</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid value for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">. Must be one of </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">arg_map</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+            
+        <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">year_mean_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">year</span><span class="p">:</span> <span class="n">mean</span> <span class="k">for</span> <span class="n">year</span><span class="p">,</span> <span class="n">mean</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mrro_means</span><span class="p">)}</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;mrro_anomaly&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="n">year_mean_map</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;year&quot;</span><span class="p">]]</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;mrro_anomaly&quot;</span><span class="p">])</span> <span class="k">else</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;mrro_anomaly&quot;</span><span class="p">],</span>
+            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+        <span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">fe</span><span class="o">.</span><span class="n">add_lag_variables</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">lag</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get_dummies</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;numerics&#39;</span><span class="p">,</span> <span class="s1">&#39;stress_balance&#39;</span><span class="p">,</span> <span class="s1">&#39;resolution&#39;</span><span class="p">,</span> <span class="s1">&#39;init_method&#39;</span><span class="p">,</span> <span class="s1">&#39;melt&#39;</span><span class="p">,</span> <span class="s1">&#39;ice_front&#39;</span><span class="p">,</span> <span class="s1">&#39;Ocean forcing&#39;</span><span class="p">,</span> <span class="s1">&#39;Ocean sensitivity&#39;</span><span class="p">,</span> <span class="s1">&#39;open_melt_param&#39;</span><span class="p">,</span> <span class="s1">&#39;standard_melt_param&#39;</span><span class="p">])</span>
+        <span class="c1"># need to add other columns as zeros from get_dummies (all true)</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;sector&#39;</span><span class="p">,</span> <span class="s1">&#39;pr_anomaly&#39;</span><span class="p">,</span> <span class="s1">&#39;evspsbl_anomaly&#39;</span><span class="p">,</span> <span class="s1">&#39;mrro_anomaly&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;smb_anomaly&#39;</span><span class="p">,</span> <span class="s1">&#39;ts_anomaly&#39;</span><span class="p">,</span> <span class="s1">&#39;thermal_forcing&#39;</span><span class="p">,</span> <span class="s1">&#39;salinity&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;temperature&#39;</span><span class="p">,</span> <span class="s1">&#39;pr_anomaly.lag1&#39;</span><span class="p">,</span> <span class="s1">&#39;evspsbl_anomaly.lag1&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;mrro_anomaly.lag1&#39;</span><span class="p">,</span> <span class="s1">&#39;smb_anomaly.lag1&#39;</span><span class="p">,</span> <span class="s1">&#39;ts_anomaly.lag1&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;thermal_forcing.lag1&#39;</span><span class="p">,</span> <span class="s1">&#39;salinity.lag1&#39;</span><span class="p">,</span> <span class="s1">&#39;temperature.lag1&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;pr_anomaly.lag2&#39;</span><span class="p">,</span> <span class="s1">&#39;evspsbl_anomaly.lag2&#39;</span><span class="p">,</span> <span class="s1">&#39;mrro_anomaly.lag2&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;smb_anomaly.lag2&#39;</span><span class="p">,</span> <span class="s1">&#39;ts_anomaly.lag2&#39;</span><span class="p">,</span> <span class="s1">&#39;thermal_forcing.lag2&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;salinity.lag2&#39;</span><span class="p">,</span> <span class="s1">&#39;temperature.lag2&#39;</span><span class="p">,</span> <span class="s1">&#39;pr_anomaly.lag3&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;evspsbl_anomaly.lag3&#39;</span><span class="p">,</span> <span class="s1">&#39;mrro_anomaly.lag3&#39;</span><span class="p">,</span> <span class="s1">&#39;smb_anomaly.lag3&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;ts_anomaly.lag3&#39;</span><span class="p">,</span> <span class="s1">&#39;thermal_forcing.lag3&#39;</span><span class="p">,</span> <span class="s1">&#39;salinity.lag3&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;temperature.lag3&#39;</span><span class="p">,</span> <span class="s1">&#39;pr_anomaly.lag4&#39;</span><span class="p">,</span> <span class="s1">&#39;evspsbl_anomaly.lag4&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;mrro_anomaly.lag4&#39;</span><span class="p">,</span> <span class="s1">&#39;smb_anomaly.lag4&#39;</span><span class="p">,</span> <span class="s1">&#39;ts_anomaly.lag4&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;thermal_forcing.lag4&#39;</span><span class="p">,</span> <span class="s1">&#39;salinity.lag4&#39;</span><span class="p">,</span> <span class="s1">&#39;temperature.lag4&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;pr_anomaly.lag5&#39;</span><span class="p">,</span> <span class="s1">&#39;evspsbl_anomaly.lag5&#39;</span><span class="p">,</span> <span class="s1">&#39;mrro_anomaly.lag5&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;smb_anomaly.lag5&#39;</span><span class="p">,</span> <span class="s1">&#39;ts_anomaly.lag5&#39;</span><span class="p">,</span> <span class="s1">&#39;thermal_forcing.lag5&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;salinity.lag5&#39;</span><span class="p">,</span> <span class="s1">&#39;temperature.lag5&#39;</span><span class="p">,</span> <span class="s1">&#39;initial_year&#39;</span><span class="p">,</span> <span class="s1">&#39;numerics_FD&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;numerics_FE&#39;</span><span class="p">,</span> <span class="s1">&#39;numerics_FE/FV&#39;</span><span class="p">,</span> <span class="s1">&#39;stress_balance_HO&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;stress_balance_Hybrid&#39;</span><span class="p">,</span> <span class="s1">&#39;stress_balance_L1L2&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;stress_balance_SIA_SSA&#39;</span><span class="p">,</span> <span class="s1">&#39;stress_balance_SSA&#39;</span><span class="p">,</span> <span class="s1">&#39;stress_balance_Stokes&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;resolution_16&#39;</span><span class="p">,</span> <span class="s1">&#39;resolution_20&#39;</span><span class="p">,</span> <span class="s1">&#39;resolution_32&#39;</span><span class="p">,</span> <span class="s1">&#39;resolution_4&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;resolution_8&#39;</span><span class="p">,</span> <span class="s1">&#39;resolution_variable&#39;</span><span class="p">,</span> <span class="s1">&#39;init_method_DA&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;init_method_DA_geom&#39;</span><span class="p">,</span> <span class="s1">&#39;init_method_DA_relax&#39;</span><span class="p">,</span> <span class="s1">&#39;init_method_Eq&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;init_method_SP&#39;</span><span class="p">,</span> <span class="s1">&#39;init_method_SP_icethickness&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;melt_Floating_condition&#39;</span><span class="p">,</span> <span class="s1">&#39;melt_No&#39;</span><span class="p">,</span> <span class="s1">&#39;melt_Sub-grid&#39;</span><span class="p">,</span> <span class="s1">&#39;ice_front_Div&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;ice_front_Fix&#39;</span><span class="p">,</span> <span class="s1">&#39;ice_front_MH&#39;</span><span class="p">,</span> <span class="s1">&#39;ice_front_RO&#39;</span><span class="p">,</span> <span class="s1">&#39;ice_front_StR&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;open_melt_param_Lin&#39;</span><span class="p">,</span> <span class="s1">&#39;open_melt_param_Nonlocal_Slope&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;open_melt_param_PICO&#39;</span><span class="p">,</span> <span class="s1">&#39;open_melt_param_PICOP&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;open_melt_param_Plume&#39;</span><span class="p">,</span> <span class="s1">&#39;open_melt_param_Quad&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;standard_melt_param_Local&#39;</span><span class="p">,</span> <span class="s1">&#39;standard_melt_param_Local_anom&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;standard_melt_param_Nonlocal&#39;</span><span class="p">,</span> <span class="s1">&#39;standard_melt_param_Nonlocal_anom&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;Ocean forcing_Open&#39;</span><span class="p">,</span> <span class="s1">&#39;Ocean forcing_Standard&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;Ocean sensitivity_High&#39;</span><span class="p">,</span> <span class="s1">&#39;Ocean sensitivity_Low&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;Ocean sensitivity_Medium&#39;</span><span class="p">,</span> <span class="s1">&#39;Ocean sensitivity_PIGL&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;Ice shelf fracture_False&#39;</span><span class="p">,</span> <span class="s1">&#39;Ice shelf fracture_True&#39;</span><span class="p">]</span>
+        
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">columns</span><span class="p">]</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;outlier&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">fe</span><span class="o">.</span><span class="n">scale_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">scaler_path</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ISEFlow_AIS_v1_0_0_path</span><span class="si">}</span><span class="s2">/scaler_X.pkl&quot;</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">data</span></div>
+
+    
+<div class="viewcode-block" id="ISEFlow_AIS.predict">
+<a class="viewcode-back" href="../../../../docs/source/ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow_AIS.predict">[docs]</a>
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span>        
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">year</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">pr_anomaly</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> 
+        <span class="n">evspsbl_anomaly</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">mrro_anomaly</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">smb_anomaly</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">ts_anomaly</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">ocean_thermal_forcing</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">ocean_salinity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">ocean_temperature</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">initial_year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">numerics</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">stress_balance</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">resolution</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">init_method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">melt_in_floating_cells</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">icefront_migration</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">ocean_forcing_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">ocean_sensitivity</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">ice_shelf_fracture</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">open_melt_type</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">standard_melt_type</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>   
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Predicts ice sheet evolution using the trained ISEFlow_AIS model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            (Same as process method)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple: A tuple containing:</span>
+<span class="sd">                - unscaled_predictions (numpy.ndarray): Model predictions in the original scale.</span>
+<span class="sd">                - uncertainties (dict): Dictionary containing different uncertainty components.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process</span><span class="p">(</span>
+            <span class="n">year</span><span class="p">,</span> <span class="n">pr_anomaly</span><span class="p">,</span> <span class="n">evspsbl_anomaly</span><span class="p">,</span> <span class="n">mrro_anomaly</span><span class="p">,</span> <span class="n">smb_anomaly</span><span class="p">,</span> <span class="n">ts_anomaly</span><span class="p">,</span> <span class="n">ocean_thermal_forcing</span><span class="p">,</span> <span class="n">ocean_salinity</span><span class="p">,</span> <span class="n">ocean_temperature</span><span class="p">,</span> <span class="n">initial_year</span><span class="p">,</span> <span class="n">numerics</span><span class="p">,</span> <span class="n">stress_balance</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">init_method</span><span class="p">,</span> <span class="n">melt_in_floating_cells</span><span class="p">,</span> <span class="n">icefront_migration</span><span class="p">,</span> <span class="n">ocean_forcing_type</span><span class="p">,</span> <span class="n">ocean_sensitivity</span><span class="p">,</span> <span class="n">ice_shelf_fracture</span><span class="p">,</span> <span class="n">open_melt_type</span><span class="p">,</span> <span class="n">standard_melt_type</span>
+        <span class="p">)</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">to_tensor</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">output_scaler</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ISEFlow_AIS_v1_0_0_path</span><span class="si">}</span><span class="s2">/scaler_y.pkl&quot;</span><span class="p">)</span></div>
+</div>
+
+
+<div class="viewcode-block" id="ISEFlow_GrIS">
+<a class="viewcode-back" href="../../../../docs/source/ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow_GrIS">[docs]</a>
+<span class="k">class</span> <span class="nc">ISEFlow_GrIS</span><span class="p">(</span><span class="n">ISEFlow</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    ISEFlow_GrIS is a specialized version of ISEFlow for the Greenland Ice Sheet (GrIS).</span>
+
+<span class="sd">    This subclass initializes the deep ensemble and normalizing flow models specifically</span>
+<span class="sd">    for GrIS and provides a loading method with pre-trained model paths.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the ISEFlow_GrIS model.</span>
+
+<span class="sd">        Sets the ice sheet type to &#39;GrIS&#39; and initializes pre-configured deep ensemble </span>
+<span class="sd">        and normalizing flow models specific to GrIS.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ice_sheet</span> <span class="o">=</span> <span class="s2">&quot;GrIS&quot;</span>
+        <span class="n">deep_ensemble</span> <span class="o">=</span> <span class="n">ISEFlow_GrIS_DE</span><span class="p">()</span>
+        <span class="n">normalizing_flow</span> <span class="o">=</span> <span class="n">ISEFlow_GrIS_NF</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ISEFlow_GrIS</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">deep_ensemble</span><span class="p">,</span> <span class="n">normalizing_flow</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="ISEFlow_GrIS.load">
+<a class="viewcode-back" href="../../../../docs/source/ise.models.ISEFlow.html#ise.models.ISEFlow.ISEFlow.ISEFlow_GrIS.load">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="s2">&quot;v1.0.0&quot;</span><span class="p">,</span> <span class="n">model_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">deep_ensemble_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalizing_flow_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads a trained ISEFlow_GrIS model.</span>
+
+<span class="sd">        (Same arguments and return type as `ISEFlow_AIS.load`.)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">model_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">version</span> <span class="o">==</span> <span class="s2">&quot;v1.0.0&quot;</span><span class="p">:</span>
+                <span class="n">model_dir</span> <span class="o">=</span> <span class="n">ISEFlow_GrIS_v1_0_0_path</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Only version v1.0.0 is supported&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">ISEFlow_GrIS</span><span class="p">,</span> <span class="n">ISEFlow_GrIS</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span> <span class="n">deep_ensemble_path</span><span class="p">,</span> <span class="n">normalizing_flow_path</span><span class="p">)</span></div>
+</div>
+
+
+    <span class="c1"># TODO: ISEFlow GrIS process, predict</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Peter Van Katwyk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

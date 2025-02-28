@@ -1,0 +1,991 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ise.data.feature_engineer &mdash; ise 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="/_modules/ise/data/feature_engineer.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ise
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/ise.html">ise documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ise</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ise.data.feature_engineer</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ise.data.feature_engineer</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">MinMaxScaler</span><span class="p">,</span> <span class="n">RobustScaler</span><span class="p">,</span> <span class="n">StandardScaler</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+
+<div class="viewcode-block" id="FeatureEngineer">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.feature_engineer.FeatureEngineer">[docs]</a>
+<span class="k">class</span> <span class="nc">FeatureEngineer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A class for performing feature engineering on a given dataset, including preprocessing,</span>
+<span class="sd">    scaling, dataset splitting, and outlier handling.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ice_sheet (str): The name of the ice sheet being analyzed.</span>
+<span class="sd">        data (pd.DataFrame): The input dataset.</span>
+<span class="sd">        fill_mrro_nans (bool, optional): Whether to fill missing values in the &#39;mrro&#39; column. Defaults to False.</span>
+<span class="sd">        split_dataset (bool, optional): Whether to split the dataset into training, validation, and test sets. Defaults to False.</span>
+<span class="sd">        train_size (float, optional): Proportion of data to use for training. Defaults to 0.7.</span>
+<span class="sd">        val_size (float, optional): Proportion of data to use for validation. Defaults to 0.15.</span>
+<span class="sd">        test_size (float, optional): Proportion of data to use for testing. Defaults to 0.15.</span>
+<span class="sd">        output_directory (str, optional): Directory to save the split datasets. Defaults to None.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        data (pd.DataFrame): The input dataset.</span>
+<span class="sd">        train_size (float): Proportion of training data.</span>
+<span class="sd">        val_size (float): Proportion of validation data.</span>
+<span class="sd">        test_size (float): Proportion of testing data.</span>
+<span class="sd">        output_directory (str): Directory to save datasets.</span>
+<span class="sd">        scaler_X_path (str): Path to the saved input feature scaler.</span>
+<span class="sd">        scaler_y_path (str): Path to the saved target variable scaler.</span>
+<span class="sd">        scaler_X (scaler object): Scaler for input features.</span>
+<span class="sd">        scaler_y (scaler object): Scaler for target variables.</span>
+<span class="sd">        train (pd.DataFrame): Training dataset.</span>
+<span class="sd">        val (pd.DataFrame): Validation dataset.</span>
+<span class="sd">        test (pd.DataFrame): Test dataset.</span>
+<span class="sd">        _including_model_characteristics (bool): Whether model characteristics have been included.</span>
+
+<span class="sd">    Methods:</span>
+<span class="sd">        split_data: Splits dataset into train, validation, and test sets.</span>
+<span class="sd">        fill_mrro_nans: Fills missing values in the &#39;mrro&#39; column.</span>
+<span class="sd">        scale_data: Scales input and target variables using a specified method.</span>
+<span class="sd">        unscale_data: Reverses the scaling transformation.</span>
+<span class="sd">        add_lag_variables: Adds lag features to the dataset.</span>
+<span class="sd">        backfill_outliers: Replaces extreme values in target variables.</span>
+<span class="sd">        drop_outliers: Removes outliers based on specified criteria.</span>
+<span class="sd">        add_model_characteristics: Merges model characteristics into the dataset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">ice_sheet</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">fill_mrro_nans</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">split_dataset</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">train_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.7</span><span class="p">,</span>
+        <span class="n">val_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.15</span><span class="p">,</span>
+        <span class="n">test_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.15</span><span class="p">,</span>
+        <span class="n">output_directory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;exp&quot;</span><span class="p">,</span> <span class="s2">&quot;sector&quot;</span><span class="p">,</span> <span class="s2">&quot;year&quot;</span><span class="p">])</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_size</span> <span class="o">=</span> <span class="n">train_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">val_size</span> <span class="o">=</span> <span class="n">val_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_size</span> <span class="o">=</span> <span class="n">test_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_directory</span> <span class="o">=</span> <span class="n">output_directory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ice_sheet</span> <span class="o">=</span> <span class="n">ice_sheet</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">scaler_X_path</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y_path</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scaler_X</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">fill_mrro_nans</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fill_mrro_nans</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;zero&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">split_dataset</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">val</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_data</span><span class="p">(</span>
+                <span class="n">data</span><span class="p">,</span> <span class="n">train_size</span><span class="p">,</span> <span class="n">val_size</span><span class="p">,</span> <span class="n">test_size</span><span class="p">,</span> <span class="n">output_directory</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_including_model_characteristics</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">train</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">val</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="FeatureEngineer.split_data">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.feature_engineer.FeatureEngineer.split_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">split_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">train_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">val_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">test_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">output_directory</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Splits the dataset into training, validation, and test sets.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data (pd.DataFrame, optional): The input dataset. Defaults to None.</span>
+<span class="sd">            train_size (float, optional): Proportion of training data. Defaults to None.</span>
+<span class="sd">            val_size (float, optional): Proportion of validation data. Defaults to None.</span>
+<span class="sd">            test_size (float, optional): Proportion of testing data. Defaults to None.</span>
+<span class="sd">            output_directory (str, optional): Directory to save split datasets. Defaults to None.</span>
+<span class="sd">            random_state (int, optional): Random seed for reproducibility. Defaults to 42.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple: Training, validation, and test datasets as pandas DataFrames.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="k">if</span> <span class="n">train_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">train_size</span> <span class="o">=</span> <span class="n">train_size</span>
+        <span class="k">if</span> <span class="n">val_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">val_size</span> <span class="o">=</span> <span class="n">val_size</span>
+        <span class="k">if</span> <span class="n">output_directory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_directory</span> <span class="o">=</span> <span class="n">output_directory</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">val</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span> <span class="o">=</span> <span class="n">split_training_data</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">train_size</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">val_size</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">test_size</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_directory</span><span class="p">,</span>
+            <span class="n">random_state</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">val</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span></div>
+
+
+<div class="viewcode-block" id="FeatureEngineer.fill_mrro_nans">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.feature_engineer.FeatureEngineer.fill_mrro_nans">[docs]</a>
+    <span class="k">def</span> <span class="nf">fill_mrro_nans</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fills missing values in the &#39;mrro&#39; column.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            method (str): The method used to fill missing values.</span>
+<span class="sd">            data (pd.DataFrame, optional): The dataset. Defaults to None.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pd.DataFrame: The dataset with missing values filled.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="k">if</span> <span class="s2">&quot;mrro_anomaly&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;mrro_anomaly not in columns, skipping fill_mrro_nans()&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">fill_mrro_nans</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span></div>
+
+
+<div class="viewcode-block" id="FeatureEngineer.scale_data">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.feature_engineer.FeatureEngineer.scale_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">scale_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;standard&quot;</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Scales input (X) and target (y) variables using a specified scaling method.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X (pd.DataFrame or np.ndarray, optional): Input data. Defaults to None.</span>
+<span class="sd">            y (pd.DataFrame or np.ndarray, optional): Target data. Defaults to None.</span>
+<span class="sd">            method (str, optional): Scaling method (&#39;standard&#39;, &#39;minmax&#39;, &#39;robust&#39;). Defaults to &#39;standard&#39;.</span>
+<span class="sd">            save_dir (str, optional): Directory to save scalers. Defaults to None.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple: Scaled X and y values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="k">if</span> <span class="n">X</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_including_model_characteristics</span><span class="p">:</span>
+                <span class="n">dropped_columns</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="s2">&quot;id&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;cmip_model&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;pathway&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;exp&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;ice_sheet&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;Scenario&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;Tier&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;aogcm&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;id&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;exp&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;model&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;ivaf&quot;</span><span class="p">,</span>
+                <span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">dropped_columns</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="s2">&quot;id&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;cmip_model&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;pathway&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;exp&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;ice_sheet&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;Scenario&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;Ocean forcing&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;Ocean sensitivity&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;Ice shelf fracture&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;Tier&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;aogcm&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;id&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;exp&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;model&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;ivaf&quot;</span><span class="p">,</span>
+                <span class="p">]</span>
+            <span class="n">dropped_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">dropped_columns</span><span class="p">]</span>
+            <span class="n">dropped_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">dropped_columns</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span>
+                <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="s2">&quot;sle&quot;</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span> <span class="o">+</span> <span class="n">dropped_columns</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">y</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="s2">&quot;sle&quot;</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_X_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">scaler_X</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scaler_X_path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">))</span>
+            <span class="n">scaler_y</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scaler_y_path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">))</span>
+
+            <span class="k">return</span> <span class="n">scaler_X</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">),</span> <span class="n">scaler_y</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_X</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_X</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">X</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;X and y must be provided if they are not already stored in the class instance.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Initialize the scalers based on the method</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;standard&quot;</span><span class="p">:</span>
+            <span class="n">scaler_X</span> <span class="o">=</span> <span class="n">StandardScaler</span><span class="p">()</span>
+            <span class="n">scaler_y</span> <span class="o">=</span> <span class="n">StandardScaler</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;minmax&quot;</span><span class="p">:</span>
+            <span class="n">scaler_X</span> <span class="o">=</span> <span class="n">MinMaxScaler</span><span class="p">()</span>
+            <span class="n">scaler_y</span> <span class="o">=</span> <span class="n">MinMaxScaler</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;robust&quot;</span><span class="p">:</span>
+            <span class="n">scaler_X</span> <span class="o">=</span> <span class="n">RobustScaler</span><span class="p">()</span>
+            <span class="n">scaler_y</span> <span class="o">=</span> <span class="n">RobustScaler</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;method must be &#39;standard&#39;, &#39;minmax&#39;, or &#39;robust&#39;&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Store scalers in the class instance for potential future use</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scaler_X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y</span> <span class="o">=</span> <span class="n">scaler_X</span><span class="p">,</span> <span class="n">scaler_y</span>
+
+        <span class="c1"># Fit and transform X</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="n">X_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">X_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;X must be either a pandas DataFrame or a NumPy array.&quot;</span><span class="p">)</span>
+
+        <span class="n">scaler_X</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_data</span><span class="p">)</span>
+        <span class="n">X_scaled</span> <span class="o">=</span> <span class="n">scaler_X</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_data</span><span class="p">)</span>
+        
+        <span class="n">categorical_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">[</span><span class="n">x</span><span class="p">]))</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">[</span><span class="n">categorical_cols</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">[</span><span class="n">categorical_cols</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;category&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Fit and transform y</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="n">y_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">y_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;X must be either a pandas DataFrame or a NumPy array.&quot;</span><span class="p">)</span>
+
+        <span class="n">scaler_y</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">y_data</span><span class="p">)</span>
+        <span class="n">y_scaled</span> <span class="o">=</span> <span class="n">scaler_y</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">y_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scaler_X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y</span> <span class="o">=</span> <span class="n">scaler_X</span><span class="p">,</span> <span class="n">scaler_y</span>
+
+        <span class="c1"># Optionally save the scalers</span>
+        <span class="k">if</span> <span class="n">save_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">/scalers/&quot;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">scaler_X_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">/scalers/scaler_X.pkl&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">/scalers/scaler_y.pkl&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">scaler_X_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">/scaler_X.pkl&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">/scaler_y.pkl&quot;</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scaler_X_path</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">scaler_X</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scaler_y_path</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">scaler_y</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">index</span><span class="p">),</span>
+                <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">y_scaled</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">index</span><span class="p">),</span>
+                <span class="n">dropped_data</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">X_scaled</span><span class="p">,</span> <span class="n">y_scaled</span></div>
+
+
+<div class="viewcode-block" id="FeatureEngineer.unscale_data">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.feature_engineer.FeatureEngineer.unscale_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">unscale_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scaler_X_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scaler_y_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reverses the scaling transformation for input (X) and target (y) variables.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X (pd.DataFrame or np.ndarray, optional): The input data to be unscaled. Defaults to None.</span>
+<span class="sd">            y (pd.DataFrame, np.ndarray, or torch.Tensor, optional): The target data to be unscaled. Defaults to None.</span>
+<span class="sd">            scaler_X_path (str, optional): Path to the stored input scaler. Defaults to None.</span>
+<span class="sd">            scaler_y_path (str, optional): Path to the stored target scaler. Defaults to None.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple: Unscaled X and y data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">scaler_X_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scaler_X_path</span> <span class="o">=</span> <span class="n">scaler_X_path</span>
+        <span class="k">if</span> <span class="n">scaler_y_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y_path</span> <span class="o">=</span> <span class="n">scaler_y_path</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+        <span class="c1"># Load scaler for X</span>
+        <span class="k">if</span> <span class="n">X</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_X_path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_X</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;scaler_X_path must be provided if X is not None and self.scaler_X is None.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_X</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scaler_X_path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">scaler_X</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">scaler_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_X</span>
+            <span class="n">X_unscaled</span> <span class="o">=</span> <span class="n">scaler_X</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+                <span class="n">X_unscaled</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">X_unscaled</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">X_unscaled</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Load scaler for y</span>
+        <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y_path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;scaler_y_path must be provided if y is not None and self.scaler_y is None.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scaler_y_path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">scaler_y</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">scaler_y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y</span>
+            <span class="n">y_unscaled</span> <span class="o">=</span> <span class="n">scaler_y</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+                <span class="n">y_unscaled</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">y_unscaled</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">y</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">y</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">y_unscaled</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">X_unscaled</span><span class="p">,</span> <span class="n">y_unscaled</span></div>
+
+
+<div class="viewcode-block" id="FeatureEngineer.add_lag_variables">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.feature_engineer.FeatureEngineer.add_lag_variables">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_lag_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lag</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds lagged versions of predictor variables to the dataset.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            lag (int): Number of time steps to lag the variables.</span>
+<span class="sd">            data (pd.DataFrame, optional): The dataset. If not provided, the class attribute &#39;data&#39; is used.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            FeatureEngineer: The modified instance with lag variables added.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">add_lag_variables</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">lag</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="FeatureEngineer.backfill_outliers">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.feature_engineer.FeatureEngineer.backfill_outliers">[docs]</a>
+    <span class="k">def</span> <span class="nf">backfill_outliers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">percentile</span><span class="o">=</span><span class="mf">99.999</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Replaces extreme values in target variables with the previous row&#39;s value.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            percentile (float, optional): Percentile threshold for identifying outliers. Defaults to 99.999.</span>
+<span class="sd">            data (pd.DataFrame, optional): The dataset. If not provided, the class attribute &#39;data&#39; is used.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            FeatureEngineer: The modified instance with outliers handled.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">backfill_outliers</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">percentile</span><span class="o">=</span><span class="n">percentile</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="FeatureEngineer.drop_outliers">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.feature_engineer.FeatureEngineer.drop_outliers">[docs]</a>
+    <span class="k">def</span> <span class="nf">drop_outliers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">expression</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.99</span><span class="p">],</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Drops simulations that are outliers based on the provided method.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            method (str): Method of outlier deletion (&#39;quantile&#39; or &#39;explicit&#39;).</span>
+<span class="sd">            column (str): Column used for detecting outliers.</span>
+<span class="sd">            expression (list[tuple], optional): List of filtering expressions in the form [(column, operator, value)]. Defaults to None.</span>
+<span class="sd">            quantiles (list[float], optional): Quantiles for &#39;quantile&#39; method. Defaults to [0.01, 0.99].</span>
+<span class="sd">            data (pd.DataFrame, optional): The dataset. If not provided, the class attribute &#39;data&#39; is used.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            FeatureEngineer: The modified instance with outliers removed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">drop_outliers</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">expression</span><span class="p">,</span> <span class="n">quantiles</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="FeatureEngineer.add_model_characteristics">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.feature_engineer.FeatureEngineer.add_model_characteristics">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_model_characteristics</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">model_char_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">encode</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">ids_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Merges model characteristic data with the dataset.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data (pd.DataFrame, optional): The dataset. If not provided, the class attribute &#39;data&#39; is used.</span>
+<span class="sd">            model_char_path (str, optional): Path to the model characteristics file. Defaults to the internal path.</span>
+<span class="sd">            encode (bool, optional): Whether to one-hot encode categorical characteristics. Defaults to True.</span>
+<span class="sd">            ids_path (str, optional): Path to an additional ID mapping file. Defaults to None.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            FeatureEngineer: The modified instance with model characteristics added.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="k">if</span> <span class="n">model_char_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">model_char_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;./ise/utils/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ice_sheet</span><span class="si">}</span><span class="s2">_model_characteristics.csv&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">add_model_characteristics</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">model_char_path</span><span class="p">,</span> <span class="n">encode</span><span class="p">,</span> <span class="n">ids_path</span><span class="o">=</span><span class="n">ids_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_including_model_characteristics</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
+</div>
+
+    
+    
+<div class="viewcode-block" id="scale_data">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.feature_engineer.scale_data">[docs]</a>
+<span class="k">def</span> <span class="nf">scale_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">scaler_path</span><span class="p">,</span> <span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Scales the provided dataset using a pre-trained scaler.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (pd.DataFrame): The dataset to be scaled.</span>
+<span class="sd">        scaler_path (str): Path to the saved scaler.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.DataFrame: The scaled dataset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dropped_columns</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;id&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;cmip_model&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;pathway&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;exp&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;ice_sheet&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Scenario&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Tier&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;aogcm&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;id&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;exp&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;model&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;ivaf&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">dropped_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">dropped_columns</span><span class="p">]</span>
+    <span class="n">dropped_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">dropped_columns</span><span class="p">]</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span>
+        <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="s2">&quot;sle&quot;</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span> <span class="o">+</span> <span class="n">dropped_columns</span>
+    <span class="p">)</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span>
+
+    <span class="n">scaler</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">scaler_path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">))</span>
+    <span class="n">scaled</span> <span class="o">=</span> <span class="n">scaler</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">scaled</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">scaled</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">cols</span><span class="p">,)</span>
+    <span class="k">if</span> <span class="s1">&#39;outlier&#39;</span> <span class="ow">in</span> <span class="n">scaled</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">scaled</span> <span class="o">=</span> <span class="n">scaled</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;outlier&#39;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">scaled</span></div>
+
+
+<div class="viewcode-block" id="add_model_characteristics">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.feature_engineer.add_model_characteristics">[docs]</a>
+<span class="k">def</span> <span class="nf">add_model_characteristics</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">,</span> <span class="n">model_char_path</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;./ise/utils/model_characteristics.csv&quot;</span><span class="p">,</span> <span class="n">encode</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ids_path</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Adds model characteristics to the dataset.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (pd.DataFrame): The input dataset.</span>
+<span class="sd">        model_char_path (str, optional): Path to the model characteristics file. Defaults to internal path.</span>
+<span class="sd">        encode (bool, optional): Whether to one-hot encode categorical characteristics. Defaults to True.</span>
+<span class="sd">        ids_path (str, optional): Path to an additional ID mapping file. Defaults to None.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.DataFrame: The dataset with model characteristics added.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">model_chars</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">model_char_path</span><span class="p">)</span>
+    <span class="n">all_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">model_chars</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">)</span>
+    <span class="n">existing_char_columns</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;Ocean forcing&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Ocean sensitivity&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Ice shelf fracture&quot;</span><span class="p">,</span>
+    <span class="p">]</span>  <span class="c1"># These are the columns that are already in the data and should not be encoded</span>
+
+    <span class="c1"># if &#39;Ocean forcing&#39; not in data.columns:</span>
+    <span class="c1">#     if ids_path is None:</span>
+    <span class="c1">#         raise ValueError(&quot;ids must be provided if &#39;Ocean forcing&#39; is not in the data.&quot;)</span>
+    <span class="c1">#     else:</span>
+    <span class="c1">#         ids = json.load(open(ids_path, &#39;r&#39;))</span>
+
+    <span class="k">if</span> <span class="n">encode</span><span class="p">:</span>
+        <span class="n">all_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get_dummies</span><span class="p">(</span>
+            <span class="n">all_data</span><span class="p">,</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">x</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">model_chars</span><span class="o">.</span><span class="n">columns</span>
+                <span class="k">if</span> <span class="n">x</span>
+                <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span>
+                    <span class="s2">&quot;initial_year&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;model&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;Scenario&quot;</span><span class="p">,</span>
+                <span class="p">]</span>
+            <span class="p">]</span>
+            <span class="o">+</span> <span class="n">existing_char_columns</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">all_data</span></div>
+
+
+
+<div class="viewcode-block" id="backfill_outliers">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.feature_engineer.backfill_outliers">[docs]</a>
+<span class="k">def</span> <span class="nf">backfill_outliers</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">percentile</span><span class="o">=</span><span class="mf">99.999</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Replaces extreme values in y-values (above the specified percentile and below the 1-percentile across all y-values)</span>
+<span class="sd">    with the value from the previous row.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (pd.DataFrame): The dataset containing y-values.</span>
+<span class="sd">        percentile (float, optional): The percentile threshold to define upper extreme values. Defaults to 99.999.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.DataFrame: The dataset with extreme values replaced using backfill.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Assuming y-values are in columns named with &#39;sle&#39; as mentioned in other methods</span>
+    <span class="n">y_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="s2">&quot;sle&quot;</span> <span class="ow">in</span> <span class="n">col</span><span class="p">]</span>
+
+    <span class="c1"># Concatenate all y-values to compute the overall upper and lower percentile thresholds</span>
+    <span class="n">all_y_values</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">y_columns</span><span class="p">])</span>
+    <span class="n">upper_threshold</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">all_y_values</span><span class="p">,</span> <span class="n">percentile</span><span class="p">)</span>
+    <span class="n">lower_threshold</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">all_y_values</span><span class="p">,</span> <span class="mi">100</span> <span class="o">-</span> <span class="n">percentile</span><span class="p">)</span>
+
+    <span class="c1"># Iterate over each y-column to backfill outliers based on the overall upper and lower thresholds</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">y_columns</span><span class="p">:</span>
+        <span class="n">upper_extreme_value_mask</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">upper_threshold</span>
+        <span class="n">lower_extreme_value_mask</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">lower_threshold</span>
+
+        <span class="c1"># Temporarily replace upper and lower extreme values with NaN</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">upper_extreme_value_mask</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">lower_extreme_value_mask</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="c1"># Use backfill method to fill NaN values</span>
+        <span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">bfill</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">data</span></div>
+
+
+
+<div class="viewcode-block" id="add_lag_variables">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.feature_engineer.add_lag_variables">[docs]</a>
+<span class="k">def</span> <span class="nf">add_lag_variables</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">lag</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Adds lagged variables to the input dataset, creating time-shifted versions of the predictor variables.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (pd.DataFrame): The dataset containing time series data.</span>
+<span class="sd">        lag (int): The number of time steps to lag the variables.</span>
+<span class="sd">        verbose (bool, optional): Whether to display a progress bar. Defaults to True.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.DataFrame: The dataset with lagged variables added.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="c1"># Separate columns that won&#39;t be lagged and shouldn&#39;t be dropped</span>
+    <span class="c1"># cols_to_exclude = [</span>
+    <span class="c1">#     &quot;id&quot;,</span>
+    <span class="c1">#     &quot;cmip_model&quot;,</span>
+    <span class="c1">#     &quot;pathway&quot;,</span>
+    <span class="c1">#     &quot;exp&quot;,</span>
+    <span class="c1">#     &quot;ice_sheet&quot;,</span>
+    <span class="c1">#     &quot;Scenario&quot;,</span>
+    <span class="c1">#     &quot;Ocean forcing&quot;,</span>
+    <span class="c1">#     &quot;Ocean sensitivity&quot;,</span>
+    <span class="c1">#     &quot;Ice shelf fracture&quot;,</span>
+    <span class="c1">#     &quot;Tier&quot;,</span>
+    <span class="c1">#     &quot;aogcm&quot;,</span>
+    <span class="c1">#     &quot;id&quot;,</span>
+    <span class="c1">#     &quot;exp&quot;,</span>
+    <span class="c1">#     &quot;model&quot;,</span>
+    <span class="c1">#     &quot;ivaf&quot;,</span>
+    <span class="c1">#     &quot;sector&quot;,</span>
+    <span class="c1"># ]</span>
+    <span class="n">cols_to_exclude</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;year&quot;</span><span class="p">,</span> <span class="s2">&quot;pr_anomaly&quot;</span><span class="p">,</span> <span class="s2">&quot;evspsbl_anomaly&quot;</span><span class="p">,</span> <span class="s2">&quot;mrro_anomaly&quot;</span><span class="p">,</span> <span class="s2">&quot;smb_anomaly&quot;</span><span class="p">,</span> <span class="s2">&quot;ts_anomaly&quot;</span><span class="p">,</span> <span class="s2">&quot;thermal_forcing&quot;</span><span class="p">,</span> <span class="s2">&quot;salinity&quot;</span><span class="p">,</span> <span class="s2">&quot;temperature&quot;</span><span class="p">)]</span>
+    <span class="n">cols_to_exclude</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">cols_to_exclude</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+    <span class="n">temporal_indicator</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span> <span class="k">if</span> <span class="s2">&quot;time&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">else</span> <span class="s2">&quot;year&quot;</span>
+    <span class="n">non_temporal_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">temporal_indicator</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span>
+        <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="s2">&quot;sle&quot;</span> <span class="ow">in</span> <span class="n">x</span> <span class="ow">or</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">cols_to_exclude</span>
+    <span class="p">]</span>
+    <span class="n">projection_length</span> <span class="o">=</span> <span class="mi">86</span>
+
+    <span class="c1"># Initialize a list to collect the processed DataFrames</span>
+    <span class="n">processed_segments</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Calculate the number of segments</span>
+    <span class="n">num_segments</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">//</span> <span class="n">projection_length</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="n">iterator</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">num_segments</span><span class="p">),</span> <span class="n">total</span><span class="o">=</span><span class="n">num_segments</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Adding lag variables&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">iterator</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_segments</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">segment_idx</span> <span class="ow">in</span> <span class="n">iterator</span><span class="p">:</span>
+        <span class="c1"># Extract the segment</span>
+        <span class="n">segment_start</span> <span class="o">=</span> <span class="n">segment_idx</span> <span class="o">*</span> <span class="n">projection_length</span>
+        <span class="n">segment_end</span> <span class="o">=</span> <span class="p">(</span><span class="n">segment_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">projection_length</span>
+        <span class="n">segment</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">segment_start</span><span class="p">:</span><span class="n">segment_end</span><span class="p">,</span> <span class="p">:]</span>
+
+        <span class="c1"># Separate the segment into lagged and non-lagged parts</span>
+        <span class="n">non_lagged_data</span> <span class="o">=</span> <span class="n">segment</span><span class="p">[</span><span class="n">non_temporal_cols</span><span class="p">]</span>
+        <span class="n">base_temporal_columns</span> <span class="o">=</span> <span class="n">segment</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">non_temporal_cols</span><span class="p">)</span>
+
+        <span class="n">lags</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># Generate lagged variables for the segment</span>
+        <span class="k">for</span> <span class="n">shift</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">lag</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">lag_columns</span> <span class="o">=</span> <span class="n">base_temporal_columns</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="n">shift</span><span class="p">)</span><span class="o">.</span><span class="n">add_suffix</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.lag</span><span class="si">{</span><span class="n">shift</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="c1"># Fill missing values caused by shifting</span>
+            <span class="n">lag_columns</span><span class="o">.</span><span class="n">bfill</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">lags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lag_columns</span><span class="p">)</span>
+        <span class="n">full_segment_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">non_lagged_data</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">base_temporal_columns</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">lags</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+
+        <span class="c1"># Store the processed segment</span>
+        <span class="n">processed_segments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">full_segment_data</span><span class="p">)</span>
+
+    <span class="c1"># Concatenate all processed segments into a single DataFrame</span>
+    <span class="n">final_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">processed_segments</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">final_data</span></div>
+
+
+
+<div class="viewcode-block" id="fill_mrro_nans">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.feature_engineer.fill_mrro_nans">[docs]</a>
+<span class="k">def</span> <span class="nf">fill_mrro_nans</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fills the NaN values in the specified columns with the given method.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (pd.DataFrame): The input DataFrame.</span>
+<span class="sd">        method (str or int): The method to fill NaN values. Must be one of &#39;zero&#39;, &#39;mean&#39;, &#39;median&#39;, or &#39;drop&#39;.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.DataFrame: The DataFrame with NaN values filled according to the specified method.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the method is not one of &#39;zero&#39;, &#39;mean&#39;, &#39;median&#39;, or &#39;drop&#39;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mrro_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="s2">&quot;mrro&quot;</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;zero&quot;</span> <span class="ow">or</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;0&quot;</span> <span class="ow">or</span> <span class="n">method</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">mrro_columns</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;mean&quot;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">mrro_columns</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+    <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;median&quot;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">mrro_columns</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">median</span><span class="p">())</span>
+    <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;drop&quot;</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="n">mrro_columns</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;mean_by_year&#39;</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;mrro_anomaly&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;year&#39;</span><span class="p">)[</span><span class="s1">&#39;mrro_anomaly&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;method must be &#39;zero&#39;, &#39;mean&#39;, &#39;median&#39;, or &#39;drop&#39;&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">data</span></div>
+
+
+
+<div class="viewcode-block" id="split_training_data">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.feature_engineer.split_training_data">[docs]</a>
+<span class="k">def</span> <span class="nf">split_training_data</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">,</span> <span class="n">train_size</span><span class="p">,</span> <span class="n">val_size</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_directory</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Splits the dataset into training, validation, and test sets.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (str or pd.DataFrame): The dataset or path to the dataset to be split.</span>
+<span class="sd">        train_size (float): Proportion of data to use for training.</span>
+<span class="sd">        val_size (float): Proportion of data to use for validation.</span>
+<span class="sd">        test_size (float, optional): Proportion of data to use for testing. Defaults to the remainder.</span>
+<span class="sd">        output_directory (str, optional): Directory to save the split datasets as CSV files. Defaults to None.</span>
+<span class="sd">        random_state (int, optional): Seed for reproducibility. Defaults to 42.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: Training, validation, and test datasets as pandas DataFrames.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the dataset length is not divisible by 86, indicating incomplete projections.</span>
+<span class="sd">        ValueError: If the dataset does not contain an &#39;id&#39; column.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;data must be a path (str) or a pandas DataFrame&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">%</span> <span class="mi">86</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;Length of data must be divisible by 86, if not there are incomplete projections.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s2">&quot;id&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;data must have a column named &#39;id&#39;&quot;</span><span class="p">)</span>
+
+    <span class="n">total_ids</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">total_ids</span><span class="p">)</span>
+    <span class="n">train_ids</span> <span class="o">=</span> <span class="n">total_ids</span><span class="p">[:</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">total_ids</span><span class="p">)</span> <span class="o">*</span> <span class="n">train_size</span><span class="p">)]</span>
+    <span class="n">val_ids</span> <span class="o">=</span> <span class="n">total_ids</span><span class="p">[</span>
+        <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">total_ids</span><span class="p">)</span> <span class="o">*</span> <span class="n">train_size</span><span class="p">)</span> <span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">total_ids</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">train_size</span> <span class="o">+</span> <span class="n">val_size</span><span class="p">))</span>
+    <span class="p">]</span>
+    <span class="n">test_ids</span> <span class="o">=</span> <span class="n">total_ids</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">total_ids</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">train_size</span> <span class="o">+</span> <span class="n">val_size</span><span class="p">))</span> <span class="p">:]</span>
+    
+    <span class="c1"># train_ids = list(pd.read_csv(r&#39;/oscar/scratch/pvankatw/datasets/sectors/GrIS/train.csv&#39;).id.unique())</span>
+    <span class="c1"># val_ids = list(pd.read_csv(r&#39;/oscar/scratch/pvankatw/datasets/sectors/GrIS/val.csv&#39;).id.unique())</span>
+    <span class="c1"># test_ids = list(pd.read_csv(r&#39;/oscar/scratch/pvankatw/datasets/sectors/GrIS/test.csv&#39;).id.unique())</span>
+
+    <span class="n">split_data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;train_ids&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">train_ids</span><span class="p">),</span>
+        <span class="s2">&quot;val_ids&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">val_ids</span><span class="p">),</span>
+        <span class="s2">&quot;test_ids&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">test_ids</span><span class="p">),</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">output_directory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_directory</span><span class="si">}</span><span class="s2">/ids.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">split_data</span><span class="p">,</span> <span class="n">file</span><span class="p">)</span>
+
+    <span class="n">train</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">train_ids</span><span class="p">)]</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">val_ids</span><span class="p">)]</span>
+    <span class="n">test</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">test_ids</span><span class="p">)]</span>
+
+    <span class="k">if</span> <span class="n">output_directory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">train</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_directory</span><span class="si">}</span><span class="s2">/train.csv&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">val</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_directory</span><span class="si">}</span><span class="s2">/val.csv&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">test</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_directory</span><span class="si">}</span><span class="s2">/test.csv&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">train</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">test</span></div>
+
+
+
+<div class="viewcode-block" id="drop_outliers">
+<a class="viewcode-back" href="../../../docs/source/ise.data.html#ise.data.feature_engineer.drop_outliers">[docs]</a>
+<span class="k">def</span> <span class="nf">drop_outliers</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">column</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">expression</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">quantiles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.99</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Removes outliers from the dataset based on a specified method.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (pd.DataFrame): The dataset containing the column with potential outliers.</span>
+<span class="sd">        column (str): The column to assess for outliers.</span>
+<span class="sd">        method (str): The method of outlier detection (&#39;quantile&#39; or &#39;explicit&#39;).</span>
+<span class="sd">        expression (list of tuples, optional): A list of conditions in the format [(column, operator, value)] for explicit filtering. Defaults to None.</span>
+<span class="sd">        quantiles (list of float, optional): Quantiles for filtering when using the &#39;quantile&#39; method. Defaults to [0.01, 0.99].</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.DataFrame: The dataset with outliers removed.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        AttributeError: If the method is &#39;quantile&#39; but no quantiles are provided.</span>
+<span class="sd">        AttributeError: If the method is &#39;explicit&#39; but no expression is provided.</span>
+<span class="sd">        ValueError: If the operator in the expression is not recognized.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="c1"># Check if method is quantile</span>
+    <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;quantile&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">quantiles</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;If method == quantile, quantiles argument cannot be None&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Calculate lower and upper quantiles</span>
+        <span class="n">lower_sle</span><span class="p">,</span> <span class="n">upper_sle</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">column</span><span class="p">]),</span> <span class="n">quantiles</span><span class="p">)</span>
+
+        <span class="c1"># Filter outlier data based on quantiles</span>
+        <span class="n">outlier_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[(</span><span class="n">data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">lower_sle</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">upper_sle</span><span class="p">)]</span>
+
+    <span class="c1"># Check if method is explicit</span>
+    <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;explicit&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">expression</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;If method == explicit, expression argument cannot be None&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expression</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expression</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
+                <span class="s1">&#39;Expression argument must be a list of tuples, e.g. [(&quot;sle&quot;, &quot;&gt;&quot;, 20), (&quot;sle&quot;, &quot;&lt;&quot;, -20)]&#39;</span>
+            <span class="p">)</span>
+
+        <span class="n">outlier_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Apply subset expressions to filter outlier data</span>
+        <span class="n">subset_dfs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">subset_expression</span> <span class="ow">in</span> <span class="n">expression</span><span class="p">:</span>
+            <span class="n">column</span><span class="p">,</span> <span class="n">operator</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">subset_expression</span>
+
+            <span class="k">if</span> <span class="n">operator</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;equal&quot;</span><span class="p">,</span> <span class="s2">&quot;equals&quot;</span><span class="p">,</span> <span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="s2">&quot;==&quot;</span><span class="p">):</span>
+                <span class="n">outlier_dataframe</span> <span class="o">=</span> <span class="n">outlier_data</span><span class="p">[</span><span class="n">outlier_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">==</span> <span class="n">value</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">operator</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;not equal&quot;</span><span class="p">,</span> <span class="s2">&quot;not equals&quot;</span><span class="p">,</span> <span class="s2">&quot;!=&quot;</span><span class="p">,</span> <span class="s2">&quot;~=&quot;</span><span class="p">):</span>
+                <span class="n">outlier_dataframe</span> <span class="o">=</span> <span class="n">outlier_data</span><span class="p">[</span><span class="n">outlier_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">!=</span> <span class="n">value</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">operator</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;greater than&quot;</span><span class="p">,</span> <span class="s2">&quot;greater&quot;</span><span class="p">,</span> <span class="s2">&quot;&gt;=&quot;</span><span class="p">,</span> <span class="s2">&quot;&gt;&quot;</span><span class="p">):</span>
+                <span class="n">outlier_dataframe</span> <span class="o">=</span> <span class="n">outlier_data</span><span class="p">[</span><span class="n">outlier_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">value</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">operator</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;less than&quot;</span><span class="p">,</span> <span class="s2">&quot;less&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;=&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">):</span>
+                <span class="n">outlier_dataframe</span> <span class="o">=</span> <span class="n">outlier_data</span><span class="p">[</span><span class="n">outlier_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">value</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Operator must be in [&quot;==&quot;, &quot;!=&quot;, &quot;&gt;&quot;, &quot;&lt;&quot;], received </span><span class="si">{</span><span class="n">operator</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">subset_dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">outlier_dataframe</span><span class="p">)</span>
+        <span class="n">outlier_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">subset_dfs</span><span class="p">)</span>
+
+    <span class="c1"># Check if outlier_data is empty</span>
+    <span class="k">if</span> <span class="n">outlier_data</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="c1"># Create dataframe of experiments with outliers (want to delete the entire 86 rows)</span>
+    <span class="n">outlier_runs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+    <span class="c1"># TODO: Check to see if this works</span>
+    <span class="n">outlier_runs</span><span class="p">[</span><span class="s2">&quot;modelname&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">outlier_data</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">]</span>
+    <span class="n">outlier_runs</span><span class="p">[</span><span class="s2">&quot;exp_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">outlier_data</span><span class="p">[</span><span class="s2">&quot;exp&quot;</span><span class="p">]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">outlier_runs</span><span class="p">[</span><span class="s2">&quot;sector&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">outlier_data</span><span class="p">[</span><span class="s2">&quot;sector&quot;</span><span class="p">]</span>
+        <span class="n">sectors</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="n">sectors</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">outlier_runs_list</span> <span class="o">=</span> <span class="n">outlier_runs</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">unique_outliers</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">outlier_runs_list</span><span class="p">)]</span>
+
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;outlier&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="c1"># Drop those runs</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">unique_outliers</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">unique_outliers</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Dropping outliers&quot;</span><span class="p">):</span>
+        <span class="n">modelname</span> <span class="o">=</span> <span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">exp_id</span> <span class="o">=</span> <span class="n">i</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">sectors</span><span class="p">:</span>
+            <span class="n">sector</span> <span class="o">=</span> <span class="n">i</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">model</span> <span class="o">==</span> <span class="n">modelname</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">exp</span> <span class="o">==</span> <span class="n">exp_id</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">sector</span> <span class="o">==</span> <span class="n">sector</span><span class="p">),</span>
+                <span class="s2">&quot;outlier&quot;</span><span class="p">,</span>
+            <span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">data</span><span class="o">.</span><span class="n">model</span> <span class="o">==</span> <span class="n">modelname</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">exp</span> <span class="o">==</span> <span class="n">exp_id</span><span class="p">),</span> <span class="s2">&quot;outlier&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;outlier&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">False</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">data</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Peter Van Katwyk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,330 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ise.utils.training &mdash; ise 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="/_modules/ise/utils/training.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ise
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/ise.html">ise documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ise</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ise.utils.training</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ise.utils.training</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<div class="viewcode-block" id="CheckpointSaver">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.training.CheckpointSaver">[docs]</a>
+<span class="k">class</span> <span class="nc">CheckpointSaver</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A class to handle saving and loading of model checkpoints during training.</span>
+
+<span class="sd">    This class monitors the model&#39;s loss and saves the model&#39;s state when an improvement is detected.</span>
+<span class="sd">    It can also be configured to save the model at every epoch.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        checkpoint_path (str): Path where the checkpoint will be saved.</span>
+<span class="sd">        model (torch.nn.Module): The PyTorch model being trained.</span>
+<span class="sd">        optimizer (torch.optim.Optimizer): The optimizer used during training.</span>
+<span class="sd">        best_loss (float): The best recorded loss value. Initially set to infinity.</span>
+<span class="sd">        verbose (bool): If True, logs messages when a checkpoint is saved.</span>
+<span class="sd">        log (str or None): Stores log messages for saving actions.</span>
+
+<span class="sd">    Methods:</span>
+<span class="sd">        __call__(loss, epoch, save_best_only=True):</span>
+<span class="sd">            Checks whether to save the checkpoint based on loss improvement.</span>
+
+<span class="sd">        _determine_if_better(loss):</span>
+<span class="sd">            Determines if the new loss is an improvement over the best recorded loss.</span>
+
+<span class="sd">        _update_best_loss(loss):</span>
+<span class="sd">            Updates the best recorded loss.</span>
+
+<span class="sd">        save_checkpoint(epoch, loss, path=None):</span>
+<span class="sd">            Saves the model&#39;s state, optimizer state, and epoch information.</span>
+
+<span class="sd">        load_checkpoint(path=None):</span>
+<span class="sd">            Loads a saved checkpoint and restores model and optimizer states.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">,</span> <span class="n">checkpoint_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the CheckpointSaver instance.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model (torch.nn.Module): The PyTorch model to be saved and restored.</span>
+<span class="sd">            optimizer (torch.optim.Optimizer): The optimizer associated with the model.</span>
+<span class="sd">            checkpoint_path (str): Path to save the checkpoint file.</span>
+<span class="sd">            verbose (bool, optional): Whether to print logs when saving checkpoints. Defaults to False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_path</span> <span class="o">=</span> <span class="n">checkpoint_path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_loss</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="kc">None</span>
+        
+<div class="viewcode-block" id="CheckpointSaver.__call__">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.training.CheckpointSaver.__call__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loss</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">save_best_only</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determines whether to save the checkpoint based on the loss.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            loss (float): The current loss value.</span>
+<span class="sd">            epoch (int): The current training epoch.</span>
+<span class="sd">            save_best_only (bool, optional): If True, saves the checkpoint only when the loss improves.</span>
+<span class="sd">                                            If False, saves the checkpoint at every call. Defaults to True.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: True if a checkpoint was saved, False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">is_better</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_determine_if_better</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span> <span class="k">if</span> <span class="n">save_best_only</span> <span class="k">else</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="n">is_better</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">save_best_only</span><span class="p">:</span>  <span class="c1"># Save if loss improves or save_best_only is False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_checkpoint</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">loss</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_path</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Loss decreased (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">best_loss</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2"> --&gt; </span><span class="si">{</span><span class="n">loss</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">). Saving checkpoint to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_path</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_best_loss</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+        
+<div class="viewcode-block" id="CheckpointSaver._determine_if_better">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.training.CheckpointSaver._determine_if_better">[docs]</a>
+    <span class="k">def</span> <span class="nf">_determine_if_better</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loss</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Checks if the new loss value is lower than the best recorded loss.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            loss (float): The current loss value.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: True if the loss has improved, False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Determine if current loss is better than best_loss</span>
+        <span class="k">return</span> <span class="n">loss</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_loss</span></div>
+
+        
+<div class="viewcode-block" id="CheckpointSaver._update_best_loss">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.training.CheckpointSaver._update_best_loss">[docs]</a>
+    <span class="k">def</span> <span class="nf">_update_best_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loss</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Updates the best recorded loss with the new value.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            loss (float): The new best loss value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_loss</span> <span class="o">=</span> <span class="n">loss</span></div>
+
+    
+<div class="viewcode-block" id="CheckpointSaver.save_checkpoint">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.training.CheckpointSaver.save_checkpoint">[docs]</a>
+    <span class="k">def</span> <span class="nf">save_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">loss</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Saves the model checkpoint, including model state, optimizer state, and epoch.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            epoch (int): The current epoch number.</span>
+<span class="sd">            loss (float): The loss value associated with this checkpoint.</span>
+<span class="sd">            path (str, optional): The file path to save the checkpoint. If None, the default path is used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">checkpoint_path</span> <span class="o">=</span> <span class="n">path</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_path</span>
+        <span class="n">checkpoint</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;epoch&#39;</span><span class="p">:</span> <span class="n">epoch</span><span class="p">,</span>
+            <span class="s1">&#39;model_state_dict&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span>
+            <span class="s1">&#39;optimizer_state_dict&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span>
+            <span class="s1">&#39;best_loss&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_loss</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">checkpoint</span><span class="p">,</span> <span class="n">checkpoint_path</span><span class="p">)</span></div>
+
+        <span class="c1"># if self.verbose:</span>
+        <span class="c1">#     print(f&quot;Checkpoint saved to {checkpoint_path}&quot;)</span>
+    
+<div class="viewcode-block" id="CheckpointSaver.load_checkpoint">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.training.CheckpointSaver.load_checkpoint">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads a checkpoint and restores the model and optimizer states.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            path (str, optional): The file path to load the checkpoint from. If None, the default path is used.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            int: The epoch number from which training should resume.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">checkpoint_path</span> <span class="o">=</span> <span class="n">path</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_path</span>
+        <span class="n">checkpoint</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">checkpoint_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">checkpoint</span><span class="p">[</span><span class="s1">&#39;model_state_dict&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">checkpoint</span><span class="p">[</span><span class="s1">&#39;optimizer_state_dict&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_loss</span> <span class="o">=</span> <span class="n">checkpoint</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;best_loss&#39;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">))</span>
+        <span class="n">start_epoch</span> <span class="o">=</span> <span class="n">checkpoint</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;epoch&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded checkpoint from </span><span class="si">{</span><span class="n">checkpoint_path</span><span class="si">}</span><span class="s2">, resuming from epoch </span><span class="si">{</span><span class="n">start_epoch</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">start_epoch</span></div>
+</div>
+
+
+<div class="viewcode-block" id="EarlyStoppingCheckpointer">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.training.EarlyStoppingCheckpointer">[docs]</a>
+<span class="k">class</span> <span class="nc">EarlyStoppingCheckpointer</span><span class="p">(</span><span class="n">CheckpointSaver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A class that extends CheckpointSaver to implement early stopping.</span>
+
+<span class="sd">    This class tracks model performance and stops training when the validation loss does not improve </span>
+<span class="sd">    for a specified number of epochs (patience).</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        patience (int): The number of epochs with no improvement before stopping.</span>
+<span class="sd">        counter (int): Tracks the number of epochs since the last improvement.</span>
+<span class="sd">        early_stop (bool): Flag indicating whether early stopping should occur.</span>
+
+<span class="sd">    Methods:</span>
+<span class="sd">        __call__(loss, epoch, save_best_only=True):</span>
+<span class="sd">            Saves the checkpoint and updates early stopping conditions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">checkpoint_path</span><span class="o">=</span><span class="s1">&#39;checkpoint.pt&#39;</span><span class="p">,</span> <span class="n">patience</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the EarlyStoppingCheckpointer.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model (torch.nn.Module): The PyTorch model to be saved and monitored for early stopping.</span>
+<span class="sd">            optimizer (torch.optim.Optimizer): The optimizer used during training.</span>
+<span class="sd">            checkpoint_path (str, optional): Path to save the checkpoint file. Defaults to &#39;checkpoint.pt&#39;.</span>
+<span class="sd">            patience (int, optional): Number of epochs to wait before stopping if no improvement is detected. Defaults to 10.</span>
+<span class="sd">            verbose (bool, optional): Whether to print logs when early stopping is triggered. Defaults to False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">checkpoint_path</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">patience</span> <span class="o">=</span> <span class="n">patience</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">early_stop</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="EarlyStoppingCheckpointer.__call__">
+<a class="viewcode-back" href="../../../docs/source/ise.utils.html#ise.utils.training.EarlyStoppingCheckpointer.__call__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loss</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">save_best_only</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Saves the checkpoint and updates the early stopping counter.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            loss (float): The current loss value.</span>
+<span class="sd">            epoch (int): The current training epoch.</span>
+<span class="sd">            save_best_only (bool, optional): If True, saves the checkpoint only when loss improves.</span>
+<span class="sd">                                            If False, saves the checkpoint at every call. Defaults to True.</span>
+
+<span class="sd">        Side Effects:</span>
+<span class="sd">            - Resets the early stopping counter if the checkpoint is saved.</span>
+<span class="sd">            - Increments the counter if no improvement is observed.</span>
+<span class="sd">            - Sets the `early_stop` flag to True if the counter reaches the patience threshold.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">saved</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">save_best_only</span><span class="p">,)</span>
+        <span class="k">if</span> <span class="n">saved</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Reset counter if the model improved</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;EarlyStopping counter: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="si">}</span><span class="s2"> out of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">patience</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">patience</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">early_stop</span> <span class="o">=</span> <span class="kc">True</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Peter Van Katwyk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
