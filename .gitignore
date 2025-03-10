@@ -22,6 +22,8 @@ supplemental/
 # *.pth
 # *.csv
 release.sh
+./*.ipynb
+validate.py
 
 .vscode/
 .vscode
