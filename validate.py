@@ -7,15 +7,18 @@ import cartopy.feature as cfeature
 # Load CMIP6 source dataset
 data_directory = r"/oscar/home/pvankatw/data/pvankatw/CMIP/"
 data_path = r"pr_day_MPI-ESM1-2-HR_ssp585_r1i1p1f1_gn_20150101-20191231.nc"
+# data_path = r"pr_Amon_CCSM4_rcp26_r6i1p1_200601-210012.nc"
+
 source = xr.open_dataset(data_directory + data_path)
 
 # Load regridded dataset
-regridded_path = "bilinear.nc"
+regridded_path = "ccsm4_patch.nc"
 ds_regridded = xr.open_dataset(regridded_path)
-ds_regridded = ds_regridded.rename({'__xarray_dataarray_variable__': 'pr'})
+if '__xarray_dataarray_variable__' in ds_regridded.variables:
+    ds_regridded = ds_regridded.rename({'__xarray_dataarray_variable__': 'pr'})
 
 # Select a time slice (assuming the dataset has a time dimension)
-time_index = 100
+time_index = 900
 
 # Define Antarctica projection
 projection = ccrs.SouthPolarStereo()
@@ -32,7 +35,7 @@ vmax = max(source_pr.max(), regridded_pr.max())
 fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12, 6), subplot_kw={'projection': projection})
 
 # Define extent for Antarctica Ice Sheet in EPSG:3031 projection
-antarctic_extent = [-2.5e6, 2.5e6, -2.5e6, 2.5e6]  # X and Y limits in meters
+antarctic_extent = [-3.0e6, 3.0e6, -3.0e6, 3.0e6]  # X and Y limits in meters
 
 # Plot original CMIP6 precipitation (assuming it is in lat/lon)
 axes[0].set_extent([-180, 180, -90, -60], crs=ccrs.PlateCarree())
