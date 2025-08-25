@@ -646,6 +646,25 @@ class ISEFlow_AIS(ISEFlow):
         X = data.values
         X = to_tensor(X).to(self.device)
         return super().predict(X, output_scaler=f"{ISEFlow_AIS_v1_0_0_path}/scaler_y.pkl")
+    
+    def test(self, X_test,):
+        """
+        Tests the model on a test dataset.
+
+        Args:
+            X_test (array-like): Test feature matrix.
+            y_test (array-like): Test target values.
+
+        Returns:
+            tuple: A tuple containing:
+                - unscaled_predictions (numpy.ndarray): Model predictions in the original scale.
+                - uncertainties (dict): Dictionary with keys:
+                    - 'total' (numpy.ndarray): Total uncertainty.
+                    - 'epistemic' (numpy.ndarray): Epistemic uncertainty.
+                    - 'aleatoric' (numpy.ndarray): Aleatoric uncertainty.
+        """
+        
+        return super().predict(X_test, output_scaler=f"{ISEFlow_AIS_v1_0_0_path}/scaler_y.pkl")
 
 class ISEFlow_GrIS(ISEFlow):
     """
