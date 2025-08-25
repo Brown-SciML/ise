@@ -10,7 +10,7 @@ import torch
 from torch import nn, optim
 from nflows import distributions, flows, transforms
 
-from ise.data.dataclasses import EmulatorDataset
+from ise.data.ISMIP6.dataclasses import EmulatorDataset
 from ise.utils.functions import to_tensor
 from ise.utils.training import EarlyStoppingCheckpointer, CheckpointSaver
 from ise.data import feature_engineer as fe

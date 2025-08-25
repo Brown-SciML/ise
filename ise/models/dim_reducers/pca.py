@@ -3,7 +3,7 @@ from torch import nn
 import pandas as pd
 import numpy as np
 
-from ise.data.scaler import LogScaler, RobustScaler, StandardScaler
+from ise.data.ISMIP6.scaler import LogScaler, RobustScaler, StandardScaler
 
 class PCA(nn.Module):
     """
