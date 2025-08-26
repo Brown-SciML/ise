@@ -7,7 +7,7 @@ import numpy as np
 import os
 
 from ise.utils.functions import to_tensor
-from ise.data.dataclasses import EmulatorDataset
+from ise.data.ISMIP6.dataclasses import EmulatorDataset
 from ise.utils.training import CheckpointSaver, EarlyStoppingCheckpointer
 
 class LSTM(nn.Module):

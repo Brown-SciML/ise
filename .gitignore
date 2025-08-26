@@ -25,6 +25,7 @@ supplemental/
 release.sh
 ./*.ipynb
 validate.py
+model/
 
 .vscode/
 .vscode

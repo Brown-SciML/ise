@@ -729,9 +729,9 @@ def get_X_y(
         
     if return_format is not None:
         if return_format.lower() == "numpy":
-            return X.values, y.values
+            return X.values.astype(float), y.values.astype(float)
         elif return_format.lower() == "tensor":
-            return torch.tensor(X.values), torch.tensor(y.values)
+            return torch.tensor(X.values.astype(float)), torch.tensor(y.values.astype(float))
         elif return_format.lower() == "pandas":
             pass
         else:

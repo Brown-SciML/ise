@@ -7,7 +7,7 @@ class ISEFlow_AIS_NF(NormalizingFlow):
     This class extends the `NormalizingFlow` class, configuring it with AIS-specific input sizes and transformations.
     """
 
-    def __init__(self, ):
+    def __init__(self, version="1.0.0"):
         """
         Initializes the ISEFlow_AIS_NF model.
 
@@ -19,7 +19,7 @@ class ISEFlow_AIS_NF(NormalizingFlow):
         Calls the `NormalizingFlow` constructor with these preset parameters.
         """
 
-        self.input_size = 99
+        self.input_size = 99 if version == "v1.0.0" else 93
         self.output_size = 1
         self.num_flow_transforms = 5
         super().__init__(input_size=self.input_size, output_size=self.output_size, num_flow_transforms=self.num_flow_transforms)

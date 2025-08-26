@@ -13,7 +13,7 @@ from nflows import distributions, flows, transforms
 from ise.data.ISMIP6.dataclasses import EmulatorDataset
 from ise.utils.functions import to_tensor
 from ise.utils.training import EarlyStoppingCheckpointer, CheckpointSaver
-from ise.data import feature_engineer as fe
+from ise.data.ISMIP6 import feature_engineer as fe
 from ise.models.predictors.deep_ensemble import DeepEnsemble
 from ise.models.density_estimators.normalizing_flow import NormalizingFlow
 from .de import ISEFlow_AIS_DE, ISEFlow_GrIS_DE

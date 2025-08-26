@@ -77,7 +77,7 @@ class NormalizingFlow(nn.Module):
         self.flow = flows.base.Flow(transform=self.t, distribution=self.base_distribution)
 
         # Define optimizer and criterion
-        self.optimizer = optim.Adam(self.flow.parameters())
+        self.optimizer = optim.Adam(self.flow.parameters(), lr=1e-3, weight_decay=1e-6)
         self.criterion = self.flow.log_prob
         self.trained = False
         self.wandb_run = None
@@ -102,12 +102,13 @@ class NormalizingFlow(nn.Module):
         Raises:
             ValueError: If checkpoint loading fails.
         """
+        self.to(self.device)
         X, y = to_tensor(X).to(self.device), to_tensor(y).to(self.device)
         if y.ndimension() == 1:
             y = y.unsqueeze(1)
         self.wandb_run = wandb_run
         validate = True if X_val is not None and y_val is not None else False
-            
+        
         start_epoch = 1
         best_loss = float("inf")
         if os.path.exists(checkpoint_path):
@@ -177,10 +178,7 @@ class NormalizingFlow(nn.Module):
                 if save_checkpoints:
                     checkpointer(average_epoch_loss, epoch)
                     if hasattr(checkpointer, "early_stop") and checkpointer.early_stop:
-                        if self.wandb_run:
-                            artifact = wandb.Artifact("nf-model", type='model')
-                            artifact.add_file(checkpoint_path)
-                            self.wandb_run.log_artifact(artifact)
+
                         if verbose:
                             print("Early stopping")
                         break
@@ -194,6 +192,11 @@ class NormalizingFlow(nn.Module):
         self.trained = True
         
         if save_checkpoints:
+            if self.wandb_run:
+                artifact = wandb.Artifact("nf-model", type='model')
+                artifact.add_file(checkpoint_path)
+                self.wandb_run.log_artifact(artifact)
+            
             checkpoint = torch.load(checkpoint_path)
             if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint.keys():
                 self.load_state_dict(checkpoint['model_state_dict'])
