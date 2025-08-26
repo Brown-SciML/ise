@@ -7,6 +7,7 @@ results/
 logs/
 runs/
 old/
+dataset/
 experiment_models/
 untracked_folder/
 main.py

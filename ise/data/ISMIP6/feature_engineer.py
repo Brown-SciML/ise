@@ -186,7 +186,8 @@ class FeatureEngineer:
                     "exp",
                     "model",
                     "ivaf",
-                ]
+                    "year"
+                ] + list(self.data.columns[self.data.dtypes == bool])
             else:
                 dropped_columns = [
                     "id",
@@ -204,6 +205,7 @@ class FeatureEngineer:
                     "exp",
                     "model",
                     "ivaf",
+                    "year",
                 ]
             dropped_columns = [x for x in self.data.columns if x in dropped_columns]
             dropped_data = self.data[dropped_columns]
@@ -256,8 +258,8 @@ class FeatureEngineer:
         scaler_X.fit(X_data)
         X_scaled = scaler_X.transform(X_data)
         
-        categorical_cols = [x for x in self.X.columns if len(set(self.X[x])) <= 2]
-        self.X[categorical_cols] = self.X[categorical_cols].astype('category')
+        # categorical_cols = [x for x in self.X.columns if len(set(self.X[x])) <= 2]
+        # self.X[categorical_cols] = self.X[categorical_cols].astype('category')
 
         # Fit and transform y
         if isinstance(self.y, pd.DataFrame):
@@ -422,13 +424,28 @@ class FeatureEngineer:
         if data is not None:
             self.data = data
         if model_char_path is None:
-            model_char_path = f"./ise/utils/{self.ice_sheet}_model_characteristics.csv"
+            model_char_path = f"./ise/utils/data_files/{self.ice_sheet}_model_characteristics.csv"
         self.data = add_model_characteristics(self.data, model_char_path, encode, ids_path=ids_path)
         self._including_model_characteristics = True
 
         return self
-    
-    
+
+    def exclude_fetish_models(self, data=None, exclude='both'):
+        """
+        Excludes specific models from the dataset.
+
+        Args:
+            data (pd.DataFrame, optional): The dataset. If not provided, the class attribute 'data' is used.
+
+        Returns:
+            FeatureEngineer: The modified instance with specific models excluded.
+        """
+        if data is not None:
+            self.data = data
+        self.data = exclude_fetish_models(self.data, exclude)
+        return self
+
+
 def scale_data(data, scaler_path, ):
     """
     Scales the provided dataset using a pre-trained scaler.
@@ -470,7 +487,7 @@ def scale_data(data, scaler_path, ):
     return scaled
 
 def add_model_characteristics(
-    data, model_char_path=r"./ise/utils/model_characteristics.csv", encode=True, ids_path=None
+    data, model_char_path=r"./ise/utils/data_files/model_characteristics.csv", encode=True, ids_path=None
 ) -> pd.DataFrame:
     """
     Adds model characteristics to the dataset.
@@ -568,24 +585,6 @@ def add_lag_variables(data: pd.DataFrame, lag: int, verbose=True) -> pd.DataFram
 
 
     # Separate columns that won't be lagged and shouldn't be dropped
-    # cols_to_exclude = [
-    #     "id",
-    #     "cmip_model",
-    #     "pathway",
-    #     "exp",
-    #     "ice_sheet",
-    #     "Scenario",
-    #     "Ocean forcing",
-    #     "Ocean sensitivity",
-    #     "Ice shelf fracture",
-    #     "Tier",
-    #     "aogcm",
-    #     "id",
-    #     "exp",
-    #     "model",
-    #     "ivaf",
-    #     "sector",
-    # ]
     cols_to_exclude = [x for x in data.columns if x not in ("year", "pr_anomaly", "evspsbl_anomaly", "mrro_anomaly", "smb_anomaly", "ts_anomaly", "thermal_forcing", "salinity", "temperature")]
     cols_to_exclude = [x for x in cols_to_exclude if x in data.columns]
     temporal_indicator = "time" if "time" in data.columns else "year"
@@ -631,6 +630,26 @@ def add_lag_variables(data: pd.DataFrame, lag: int, verbose=True) -> pd.DataFram
     final_data = pd.concat(processed_segments, axis=0)
 
     return final_data
+
+def exclude_fetish_models(data: pd.DataFrame, exclude: str='both') -> pd.DataFrame:
+    """
+    Excludes specific models from the dataset.
+
+    Args:
+        data (pd.DataFrame): The input DataFrame.
+
+    Returns:
+        pd.DataFrame: The filtered DataFrame.
+    """
+    
+    if exclude == '16km':
+        return data[data.model != "fETISh_16km"]
+    elif exclude == '32km':
+        return data[data.model != "fETISh_32km"]
+    elif exclude == 'both':
+        return data[(data.model != "fETISh_16km") & (data.model != "fETISh_32km")]
+    else:
+        raise ValueError("exclude must be '16km', '32km', or 'both'")
 
 
 def fill_mrro_nans(data: pd.DataFrame, method) -> pd.DataFrame:

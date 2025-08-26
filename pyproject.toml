@@ -86,4 +86,7 @@ dependencies = [
     "zipp==3.20.2 ; python_full_version == '3.9.*'",
     "torchvision>=0.20.0",
     "transformers>=4.49.0",
+    "plotly>=6.3.0",
+    "nbformat>=5.10.4",
+    "wandb>=0.21.1",
 ]

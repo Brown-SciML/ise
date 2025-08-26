@@ -2,11 +2,12 @@ import torch
 from torch import nn, optim
 from nflows import distributions, flows, transforms
 from ise.utils.functions import to_tensor
-from ise.data.dataclasses import EmulatorDataset
+from ise.data.ISMIP6.dataclasses import EmulatorDataset
 import numpy as np
 import json
 import os
 from ise.utils.training import EarlyStoppingCheckpointer, CheckpointSaver
+import wandb
 
 class NormalizingFlow(nn.Module):
     """
@@ -79,9 +80,10 @@ class NormalizingFlow(nn.Module):
         self.optimizer = optim.Adam(self.flow.parameters())
         self.criterion = self.flow.log_prob
         self.trained = False
+        self.wandb_run = None
 
-    def fit(self, X, y, epochs=100, batch_size=64, save_checkpoints=True, 
-            checkpoint_path='checkpoint.pt', early_stopping=True, patience=10, verbose=True):
+    def fit(self, X, y, X_val=None, y_val=None, epochs=100, batch_size=64, save_checkpoints=True, 
+            checkpoint_path='checkpoint.pt', early_stopping=True, patience=10, verbose=True, wandb_run=None):
         """
         Trains the normalizing flow model using maximum likelihood estimation.
 
@@ -95,6 +97,7 @@ class NormalizingFlow(nn.Module):
             early_stopping (bool, optional): Whether to use early stopping. Defaults to True.
             patience (int, optional): Number of epochs to wait before early stopping. Defaults to 10.
             verbose (bool, optional): Whether to print training progress. Defaults to True.
+            wandb_run (wandb.run, optional): Weights & Biases run for logging. Defaults to None.
 
         Raises:
             ValueError: If checkpoint loading fails.
@@ -102,6 +105,8 @@ class NormalizingFlow(nn.Module):
         X, y = to_tensor(X).to(self.device), to_tensor(y).to(self.device)
         if y.ndimension() == 1:
             y = y.unsqueeze(1)
+        self.wandb_run = wandb_run
+        validate = True if X_val is not None and y_val is not None else False
             
         start_epoch = 1
         best_loss = float("inf")
@@ -117,6 +122,14 @@ class NormalizingFlow(nn.Module):
         dataset = EmulatorDataset(X, y, sequence_length=1, projection_length=self.output_sequence_length)
         data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
         self.train()
+        
+        if validate:
+            X_val, y_val = to_tensor(X_val).to(self.device), to_tensor(y_val).to(self.device)
+            if y_val.ndimension() == 1:
+                y_val = y_val.unsqueeze(1)
+
+            val_dataset = EmulatorDataset(X_val, y_val, sequence_length=1, projection_length=self.output_sequence_length)
+            val_data_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
         if save_checkpoints:
             if early_stopping:
@@ -136,11 +149,38 @@ class NormalizingFlow(nn.Module):
                     loss.backward()
                     self.optimizer.step()
                     epoch_loss.append(loss.item())
-                average_epoch_loss = sum(epoch_loss) / len(epoch_loss)
 
+                if validate:
+                    self.eval()
+                    val_losses = []
+                    with torch.no_grad():
+                        for val_x, val_y in val_data_loader:
+                            val_x = val_x.to(self.device).view(val_x.shape[0], -1)
+                            val_y = val_y.to(self.device)
+                            val_loss = torch.mean(-self.flow.log_prob(inputs=val_y, context=val_x))
+                            val_losses.append(val_loss.item())
+                    average_epoch_loss = sum(val_losses) / len(val_losses) if val_losses else float("inf")
+
+                    train_avg_loss = sum(epoch_loss) / len(epoch_loss) if epoch_loss else float("inf")
+                    
+                    if self.wandb_run:
+                        log_dict = {"epoch": epoch, "val_loss": average_epoch_loss}
+                        if train_avg_loss is not None:
+                            log_dict["train_loss"] = train_avg_loss
+                        self.wandb_run.log(log_dict)
+                    self.train()
+                else:
+                    average_epoch_loss = sum(epoch_loss) / len(epoch_loss)
+                    if self.wandb_run:
+                        self.wandb_run.log({"epoch": epoch, "loss": average_epoch_loss})
+                        
                 if save_checkpoints:
                     checkpointer(average_epoch_loss, epoch)
                     if hasattr(checkpointer, "early_stop") and checkpointer.early_stop:
+                        if self.wandb_run:
+                            artifact = wandb.Artifact("nf-model", type='model')
+                            artifact.add_file(checkpoint_path)
+                            self.wandb_run.log_artifact(artifact)
                         if verbose:
                             print("Early stopping")
                         break
