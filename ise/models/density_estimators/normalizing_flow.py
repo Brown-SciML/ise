@@ -39,20 +39,28 @@ class NormalizingFlow(nn.Module):
         output_size=1,
         output_sequence_length=86,
         num_flow_transforms=5,
+        flow_hidden_features=16,
     ):
         super(NormalizingFlow, self).__init__()
         self.num_flow_transforms = num_flow_transforms
         self.num_input_features = input_size
         self.num_predicted_sle = output_size
-        self.flow_hidden_features = output_size * 2
+        # self.flow_hidden_features = output_size * 2
+        self.flow_hidden_features = flow_hidden_features
         self.output_sequence_length = output_sequence_length
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.to(self.device)
 
+
         # Define base distribution
+        context_encoder = nn.Sequential(
+            nn.Linear(self.num_input_features, self.flow_hidden_features),
+            nn.ReLU(),
+            nn.Linear(self.flow_hidden_features, output_size * 2)
+        )
         self.base_distribution = distributions.normal.ConditionalDiagonalNormal(
             shape=[self.num_predicted_sle],
-            context_encoder=nn.Linear(self.num_input_features, self.flow_hidden_features),
+            context_encoder=context_encoder,
         )
 
         # Create flow transforms
