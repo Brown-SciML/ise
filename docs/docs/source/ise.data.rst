@@ -4,37 +4,23 @@ ise.data
 .. Submodules
 .. ----------
 
-ise.data.dataclasses
+ise.data.ISMIP6
 ---------------------------
 
-.. automodule:: ise.data.dataclasses
+.. automodule:: ise.data.ISMIP6
    :members:
    :undoc-members:
    :show-inheritance:
 
-ise.data.feature\_engineer
+ise.data.CMIP
 ---------------------------------
 
-.. automodule:: ise.data.feature_engineer
+.. automodule:: ise.data.CMIP
    :members:
    :undoc-members:
    :show-inheritance:
 
-ise.data.process
------------------------
 
-.. automodule:: ise.data.process
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-ise.data.scaler
-----------------------
-
-.. automodule:: ise.data.scaler
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 .. Module contents
 .. ---------------

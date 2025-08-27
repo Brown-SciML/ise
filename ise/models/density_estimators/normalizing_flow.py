@@ -85,13 +85,11 @@ class NormalizingFlow(nn.Module):
         self.flow = flows.base.Flow(transform=self.t, distribution=self.base_distribution)
 
         # Define optimizer and criterion
-        self.optimizer = optim.Adam(self.flow.parameters(), lr=1e-3, weight_decay=1e-6)
-        self.criterion = self.flow.log_prob
         self.trained = False
         self.wandb_run = None
 
     def fit(self, X, y, X_val=None, y_val=None, epochs=100, batch_size=64, save_checkpoints=True, 
-            checkpoint_path='checkpoint.pt', early_stopping=True, patience=10, verbose=True, wandb_run=None):
+            checkpoint_path='checkpoint.pt', early_stopping=True, patience=10, verbose=True, wandb_run=None, lr=1e-4, wd=1e-6):
         """
         Trains the normalizing flow model using maximum likelihood estimation.
 
@@ -110,6 +108,10 @@ class NormalizingFlow(nn.Module):
         Raises:
             ValueError: If checkpoint loading fails.
         """
+        
+        self.optimizer = optim.AdamW(self.flow.parameters(), lr=lr, weight_decay=wd)
+        self.criterion = self.flow.log_prob
+        
         self.to(self.device)
         X, y = to_tensor(X).to(self.device), to_tensor(y).to(self.device)
         if y.ndimension() == 1:
@@ -201,7 +203,8 @@ class NormalizingFlow(nn.Module):
         
         if save_checkpoints:
             if self.wandb_run:
-                artifact = wandb.Artifact("nf-model", type='model')
+                model_name = checkpoint_path.split('/')[-1].replace('.pt', '')
+                artifact = wandb.Artifact(model_name, type='model')
                 artifact.add_file(checkpoint_path)
                 self.wandb_run.log_artifact(artifact)
             
