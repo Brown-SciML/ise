@@ -89,4 +89,5 @@ dependencies = [
     "plotly>=6.3.0",
     "nbformat>=5.10.4",
     "wandb>=0.21.1",
+    "optuna>=4.5.0",
 ]

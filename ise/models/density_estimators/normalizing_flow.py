@@ -87,6 +87,8 @@ class NormalizingFlow(nn.Module):
         # Define optimizer and criterion
         self.trained = False
         self.wandb_run = None
+        self.optimizer = optim.AdamW(self.flow.parameters(),)
+        
 
     def fit(self, X, y, X_val=None, y_val=None, epochs=100, batch_size=64, save_checkpoints=True, 
             checkpoint_path='checkpoint.pt', early_stopping=True, patience=10, verbose=True, wandb_run=None, lr=1e-4, wd=1e-6):
@@ -109,6 +111,11 @@ class NormalizingFlow(nn.Module):
             ValueError: If checkpoint loading fails.
         """
         
+        
+        if self.trained:
+            print("Model is already trained. Skipping training.")
+            return
+
         self.optimizer = optim.AdamW(self.flow.parameters(), lr=lr, weight_decay=wd)
         self.criterion = self.flow.log_prob
         
@@ -237,7 +244,7 @@ class NormalizingFlow(nn.Module):
             return samples.detach().cpu().numpy()
         return samples
 
-    def get_latent(self, x, latent_constant=0.0):
+    def get_latent(self, x, latent_dim=1):
         """
         Computes the latent space representation of the given input.
 
@@ -250,8 +257,10 @@ class NormalizingFlow(nn.Module):
         """
 
         x = to_tensor(x).to(self.device)
-        latent_constant_tensor = torch.ones((x.shape[0], 1)).to(self.device) * latent_constant
-        z, _ = self.t(latent_constant_tensor.float(), context=x)
+        # latent_constant_tensor = torch.ones((x.shape[0], 1)).to(self.device) * latent_constant
+        # z, _ = self.t(latent_constant_tensor.float(), context=x)
+        
+        z = self.base_distribution.sample(latent_dim, context=x).squeeze(2) # collapse third 1-d dimension
         return z
 
     def aleatoric(self, features, num_samples, batch_size=128):
@@ -302,6 +311,8 @@ class NormalizingFlow(nn.Module):
             "device": self.device,
             "best_loss": self.best_loss,
             "epochs_trained": self.epochs_trained,
+            "flow_hidden_size": self.flow_hidden_size,
+            "num_flows": self.num_flows
         }
         metadata_path = path + "_metadata.json"
 
@@ -333,7 +344,9 @@ class NormalizingFlow(nn.Module):
 
         model = NormalizingFlow(
             input_size=metadata["input_size"], 
-            output_size=metadata["output_size"]
+            output_size=metadata["output_size"],
+            flow_hidden_features=metadata["flow_hidden_size"],
+            num_flow_transforms=metadata["num_flows"]
         )
 
         checkpoint = torch.load(path, map_location="cpu" if not torch.cuda.is_available() else None)

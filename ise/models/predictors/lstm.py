@@ -5,6 +5,7 @@ import warnings
 import pandas as pd
 import numpy as np
 import os
+import wandb
 
 from ise.utils.functions import to_tensor
 from ise.data.ISMIP6.dataclasses import EmulatorDataset
@@ -40,7 +41,7 @@ class LSTM(nn.Module):
         output_size (int, optional): Number of output features. Defaults to 1.
         criterion (torch.nn.modules.loss._Loss, optional): Loss function. Defaults to MSELoss.
         output_sequence_length (int, optional): Number of output time steps. Defaults to 86.
-        optimizer (torch.optim.Optimizer, optional): Optimizer type. Defaults to Adam.
+        optimizer (torch.optim.Optimizer, optional): Optimizer type. Defaults to AdamW.
     """
 
     def __init__(
@@ -51,7 +52,9 @@ class LSTM(nn.Module):
         output_size=1,
         criterion=torch.nn.MSELoss(),
         output_sequence_length=86,
-        optimizer=optim.Adam
+        optimizer=optim.AdamW,
+        lr=1e-4,
+        wd=1e-6,
     ):
         super(LSTM, self).__init__()
 
@@ -76,7 +79,7 @@ class LSTM(nn.Module):
         self.linear_out = nn.Linear(in_features=32, out_features=output_size)
 
         # Initialize optimizer and other components
-        self.optimizer = optimizer(self.parameters())
+        self.optimizer = optimizer(self.parameters(), lr=lr, weight_decay=wd)
         self.dropout = nn.Dropout(p=0.2)
         self.criterion = criterion
         self.trained = False
@@ -120,7 +123,7 @@ class LSTM(nn.Module):
     
     def fit(self, X, y, epochs=100, sequence_length=5, batch_size=64, criterion=None, X_val=None, y_val=None, 
             save_checkpoints=True, checkpoint_path='checkpoint.pt', early_stopping=False, patience=10, 
-            verbose=True, dataclass=EmulatorDataset):
+            verbose=True, dataclass=EmulatorDataset, wandb_run=None, ):
         """
         Trains the LSTM model on the provided data.
 
@@ -155,6 +158,7 @@ class LSTM(nn.Module):
         X, y = to_tensor(X).to(self.device), to_tensor(y).to(self.device)
         if y.ndimension() == 1:
             y = y.unsqueeze(1)
+        self.wandb_run = wandb_run
             
         # Check if a checkpoint exists and load it
         start_epoch = 1
@@ -242,7 +246,11 @@ class LSTM(nn.Module):
                             if verbose:
                                 print("Early stopping") 
                             break
-                        
+                    
+                    if self.wandb_run:
+                        log_dict = {"epoch": epoch, "train_loss": sum(batch_losses) / len(batch_losses), "val_loss": val_loss.item()}
+                        wandb.log(log_dict)
+
                     if verbose:
                         print(f"[epoch/total]: [{epoch}/{epochs}], train loss: {sum(batch_losses) / len(batch_losses)}, val mse: {val_loss:.6f} -- {getattr(checkpointer, 'log', '') if checkpointer is not None else ''}")
                 else:
@@ -257,6 +265,12 @@ class LSTM(nn.Module):
         
         # loads best model
         if save_checkpoints:
+            if self.wandb_run:
+                model_name = checkpoint_path.split('/')[-1]
+                artifact = wandb.Artifact(model_name, type="model")
+                artifact.add_file(checkpoint_path)
+                self.wandb_run.log_artifact(artifact)
+
             checkpoint = torch.load(checkpoint_path)
             if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint.keys():
                 self.load_state_dict(checkpoint['model_state_dict'])
@@ -305,5 +319,6 @@ class LSTM(nn.Module):
             X_test_batch = X_test_batch.to(self.device)
             y_pred = self.forward(X_test_batch)
             preds = torch.cat((preds, y_pred), 0)
+        self.train()
 
         return preds
