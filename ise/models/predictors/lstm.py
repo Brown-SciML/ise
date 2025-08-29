@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import os
 import wandb
+import json
 
 from ise.utils.functions import to_tensor
 from ise.data.ISMIP6.dataclasses import EmulatorDataset
@@ -83,6 +84,7 @@ class LSTM(nn.Module):
         self.dropout = nn.Dropout(p=0.2)
         self.criterion = criterion
         self.trained = False
+        self.sequence_length = None
 
     def forward(self, x):
         """
@@ -159,6 +161,7 @@ class LSTM(nn.Module):
         if y.ndimension() == 1:
             y = y.unsqueeze(1)
         self.wandb_run = wandb_run
+        self.sequence_length = sequence_length
             
         # Check if a checkpoint exists and load it
         start_epoch = 1
@@ -280,8 +283,9 @@ class LSTM(nn.Module):
             else:
                 self.load_state_dict(checkpoint)
             # os.remove(checkpoint_path)
+        self.trained = True
 
-    def predict(self, X, sequence_length=5, batch_size=64, dataclass=EmulatorDataset):
+    def predict(self, X, sequence_length=None, batch_size=64, dataclass=EmulatorDataset):
         """
         Generates predictions using the trained LSTM model.
 
@@ -304,6 +308,9 @@ class LSTM(nn.Module):
 
         self.eval()
         self.to(self.device)
+        
+        if sequence_length is None:
+            sequence_length = self.sequence_length
 
         # Convert data to numpy array if pandas DataFrame
         if isinstance(X, pd.DataFrame):
@@ -322,3 +329,163 @@ class LSTM(nn.Module):
         self.train()
 
         return preds
+
+
+    def save(self, model_path: str):
+        """
+        Saves the LSTM model weights and metadata.
+
+        - Writes <model_path> (state_dict) and <model_path>_metadata.json (config).
+        - Records architecture, optimizer type & hparams (lr/weight_decay), and loss name.
+        - Removes the training checkpoint file if this instance has one.
+
+        Args:
+            model_path (str): Destination file path ending in '.pth'.
+
+        Raises:
+            ValueError: If the model has not been trained yet.
+        """
+        if not getattr(self, "trained", False):
+            raise ValueError("Train the model before saving.")
+
+        model_dir = os.path.dirname(model_path) or "."
+        os.makedirs(model_dir, exist_ok=True)
+
+        # Pull optimizer hyperparams if available
+        opt_group = self.optimizer.param_groups[0] if hasattr(self, "optimizer") else {}
+        lr = float(opt_group.get("lr", 1e-4))
+        weight_decay = float(opt_group.get("weight_decay", 0.0))
+
+        metadata = {
+            "model_type": self.__class__.__name__,
+            "version": "1.0",
+            "device": "cuda" if torch.cuda.is_available() else "cpu",
+            "architecture": {
+                "lstm_num_layers": int(self.lstm_num_layers),
+                "lstm_num_hidden": int(self.lstm_num_hidden),
+                "input_size": int(self.input_size),
+                "output_size": int(self.output_size),
+                "output_sequence_length": int(self.output_sequence_length),
+                "sequence_length": int(self.sequence_length),
+                # Useful to have if you ever change these later:
+                "fc_hidden": int(self.linear1.out_features),
+                "dropout_p": float(getattr(self.dropout, "p", 0.0)),
+            },
+            "criterion": getattr(self.criterion, "__class__", type(self.criterion)).__name__,
+            "optimizer": {
+                "type": self.optimizer.__class__.__name__ if hasattr(self, "optimizer") else "AdamW",
+                "lr": lr,
+                "weight_decay": weight_decay,
+            },
+            "trained": bool(getattr(self, "trained", False)),
+            "best_loss": float(getattr(self, "best_loss", float("inf"))),
+            "epochs_trained": int(getattr(self, "epochs_trained", 0)),
+            "path": os.path.basename(model_path),
+        }
+
+        # Save metadata JSON
+        metadata_path = model_path.replace(".pth", "_metadata.json")
+        with open(metadata_path, "w") as f:
+            json.dump(metadata, f, indent=4)
+        print(f"Model metadata saved to {metadata_path}")
+
+        # Save model weights
+        torch.save(self.state_dict(), model_path)
+        print(f"Model parameters saved to {model_path}")
+
+        # Optionally remove training checkpoint if it exists
+        if hasattr(self, "checkpoint_path") and isinstance(self.checkpoint_path, str):
+            try:
+                if os.path.isfile(self.checkpoint_path):
+                    os.remove(self.checkpoint_path)
+                    print(f"Removed training checkpoint: {self.checkpoint_path}")
+            except OSError:
+                pass
+
+    @classmethod
+    def load(cls, model_path: str) -> "LSTM":
+        """
+        Loads a trained LSTM model from disk.
+
+        Expects:
+            - <model_path> (a .pth with state_dict)
+            - <model_path>_metadata.json (hyperparams & config)
+
+        Returns:
+            LSTM: A model instance reconstructed with saved hyperparams, loss,
+                  and optimizer type (with saved lr/weight_decay).
+
+        Raises:
+            FileNotFoundError: If weights or metadata files are missing.
+            ValueError: If the saved model_type does not match this class.
+        """
+        metadata_path = model_path.replace(".pth", "_metadata.json")
+        if not os.path.isfile(metadata_path):
+            raise FileNotFoundError(f"Metadata file not found: {metadata_path}")
+        if not os.path.isfile(model_path):
+            raise FileNotFoundError(f"Model weights file not found: {model_path}")
+
+        with open(metadata_path, "r") as f:
+            metadata = json.load(f)
+
+        if metadata.get("model_type") != cls.__name__:
+            raise ValueError(
+                f"Metadata type {metadata.get('model_type')} does not match {cls.__name__}"
+            )
+
+        arch = metadata["architecture"]
+        crit_name = metadata.get("criterion", "MSELoss")
+        opt_info = metadata.get("optimizer", {})
+        opt_name = opt_info.get("type", "AdamW")
+        lr = float(opt_info.get("lr", 1e-4))
+        wd = float(opt_info.get("weight_decay", 0.0))
+
+        # Loss + Optimizer lookup (extend as needed)
+        loss_lookup = {
+            "MSELoss": torch.nn.MSELoss(),
+            "L1Loss": torch.nn.L1Loss(),
+            "HuberLoss": torch.nn.HuberLoss(),
+            "SmoothL1Loss": torch.nn.SmoothL1Loss(),
+            "CrossEntropyLoss": torch.nn.CrossEntropyLoss(),
+            "BCELoss": torch.nn.BCELoss(),
+            "BCEWithLogitsLoss": torch.nn.BCEWithLogitsLoss(),
+        }
+        optim_lookup = {
+            "Adam": optim.Adam,
+            "AdamW": optim.AdamW,
+            "SGD": optim.SGD,
+            "RMSprop": optim.RMSprop,
+            "Adagrad": optim.Adagrad,
+        }
+
+        criterion = loss_lookup.get(crit_name, torch.nn.MSELoss())
+        opt_cls = optim_lookup.get(opt_name, optim.AdamW)
+
+        # Re-instantiate the model with saved hyperparams
+        model = cls(
+            lstm_num_layers=int(arch["lstm_num_layers"]),
+            lstm_hidden_size=int(arch["lstm_num_hidden"]),
+            input_size=int(arch["input_size"]),
+            output_size=int(arch["output_size"]),
+            output_sequence_length=int(arch["output_sequence_length"]),
+            criterion=criterion,
+            optimizer=opt_cls,
+            lr=lr,
+            wd=wd,
+        )
+
+        model.output_sequence_length = int(arch["sequence_length"])
+
+        # Load weights (CPU-safe)
+        state_dict = torch.load(
+            model_path, map_location="cpu" if not torch.cuda.is_available() else None
+        )
+        model.load_state_dict(state_dict)
+
+        # Restore misc flags/attrs for convenience
+        model.trained = bool(metadata.get("trained", True))
+        model.best_loss = float(metadata.get("best_loss", float("inf")))
+        model.epochs_trained = int(metadata.get("epochs_trained", 0))
+
+        model.eval()
+        return model
