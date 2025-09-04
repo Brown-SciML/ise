@@ -360,6 +360,10 @@ class NormalizingFlow(nn.Module):
             model.trained = True
             
         model.trained = True
+        model.best_loss = metadata.get("best_loss", None)
+        model.epochs_trained = metadata.get("epochs_trained", None)
+        model.flow_hidden_size = metadata.get("flow_hidden_size", None)
+        model.num_flows = metadata.get("num_flows", None)
         model.to(model.device)
         model.eval()
         return model

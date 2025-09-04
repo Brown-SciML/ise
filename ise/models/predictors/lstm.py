@@ -56,6 +56,7 @@ class LSTM(nn.Module):
         optimizer=optim.AdamW,
         lr=1e-4,
         wd=1e-6,
+        dropout=0.0,
     ):
         super(LSTM, self).__init__()
 
@@ -74,6 +75,7 @@ class LSTM(nn.Module):
             hidden_size=int(lstm_hidden_size),
             batch_first=True,
             num_layers=lstm_num_layers,
+            dropout=dropout,
         )
         self.relu = nn.ReLU()
         self.linear1 = nn.Linear(in_features=lstm_hidden_size, out_features=32)
@@ -81,7 +83,7 @@ class LSTM(nn.Module):
 
         # Initialize optimizer and other components
         self.optimizer = optimizer(self.parameters(), lr=lr, weight_decay=wd)
-        self.dropout = nn.Dropout(p=0.2)
+        self.dropout = nn.Dropout(p=dropout) if dropout > 0.0 else None
         self.criterion = criterion
         self.trained = False
         self.sequence_length = None
@@ -162,7 +164,7 @@ class LSTM(nn.Module):
             y = y.unsqueeze(1)
         self.wandb_run = wandb_run
         self.sequence_length = sequence_length
-            
+
         # Check if a checkpoint exists and load it
         start_epoch = 1
         best_loss = float("inf")
@@ -203,7 +205,7 @@ class LSTM(nn.Module):
 
         # Create dataset and data loader
         dataset = dataclass(X, y, sequence_length=sequence_length, projection_length=self.output_sequence_length)
-        data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
+        data_loader = torch.utils.data.DataLoader(dataset, batch_size=int(batch_size), shuffle=True)
 
         # Set model to training mode
         self.train()
@@ -221,7 +223,7 @@ class LSTM(nn.Module):
             checkpointer = None
         
         # Training loop
-        if start_epoch < epochs:
+        if start_epoch <= epochs:
             for epoch in range(start_epoch, epochs + 1):
                 self.train()
                 batch_losses = []
@@ -384,7 +386,7 @@ class LSTM(nn.Module):
         }
 
         # Save metadata JSON
-        metadata_path = model_path.replace(".pth", "_metadata.json")
+        metadata_path = model_path.replace(".pt", "_metadata.json")
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=4)
         print(f"Model metadata saved to {metadata_path}")
@@ -394,13 +396,13 @@ class LSTM(nn.Module):
         print(f"Model parameters saved to {model_path}")
 
         # Optionally remove training checkpoint if it exists
-        if hasattr(self, "checkpoint_path") and isinstance(self.checkpoint_path, str):
-            try:
-                if os.path.isfile(self.checkpoint_path):
-                    os.remove(self.checkpoint_path)
-                    print(f"Removed training checkpoint: {self.checkpoint_path}")
-            except OSError:
-                pass
+        # if hasattr(self, "checkpoint_path") and isinstance(self.checkpoint_path, str):
+        #     try:
+        #         if os.path.isfile(self.checkpoint_path):
+        #             os.remove(self.checkpoint_path)
+        #             print(f"Removed training checkpoint: {self.checkpoint_path}")
+        #     except OSError:
+        #         pass
 
     @classmethod
     def load(cls, model_path: str) -> "LSTM":
@@ -419,7 +421,7 @@ class LSTM(nn.Module):
             FileNotFoundError: If weights or metadata files are missing.
             ValueError: If the saved model_type does not match this class.
         """
-        metadata_path = model_path.replace(".pth", "_metadata.json")
+        metadata_path = model_path.replace(".pth", "_metadata.json").replace(".pt", "_metadata.json")
         if not os.path.isfile(metadata_path):
             raise FileNotFoundError(f"Metadata file not found: {metadata_path}")
         if not os.path.isfile(model_path):
@@ -474,7 +476,7 @@ class LSTM(nn.Module):
             wd=wd,
         )
 
-        model.output_sequence_length = int(arch["sequence_length"])
+        model.sequence_length = int(arch["sequence_length"])
 
         # Load weights (CPU-safe)
         state_dict = torch.load(
@@ -486,6 +488,7 @@ class LSTM(nn.Module):
         model.trained = bool(metadata.get("trained", True))
         model.best_loss = float(metadata.get("best_loss", float("inf")))
         model.epochs_trained = int(metadata.get("epochs_trained", 0))
+        model.sequence_length = int(arch["sequence_length"])
 
         model.eval()
         return model

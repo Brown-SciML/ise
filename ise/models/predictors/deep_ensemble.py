@@ -190,6 +190,7 @@ class DeepEnsemble(nn.Module):
                     "path": os.path.join("ensemble_members", f"member_{i+1}.pth"),
                     "best_loss": float(member.best_loss),
                     "epochs_trained": int(member.epochs_trained),
+                    "sequence_length": int(member.sequence_length),
                 }
                 for i, member in enumerate(self.ensemble_members)
             ],
@@ -269,6 +270,7 @@ class DeepEnsemble(nn.Module):
             state_dict = torch.load(member_path, map_location="cpu" if not torch.cuda.is_available() else None)
             member.load_state_dict(state_dict)
             member.trained = True
+            member.sequence_length = member_metadata.get("sequence_length", None)
             member.eval()
             ensemble_members.append(member)
 
