@@ -267,7 +267,7 @@ class DeepEnsemble(nn.Module):
                 output_size=member_metadata["output_size"],
                 criterion=criterion,
             )
-            state_dict = torch.load(member_path, map_location="cpu" if not torch.cuda.is_available() else None)
+            state_dict = torch.load(member_path, map_location="cpu" if not torch.cuda.is_available() else None, weights_only=True)
             member.load_state_dict(state_dict)
             member.trained = True
             member.sequence_length = member_metadata.get("sequence_length", None)
@@ -275,7 +275,7 @@ class DeepEnsemble(nn.Module):
             ensemble_members.append(member)
 
         model = cls(ensemble_members=ensemble_members)
-        ensemble_state_dict = torch.load(model_path, map_location="cpu" if not torch.cuda.is_available() else None)
+        ensemble_state_dict = torch.load(model_path, map_location="cpu" if not torch.cuda.is_available() else None, weights_only=True)
         model.load_state_dict(ensemble_state_dict, strict=False)
         model.eval()
         return model

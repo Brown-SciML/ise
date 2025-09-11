@@ -349,7 +349,7 @@ class NormalizingFlow(nn.Module):
             num_flow_transforms=metadata["num_flows"]
         )
 
-        checkpoint = torch.load(path, map_location="cpu" if not torch.cuda.is_available() else None)
+        checkpoint = torch.load(path, map_location="cpu" if not torch.cuda.is_available() else None, weights_only=True)
         
         if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint.keys():
             model.load_state_dict(checkpoint['model_state_dict'])
