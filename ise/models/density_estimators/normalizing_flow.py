@@ -311,8 +311,8 @@ class NormalizingFlow(nn.Module):
             "device": self.device,
             "best_loss": self.best_loss,
             "epochs_trained": self.epochs_trained,
-            "flow_hidden_size": self.flow_hidden_size,
-            "num_flows": self.num_flows
+            "flow_hidden_size": self.flow_hidden_features,
+            "num_flows": self.num_flow_transforms
         }
         metadata_path = path + "_metadata.json"
 

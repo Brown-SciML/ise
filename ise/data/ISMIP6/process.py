@@ -12,6 +12,9 @@ from tqdm import tqdm
 from ise.data.ISMIP6.scaler import LogScaler, RobustScaler, StandardScaler
 from ise.models.dim_reducers.pca import PCA
 from ise.utils.functions import get_all_filepaths
+from ise.data.forcings import ForcingFile
+from ise.data.grids import GridFile
+from ise.data.utils import convert_and_subset_times
 
 
 class ProjectionProcessor:
@@ -566,95 +569,6 @@ class ProjectionProcessor:
 
         return 1
 
-
-def convert_and_subset_times(dataset):
-    """
-    Converts time variables in an xarray dataset to a uniform format and subsets time to the range 2015-2100.
-
-    Args:
-        dataset (xarray.Dataset): The dataset with time values to be converted and subset.
-
-    Returns:
-        xarray.Dataset: The dataset with standardized time format and subset to the correct time range.
-
-    Raises:
-        ValueError: If time values are not in a recognizable format.
-    """
-
-    if isinstance(dataset.time.values[0], cftime._cftime.DatetimeNoLeap) or isinstance(
-        dataset.time.values[0], cftime._cftime.Datetime360Day
-    ):
-        datetimeindex = dataset.indexes["time"].to_datetimeindex()
-        dataset["time"] = datetimeindex
-
-    elif (
-        isinstance(dataset.time.values[0], np.float32)
-        or isinstance(dataset.time.values[0], np.float64)
-        or isinstance(dataset.time.values[0], np.int32)
-        or isinstance(dataset.time.values[0], np.int64)
-    ):
-        try:
-            units = dataset.time.attrs["units"]
-        except KeyError:
-            units = dataset.time.attrs["unit"]
-        units = units.replace("days since ", "").split(" ")[0]
-
-        if units == "2000-1-0":  # VUB AISMPALEO
-            units = "2000-1-1"
-        elif units == "day":  # NCAR CISM exp7 - "day as %Y%m%d.%f"?
-            units = "2014-1-1"
-
-        if units == "seconds":  # VUW PISM -- seconds since 1-1-1 00:00:00
-            start_date = np.datetime64(
-                datetime.strptime("0001-01-01 00:00:00", "%Y-%m-%d %H:%M:%S")
-            )
-            dataset["time"] = np.array(
-                [start_date + np.timedelta64(int(x), "s") for x in dataset.time.values]
-            )
-        elif units == "2008-1-1" and dataset.time[-1] == 157785.0:  # UAF?
-            # every 5 years but still len(time) == 86.. assume we keep them all for 2015-2100
-            dataset["time"] = np.array(
-                [
-                    np.datetime64(datetime.strptime(f"{x}-01-01 00:00:00", "%Y-%m-%d %H:%M:%S"))
-                    for x in range(2015, 2101)
-                ]
-            )
-        else:
-            try:
-                start_date = np.datetime64(
-                    datetime.strptime(units.replace("days since ", ""), "%Y-%m-%d")
-                )
-            except ValueError:
-                start_date = np.datetime64(
-                    datetime.strptime(units.replace("days since ", ""), "%d-%m-%Y")
-                )
-
-            dataset["time"] = np.array(
-                [start_date + np.timedelta64(int(x), "D") for x in dataset.time.values]
-            )
-    else:
-        raise ValueError(f"Time values are not recognized: {type(dataset.time.values[0])}")
-
-    if len(dataset.time) > 86:
-        # make sure the max date is 2100
-        # dataset = dataset.sel(time=slice(np.datetime64('2014-01-01'), np.datetime64('2101-01-01')))
-        dataset = dataset.sel(time=slice("2012-01-01", "2101-01-01"))
-
-        # if you still have more than 86, take the previous 86 values from 2100
-        if len(dataset.time) > 86:
-            # LSCE GRISLI has two 2015 measurements
-
-            # dataset = dataset.sel(time=slice(dataset.time.values[len(dataset.time) - 86], dataset.time.values[-1]))
-            start_idx = len(dataset.time) - 86
-            dataset = dataset.isel(time=slice(start_idx, len(dataset.time)))
-
-    if len(dataset.time) != 86:
-        warnings.warn(
-            "After subsetting there are still not 86 time points. Go back and check logs."
-        )
-        print(f"dataset_length={len(dataset.time)} -- {dataset.attrs}")
-
-    return dataset
 
 
 def get_model_densities(zenodo_directory: str, output_path: str = None):
@@ -1238,7 +1152,9 @@ def process_AIS_atmospheric_sectors(forcing_directory, grid_file):
     if not filepaths:
         raise ValueError("No files found. Check the path to the forcing files.")
 
-    sectors = _format_grid_file(grid_file)
+    gridfile = GridFile(ice_sheet=ice_sheet, filepath=grid_file)
+    gridfile.format_grids()
+    sectors = gridfile.get_sectors()
     unique_sectors = np.unique(sectors)
     all_data = []
     for i, fp in enumerate(filepaths):
@@ -1247,32 +1163,17 @@ def process_AIS_atmospheric_sectors(forcing_directory, grid_file):
         print(f'File: {fp.split("/")[-1]}')
         print(f"Time since start: {(time.time()-start_time) // 60} minutes")
 
-        dataset = xr.open_dataset(fp, decode_times=False)
-        dataset = convert_and_subset_times(dataset)
+        forcingfile = ForcingFile(ice_sheet, realm='atmos', filepath=fp)
+        forcingfile.load(decode_times=False)
+        forcingfile.format_timestamps()
 
-        # handle extra dimensions and variables
-        try:
-            dataset = dataset.drop_dims("nv4")
-        except ValueError:
-            pass
+        forcingfile.drop_vars(["nv4", "z_bnds", "lat", "lon", "mapping", "time_bounds", "lat2d", "lon2d"])
+        forcingfile.assign_sectors(gridfile)
 
-        for var in ["z_bnds", "lat", "lon", "mapping", "time_bounds", "lat2d", "lon2d"]:
-            try:
-                dataset = dataset.drop(labels=[var])
-            except ValueError:
-                pass
-        if "z" in dataset.dims:
-            dataset = dataset.mean(dim="z", skipna=True)
-
-        # dataset = dataset.transpose("time", "x", "y", ...)
-        dataset["sector"] = sectors
 
         aogcm_data = []
         for sector in unique_sectors:
-            mask = dataset.sector == sector
-            sector_averages = dataset.where(
-                mask,
-            ).mean(dim=["x", "y"], skipna=True)
+            sector_averages = forcingfile.average_over_sector(sector)
             sector_averages = sector_averages.to_dataframe()
             sector_averages["aogcm"] = fp.split("/")[-3].lower()
             sector_averages["year"] = np.arange(1, 87)
@@ -1318,7 +1219,9 @@ def process_AIS_oceanic_sectors(forcing_directory, grid_file):
     print("Files to be processed...")
     print([f.split("/")[-2] for f in filepaths])
 
-    sectors = _format_grid_file(grid_file)
+    gridfile = GridFile(ice_sheet="AIS", filepath=grid_file)
+    gridfile.format_grids()
+    sectors = gridfile.get_sectors()
     unique_sectors = np.unique(sectors)
     all_data = []
     for i, directory in enumerate(filepaths):
@@ -1334,65 +1237,36 @@ def process_AIS_oceanic_sectors(forcing_directory, grid_file):
         thermal_forcing_file = [f for f in files if "thermal_forcing" in f][0]
         salinity_file = [f for f in files if "salinity" in f][0]
         temperature_file = [f for f in files if "temperature" in f][0]
+        
+        tffile = ForcingFile(ice_sheet="AIS", realm='ocean', filepath=f"{directory}/1995-2100/{thermal_forcing_file}", varname='thermal_forcing')
+        tffile.load(decode_times=False)
+        tffile.format_timestamps()
+        
+        salfile = ForcingFile(ice_sheet="AIS", realm='ocean', filepath=f"{directory}/1995-2100/{salinity_file}", varname='salinity')
+        salfile.load(decode_times=False)
+        salfile.format_timestamps()
+        
+        tempfile = ForcingFile(ice_sheet="AIS", realm='ocean', filepath=f"{directory}/1995-2100/{temperature_file}", varname='temperature')
+        tempfile.load(decode_times=False)
+        tempfile.format_timestamps()
 
-        thermal_forcing = xr.open_dataset(
-            f"{directory}/1995-2100/{thermal_forcing_file}", decode_times=False
-        )
-        salinity = xr.open_dataset(f"{directory}/1995-2100/{salinity_file}", decode_times=False)
-        temperature = xr.open_dataset(
-            f"{directory}/1995-2100/{temperature_file}", decode_times=False
-        )
-
-        thermal_forcing = convert_and_subset_times(thermal_forcing)
-        salinity = convert_and_subset_times(salinity)
-        temperature = convert_and_subset_times(temperature)
-
-        data = {
-            "thermal_forcing": thermal_forcing,
-            "salinity": salinity,
-            "temperature": temperature,
-        }
         aogcm_data = {"thermal_forcing": [], "salinity": [], "temperature": []}
-        for name, dataset in data.items():
-            # handle extra dimensions and variables
-            try:
-                dataset = dataset.drop_dims("nv4")
-            except ValueError:
-                pass
 
-            for var in [
-                "z_bnds",
-                "lat",
-                "lon",
-                "mapping",
-                "time_bounds",
-                "lat2d",
-                "lon2d",
-                "polar_stereographic",
-            ]:
-                try:
-                    dataset = dataset.drop(labels=[var])
-                except ValueError:
-                    pass
-            if "z" in dataset.dims:
-                dataset = dataset.mean(dim="z", skipna=True)
-
-            try:
-                dataset["sector"] = sectors
-            except ValueError:
-                dataset["time"] = np.arange(1, 87)
-                dataset["sector"] = sectors
+        for datafile in [tffile, salfile, tempfile]:
+            
+            datafile.drop_vars(["nv4", "z_bnds", "lat", "lon", "mapping", "time_bounds", "lat2d", "lon2d", "polar_stereographic"])
+            datafile.aggregate_depth(method="mean")
+            datafile.assign_sectors(gridfile)
 
             for sector in unique_sectors:
-                mask = dataset.sector == sector
-                sector_averages = dataset.where(mask, drop=True).mean(dim=["x", "y"])
+                sector_averages = datafile.average_over_sector(sector)
                 sector_averages = sector_averages.to_dataframe()
                 sector_averages["aogcm"] = _format_AIS_ocean_aogcm_name(
                     directory.split("/")[-2].lower()
                 )
                 sector_averages["year"] = np.arange(1, 87)
                 sector_averages = sector_averages.reset_index(drop=True)
-                aogcm_data[name].append(sector_averages)
+                aogcm_data[datafile.varname].append(sector_averages)
         df = pd.concat(
             [
                 pd.concat(aogcm_data["thermal_forcing"]),

@@ -585,7 +585,7 @@ def add_lag_variables(data: pd.DataFrame, lag: int, verbose=True) -> pd.DataFram
 
 
     # Separate columns that won't be lagged and shouldn't be dropped
-    cols_to_exclude = [x for x in data.columns if x not in ("year", "pr_anomaly", "evspsbl_anomaly", "mrro_anomaly", "smb_anomaly", "ts_anomaly", "thermal_forcing", "salinity", "temperature")]
+    cols_to_exclude = [x for x in data.columns if x not in ("year", "pr_anomaly", "evspsbl_anomaly", "mrro_anomaly", "smb_anomaly", "ts_anomaly", "thermal_forcing", "salinity", "temperature", 'aST', 'aSMB', 'basin_runoff')]
     cols_to_exclude = [x for x in cols_to_exclude if x in data.columns]
     temporal_indicator = "time" if "time" in data.columns else "year"
     non_temporal_cols = [temporal_indicator] + [
