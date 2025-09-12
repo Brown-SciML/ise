@@ -480,7 +480,7 @@ class LSTM(nn.Module):
 
         # Load weights (CPU-safe)
         state_dict = torch.load(
-            model_path, map_location="cpu" if not torch.cuda.is_available() else None
+            model_path, map_location="cpu" if not torch.cuda.is_available() else None, weights_only=True
         )
         model.load_state_dict(state_dict)
 

@@ -16,9 +16,9 @@ from ise.utils.training import EarlyStoppingCheckpointer, CheckpointSaver
 from ise.data.ISMIP6 import feature_engineer as fe
 from ise.models.predictors.deep_ensemble import DeepEnsemble
 from ise.models.density_estimators.normalizing_flow import NormalizingFlow
-from .de import ISEFlow_AIS_DE, ISEFlow_GrIS_DE
-from .nf import ISEFlow_AIS_NF, ISEFlow_GrIS_NF
-from ise.models.pretrained import ISEFlow_AIS_v1_0_0_path, ISEFlow_GrIS_v1_0_0_path
+from ise.models.pretrained import ISEFlow_AIS_v1_0_0_path, ISEFlow_GrIS_v1_0_0_path, ISEFlow_AIS_v1_1_0_path, ISEFlow_GrIS_v1_1_0_path, ISEFlow_AIS_v1_1_0_variables, ISEFlow_AIS_v1_0_0_variables
+from ise.models.predictors.lstm import LSTM
+from ise.models.predictors.deep_ensemble import DeepEnsemble
 
 class ISEFlow(torch.nn.Module):
     """
@@ -248,6 +248,11 @@ class ISEFlow(torch.nn.Module):
             
         if self.scaler_path is not None:
             shutil.copy(self.scaler_path, os.path.join(save_dir, "scaler_y.pkl"))
+            try:
+                scaler_x_path = self.scaler_path.replace('scaler_y', 'scaler_X')
+                shutil.copy(scaler_x_path, os.path.join(save_dir, "scaler_X.pkl"))
+            except:
+                pass
 
     @staticmethod
     def load(model_dir=None, deep_ensemble_path=None, normalizing_flow_path=None,):
@@ -288,65 +293,35 @@ class ISEFlow_AIS(ISEFlow):
     This subclass initializes the deep ensemble and normalizing flow models specifically
     for AIS and provides a loading method with pre-trained model paths.
     """
-
-    def __init__(self,):
-        """
-        Initializes the ISEFlow_AIS model.
-
-        Sets the ice sheet type to 'AIS' and initializes pre-configured deep ensemble 
-        and normalizing flow models specific to AIS.
-        """
-
+    def __init__(self, version="v1.1.0"):
         self.ice_sheet = "AIS"
-        deep_ensemble = ISEFlow_AIS_DE()
-        normalizing_flow = ISEFlow_AIS_NF()
-        super(ISEFlow_AIS, self).__init__(deep_ensemble, normalizing_flow)
-    
-    @staticmethod
-    def load(version="v1.0.0", model_dir=None, deep_ensemble_path=None, normalizing_flow_path=None):
-        """
-        Loads a trained ISEFlow_AIS model.
+        self.version = version
 
-        Args:
-            version (str, optional): Model version. Defaults to "v1.0.0".
-            model_dir (str, optional): Directory of the saved model. Defaults to None.
-            deep_ensemble_path (str, optional): Path to deep ensemble model. Defaults to None.
-            normalizing_flow_path (str, optional): Path to normalizing flow model. Defaults to None.
+        if version == "v1.0.0":
+            model_dir = ISEFlow_AIS_v1_0_0_path
+        elif version == "v1.1.0":
+            model_dir = ISEFlow_AIS_v1_1_0_path
+        else:
+            raise NotImplementedError(f"Version {version} not implemented. Try v1.0.0 or v1.1.0")
 
-        Returns:
-            ISEFlow_AIS: The loaded model.
-
-        Raises:
-            NotImplementedError: If an unsupported version is specified.
-        """
-        
-        # TODO: Add support for deep ensemble and normalizing flow paths
-
-        if model_dir is None:
-            if version == "v1.0.0":
-                model_dir = ISEFlow_AIS_v1_0_0_path
-            else:
-                raise NotImplementedError("Only version v1.0.0 is supported")
-
-        # Load components using the parent class logic
+        # Load the actual submodules
         deep_ensemble = DeepEnsemble.load(os.path.join(model_dir, "deep_ensemble.pth"))
         normalizing_flow = NormalizingFlow.load(os.path.join(model_dir, "normalizing_flow.pth"))
 
-        # Return an instance of ISEFlow_AIS instead of ISEFlow
-        model = ISEFlow_AIS()
-        model.deep_ensemble = deep_ensemble
-        model.normalizing_flow = normalizing_flow
-        model.trained = True
-        model.model_dir = model_dir
+        # ✅ This calls nn.Module.__init__ properly and registers submodules
+        super(ISEFlow_AIS, self).__init__(deep_ensemble, normalizing_flow)
 
-        return model
+        self.model_dir = model_dir
+        self.trained = True
     
+
+
     def process(
         self, 
         year: np.array,
+        sector: np.array,
         pr_anomaly: np.array, 
         evspsbl_anomaly: np.array,
-        mrro_anomaly: np.array,
         smb_anomaly: np.array,
         ts_anomaly: np.array,
         ocean_thermal_forcing: np.array,
@@ -364,6 +339,8 @@ class ISEFlow_AIS(ISEFlow):
         ice_shelf_fracture: bool,
         open_melt_type: str=None,
         standard_melt_type: str=None,
+        mrro_anomaly: np.array=None,
+        
         
     ):
         """
@@ -398,16 +375,20 @@ class ISEFlow_AIS(ISEFlow):
         Raises:
             ValueError: If any input arguments are invalid.
         """
-
+        if mrro_anomaly is None and self.version == "v1.0.0":
+            raise ValueError("mrro_anomaly is required for version v1.0.0")
         
         if year[0] == 2015:
             year = year - 2015
+        
+        if isinstance(sector, int):
+            sector = np.ones_like(year) * sector
             
         data = {    
             "year": year,
+            "sector": sector,
             "pr_anomaly": pr_anomaly,
             "evspsbl_anomaly": evspsbl_anomaly,
-            "mrro_anomaly": mrro_anomaly,
             "smb_anomaly": smb_anomaly,
             "ts_anomaly": ts_anomaly,
             "thermal_forcing": ocean_thermal_forcing,
@@ -426,6 +407,9 @@ class ISEFlow_AIS(ISEFlow):
             "open_melt_param": open_melt_type,
             "standard_melt_param": standard_melt_type,
         }
+        
+        if self.version == "v1.0.0":
+            data['mrro_anomaly'] = mrro_anomaly
 
         
         # map from accepted input to how the model expects variable names
@@ -534,8 +518,10 @@ class ISEFlow_AIS(ISEFlow):
         
         
         for key, value in data.items():
-            # make sure forcings are numpy arrays           
-            if key in ("year", "pr_anomaly", "evspsbl_anomaly", "mrro_anomaly", "smb_anomaly", "ts_anomaly", "thermal_forcing", "salinity", "temperature"):
+            # make sure forcings are numpy arrays        
+            cols = ("year", "pr_anomaly", "evspsbl_anomaly", "smb_anomaly", "ts_anomaly", "thermal_forcing", "salinity", "temperature")
+            cols += ("mrro_anomaly",) if self.version == "v1.0.0" else ()
+            if key in cols:
                 try:
                     data[key] = np.array(value)
                 except Exception as e:
@@ -550,65 +536,42 @@ class ISEFlow_AIS(ISEFlow):
 
             
         data = pd.DataFrame(data)
-        year_mean_map = {year: mean for year, mean in enumerate(mrro_means)}
-        data["mrro_anomaly"] = data.apply(
-            lambda row: year_mean_map[row["year"]] if pd.isna(row["mrro_anomaly"]) else row["mrro_anomaly"],
-            axis=1
-        )
+    
+        if self.version == "v1.0.0":
+            year_mean_map = {year: mean for year, mean in enumerate(mrro_means)}
+            data["mrro_anomaly"] = data.apply(
+                lambda row: year_mean_map[row["year"]] if pd.isna(row["mrro_anomaly"]) else row["mrro_anomaly"],
+                axis=1
+            )
+        data = fe.scale_data(data, scaler_path=f"{self.model_dir}/scaler_X.pkl")
         data = fe.add_lag_variables(data, lag=5, verbose=False)
-        data = pd.get_dummies(data, columns=['numerics', 'stress_balance', 'resolution', 'init_method', 'melt', 'ice_front', 'Ocean forcing', 'Ocean sensitivity', 'open_melt_param', 'standard_melt_param'])
+        data = pd.get_dummies(data, columns=['numerics', 'stress_balance', 'resolution', 'init_method', 'melt', 'ice_front', 'Ocean forcing', 'Ocean sensitivity', 'open_melt_param', 'standard_melt_param'], dtype=bool)
+        
         # need to add other columns as zeros from get_dummies (all true)
-        columns = ['year', 'sector', 'pr_anomaly', 'evspsbl_anomaly', 'mrro_anomaly',
-       'smb_anomaly', 'ts_anomaly', 'thermal_forcing', 'salinity',
-       'temperature', 'pr_anomaly.lag1', 'evspsbl_anomaly.lag1',
-       'mrro_anomaly.lag1', 'smb_anomaly.lag1', 'ts_anomaly.lag1',
-       'thermal_forcing.lag1', 'salinity.lag1', 'temperature.lag1',
-       'pr_anomaly.lag2', 'evspsbl_anomaly.lag2', 'mrro_anomaly.lag2',
-       'smb_anomaly.lag2', 'ts_anomaly.lag2', 'thermal_forcing.lag2',
-       'salinity.lag2', 'temperature.lag2', 'pr_anomaly.lag3',
-       'evspsbl_anomaly.lag3', 'mrro_anomaly.lag3', 'smb_anomaly.lag3',
-       'ts_anomaly.lag3', 'thermal_forcing.lag3', 'salinity.lag3',
-       'temperature.lag3', 'pr_anomaly.lag4', 'evspsbl_anomaly.lag4',
-       'mrro_anomaly.lag4', 'smb_anomaly.lag4', 'ts_anomaly.lag4',
-       'thermal_forcing.lag4', 'salinity.lag4', 'temperature.lag4',
-       'pr_anomaly.lag5', 'evspsbl_anomaly.lag5', 'mrro_anomaly.lag5',
-       'smb_anomaly.lag5', 'ts_anomaly.lag5', 'thermal_forcing.lag5',
-       'salinity.lag5', 'temperature.lag5', 'initial_year', 'numerics_FD',
-       'numerics_FE', 'numerics_FE/FV', 'stress_balance_HO',
-       'stress_balance_Hybrid', 'stress_balance_L1L2',
-       'stress_balance_SIA_SSA', 'stress_balance_SSA', 'stress_balance_Stokes',
-       'resolution_16', 'resolution_20', 'resolution_32', 'resolution_4',
-       'resolution_8', 'resolution_variable', 'init_method_DA',
-       'init_method_DA_geom', 'init_method_DA_relax', 'init_method_Eq',
-       'init_method_SP', 'init_method_SP_icethickness',
-       'melt_Floating_condition', 'melt_No', 'melt_Sub-grid', 'ice_front_Div',
-       'ice_front_Fix', 'ice_front_MH', 'ice_front_RO', 'ice_front_StR',
-       'open_melt_param_Lin', 'open_melt_param_Nonlocal_Slope',
-       'open_melt_param_PICO', 'open_melt_param_PICOP',
-       'open_melt_param_Plume', 'open_melt_param_Quad',
-       'standard_melt_param_Local', 'standard_melt_param_Local_anom',
-       'standard_melt_param_Nonlocal', 'standard_melt_param_Nonlocal_anom',
-       'Ocean forcing_Open', 'Ocean forcing_Standard',
-       'Ocean sensitivity_High', 'Ocean sensitivity_Low',
-       'Ocean sensitivity_Medium', 'Ocean sensitivity_PIGL',
-       'Ice shelf fracture_False', 'Ice shelf fracture_True']
+        if self.version == "v1.1.0":
+            columns = ISEFlow_AIS_v1_1_0_variables
+        elif self.version == "v1.0.0":
+            columns = ISEFlow_AIS_v1_0_0_variables
+        else:
+            raise NotImplementedError(f"Version {self.version} not implemented. Try v1.0.0 or v1.1.0")
+        
         
         for col in columns:
             if col not in data.columns:
-                data[col] = 0
-        
+                data[col] = False
+            
         data = data[columns]
-        data['outlier'] = False
-        data = fe.scale_data(data, scaler_path=f"{ISEFlow_AIS_v1_0_0_path}/scaler_X.pkl")
+        data = data.loc[:, ~data.columns.duplicated()]
+        
         
         return data
     
     def predict(        
         self, 
         year: np.array,
+        sector: np.array,
         pr_anomaly: np.array, 
         evspsbl_anomaly: np.array,
-        mrro_anomaly: np.array,
         smb_anomaly: np.array,
         ts_anomaly: np.array,
         ocean_thermal_forcing: np.array,
@@ -626,6 +589,8 @@ class ISEFlow_AIS(ISEFlow):
         ice_shelf_fracture: bool,
         open_melt_type: str=None,
         standard_melt_type: str=None,   
+        mrro_anomaly: np.array=None,
+        
     ):
         """
         Predicts ice sheet evolution using the trained ISEFlow_AIS model.
@@ -641,11 +606,11 @@ class ISEFlow_AIS(ISEFlow):
 
         
         data = self.process(
-            year, pr_anomaly, evspsbl_anomaly, mrro_anomaly, smb_anomaly, ts_anomaly, ocean_thermal_forcing, ocean_salinity, ocean_temperature, initial_year, numerics, stress_balance, resolution, init_method, melt_in_floating_cells, icefront_migration, ocean_forcing_type, ocean_sensitivity, ice_shelf_fracture, open_melt_type, standard_melt_type
+            year, sector, pr_anomaly, evspsbl_anomaly, smb_anomaly, ts_anomaly, ocean_thermal_forcing, ocean_salinity, ocean_temperature, initial_year, numerics, stress_balance, resolution, init_method, melt_in_floating_cells, icefront_migration, ocean_forcing_type, ocean_sensitivity, ice_shelf_fracture, open_melt_type, standard_melt_type, mrro_anomaly
         )
-        X = data.values
+        X = data.to_numpy(dtype=float)
         X = to_tensor(X).to(self.device)
-        return super().predict(X, output_scaler=f"{ISEFlow_AIS_v1_0_0_path}/scaler_y.pkl")
+        return super().predict(X, output_scaler=f"{self.model_dir}/scaler_y.pkl")
     
     def test(self, X_test,):
         """
@@ -681,10 +646,12 @@ class ISEFlow_GrIS(ISEFlow):
         Sets the ice sheet type to 'GrIS' and initializes pre-configured deep ensemble 
         and normalizing flow models specific to GrIS.
         """
+        
+        warnings.warn("ISEFlow_GrIS is deprecated and will be removed in future versions. Please use ISEFlow with custom models instead.", DeprecationWarning)
 
         self.ice_sheet = "GrIS"
-        deep_ensemble = ISEFlow_GrIS_DE()
-        normalizing_flow = ISEFlow_GrIS_NF()
+        deep_ensemble = ISEFlow_GrIS_DE_v1_0_0()
+        normalizing_flow = ISEFlow_GrIS_NF_v1_0_0()
         super(ISEFlow_GrIS, self).__init__(deep_ensemble, normalizing_flow)
     
     @staticmethod
@@ -703,3 +670,131 @@ class ISEFlow_GrIS(ISEFlow):
         return super(ISEFlow_GrIS, ISEFlow_GrIS).load(model_dir, deep_ensemble_path, normalizing_flow_path)
 
     # TODO: ISEFlow GrIS process, predict
+    
+    
+    
+    
+class ISEFlow_AIS_DE_v1_0_0(DeepEnsemble):
+    """
+    ISEFlow Deep ensemble model for Antarctic Ice Sheet (AIS) emulation.
+
+    This class implements an ensemble of Long Short-Term Memory (LSTM) networks 
+    to predict ice sheet dynamics using deep learning. It extends the `DeepEnsemble` 
+    class and combines multiple LSTM models to enhance predictive performance.
+
+    Attributes:
+        input_size (int): The number of input features, Defaults to 99.
+        output_size (int): The number of output features, Defaults to 1.
+        iseflow_ais_ensemble (list): A list of LSTM models with different architectures and loss functions.
+    
+    Inherits from:
+        DeepEnsemble: A base class for deep ensemble models.
+
+    """
+
+    def __init__(self, ):
+        warnings.warn("ISEFlow_AIS_DE_v1_0_0 is deprecated and will be removed in future versions. Please use ISEFlow_AIS instead.", DeprecationWarning)
+        
+        self.input_size = 99
+        self.output_size = 1
+        iseflow_ais_ensemble = [
+            LSTM(1, 128, 99, 1, nn.HuberLoss()),
+            LSTM(1, 512, 99, 1, nn.HuberLoss()),
+            LSTM(1, 512, 99, 1, nn.HuberLoss()),
+            LSTM(2, 128, 99, 1, nn.HuberLoss()),
+            LSTM(1, 256, 99, 1, nn.L1Loss()),
+            LSTM(1, 512, 99, 1, nn.MSELoss()),
+            LSTM(2, 128, 99, 1, nn.MSELoss()),
+            LSTM(2, 512, 99, 1, nn.MSELoss()),
+            LSTM(1, 256, 99, 1, nn.L1Loss()),
+            LSTM(1, 64, 99, 1, nn.HuberLoss()),
+        ]
+        super().__init__(ensemble_members=iseflow_ais_ensemble, input_size=self.input_size, output_size=self.output_size, output_sequence_length=86,)
+    
+    
+
+class ISEFlow_GrIS_DE_v1_0_0(DeepEnsemble):
+    """
+    ISEFlow Deep ensemble model for Greenland Ice Sheet (GrIS) emulation.
+
+    This class constructs an ensemble of LSTM models to predict ice sheet behavior 
+    for the Greenland Ice Sheet (GrIS). It extends the `DeepEnsemble` framework 
+    and integrates multiple LSTM-based predictors to improve accuracy.
+
+    Attributes:
+        input_size (int): The number of input features (90).
+        output_size (int): The number of output features (1).
+        iseflow_gris_ensemble (list): A list of LSTM models with varying architectures and loss functions.
+
+    Inherits from:
+        DeepEnsemble: A base class for deep ensemble models.
+    """
+
+    def __init__(self,):
+        self.input_size = 90
+        self.output_size = 1
+        iseflow_gris_ensemble = [
+            LSTM(2, 128, 99, 1, nn.HuberLoss()),
+            LSTM(2, 256, 99, 1, nn.MSELoss()),
+            LSTM(2, 128, 99, 1, nn.HuberLoss()),
+            LSTM(2, 128, 99, 1, nn.MSELoss()),
+            LSTM(2, 256, 99, 1, nn.HuberLoss()),
+            LSTM(1, 256, 99, 1, nn.L1Loss()),
+            LSTM(1, 128, 99, 1, nn.HuberLoss()),
+            LSTM(2, 64, 99, 1, nn.MSELoss()),
+            LSTM(2, 256, 99, 1, nn.HuberLoss()),
+            LSTM(1, 256, 99, 1, nn.L1Loss()),
+        ]
+        super().__init__(ensemble_members=iseflow_gris_ensemble, input_size=self.input_size, output_size=self.output_size, output_sequence_length=86,)
+        
+        
+from ise.models.density_estimators.normalizing_flow import NormalizingFlow
+
+class ISEFlow_AIS_NF_v1_0_0(NormalizingFlow):
+    """
+    ISEFlow_AIS_NF is a specialized normalizing flow model for the Antarctic Ice Sheet (AIS).
+
+    This class extends the `NormalizingFlow` class, configuring it with AIS-specific input sizes and transformations.
+    """
+
+    def __init__(self, version="1.0.0"):
+        """
+        Initializes the ISEFlow_AIS_NF model.
+
+        This model is pre-configured with:
+        - `input_size` of 99, representing the number of input features.
+        - `output_size` of 1, representing the target variable.
+        - `num_flow_transforms` of 5, specifying the number of flow transformations.
+
+        Calls the `NormalizingFlow` constructor with these preset parameters.
+        """
+        warnings.warn("ISEFlow_AIS_NF_v1_0_0 is deprecated and will be removed in future versions. Please use ISEFlow_AIS instead.", DeprecationWarning)
+
+        self.input_size = 99 if version == "v1.0.0" else 93
+        self.output_size = 1
+        self.num_flow_transforms = 5
+        super().__init__(input_size=self.input_size, output_size=self.output_size, num_flow_transforms=self.num_flow_transforms)
+        
+class ISEFlow_GrIS_NF_v1_0_0(NormalizingFlow):
+    """
+    ISEFlow_GrIS_NF is a specialized normalizing flow model for the Greenland Ice Sheet (GrIS).
+
+    This class extends the `NormalizingFlow` class, configuring it with GrIS-specific input sizes and transformations.
+    """
+
+    def __init__(self,):
+        """
+        Initializes the ISEFlow_GrIS_NF model.
+
+        This model is pre-configured with:
+        - `input_size` of 90, representing the number of input features.
+        - `output_size` of 1, representing the target variable.
+        - `num_flow_transforms` of 5, specifying the number of flow transformations.
+
+        Calls the `NormalizingFlow` constructor with these preset parameters.
+        """
+        warnings.warn("ISEFlow_GrIS_NF_v1_0_0 is deprecated and will be removed in future versions. Please use ISEFlow with custom models instead.", DeprecationWarning)
+        self.input_size = 90
+        self.output_size = 1
+        self.num_flow_transforms = 5
+        super().__init__(input_size=self.input_size, output_size=self.output_size, num_flow_transforms=self.num_flow_transforms)

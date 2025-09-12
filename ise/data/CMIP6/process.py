@@ -22,7 +22,6 @@ def process_atmos_forcings(forcing_filepath: str, grid_filepath: str, aogcm_name
     # trim dataset
     datafile.drop_vars(["nv4", "z_bnds", "lat", "lon", "mapping", "time_bounds", "lat2d", "lon2d", "bnds", "areacella"])
     datafile.data = datafile.data.rename(name_dict={"sectors": "sector"},)
-    # datafile.assign_sectors(gridfile)
     
     assert datafile._check_averaged_sectors(), "The data is not pre-averaged as expected."
     

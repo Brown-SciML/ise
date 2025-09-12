@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import torch
 from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
+from ise.utils import functions as f
 from tqdm import tqdm
 import warnings
 
@@ -246,17 +247,19 @@ class FeatureEngineer:
 
         # Store scalers in the class instance for potential future use
         self.scaler_X, self.scaler_y = scaler_X, scaler_y
+        
+        
 
-        # Fit and transform X
-        if isinstance(self.X, pd.DataFrame):
-            X_data = self.X.values
-        elif isinstance(self.X, np.ndarray):
-            X_data = self.X
-        else:
-            raise TypeError("X must be either a pandas DataFrame or a NumPy array.")
+        # # Fit and transform X
+        # if isinstance(self.X, pd.DataFrame):
+        #     X_data = self.X.values
+        # elif isinstance(self.X, np.ndarray):
+        #     X_data = self.X
+        # else:
+        #     raise TypeError("X must be either a pandas DataFrame or a NumPy array.")
 
-        scaler_X.fit(X_data)
-        X_scaled = scaler_X.transform(X_data)
+        scaler_X.fit(self.X)
+        X_scaled = scaler_X.transform(self.X)
         
         # categorical_cols = [x for x in self.X.columns if len(set(self.X[x])) <= 2]
         # self.X[categorical_cols] = self.X[categorical_cols].astype('category')
@@ -445,8 +448,7 @@ class FeatureEngineer:
         self.data = exclude_fetish_models(self.data, exclude)
         return self
 
-
-def scale_data(data, scaler_path, ):
+def scale_data(data, scaler_path):
     """
     Scales the provided dataset using a pre-trained scaler.
 
@@ -457,34 +459,42 @@ def scale_data(data, scaler_path, ):
     Returns:
         pd.DataFrame: The scaled dataset.
     """
-    dropped_columns = [
-        "id",
-        "cmip_model",
-        "pathway",
-        "exp",
-        "ice_sheet",
-        "Scenario",
-        "Tier",
-        "aogcm",
-        "id",
-        "exp",
-        "model",
-        "ivaf",
-    ]
+    # Columns to drop regardless
+    always_drop = {
+        "id", "cmip_model", "pathway", "exp", "ice_sheet", "Scenario",
+        "Tier", "aogcm", "model", "ivaf", "outlier"
+    }
 
-    dropped_columns = [x for x in data.columns if x in dropped_columns]
-    dropped_data = data[dropped_columns]
-    data = data.drop(
-        columns=[x for x in data.columns if "sle" in x] + dropped_columns
-    )
-    cols = data.columns
+    # Drop duplicates, sle* columns, and always_drop
+    drop_cols = [c for c in data.columns if "sle" in c or c in always_drop]
+    dropped_data = data[drop_cols].copy()
+    data = data.drop(columns=drop_cols)
 
+    # Load scaler
     scaler = pickle.load(open(scaler_path, "rb"))
+
+    # Ensure alignment: use scaler.feature_names_in_ as the source of truth
+    data = data[scaler.get_feature_names_out()]
     scaled = scaler.transform(data)
-    scaled = pd.DataFrame(scaled, columns=cols,)
-    if 'outlier' in scaled.columns:
-        scaled = scaled.drop(columns=['outlier'])
+
+    scaled = pd.DataFrame(scaled, columns=scaler.feature_names_in_, index=data.index)
+    scaled = pd.concat([scaled, dropped_data], axis=1)
+
+    # Clean up
+    if "outlier" in scaled.columns:
+        scaled = scaled.drop(columns=["outlier"])
+
+    # Convert bools back to int
+    bool_cols = scaled.select_dtypes(bool).columns
+    scaled[bool_cols] = scaled[bool_cols].astype(int)
+
+    # Remove duplicate columns if any
+    scaled = scaled.loc[:, ~scaled.columns.duplicated()]
+    
+    
+
     return scaled
+
 
 def add_model_characteristics(
     data, model_char_path=r"./ise/utils/data_files/model_characteristics.csv", encode=True, ids_path=None
