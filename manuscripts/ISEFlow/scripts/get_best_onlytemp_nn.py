@@ -73,7 +73,7 @@ def get_optimal_temponly_model(ice_sheet, out_dir, iterations=10, with_chars=Fal
 
     X_val = subset_val.drop(columns=['sle']).reset_index(drop=True)
     y_val = subset_val['sle'].reset_index(drop=True).values
-    y_val_unscaled = f.unscale(y_val.reshape(-1, 1), f"{data_dir}/scaler_y.pkl")
+    y_val_unscaled = f.unscale_output(y_val.reshape(-1, 1), f"{data_dir}/scaler_y.pkl")
     years = X_val.year.values
 
     # Perform model training and evaluation for the specified number of iterations

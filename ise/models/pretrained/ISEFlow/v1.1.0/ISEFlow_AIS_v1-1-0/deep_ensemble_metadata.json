@@ -5,122 +5,110 @@
     "ensemble_members": [
         {
             "lstm_num_layers": 1,
-            "lstm_num_hidden": 381,
+            "lstm_num_hidden": 383,
             "criterion": "MSELoss",
             "input_size": 93,
             "output_size": 1,
             "trained": true,
             "path": "ensemble_members/member_1.pth",
-            "best_loss": 0.31824997067451477,
-            "epochs_trained": 5,
-            "sequence_length": 10
+            "best_loss": 0.061925455927848816,
+            "epochs_trained": 9,
+            "sequence_length": 5
         },
         {
             "lstm_num_layers": 1,
-            "lstm_num_hidden": 359,
+            "lstm_num_hidden": 379,
             "criterion": "MSELoss",
             "input_size": 93,
             "output_size": 1,
             "trained": true,
             "path": "ensemble_members/member_2.pth",
-            "best_loss": 0.23211395740509033,
-            "epochs_trained": 34,
-            "sequence_length": 5
+            "best_loss": 0.04621278494596481,
+            "epochs_trained": 55,
+            "sequence_length": 10
         },
         {
             "lstm_num_layers": 1,
-            "lstm_num_hidden": 274,
+            "lstm_num_hidden": 281,
             "criterion": "MSELoss",
             "input_size": 93,
             "output_size": 1,
             "trained": true,
             "path": "ensemble_members/member_3.pth",
-            "best_loss": 0.2519935965538025,
-            "epochs_trained": 10,
-            "sequence_length": 10
+            "best_loss": 0.05372023209929466,
+            "epochs_trained": 19,
+            "sequence_length": 5
         },
         {
             "lstm_num_layers": 1,
-            "lstm_num_hidden": 147,
+            "lstm_num_hidden": 206,
             "criterion": "MSELoss",
             "input_size": 93,
             "output_size": 1,
             "trained": true,
             "path": "ensemble_members/member_4.pth",
-            "best_loss": 0.2510608434677124,
-            "epochs_trained": 16,
-            "sequence_length": 10
+            "best_loss": 0.05197770521044731,
+            "epochs_trained": 77,
+            "sequence_length": 5
         },
         {
             "lstm_num_layers": 1,
-            "lstm_num_hidden": 124,
+            "lstm_num_hidden": 371,
             "criterion": "MSELoss",
             "input_size": 93,
             "output_size": 1,
             "trained": true,
             "path": "ensemble_members/member_5.pth",
-            "best_loss": 0.2526271939277649,
-            "epochs_trained": 14,
-            "sequence_length": 5
+            "best_loss": 0.053291864693164825,
+            "epochs_trained": 53,
+            "sequence_length": 10
         },
         {
             "lstm_num_layers": 1,
-            "lstm_num_hidden": 265,
+            "lstm_num_hidden": 466,
             "criterion": "MSELoss",
             "input_size": 93,
             "output_size": 1,
             "trained": true,
             "path": "ensemble_members/member_6.pth",
-            "best_loss": 0.2550617754459381,
-            "epochs_trained": 14,
-            "sequence_length": 10
+            "best_loss": 0.05570890009403229,
+            "epochs_trained": 93,
+            "sequence_length": 5
         },
         {
             "lstm_num_layers": 1,
-            "lstm_num_hidden": 503,
+            "lstm_num_hidden": 447,
             "criterion": "MSELoss",
             "input_size": 93,
             "output_size": 1,
             "trained": true,
             "path": "ensemble_members/member_7.pth",
-            "best_loss": 0.2534288763999939,
-            "epochs_trained": 24,
-            "sequence_length": 5
+            "best_loss": 0.051514632999897,
+            "epochs_trained": 44,
+            "sequence_length": 10
         },
         {
             "lstm_num_layers": 1,
-            "lstm_num_hidden": 368,
+            "lstm_num_hidden": 526,
             "criterion": "MSELoss",
             "input_size": 93,
             "output_size": 1,
             "trained": true,
             "path": "ensemble_members/member_8.pth",
-            "best_loss": 0.260009229183197,
-            "epochs_trained": 11,
+            "best_loss": 0.04969280585646629,
+            "epochs_trained": 144,
             "sequence_length": 5
         },
         {
             "lstm_num_layers": 1,
-            "lstm_num_hidden": 266,
+            "lstm_num_hidden": 275,
             "criterion": "MSELoss",
             "input_size": 93,
             "output_size": 1,
             "trained": true,
             "path": "ensemble_members/member_9.pth",
-            "best_loss": 0.27189964056015015,
-            "epochs_trained": 17,
-            "sequence_length": 5
-        },
-        {
-            "lstm_num_layers": 1,
-            "lstm_num_hidden": 302,
-            "criterion": "MSELoss",
-            "input_size": 93,
-            "output_size": 1,
-            "trained": true,
-            "path": "ensemble_members/member_10.pth",
-            "best_loss": 0.2586185038089752,
-            "epochs_trained": 10,
+            "best_loss": 0.054380059242248535,
+            "epochs_trained": 28,
             "sequence_length": 10
         }
     ]

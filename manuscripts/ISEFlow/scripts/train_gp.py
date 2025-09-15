@@ -141,9 +141,9 @@ def train_gp(ice_sheet, temp_only, smb_only):
 
         # Store predictions, upper and lower bounds for train, validation, and test sets
         def store_predictions(df, preds, sd, target_df, scaler_path, column='pred'):
-            df[column] = f.unscale(preds.reshape(-1, 1), scaler_path).squeeze()
-            df['upper_bound'] = f.unscale((preds + sd).reshape(-1, 1), scaler_path).squeeze()
-            df['lower_bound'] = f.unscale((preds - sd).reshape(-1, 1), scaler_path).squeeze()
+            df[column] = f.unscale_output(preds.reshape(-1, 1), scaler_path).squeeze()
+            df['upper_bound'] = f.unscale_output((preds + sd).reshape(-1, 1), scaler_path).squeeze()
+            df['lower_bound'] = f.unscale_output((preds - sd).reshape(-1, 1), scaler_path).squeeze()
 
         store_predictions(train.loc[(train['year'] == all_years[i])], preds, sd, y_train_subset, f'{dir_}/scaler_y.pkl')
 

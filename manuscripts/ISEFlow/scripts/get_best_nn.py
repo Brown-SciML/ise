@@ -19,7 +19,7 @@ def get_best_nn(data_directory, export_directory, iterations=10, with_chars=True
     _, scenarios = f.get_X_y(pd.read_csv(f"{data_directory}/val.csv"), 'scenario', return_format='pandas', with_chars=with_chars)
     X_val_df, _ = f.get_X_y(pd.read_csv(f"{data_directory}/val.csv"), 'sectors', return_format='pandas', with_chars=with_chars)
     X_val, y_val = f.get_X_y(pd.read_csv(f"{data_directory}/val.csv"), 'sectors', return_format='numpy', with_chars=with_chars)
-    y_val = f.unscale(y_val.reshape(-1,1), f"{data_directory}/scaler_y.pkl")
+    y_val = f.unscale_output(y_val.reshape(-1,1), f"{data_directory}/scaler_y.pkl")
     ice_sheet = "AIS" if 'AIS' in data_directory else "GIS"
     print('Cols:', X_val_df.columns)
     
@@ -53,7 +53,7 @@ def get_best_nn(data_directory, export_directory, iterations=10, with_chars=True
             emulator.save(export_dir)
 
             predictions, uncertainties = emulator.predict(X_val, output_scaler=f"{data_directory}/scaler_y.pkl")
-            y_val = f.unscale(y_val.reshape(-1,1), f"{data_directory}/scaler_y.pkl")
+            y_val = f.unscale_output(y_val.reshape(-1,1), f"{data_directory}/scaler_y.pkl")
             
             print('Exported to ', f"{export_dir}/nn_predictions.csv")
             results = pd.DataFrame(dict(year=X_val_df.year.values, pred=predictions.squeeze(), true=y_val.squeeze(), scenarios=scenarios.values.squeeze()))

@@ -122,8 +122,8 @@ iseflowAIS_temponly_preds, iseflowAIS_temponly_uq = iseflowAIS_temponly.predict(
 iseflowGrIS_temponly_preds, iseflowGrIS_temponly_uq = iseflowGrIS_temponly.predict(X_test_GrIS, output_scaler=f"{GrIS_data_dir}/scaler_y.pkl", smooth_projection=smooth)
 
 # Unscale the true values for comparison
-y_val_AIS = f.unscale(y_val_AIS.values.reshape(-1,1), f"{AIS_data_dir}/scaler_y.pkl")
-y_val_GrIS = f.unscale(y_val_GrIS.values.reshape(-1,1), f"{GrIS_data_dir}/scaler_y.pkl")
+y_val_AIS = f.unscale_output(y_val_AIS.values.reshape(-1,1), f"{AIS_data_dir}/scaler_y.pkl")
+y_val_GrIS = f.unscale_output(y_val_GrIS.values.reshape(-1,1), f"{GrIS_data_dir}/scaler_y.pkl")
 
 # Save predictions to CSV (uncomment to save predictions)
 # pd.DataFrame(dict(...)).to_csv(f"{out_dir}/AIS_region_temponly/nn_predictions.csv", index=False)
@@ -134,8 +134,8 @@ iseflowAIS_temponly = pd.read_csv(f"{out_dir}/AIS_region_temponly/nn_predictions
 iseflowGrIS_temponly = pd.read_csv(f"{out_dir}/GrIS_region_temponly/nn_predictions.csv")
 
 # Unscale the true values
-iseflowAIS_temponly['true'] = f.unscale(iseflowAIS_temponly['true'].values.reshape(-1,1), f"{AIS_data_dir}/scaler_y.pkl")
-iseflowGrIS_temponly['true'] = f.unscale(iseflowGrIS_temponly['true'].values.reshape(-1,1), f"{GrIS_data_dir}/scaler_y.pkl")
+iseflowAIS_temponly['true'] = f.unscale_output(iseflowAIS_temponly['true'].values.reshape(-1,1), f"{AIS_data_dir}/scaler_y.pkl")
+iseflowGrIS_temponly['true'] = f.unscale_output(iseflowGrIS_temponly['true'].values.reshape(-1,1), f"{GrIS_data_dir}/scaler_y.pkl")
 
 # Calculate prediction bounds and coverage
 for df in [iseflowAIS_temponly, iseflowGrIS_temponly]:
