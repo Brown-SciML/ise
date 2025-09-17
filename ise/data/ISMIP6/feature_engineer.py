@@ -464,36 +464,26 @@ def scale_data(data, scaler_path):
         "id", "cmip_model", "pathway", "exp", "ice_sheet", "Scenario",
         "Tier", "aogcm", "model", "ivaf", "outlier"
     }
-
-    # Drop duplicates, sle* columns, and always_drop
-    drop_cols = [c for c in data.columns if "sle" in c or c in always_drop]
-    dropped_data = data[drop_cols].copy()
-    data = data.drop(columns=drop_cols)
-
-    # Load scaler
+    column_order = data.columns
+    
     scaler = pickle.load(open(scaler_path, "rb"))
-
-    # Ensure alignment: use scaler.feature_names_in_ as the source of truth
-    data = data[scaler.get_feature_names_out()]
-    scaled = scaler.transform(data)
-
-    scaled = pd.DataFrame(scaled, columns=scaler.feature_names_in_, index=data.index)
-    scaled = pd.concat([scaled, dropped_data], axis=1)
-
-    # Clean up
-    if "outlier" in scaled.columns:
-        scaled = scaled.drop(columns=["outlier"])
+    columns_to_scale = scaler.get_feature_names_out()
+    columns_not_to_scale = [c for c in data.columns if c not in columns_to_scale]
+    data_to_scale = data[columns_to_scale]
+    data_not_to_scale = data[columns_not_to_scale]
+    
+    scaled = scaler.transform(data_to_scale)
+    scaled = pd.DataFrame(scaled, columns=columns_to_scale, index=data.index)
+    data = pd.concat([scaled, data_not_to_scale], axis=1)
+    data = data[column_order]
 
     # Convert bools back to int
-    bool_cols = scaled.select_dtypes(bool).columns
-    scaled[bool_cols] = scaled[bool_cols].astype(int)
-
+    # bool_cols = data.select_dtypes(include="bool").columns
+    # data[bool_cols] = data[bool_cols].astype(int)
     # Remove duplicate columns if any
-    scaled = scaled.loc[:, ~scaled.columns.duplicated()]
-    
-    
+    data = data.loc[:, ~data.columns.duplicated()]
 
-    return scaled
+    return data
 
 
 def add_model_characteristics(

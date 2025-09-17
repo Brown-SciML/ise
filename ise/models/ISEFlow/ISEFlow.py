@@ -125,7 +125,7 @@ class ISEFlow(torch.nn.Module):
 
         self.trained = True
 
-    def forward(self, x, smooth_projection=False):
+    def forward(self, x,):
         """
         Performs a forward pass through the hybrid emulator.
 
@@ -162,14 +162,19 @@ class ISEFlow(torch.nn.Module):
         )
         return prediction, uncertainties
 
-    def predict(self, x, output_scaler=True, smooth_projection=False):
+    def predict(self, x, output_scaler=True, smoothing_window=0):
         """
-        Makes predictions using the trained hybrid emulator.
+        Makes predictions using the trained hybrid emulator with optional smoothing.
+        
+        IMPORTANT: Smoothing is applied to the final unscaled predictions and uncertainties
+        to ensure smooth output curves.
 
         Args:
             x (array-like): Input data.
-            output_scaler (bool or str, optional): Path to the output scaler or whether to apply scaling. Defaults to True.
-            smooth_projection (bool, optional): Whether to apply smoothing. Defaults to False.
+            output_scaler (bool or str, optional): Path to the output scaler or whether to apply scaling. 
+                Defaults to True.
+            smoothing_window (int, optional): Size of the smoothing window. 0 means no smoothing. 
+                Defaults to 0.
 
         Returns:
             tuple: A tuple containing:
@@ -182,34 +187,73 @@ class ISEFlow(torch.nn.Module):
         Raises:
             Warning: If no scaler path is provided.
         """
-
         self.eval()
+        
+        # Handle scaler loading
         if output_scaler is True:
             output_scaler = os.path.join(self.model_dir, "scaler_y.pkl")
             with open(output_scaler, "rb") as f:
                 output_scaler = pickle.load(f)
         elif output_scaler is False and self.scaler_path is None:
             warnings.warn("No scaler path provided, uncertainties are not in units of SLE.")
-            return self.forward(x, smooth_projection=smooth_projection)
+            predictions, uncertainties = self.forward(x)
+            
+            # Apply smoothing to raw predictions and uncertainties if requested
+            if smoothing_window > 0:
+                predictions = smooth_projections(predictions, smoothing_window)
+                for key in uncertainties:
+                    uncertainties[key] = smooth_projections(uncertainties[key], smoothing_window)
+            
+            return predictions, uncertainties
         elif isinstance(output_scaler, str):
             self.scaler_path = output_scaler
             with open(self.scaler_path, "rb") as f:
                 output_scaler = pickle.load(f)
-
-        predictions, uncertainties = self.forward(x, smooth_projection=smooth_projection)
+        
+        # Get raw predictions and uncertainties (no smoothing yet)
+        predictions, uncertainties = self.forward(x)
+        
+        # Inverse transform predictions first
         unscaled_predictions = output_scaler.inverse_transform(predictions.reshape(-1, 1))
-        bound_epistemic = predictions + uncertainties["epistemic"]
-        bound_aleatoric = predictions + uncertainties["aleatoric"]
-        unscaled_bound_epistemic = output_scaler.inverse_transform(bound_epistemic.reshape(-1, 1))
-        unscaled_bound_aleatoric = output_scaler.inverse_transform(bound_aleatoric.reshape(-1, 1))
-        epistemic = unscaled_bound_epistemic - unscaled_predictions
-        aleatoric = unscaled_bound_aleatoric - unscaled_predictions
-
+        
+        # Calculate uncertainty bounds in scaled space
+        bound_epistemic_upper = predictions + uncertainties["epistemic"]
+        bound_epistemic_lower = predictions - uncertainties["epistemic"]
+        bound_aleatoric_upper = predictions + uncertainties["aleatoric"]
+        bound_aleatoric_lower = predictions - uncertainties["aleatoric"]
+        
+        # Inverse transform all bounds
+        unscaled_bound_epistemic_upper = output_scaler.inverse_transform(bound_epistemic_upper.reshape(-1, 1))
+        unscaled_bound_epistemic_lower = output_scaler.inverse_transform(bound_epistemic_lower.reshape(-1, 1))
+        unscaled_bound_aleatoric_upper = output_scaler.inverse_transform(bound_aleatoric_upper.reshape(-1, 1))
+        unscaled_bound_aleatoric_lower = output_scaler.inverse_transform(bound_aleatoric_lower.reshape(-1, 1))
+        
+        # Calculate unscaled uncertainties (symmetric around predictions)
+        epistemic_upper = unscaled_bound_epistemic_upper - unscaled_predictions
+        epistemic_lower = unscaled_predictions - unscaled_bound_epistemic_lower
+        aleatoric_upper = unscaled_bound_aleatoric_upper - unscaled_predictions
+        aleatoric_lower = unscaled_predictions - unscaled_bound_aleatoric_lower
+        
+        # Use average of upper and lower uncertainties for symmetry
+        epistemic = (epistemic_upper + epistemic_lower) / 2
+        aleatoric = (aleatoric_upper + aleatoric_lower) / 2
+        
+        # NOW apply smoothing to the final unscaled values
+        if smoothing_window > 0:
+            unscaled_predictions = smooth_projections(unscaled_predictions, smoothing_window)
+            epistemic = smooth_projections(epistemic, smoothing_window)
+            aleatoric = smooth_projections(aleatoric, smoothing_window)
+        
+        # Ensure uncertainties are non-negative
+        epistemic = np.abs(epistemic)
+        aleatoric = np.abs(aleatoric)
+        
         uncertainties = dict(
             total=epistemic + aleatoric,
             epistemic=epistemic,
             aleatoric=aleatoric,
         )
+        
         return unscaled_predictions, uncertainties
     
 
@@ -545,7 +589,7 @@ class ISEFlow_AIS(ISEFlow):
             )
         data = fe.scale_data(data, scaler_path=f"{self.model_dir}/scaler_X.pkl")
         data = fe.add_lag_variables(data, lag=5, verbose=False)
-        data = pd.get_dummies(data, columns=['numerics', 'stress_balance', 'resolution', 'init_method', 'melt', 'ice_front', 'Ocean forcing', 'Ocean sensitivity', 'open_melt_param', 'standard_melt_param'], dtype=bool)
+        data = pd.get_dummies(data, columns=['numerics', 'stress_balance', 'resolution', 'init_method', 'melt', 'ice_front', 'Ocean forcing', 'Ocean sensitivity', 'open_melt_param', 'standard_melt_param', 'Ice shelf fracture'], dtype=bool)
         
         # need to add other columns as zeros from get_dummies (all true)
         if self.version == "v1.1.0":
@@ -553,7 +597,7 @@ class ISEFlow_AIS(ISEFlow):
         elif self.version == "v1.0.0":
             columns = ISEFlow_AIS_v1_0_0_variables
         else:
-            raise NotImplementedError(f"Version {self.version} not implemented. Try v1.0.0 or v1.1.0")
+            raise NotImplementedError(f"Version {self.version} not implemented. Use v1.0.0 or v1.1.0")
         
         
         for col in columns:
@@ -590,6 +634,7 @@ class ISEFlow_AIS(ISEFlow):
         open_melt_type: str=None,
         standard_melt_type: str=None,   
         mrro_anomaly: np.array=None,
+        smoothing_window: int=0
         
     ):
         """
@@ -606,11 +651,20 @@ class ISEFlow_AIS(ISEFlow):
 
         
         data = self.process(
-            year, sector, pr_anomaly, evspsbl_anomaly, smb_anomaly, ts_anomaly, ocean_thermal_forcing, ocean_salinity, ocean_temperature, initial_year, numerics, stress_balance, resolution, init_method, melt_in_floating_cells, icefront_migration, ocean_forcing_type, ocean_sensitivity, ice_shelf_fracture, open_melt_type, standard_melt_type, mrro_anomaly
+            year=year, sector=sector, pr_anomaly=pr_anomaly,
+            evspsbl_anomaly=evspsbl_anomaly, smb_anomaly=smb_anomaly,
+            ts_anomaly=ts_anomaly, ocean_thermal_forcing=ocean_thermal_forcing, 
+            ocean_salinity=ocean_salinity, ocean_temperature=ocean_temperature, 
+            initial_year=initial_year, numerics=numerics, stress_balance=stress_balance, 
+            resolution=resolution, init_method=init_method, 
+            melt_in_floating_cells=melt_in_floating_cells, icefront_migration=icefront_migration, 
+            ocean_forcing_type=ocean_forcing_type, ocean_sensitivity=ocean_sensitivity, 
+            ice_shelf_fracture=ice_shelf_fracture, open_melt_type=open_melt_type, 
+            standard_melt_type=standard_melt_type, mrro_anomaly=mrro_anomaly
         )
         X = data.to_numpy(dtype=float)
         X = to_tensor(X).to(self.device)
-        return super().predict(X, output_scaler=f"{self.model_dir}/scaler_y.pkl")
+        return super().predict(X, output_scaler=f"{self.model_dir}/scaler_y.pkl", smoothing_window=smoothing_window)
     
     def test(self, X_test,):
         """
@@ -798,3 +852,77 @@ class ISEFlow_GrIS_NF_v1_0_0(NormalizingFlow):
         self.output_size = 1
         self.num_flow_transforms = 5
         super().__init__(input_size=self.input_size, output_size=self.output_size, num_flow_transforms=self.num_flow_transforms)
+        
+        
+        
+from scipy.ndimage import uniform_filter1d
+
+def smooth_projections(data, window_size, projection_length=86):
+    """
+    Apply smoothing to projections while respecting projection boundaries.
+    Uses scipy's uniform_filter1d for more effective smoothing.
+    
+    Args:
+        data (np.ndarray): Array of shape (n_samples,) or (n_samples, 1) containing values to smooth
+        window_size (int): Size of the smoothing window
+        projection_length (int): Length of each projection segment (default: 86 years)
+    
+    Returns:
+        np.ndarray: Smoothed data with same shape as input
+    """
+    if window_size <= 0 or window_size == 1:
+        return data
+    
+    # Ensure window_size is odd for symmetric smoothing
+    if window_size % 2 == 0:
+        window_size += 1
+    
+    # Handle both 1D and 2D arrays
+    original_shape = data.shape
+    data_was_1d = False
+    if data.ndim == 1:
+        data = data.reshape(-1, 1)
+        data_was_1d = True
+    
+    smoothed_data = np.zeros_like(data)
+    n_samples = data.shape[0]
+    
+    # Calculate number of complete projections
+    n_complete_projections = n_samples // projection_length
+    
+    # Process each projection separately to avoid boundary mixing
+    for proj_idx in range(n_complete_projections):
+        start_idx = proj_idx * projection_length
+        end_idx = (proj_idx + 1) * projection_length
+        
+        # Extract current projection segment
+        projection_segment = data[start_idx:end_idx, :]
+        
+        # Apply uniform filter for each column
+        for col in range(data.shape[1]):
+            # Use mode='nearest' at boundaries to avoid edge effects
+            smoothed_segment = uniform_filter1d(
+                projection_segment[:, col], 
+                size=window_size, 
+                mode='nearest'
+            )
+            smoothed_data[start_idx:end_idx, col] = smoothed_segment
+    
+    # Handle any remaining samples that don't form a complete projection
+    if n_samples % projection_length != 0:
+        start_idx = n_complete_projections * projection_length
+        remaining_segment = data[start_idx:, :]
+        
+        for col in range(data.shape[1]):
+            smoothed_segment = uniform_filter1d(
+                remaining_segment[:, col],
+                size=min(window_size, len(remaining_segment)),
+                mode='nearest'
+            )
+            smoothed_data[start_idx:, col] = smoothed_segment
+    
+    # Restore original shape
+    if data_was_1d:
+        smoothed_data = smoothed_data.flatten()
+    
+    return smoothed_data

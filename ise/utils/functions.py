@@ -772,7 +772,7 @@ def to_tensor(x):
     return x.float()
 
 
-def unscale(y, scaler_path):
+def unscale_output(y, scaler_path):
     """
     Unscales a dataset using a previously saved MinMaxScaler.
 
@@ -787,6 +787,33 @@ def unscale(y, scaler_path):
     scaler = pkl.load(open(scaler_path, "rb"))
     y = scaler.inverse_transform(y)
     return y
+
+def unscale_input(X, scaler_path):
+    """
+    Unscales input features using a previously saved MinMaxScaler.
+
+    Args:
+        X (np.ndarray or pd.DataFrame): The scaled input features.
+        scaler_path (str): Path to the saved MinMaxScaler object.
+
+    Returns:
+        np.ndarray or pd.DataFrame: The unscaled input features.
+    """
+    if not isinstance(X, pd.DataFrame):
+        raise NotImplementedError("Only pandas DataFrame input is currently supported.")    
+    
+    scaler = pkl.load(open(scaler_path, "rb"))
+    column_order = X.columns
+    cols_to_scale = scaler.get_feature_names_out()
+    data_to_scale = X[cols_to_scale]
+    data_to_not_scale = X.drop(columns=cols_to_scale)
+    
+    # scale data and then concat with the non-scaled data
+    data_to_scale = pd.DataFrame(scaler.inverse_transform(data_to_scale), columns=cols_to_scale)
+    X = pd.concat([data_to_scale, data_to_not_scale], axis=1)
+    # Reorder columns to original order
+    X = X[column_order]
+    return X
 
 def get_data(data_dir, dataset_type='sectors', return_format='tensor'):
     """
