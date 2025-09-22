@@ -9,6 +9,7 @@ import pandas as pd
 import torch
 from torch import nn, optim
 from nflows import distributions, flows, transforms
+import xarray as xr
 
 from ise.data.ISMIP6.dataclasses import EmulatorDataset
 from ise.utils.functions import to_tensor
@@ -19,6 +20,7 @@ from ise.models.density_estimators.normalizing_flow import NormalizingFlow
 from ise.models.pretrained import ISEFlow_AIS_v1_0_0_path, ISEFlow_GrIS_v1_0_0_path, ISEFlow_AIS_v1_1_0_path, ISEFlow_GrIS_v1_1_0_path, ISEFlow_AIS_v1_1_0_variables, ISEFlow_AIS_v1_0_0_variables
 from ise.models.predictors.lstm import LSTM
 from ise.models.predictors.deep_ensemble import DeepEnsemble
+from ise.data.inputs import ISEFlowAISInputs, ISEFlowGrISInputs
 
 class ISEFlow(torch.nn.Module):
     """
@@ -237,6 +239,8 @@ class ISEFlow(torch.nn.Module):
         # Use average of upper and lower uncertainties for symmetry
         epistemic = (epistemic_upper + epistemic_lower) / 2
         aleatoric = (aleatoric_upper + aleatoric_lower) / 2
+        # epistemic = epistemic_upper - unscaled_predictions
+        # aleatoric = aleatoric_upper - unscaled_predictions
         
         # NOW apply smoothing to the final unscaled values
         if smoothing_window > 0:
@@ -255,6 +259,9 @@ class ISEFlow(torch.nn.Module):
         )
         
         return unscaled_predictions, uncertainties
+    
+        
+        
     
 
     def save(self, save_dir, input_features=None, output_scaler_path=None):
@@ -362,224 +369,15 @@ class ISEFlow_AIS(ISEFlow):
 
     def process(
         self, 
-        year: np.array,
-        sector: np.array,
-        pr_anomaly: np.array, 
-        evspsbl_anomaly: np.array,
-        smb_anomaly: np.array,
-        ts_anomaly: np.array,
-        ocean_thermal_forcing: np.array,
-        ocean_salinity: np.array,
-        ocean_temperature: np.array,
-        initial_year: int,
-        numerics: str,
-        stress_balance: str,
-        resolution: int,
-        init_method: str,
-        melt_in_floating_cells: str,
-        icefront_migration: str,
-        ocean_forcing_type: str,
-        ocean_sensitivity: str,
-        ice_shelf_fracture: bool,
-        open_melt_type: str=None,
-        standard_melt_type: str=None,
-        mrro_anomaly: np.array=None,
-        
-        
+        inputs: ISEFlowAISInputs,
     ):
-        """
-        Processes input data for prediction by applying necessary transformations and encoding.
-
-        Args:
-            year (np.array): Years of the input data.
-            pr_anomaly (np.array): Precipitation anomaly data.
-            evspsbl_anomaly (np.array): Evaporation anomaly data.
-            mrro_anomaly (np.array): Runoff anomaly data.
-            smb_anomaly (np.array): Surface mass balance anomaly.
-            ts_anomaly (np.array): Surface temperature anomaly.
-            ocean_thermal_forcing (np.array): Ocean thermal forcing.
-            ocean_salinity (np.array): Ocean salinity.
-            ocean_temperature (np.array): Ocean temperature.
-            initial_year (int): Initial year for modeling.
-            numerics (str): Numerical scheme used.
-            stress_balance (str): Stress balance model.
-            resolution (int): Resolution of the model.
-            init_method (str): Initialization method.
-            melt_in_floating_cells (str): Melt treatment method.
-            icefront_migration (str): Ice front migration scheme.
-            ocean_forcing_type (str): Type of ocean forcing applied.
-            ocean_sensitivity (str): Ocean sensitivity setting.
-            ice_shelf_fracture (bool): Whether ice shelf fracture is considered.
-            open_melt_type (str, optional): Type of open melt model. Defaults to None.
-            standard_melt_type (str, optional): Type of standard melt model. Defaults to None.
-
-        Returns:
-            pd.DataFrame: Processed input data ready for prediction.
-
-        Raises:
-            ValueError: If any input arguments are invalid.
-        """
-        if mrro_anomaly is None and self.version == "v1.0.0":
-            raise ValueError("mrro_anomaly is required for version v1.0.0")
         
-        if year[0] == 2015:
-            year = year - 2015
-        
-        if isinstance(sector, int):
-            sector = np.ones_like(year) * sector
-            
-        data = {    
-            "year": year,
-            "sector": sector,
-            "pr_anomaly": pr_anomaly,
-            "evspsbl_anomaly": evspsbl_anomaly,
-            "smb_anomaly": smb_anomaly,
-            "ts_anomaly": ts_anomaly,
-            "thermal_forcing": ocean_thermal_forcing,
-            "salinity": ocean_salinity,
-            "temperature": ocean_temperature,
-            "initial_year": initial_year,
-            "numerics": numerics,
-            "stress_balance": stress_balance,
-            "resolution": resolution,
-            "init_method": init_method,
-            "melt": melt_in_floating_cells,
-            "ice_front": icefront_migration,
-            "Ocean sensitivity": ocean_sensitivity,
-            "Ice shelf fracture": ice_shelf_fracture,
-            "Ocean forcing": ocean_forcing_type,
-            "open_melt_param": open_melt_type,
-            "standard_melt_param": standard_melt_type,
-        }
-        
-        if self.version == "v1.0.0":
-            data['mrro_anomaly'] = mrro_anomaly
-
-        
-        # map from accepted input to how the model expects variable names
-        arg_map = {
-            'numerics': {
-                'fe': 'FE',
-                'fd': 'FD',
-                'fe/fv': 'FE/FV',
-            },
-            'stress_balance': {
-                'ho': 'HO',
-                'hybrid': 'Hybrid',
-                'l1l2': 'L1L2',
-                'sia+ssa': 'SIA_SSA',
-                'ssa': 'SSA',
-                'stokes': 'Stokes',
-            },
-            "init_method": {
-                'da': 'DA',
-                'da*': 'DA_geom',
-                'da+': 'DA_relax',
-                'eq': 'Eq',
-                'sp': 'SP',
-                'sp+': 'SP_icethickness',
-            },
-            "melt": {
-                'floating condition': 'Floating condition',
-                'sub-grid': 'Sub-grid',
-            },
-            'ice_front': {
-                'str': 'StR',
-                'fix': 'Fix',
-                'mh': 'MH',
-                'ro': 'RO',
-                'div': 'Div',
-            },
-            'Ocean forcing': {
-                'standard': 'Standard',
-                'open': 'Open',
-            },
-            'Ocean sensitivity': {
-                'low': 'Low',
-                'medium': 'Medium',
-                'high': 'High',
-                'pigl': 'PIGL',
-            },
-            "open_melt_param": {
-                'lin': 'Lin',
-                'quad': 'Quad',
-                'nonlocal+slope': 'Nonlocal_Slope',
-                'pico': 'PICO',
-                'picop': 'PICOP',
-                'plume': 'Plume',
-            },
-            "standard_melt_param": {
-                'local': 'Local',
-                'nonlocal': 'Nonlocal',
-                'local anom': 'Local anom',
-                'nonlocal anom': 'Nonlocal anom',
-            }
-        }
+        if inputs.mrro_anomaly is None and self.version == "v1.0.0":
+            raise ValueError("mrro_anomaly is required for version v1.0.0") 
         
         mrro_means = np.array([3.61493220e-08, 2.77753815e-08, 5.50841177e-08, 4.17617754e-08, 5.58558082e-08, 5.74870861e-08, 1.07017988e-07, 7.72183085e-08, 6.44275121e-08, 2.10466987e-08, 5.36071770e-08, 8.32501757e-08, 9.31873131e-08, 7.84747761e-08, 8.41751157e-08, 8.56960829e-08, 7.81743956e-08, 9.74934761e-08, 6.04155892e-08, 8.31572351e-08, 1.16800344e-07, 9.96168899e-08, 1.41262144e-07, 8.76467771e-08, 1.03335698e-07, 1.23414214e-07, 9.29483909e-08, 1.95530928e-07, 1.18321950e-07, 1.68664275e-07, 1.56460562e-07, 1.40309916e-07, 1.08267844e-07, 1.85627395e-07, 1.29400203e-07, 1.98725020e-07, 1.39994753e-07, 1.86775688e-07, 1.68388442e-07, 2.04534154e-07, 1.49715175e-07, 1.50418319e-07, 1.44444531e-07, 1.67211070e-07, 1.83698063e-07, 2.05489898e-07, 2.42246565e-07, 1.98110423e-07, 2.40505470e-07, 2.37863389e-07, 2.55668987e-07, 2.93048624e-07, 2.57849749e-07, 2.72915753e-07, 2.82135517e-07, 2.27647208e-07, 2.21859448e-07, 2.07266200e-07, 2.42241281e-07, 2.55693726e-07, 2.52039399e-07, 2.82802604e-07, 2.94193847e-07, 3.00380753e-07, 3.60152406e-07, 3.47886784e-07, 3.58344925e-07, 3.84398045e-07, 4.41053179e-07, 3.84072892e-07, 4.42520286e-07, 4.30170222e-07, 4.34444387e-07, 4.77483307e-07, 3.52802246e-07, 4.96503280e-07, 5.22078462e-07, 4.78644041e-07, 4.86755806e-07, 5.04600526e-07, 4.80814514e-07, 5.38276914e-07, 5.91539053e-07, 5.84794672e-07, 5.33792907e-07, 5.37435986e-07])
-        
-
-        # check inputs
-        if not isinstance(initial_year, int):
-            raise ValueError("initial_year must be an integer")
-
-        if str(numerics).lower() not in ('fe', 'fd', 'fe/fv'):
-            raise ValueError("numerics must be one of 'fe', 'fd', or 'fe/fv'")
-        
-        if str(stress_balance) not in ('ho', 'hybrid', "l1l2", 'sia+ssa', 'ssa', 'stokes'):
-            raise ValueError("stress_balance must be one of 'ho', 'hybrid', 'l1l2', 'sia+ssa', 'ssa', or 'stokes'")
-        
-        if str(resolution) not in ('16', '20', '32', '4', '8', 'variable'):
-            raise ValueError("resolution must be one of '16', '20', '32', '4', '8', or 'variable'")
-        
-        if str(init_method) not in ('da', 'da*', 'da+', 'eq', 'sp', 'sp+'):
-            raise ValueError("init_method must be one of 'da', 'da*', 'da+', 'eq', 'sp', or 'sp+'")
-        
-        if str(melt_in_floating_cells) not in ('floating condition', 'sub-grid', 'None', 'False'):
-            raise ValueError("melt_in_floating_cells must be one of 'floating condition', 'sub-grid', 'None', or 'False'")
-
-        if str(icefront_migration) not in ('str', 'fix', 'mh', 'ro', 'div'):
-            raise ValueError("icefront_migration must be one of 'str', 'fix', 'mh', 'ro', or 'div'")
-        
-        if str(ocean_forcing_type) not in ('standard', 'open'):
-            raise ValueError("ocean_forcing_type must be one of 'standard' or 'open'")
-        
-        if str(ocean_forcing_type) == 'standard' and standard_melt_type is None:
-            raise ValueError("standard_melt_type must be provided if ocean_forcing_type is 'standard'")
-        elif str(ocean_forcing_type) == 'standard' and standard_melt_type not in ("local", "nonlocal", "local anom", "nonlocal anom", "None"):
-            raise ValueError("standard_melt_type must be one of 'local', 'nonlocal', 'local anom', 'nonlocal anom', or None")
-        
-        if str(ocean_forcing_type) == 'open' and open_melt_type is None:
-            raise ValueError("open_melt_type must be provided if ocean_forcing_type is 'open'")
-        elif str(ocean_forcing_type) == 'open' and open_melt_type not in ("lin", "quad", "nonlocal+slope", "pico", "picop", "plume", "None"):
-            raise ValueError("open_melt_type must be one of 'lin', 'quad', 'nonlocal+slope', 'pico', 'picop', 'plume', or None")
-        
-        if str(ocean_sensitivity) not in ('low', 'medium', 'high', 'pigl'):
-            raise ValueError("ocean_sensitivity must be one of 'low', 'medium', 'high', or 'pigl'")
-
-        if not isinstance(ice_shelf_fracture, bool):
-            raise ValueError("ice_shelf_fracture must be a boolean")
-        
-        
-        for key, value in data.items():
-            # make sure forcings are numpy arrays        
-            cols = ("year", "pr_anomaly", "evspsbl_anomaly", "smb_anomaly", "ts_anomaly", "thermal_forcing", "salinity", "temperature")
-            cols += ("mrro_anomaly",) if self.version == "v1.0.0" else ()
-            if key in cols:
-                try:
-                    data[key] = np.array(value)
-                except Exception as e:
-                    raise ValueError(f"Variable {key} must be a numpy array.") from e
-            # remap args
-            elif key in arg_map:
-                if value in arg_map[key]:
-                    data[key] = arg_map[key][value]
-                else:
-                    raise ValueError(f"Invalid value for {key}: {value}. Must be one of {list(arg_map[key].keys())}")
-
-
             
-        data = pd.DataFrame(data)
+        data = inputs.to_df()
     
         if self.version == "v1.0.0":
             year_mean_map = {year: mean for year, mean in enumerate(mrro_means)}
@@ -612,29 +410,8 @@ class ISEFlow_AIS(ISEFlow):
     
     def predict(        
         self, 
-        year: np.array,
-        sector: np.array,
-        pr_anomaly: np.array, 
-        evspsbl_anomaly: np.array,
-        smb_anomaly: np.array,
-        ts_anomaly: np.array,
-        ocean_thermal_forcing: np.array,
-        ocean_salinity: np.array,
-        ocean_temperature: np.array,
-        initial_year: int,
-        numerics: str,
-        stress_balance: str,
-        resolution: int,
-        init_method: str,
-        melt_in_floating_cells: str,
-        icefront_migration: str,
-        ocean_forcing_type: str,
-        ocean_sensitivity: str,
-        ice_shelf_fracture: bool,
-        open_melt_type: str=None,
-        standard_melt_type: str=None,   
-        mrro_anomaly: np.array=None,
-        smoothing_window: int=0
+        inputs: ISEFlowAISInputs,
+        smoothing_window: int=0,
         
     ):
         """
@@ -649,21 +426,10 @@ class ISEFlow_AIS(ISEFlow):
                 - uncertainties (dict): Dictionary containing different uncertainty components.
         """
 
-        
         data = self.process(
-            year=year, sector=sector, pr_anomaly=pr_anomaly,
-            evspsbl_anomaly=evspsbl_anomaly, smb_anomaly=smb_anomaly,
-            ts_anomaly=ts_anomaly, ocean_thermal_forcing=ocean_thermal_forcing, 
-            ocean_salinity=ocean_salinity, ocean_temperature=ocean_temperature, 
-            initial_year=initial_year, numerics=numerics, stress_balance=stress_balance, 
-            resolution=resolution, init_method=init_method, 
-            melt_in_floating_cells=melt_in_floating_cells, icefront_migration=icefront_migration, 
-            ocean_forcing_type=ocean_forcing_type, ocean_sensitivity=ocean_sensitivity, 
-            ice_shelf_fracture=ice_shelf_fracture, open_melt_type=open_melt_type, 
-            standard_melt_type=standard_melt_type, mrro_anomaly=mrro_anomaly
+            inputs=inputs,
         )
-        X = data.to_numpy(dtype=float)
-        X = to_tensor(X).to(self.device)
+        X = to_tensor(data).to(self.device)
         return super().predict(X, output_scaler=f"{self.model_dir}/scaler_y.pkl", smoothing_window=smoothing_window)
     
     def test(self, X_test,):
@@ -693,7 +459,7 @@ class ISEFlow_GrIS(ISEFlow):
     for GrIS and provides a loading method with pre-trained model paths.
     """
 
-    def __init__(self,):
+    def __init__(self, version="v1.1.0"):
         """
         Initializes the ISEFlow_GrIS model.
 
@@ -704,27 +470,84 @@ class ISEFlow_GrIS(ISEFlow):
         warnings.warn("ISEFlow_GrIS is deprecated and will be removed in future versions. Please use ISEFlow with custom models instead.", DeprecationWarning)
 
         self.ice_sheet = "GrIS"
-        deep_ensemble = ISEFlow_GrIS_DE_v1_0_0()
-        normalizing_flow = ISEFlow_GrIS_NF_v1_0_0()
+        self.version = version
+        
+        if version == "v1.0.0":
+            model_dir = ISEFlow_GrIS_v1_0_0_path
+        elif version == "v1.1.0":
+            model_dir = ISEFlow_GrIS_v1_1_0_path
+        else:
+            raise NotImplementedError(f"Version {version} not implemented. Try v1.0.0 or v1.1.0")
+        
+        # Load the actual submodules
+        deep_ensemble = DeepEnsemble.load(os.path.join(model_dir, "deep_ensemble.pth"))
+        normalizing_flow = NormalizingFlow.load(os.path.join(model_dir, "normalizing_flow.pth"))
+        
+        # ✅ This calls nn.Module.__init__ properly and registers submodules
         super(ISEFlow_GrIS, self).__init__(deep_ensemble, normalizing_flow)
+        
+        self.model_dir = model_dir
+        self.trained = True
+        
     
-    @staticmethod
-    def load(version="v1.0.0", model_dir=None, deep_ensemble_path=None, normalizing_flow_path=None,):
-        """
-        Loads a trained ISEFlow_GrIS model.
-
-        (Same arguments and return type as `ISEFlow_AIS.load`.)
-        """
-
-        if model_dir is None:
-            if version == "v1.0.0":
-                model_dir = ISEFlow_GrIS_v1_0_0_path
-            else:
-                raise NotImplementedError("Only version v1.0.0 is supported")
-        return super(ISEFlow_GrIS, ISEFlow_GrIS).load(model_dir, deep_ensemble_path, normalizing_flow_path)
-
-    # TODO: ISEFlow GrIS process, predict
+    def process(
+        self, 
+        inputs: ISEFlowGrISInputs,
+    ):
+        
+        data = inputs.to_df()
+        
+        data = fe.scale_data(data, scaler_path=f"{self.model_dir}/scaler_X.pkl")
+        data = fe.add_lag_variables(data, lag=5, verbose=False)
+        data = pd.get_dummies(data, columns=['numerics', 'ice_flow', 'initialization', 'initial_smb', 'velocity', 'bed', 'surface_thickness', 'ghf', 'res_min', 'res_max', 'Ocean forcing', 'Ocean sensitivity', 'Ice shelf fracture'], dtype=bool)
     
+        # need to add other columns as zeros from get_dummies (all true)
+        if self.version == "v1.1.0":
+            columns = ISEFlow_AIS_v1_1_0_variables
+        elif self.version == "v1.0.0":
+            columns = ISEFlow_AIS_v1_0_0_variables
+        else:
+            raise NotImplementedError(f"Version {self.version} not implemented. Use v1.0.0 or v1.1.0")
+        
+        for col in columns:
+            if col not in data.columns:
+                data[col] = False
+                
+        data = data[columns]
+        data = data.loc[:, ~data.columns.duplicated()]
+        return data
+
+    def predict(
+        self,
+        inputs: ISEFlowGrISInputs,
+        smoothing_window: int=0,
+    ):
+        data = self.process(
+            inputs=inputs,
+        )
+        X = to_tensor(data).to(self.device)
+        return super().predict(X, output_scaler=f"{self.model_dir}/scaler_y.pkl", smoothing_window=smoothing_window)
+    
+    def test(self, X_test,):
+        """
+        Tests the model on a test dataset.
+
+        Args:
+            X_test (array-like): Test feature matrix.
+            y_test (array-like): Test target values.
+
+        Returns:
+            tuple: A tuple containing:
+                - unscaled_predictions (numpy.ndarray): Model predictions in the original scale.
+                - uncertainties (dict): Dictionary with keys:
+                    - 'total' (numpy.ndarray): Total uncertainty.
+                    - 'epistemic' (numpy.ndarray): Epistemic uncertainty.
+                    - 'aleatoric' (numpy.ndarray): Aleatoric uncertainty.
+        """
+        
+        return super().predict(X_test, output_scaler=f"{ISEFlow_GrIS_v1_0_0_path}/scaler_y.pkl")
+    
+
     
     
     
@@ -926,3 +749,5 @@ def smooth_projections(data, window_size, projection_length=86):
         smoothed_data = smoothed_data.flatten()
     
     return smoothed_data
+
+

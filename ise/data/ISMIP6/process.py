@@ -1484,8 +1484,9 @@ def process_AIS_outputs(zenodo_directory, with_ctrl=False):
         full_dataset["exp"] = exp
         full_dataset["model"] = model
         all_files_data.append(full_dataset)
-    outputs = pd.concat(all_files_data)
-    outputs["sle"] = outputs["ivaf"] / 362.5 / 1e9
+    outputs = pd.concat(all_files_data) 
+    # outputs["sle"] = outputs["ivaf"] / 362.5 / 1e9
+    outputs["sle"] = -outputs['ivaf']/362.5*910/(10**9*1000) # per Seroussi et al., ISMIP6 scripts (910=ice density)
 
     return outputs
 
@@ -1765,24 +1766,18 @@ def _format_GrIS_forcings_aogcm_name(aogcm):
         aogcm = "noresm1-m_rcp85"
     elif aogcm == "ukesm1-cm6_ssp585":
         aogcm = "ukesm1-0-ll_ssp585"
+    elif aogcm == "csiro_mk3.6_rcp85":
+        aogcm = "csiro-mk3.6_rcp85"
+    elif aogcm == "hadgem2_es_rcp85":
+        aogcm = "hadgem2-es_rcp8.5"
+    elif aogcm == "ipsl-cm5_mr_rcp85":
+        aogcm = "ipsl-cm5-mr_rcp8.5"
+    elif aogcm == "noresm1_rcp85":
+        aogcm = "noresm1-m_rcp8.5"
     else:
         pass
     return aogcm
 
-
-def _format_GrIS_forcings_aogcm_name(aogcm):
-    """
-    Formats AOGCM names for GrIS atmospheric forcing files to maintain consistency.
-
-    Args:
-        aogcm (str): The original AOGCM name.
-
-    Returns:
-        str: The formatted AOGCM name.
-    """
-
-    modified_string = aogcm.rsplit("-", 1)
-    return "_".join(modified_string).lower()
 
 
 def _format_GrIS_ocean_aogcm_name(aogcm):

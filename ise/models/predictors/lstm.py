@@ -276,7 +276,7 @@ class LSTM(nn.Module):
                 artifact.add_file(checkpoint_path)
                 self.wandb_run.log_artifact(artifact)
 
-            checkpoint = torch.load(checkpoint_path)
+            checkpoint = torch.load(checkpoint_path, weights_only=False)
             if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint.keys():
                 self.load_state_dict(checkpoint['model_state_dict'])
                 self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])

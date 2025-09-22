@@ -478,9 +478,6 @@ def scale_data(data, scaler_path):
     data = data[column_order]
 
     # Convert bools back to int
-    # bool_cols = data.select_dtypes(include="bool").columns
-    # data[bool_cols] = data[bool_cols].astype(int)
-    # Remove duplicate columns if any
     data = data.loc[:, ~data.columns.duplicated()]
 
     return data

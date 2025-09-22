@@ -762,7 +762,7 @@ def to_tensor(x):
     if x is None:
         return None
     if isinstance(x, pd.DataFrame) or isinstance(x, pd.Series):
-        x = torch.tensor(x.values, dtype=torch.float32)
+        x = torch.tensor(x.to_numpy(dtype=float), dtype=torch.float32)
     elif isinstance(x, np.ndarray):
         x = torch.tensor(x, dtype=torch.float32)
     elif isinstance(x, torch.Tensor):
