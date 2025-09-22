@@ -165,6 +165,7 @@ pytest tests/
 - Creating more unit tests. I know, maybe one day I'll get around it.
 - Expanding **support for additional climate scenarios** and additional ISM runs (ISMIP7).
 - Better documentation and improvements to the readthedocs page.
+- Documentation was written with the help of Generative AI (ChatGPT & GitHub Copilot). Please report any issues you find!
 
 ---
 
