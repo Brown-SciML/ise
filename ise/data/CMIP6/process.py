@@ -1,5 +1,6 @@
 from ise.data.forcings import ForcingFile
 from ise.data.grids import GridFile
+from ise.utils import functions as f
 import numpy as np
 import pandas as pd
 import os
@@ -121,7 +122,7 @@ if __name__ == "__main__":
                             atmos_df = process_atmos_forcings(atmos_forcing_file, grid_file, aogcm)
                             atmos_df["ssp"] = ssp
                             atmos_df.to_csv(f"{realm_dir}/{aogcm}_{ssp}_atmospheric.csv", index=False)
-                            with open(f"{realm_dir}/.complete", "w") as f:
+                            with open(f"{realm_dir}/.complete", "w") as c:
                                 pass
                         except Exception as e:
                             warnings.warn(f"Failed to process atmospheric forcings for {aogcm} {ssp}: {e}")
@@ -153,7 +154,7 @@ if __name__ == "__main__":
                             ocean_df = process_ocean_forcings(tf_file, sal_file, ts_file, grid_file, aogcm)
                             ocean_df["ssp"] = ssp
                             ocean_df.to_csv(f"{ocean_dir}/{aogcm}_{ssp}_oceanic.csv", index=False)
-                            with open(f"{realm_dir}/.complete", "w") as f:
+                            with open(f"{realm_dir}/.complete", "w") as c:
                                 pass
                         except Exception as e:
                             warnings.warn(f"Failed to process ocean forcings for {aogcm} {ssp}: {e}")    
@@ -207,4 +208,5 @@ if __name__ == "__main__":
     else:
         combined = pd.DataFrame()
         print("No data files loaded; combined DataFrame is empty.")
-        
+    
+    combined.to_csv(os.path.join(dataset_path, "CMIP6_AIS_combined.csv"), index=False)

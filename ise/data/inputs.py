@@ -49,11 +49,22 @@ class ISEFlowAISInputs:
 
     # Validation logic runs after the object is created
     def __post_init__(self):
-        self._assign_model_configs(self.model_configs) if self.model_configs else None
+        
+        if self.model_configs:
+            self._load_all_ism_configs()
+            
+            if self.model_configs not in self.all_ism_configs:
+                raise ValueError(f"Model name {self.model_configs} in 'model_configs' not found, must be in {list(self.all_ism_configs.keys())}")
+            if self.all_ism_configs[self.model_configs]['ocean_forcing_type'] != self.ocean_forcing_type:
+                raise ValueError(f"Model {self.model_configs} has ocean_forcing_type {self.all_ism_configs[self.model_configs]['ocean_forcing_type']}, but received {self.ocean_forcing_type}")
+                
+            self._assign_model_configs(self.model_configs)
+            
         self._check_inputs()
         self._map_args()
         self._convert_arrays()
         self.df = None
+        self.all_ism_configs = None if not self.model_configs else self.all_ism_configs
         
     def _check_inputs(self,):
         """Check the validity of input parameters."""
@@ -65,15 +76,10 @@ class ISEFlowAISInputs:
             
         if isinstance(self.sector, int):
             self.sector = np.ones_like(self.year) * self.sector
-        
-        
-        
+            
         if not self.model_configs and (not self.numerics or not self.stress_balance or not self.resolution or not self.init_method or not self.initial_year or not self.melt_in_floating_cells or not self.icefront_migration or not self.ocean_forcing_type or not self.ocean_sensitivity or self.ice_shelf_fracture is None):
             raise ValueError("Either 'model_configs' must be provided or all individual configuration parameters must be specified.")
         
-        elif self.model_configs and (self.numerics or self.stress_balance or self.resolution or self.init_method or self.initial_year or self.melt_in_floating_cells or self.icefront_migration or self.ocean_forcing_type):
-            warnings.warn("Both 'model_configs' and individual configuration parameters are provided. 'model_configs' will take precedence.")
-         
         if not isinstance(self.initial_year, int):
             raise ValueError("initial_year must be an integer")
 
@@ -89,8 +95,8 @@ class ISEFlowAISInputs:
         if str(self.init_method) not in ('da', 'da*', 'da+', 'eq', 'sp', 'sp+'):
             raise ValueError("init_method must be one of 'da', 'da*', 'da+', 'eq', 'sp', or 'sp+'")
         
-        if str(self.melt_in_floating_cells) not in ('floating condition', 'sub-grid', 'None', 'False'):
-            raise ValueError("melt_in_floating_cells must be one of 'floating condition', 'sub-grid', 'None', or 'False'")
+        if str(self.melt_in_floating_cells) not in ('floating condition', 'sub-grid', 'None', 'False', "No"):
+            raise ValueError("melt_in_floating_cells must be one of 'floating condition', 'sub-grid', 'No', 'None', or 'False'")
 
         if str(self.icefront_migration) not in ('str', 'fix', 'mh', 'ro', 'div'):
             raise ValueError("icefront_migration must be one of 'str', 'fix', 'mh', 'ro', or 'div'")
@@ -142,6 +148,8 @@ class ISEFlowAISInputs:
             "melt_in_floating_cells": {
                 'floating condition': 'Floating condition',
                 'sub-grid': 'Sub-grid',
+                "No": "No",
+                'None': None
             },
             'icefront_migration': {
                 'str': 'StR',
@@ -233,17 +241,30 @@ class ISEFlowAISInputs:
         self.df = pd.DataFrame(data)
         # self.df = self._order_columns(self.df)
         return self.df
+    
+    def _load_all_ism_configs(self,):
+        if not self.model_configs:
+            raise ValueError("model_configs must be provided to get ISM characteristics.")
+        
+        with open(ismip6_model_configs_path, 'r') as file:
+            self.all_ism_configs = json.load(file)
 
+        return self.all_ism_configs
 
     def _assign_model_configs(self, model_name, characteristics_json=ismip6_model_configs_path):
-        with open(characteristics_json, 'r') as file:
-            characteristics = json.load(file)
-            
-        if model_name in characteristics:
-            model_config = characteristics[model_name]
+        
+        configs_provided = any([self.numerics, self.stress_balance, self.resolution, self.init_method, self.initial_year, self.melt_in_floating_cells, self.icefront_migration, ])
+        if configs_provided:
+            warnings.warn("Both 'model_configs' and individual configuration parameters are provided. 'model_configs' will take precedence.")
+         
+        if not self.all_ism_configs:
+            self._load_all_ism_configs()
+        
+        if model_name in self.all_ism_configs:
+            model_config = self.all_ism_configs[model_name]
         else:
-            raise ValueError(f"Model name {model_name} in 'model_configs' not found, must be in {list(characteristics.keys())}")
-
+            raise ValueError(f"Model name {model_name} in 'model_configs' not found, must be in {list(self.all_ism_configs.keys())}")
+                
         for key, value in model_config.items():
             if hasattr(self, key):
                 setattr(self, key, value)

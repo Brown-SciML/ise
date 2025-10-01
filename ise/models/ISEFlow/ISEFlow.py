@@ -239,8 +239,7 @@ class ISEFlow(torch.nn.Module):
         # Use average of upper and lower uncertainties for symmetry
         epistemic = (epistemic_upper + epistemic_lower) / 2
         aleatoric = (aleatoric_upper + aleatoric_lower) / 2
-        # epistemic = epistemic_upper - unscaled_predictions
-        # aleatoric = aleatoric_upper - unscaled_predictions
+
         
         # NOW apply smoothing to the final unscaled values
         if smoothing_window > 0:
