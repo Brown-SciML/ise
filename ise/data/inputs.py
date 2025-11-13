@@ -46,6 +46,8 @@ class ISEFlowAISInputs:
     # ISEFlow version
     version: str = "v1.1.0"
     
+    override_params: dict = None
+    
 
     # Validation logic runs after the object is created
     def __post_init__(self):
@@ -193,8 +195,21 @@ class ISEFlowAISInputs:
             if key in arg_map:
                 new_value = arg_map[key][current_value]
                 setattr(self, key, new_value)
-            
                 
+        if self.override_params:
+            if not isinstance(self.override_params, dict):
+                raise ValueError("override_params must be a dictionary")
+            
+            for key, value in self.override_params.items():
+                if key not in arg_map and not hasattr(self, key):
+                    raise ValueError(f"Invalid configuration key '{key}' in 'override_params' mapping. Should be one of {list(arg_map.keys())}.")
+                
+                if value not in arg_map.get(key, {}):
+                    raise ValueError(f"Invalid value '{value}' for key '{key}' in 'override_params'. Accepted values are: {list(arg_map.get(key, {}).keys())}")
+                
+                setattr(self, key, arg_map[key][value])
+                
+
     def _convert_arrays(self):
 
         forcings = ("year", "pr_anomaly", "evspsbl_anomaly", "smb_anomaly", "ts_anomaly", "ocean_thermal_forcing", "ocean_salinity", "ocean_temperature")
@@ -207,6 +222,7 @@ class ISEFlowAISInputs:
                 setattr(self, arr_name, np.array(forcing_array))
             except Exception as e:
                 raise ValueError(f"Variable {arr_name} must be a numpy array, received {type(forcing_array)}.") from e
+
     
     def to_df(self):
         """Convert the dataclass to a pandas DataFrame."""

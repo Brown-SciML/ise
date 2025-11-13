@@ -66,6 +66,7 @@ def main():
             plt.legend()
             plt.grid(True)
             plt.savefig(f'ISEFlow_{args.ism}_{args.aogcm}_{args.scenario}_sector_{sector}.png')
+            plt.savefig(f'ISEFlow_{args.ism}_{args.aogcm}_{args.scenario}_sector_{sector}.svg')
             plt.show()
             plt.close('all')
             
@@ -82,6 +83,7 @@ def main():
         plt.title(f'ISEFlow-AIS Total Sea Level Projection: {args.aogcm.upper()} {args.scenario.upper()}')
         plt.legend()
         plt.grid(True)
+        plt.savefig(f'ISEFlow_{args.ism}_{args.aogcm}_{args.scenario}_total.svg')
         plt.savefig(f'ISEFlow_{args.ism}_{args.aogcm}_{args.scenario}_total.png')
         plt.show()
         plt.close('all')

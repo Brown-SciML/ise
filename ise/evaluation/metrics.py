@@ -317,3 +317,48 @@ def mean_absolute_error(y_true, y_pred):
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     mae = np.mean(np.abs(y_true - y_pred))
     return mae
+
+def mean_prediction_interval_width(upper_bound, lower_bound):
+    """
+    Computes the Mean Prediction Interval Width (MPIW).
+
+    Args:
+        upper_bound (numpy.ndarray or list): The upper bounds of the prediction intervals.
+        lower_bound (numpy.ndarray or list): The lower bounds of the prediction intervals.
+
+    Returns:
+        float: The Mean Prediction Interval Width (MPIW).
+    """
+
+    upper_bound, lower_bound = np.array(upper_bound), np.array(lower_bound)
+    mpiw = np.mean(upper_bound - lower_bound)
+    return mpiw
+
+def winkler_score(y_true, y_pred, lower_bound, upper_bound, alpha=0.05):
+    """
+    Computes the Winkler Score for prediction intervals.
+
+    Args:
+        y_true (numpy.ndarray or list): The true values.
+        y_pred (numpy.ndarray or list): The predicted mean values.
+        lower_bound (numpy.ndarray or list): The lower bounds of the prediction intervals.
+        upper_bound (numpy.ndarray or list): The upper bounds of the prediction intervals.
+        alpha (float, optional): The significance level for the prediction intervals. Defaults to 0.05.
+    Returns:
+        float: The Winkler Score.
+    """
+
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
+    lower_bound, upper_bound = np.array(lower_bound), np.array(upper_bound)
+    n = len(y_true)
+    score = np.zeros(n)
+
+    for i in range(n):
+        if y_true[i] < lower_bound[i]:
+            score[i] = (upper_bound[i] - lower_bound[i]) + (2 / alpha) * (lower_bound[i] - y_true[i])
+        elif y_true[i] > upper_bound[i]:
+            score[i] = (upper_bound[i] - lower_bound[i]) + (2 / alpha) * (y_true[i] - upper_bound[i])
+        else:
+            score[i] = upper_bound[i] - lower_bound[i]
+
+    return np.mean(score)

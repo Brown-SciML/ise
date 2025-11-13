@@ -9,7 +9,7 @@ import warnings
 
 # Custom imports from the ISEFlow library
 try:
-    from ise.models.gp import GP
+    from ise.models.gp import GP, PowerExponentialKernel, EmulandiceGP
     from ise.utils import functions as f
     from ise.evaluation import metrics as m
 except:
@@ -73,6 +73,8 @@ def train_gp(ice_sheet, temp_only, smb_only):
     val_scenarios = val['Scenario']
     test_scenarios = test['Scenario']
 
+    GP_retreat_parameter = ""
+
     # For Antarctic Ice Sheet (AIS), include ice shelf collapse indicator
     if ice_sheet == 'AIS':
         train['ice_shelf_collapse'] = train['Ice shelf fracture_True'] == train['Ice shelf fracture_True'].max()
@@ -130,28 +132,39 @@ def train_gp(ice_sheet, temp_only, smb_only):
         X_test_subset = X_test_subset.to_numpy()
 
         # Define and train the Gaussian Process model
-        kernel = ConstantKernel(1.0, (1e-4, 1e1)) * RBF(1.0, (1e-4, 1e1)) + WhiteKernel(noise_level=5, noise_level_bounds=(1e-10, 1e+1))
-        model = GP(kernel=kernel)
-        model.fit(X_train_subset, y_train_subset)
+        # kernel = ConstantKernel(1.0, (1e-4, 1e1)) * RBF(1.0, (1e-4, 1e1)) + WhiteKernel(noise_level=5, noise_level_bounds=(1e-10, 1e+1))
+        # model = GP(kernel=kernel)
+        # model.fit(X_train_subset, y_train_subset)
+
+        model = EmulandiceGP()
+        model.train(X_train_subset, y_train_subset)
 
         # Make predictions and compute upper/lower bounds
         inference_time_start = time.time()
         preds, sd = model.predict(X_train_subset, return_std=True)
         inference_time += (time.time() - inference_time_start) / X_train_subset.shape[0]
 
-        # Store predictions, upper and lower bounds for train, validation, and test sets
-        def store_predictions(df, preds, sd, target_df, scaler_path, column='pred'):
-            df[column] = f.unscale_output(preds.reshape(-1, 1), scaler_path).squeeze()
-            df['upper_bound'] = f.unscale_output((preds + sd).reshape(-1, 1), scaler_path).squeeze()
-            df['lower_bound'] = f.unscale_output((preds - sd).reshape(-1, 1), scaler_path).squeeze()
+        # Define the boolean masks for the current year
+        train_mask = (train['year'] == all_years[i])
+        val_mask = (val['year'] == all_years[i])
+        test_mask = (test['year'] == all_years[i])
 
-        store_predictions(train.loc[(train['year'] == all_years[i])], preds, sd, y_train_subset, f'{dir_}/scaler_y.pkl')
+        # Store predictions, upper and lower bounds for train, validation, and test sets
+        # (This is the new function definition from above)
+        def store_predictions(original_df, mask, preds, sd, scaler_path, column='pred'):
+            original_df.loc[mask, column] = f.unscale_output(preds.reshape(-1, 1), scaler_path).squeeze()
+            original_df.loc[mask, 'upper_bound'] = f.unscale_output((preds + sd).reshape(-1, 1), scaler_path).squeeze()
+            original_df.loc[mask, 'lower_bound'] = f.unscale_output((preds - sd).reshape(-1, 1), scaler_path).squeeze()
+            original_df.loc[mask, 'true'] = f.unscale_output(original_df.loc[mask, 'sle'].values.reshape(-1, 1), scaler_path).squeeze()
+
+        # Call the updated function with the full DataFrame and the mask
+        store_predictions(train, train_mask, preds, sd, f'{dir_}/scaler_y.pkl')
 
         preds, sd = model.predict(X_val_subset, return_std=True)
-        store_predictions(val.loc[(val['year'] == all_years[i])], preds, sd, y_val_subset, f'{dir_}/scaler_y.pkl')
+        store_predictions(val, val_mask, preds, sd, f'{dir_}/scaler_y.pkl')
 
         preds, sd = model.predict(X_test_subset, return_std=True)
-        store_predictions(test.loc[(test['year'] == all_years[i])], preds, sd, y_test_subset, f'{dir_}/scaler_y.pkl')
+        store_predictions(test, test_mask, preds, sd, f'{dir_}/scaler_y.pkl')
 
     # Evaluation and summary statistics
     print(f"Time taken: {time.time() - start_time} seconds")
@@ -166,10 +179,10 @@ def train_gp(ice_sheet, temp_only, smb_only):
 
     # Export predictions to CSV
     cur_time = time.time()
-    print(f'Exported to: {ice_sheet}_temponly{temp_only}_smbonly{smb_only}_gp_predictions_{cur_time}.csv')
-    train.to_csv(f"train_{ice_sheet}_temponly{temp_only}_smbonly{smb_only}_gp_predictions_{cur_time}.csv", index=False)
-    val.to_csv(f"val_{ice_sheet}_temponly{temp_only}_smbonly{smb_only}_gp_predictions_{cur_time}.csv", index=False)
-    test.to_csv(f"test_{ice_sheet}_temponly{temp_only}_smbonly{smb_only}_gp_predictions_{cur_time}.csv", index=False)
+    print(f'Exported to: {model.__class__.__name__}_{ice_sheet}_temponly{temp_only}_smbonly{smb_only}_gp_predictions_{cur_time}.csv')
+    train.to_csv(f"{model.__class__.__name__}_train_{ice_sheet}_temponly{temp_only}_smbonly{smb_only}_gp_predictions_{cur_time}.csv", index=False)
+    val.to_csv(f"{model.__class__.__name__}_val_{ice_sheet}_temponly{temp_only}_smbonly{smb_only}_gp_predictions_{cur_time}.csv", index=False)
+    test.to_csv(f"{model.__class__.__name__}_test_{ice_sheet}_temponly{temp_only}_smbonly{smb_only}_gp_predictions_{cur_time}.csv", index=False)
 
 
 if __name__ == '__main__':

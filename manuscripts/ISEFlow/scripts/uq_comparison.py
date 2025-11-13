@@ -90,8 +90,8 @@ def get_dataset(ice_sheet='AIS'):
 
 
 # Load Emulandice prediction data for AIS and GrIS
-emulandice_temponly_ais = pd.read_csv("/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/ISEFlow/Emulandice/regions/Temp_only/test_AIS_temponlyTrue_smbonlyFalse_gp_predictions_1729644962.7696323.csv")
-emulandice_temponly_gris = pd.read_csv("/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/ISEFlow/Emulandice/regions/Temp_only/test_GrIS_temponlyTrue_smbonlyFalse_gp_predictions_1729643774.799597.csv")
+emulandice_temponly_ais = pd.read_csv("/oscar/home/pvankatw/research/ise/manuscripts/ISEFlow/emulandice-ais-predictions.csv")
+emulandice_temponly_gris = pd.read_csv("/oscar/home/pvankatw/research/ise/manuscripts/ISEFlow/emulandice-gris-predictions.csv")
 
 # Get datasets for AIS and GrIS
 X_train_AIS, y_train_AIS, X_val_AIS, y_val_AIS, X_test_AIS, y_test_AIS = get_dataset(ice_sheet='AIS')
@@ -102,7 +102,7 @@ AIS_data_dir = '/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/ISEFlow/dat
 GrIS_data_dir = '/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/ISEFlow/data/ml/GrIS/'
 
 # Uncomment this section to train and save models
-out_dir = '/users/pvankatw/research/ise/supplemental/uq/after_scenario_fix/'
+out_dir = '/oscar/home/pvankatw/data/pvankatw/old code/iseflow_supplemental/supplemental/uq/after_scenario_fix'
 # Train and save ISEFlow models for AIS and GrIS (temp-only version)
 # iseflowAIS_temponly = ISEFlow(de, nf)
 # iseflowAIS_temponly.fit(X_train_AIS.to_numpy(), y_train_AIS.to_numpy(), ...)

@@ -3,9 +3,9 @@ import numpy as np
 from joblib import dump, load
 from scipy.spatial.distance import cdist, pdist, squareform
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, WhiteKernel, _check_length_scale
+from sklearn.gaussian_process.kernels import ConstantKernel, RBF, WhiteKernel, _check_length_scale
 from sklearn.metrics import r2_score
-
+from sklearn.linear_model import LinearRegression
 
 class PowerExponentialKernel(RBF):
     """
@@ -22,7 +22,7 @@ class PowerExponentialKernel(RBF):
 
     def __init__(
         self,
-        exponential=2.0,
+        exponential=0.1,
         length_scale=1.0,
         length_scale_bounds=(1e-5, 1e5),
     ):
@@ -207,5 +207,126 @@ R2: {r2:0.6f}"""
         self = load(path)
         return self
 
+class EmulandiceGP(GaussianProcessRegressor):
+    """
+    Gaussian Process (GP) regression model that first fits a linear trend
+    and then models the residuals, similar to the emulandice methodology.
+    """
+    def __init__(self, verbose=True):
 
-# TODO write Emulandice based on train_gp.py
+        self.kernel = (ConstantKernel(1.0, (1e-4, 1e1)) * PowerExponentialKernel(exponential=0.1) 
+                       + WhiteKernel(noise_level=1.0, noise_level_bounds=(1e-20, 1e+20))) # noise_level_bounds so large ~= unbounded
+        self.verbose = verbose
+        # Add a linear model component
+        self.linear_model = LinearRegression()
+        
+        super().__init__(
+            kernel=self.kernel,
+            n_restarts_optimizer=9,
+        )
+
+    def train(self, train_features, train_labels):
+        """
+        Trains the combined Linear Regression and Gaussian Process model.
+
+        Args:
+            train_features (np.ndarray): Feature matrix.
+            train_labels (np.ndarray): Target values.
+
+        Returns:
+            GP: The trained model.
+        """
+        self.train_features, self.train_labels = train_features, train_labels
+
+        # 1. Fit the linear model
+        self.linear_model.fit(train_features, train_labels)
+
+        # 2. Calculate the residuals
+        linear_preds = self.linear_model.predict(train_features)
+        residuals = train_labels - linear_preds
+
+        # 3. Fit the GP on the residuals
+        self.fit(train_features, residuals)
+        return self
+
+    def predict(self, X, return_std=False):
+        """
+        Makes predictions by combining the linear model and the GP.
+
+        Args:
+            X (np.ndarray): Features to predict on.
+            return_std (bool): Whether to return the standard deviation.
+
+        Returns:
+            np.ndarray or tuple: Predictions, and optionally standard deviation.
+        """
+        # 1. Predict the trend with the linear model
+        linear_preds = self.linear_model.predict(X)
+
+        # 2. Predict the residuals with the GP
+        gp_preds, std = super().predict(X, return_std=True)
+
+        # 3. Combine the predictions
+        final_preds = linear_preds + gp_preds
+
+        if return_std:
+            return final_preds, std
+        else:
+            return final_preds
+
+
+    def test(self, test_features, test_labels):
+        self.test_features, self.test_labels = test_features, test_labels
+        preds, std_prediction = self.predict(test_features, return_std=True) 
+        
+        test_labels = np.array(test_labels.squeeze())
+        mse = sum((preds - test_labels) ** 2) / len(preds)
+        mae = sum(abs((preds - test_labels))) / len(preds)
+        rmse = np.sqrt(mse)
+        r2 = r2_score(test_labels, preds)
+
+        metrics = {"MSE": mse, "MAE": mae, "RMSE": rmse, "R2": r2}
+
+        if self.verbose:
+            print(
+                f"""Test Metrics
+MSE: {mse:0.6f}
+MAE: {mae:0.6f}
+RMSE: {rmse:0.6f}
+R2: {r2:0.6f}"""
+            )
+        return preds, std_prediction, metrics
+    
+    def save(self, path):
+        """
+        Saves the trained Gaussian Process model to a file.
+
+        Args:
+            path (str): Path where the model should be saved. Must end with `.joblib`.
+
+        Raises:
+            ValueError: If the file path does not end with `.joblib`.
+        """
+
+        if not path.endswith(".joblib"):
+            raise ValueError("Path must end with .joblib")
+        dump(self, path)
+
+    def load(self, path):
+        """
+        Loads a Gaussian Process model from a saved file.
+
+        Args:
+            path (str): Path to the saved model file. Must end with `.joblib`.
+
+        Returns:
+            GP: The loaded Gaussian Process model.
+
+        Raises:
+            ValueError: If the file path does not end with `.joblib`.
+        """
+
+        if not path.endswith(".joblib"):
+            raise ValueError("Path must end with .joblib")
+        self = load(path)
+        return self
