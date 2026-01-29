@@ -91,3 +91,8 @@ dependencies = [
     "wandb>=0.21.1",
     "optuna>=4.5.0",
 ]
+
+[dependency-groups]
+dev = [
+    "statsmodels>=0.14.5",
+]
