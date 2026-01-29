@@ -77,7 +77,7 @@ import numpy as np
 year = np.arange(2015, 2101)
 pr_anomaly = np.array([...])
 evspsbl_anomaly = np.array([...])
-mrro_anomaly = np.array([....])
+mrro_anomaly = np.array([...])
 smb_anomaly = np.array([...])
 ts_anomaly = np.array([...])
 ocean_thermal_forcing = np.array([...])
@@ -100,7 +100,7 @@ open_melt_type = "picop"
 standard_melt_type = "nonlocal"
 
 inputs = ISEFlowAISInputs(
-    year=years,
+    year=year,
     sector=sector,
     pr_anomaly=pr_anomaly,
     evspsbl_anomaly=evspsbl_anomaly,
@@ -125,7 +125,7 @@ inputs = ISEFlowAISInputs(
 
 # OR, TO RUN AS A PARTICULAR MODEL...
 # inputs = ISEFlowAISInputs(
-#     year=years,
+#     year=year,
 #     sector=sector,
 #     pr_anomaly=pr_anomaly,
 #     evspsbl_anomaly=evspsbl_anomaly,
