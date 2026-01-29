@@ -66,7 +66,7 @@ ise/
 from ise.models.ISEFlow import ISEFlow_AIS
 
 # Load v1.0.0 of ISEFlow-AIS
-iseflowais = ISEFlow_AIS.load(version="v1.0.0", )
+iseflowais = ISEFlow_AIS(version="v1.1.0", )
 ```
 
 ### **2️⃣ Running Predictions**
@@ -75,15 +75,15 @@ import numpy as np
 
 # Identify Climate Forcings
 year = np.arange(2015, 2101)
-pr_anomaly = np.array([-7.0884660e-07,  3.3546070e-06,  ...])
-evspsbl_anomaly = np.array([-1.7997656e-06,  8.4536487e-07, ...])
-mrro_anomaly = np.array([ 9.14532450e-09, -1.04553575e-08,  ....])
-smb_anomaly = np.array([ 1.0817737e-06,  2.5196978e-06,  ....])
-ts_anomaly = np.array([-0.6466742 ,  0.00770213, ...  ])
-ocean_thermal_forcing = np.array([3.952802, 3.952802, ...  ])
-ocean_thermal_forcing = np.array([4.052609 , 4.048029 , ...])
-ocean_salinity = np.array([34.538155, 34.54216 , ...])
-ocean_temp = np.array([1.4597255, 1.454916 , ...])
+pr_anomaly = np.array([...])
+evspsbl_anomaly = np.array([...])
+mrro_anomaly = np.array([....])
+smb_anomaly = np.array([...])
+ts_anomaly = np.array([...])
+ocean_thermal_forcing = np.array([...])
+ocean_thermal_forcing = np.array([...])
+ocean_salinity = np.array([...])
+ocean_temp = np.array([...])
 
 # Ice Sheet Model Characteristics for projection (see Table A1 Seroussi et al. 2020)
 initial_year = 1980
@@ -99,9 +99,45 @@ ice_shelf_fracture = False
 open_melt_type = "picop"
 standard_melt_type = "nonlocal"
 
-prediction, uq = iseflowais.predict(
-    year, pr_anomaly, evspsbl_anomaly, mrro_anomaly, smb_anomaly, ts_anomaly, ocean_thermal_forcing, ocean_salinity, ocean_temp, initial_year, numerics, stress_balance, resolution, init_method,  melt_in_floating_cells, icefront_migration, ocean_forcing_type, ocean_sensitivity, ice_shelf_fracture, open_melt_type, standard_melt_type
+inputs = ISEFlowAISInputs(
+    year=years,
+    sector=sector,
+    pr_anomaly=pr_anomaly,
+    evspsbl_anomaly=evspsbl_anomaly,
+    smb_anomaly=smb_anomaly,
+    ts_anomaly=ts_anomaly,
+    ocean_thermal_forcing=ocean_thermal_forcing,
+    ocean_salinity=ocean_salinity,
+    ocean_temperature=ocean_temp,
+    ocean_forcing_type=ocean_forcing_type,
+    ocean_sensitivity=ocean_sensitivity,
+    ice_shelf_fracture=ice_shelf_fracture,
+    stress_balance=stress_balance,
+    resolution=resolution,
+    numerics=numerics,
+    init_method=init_method,
+    melt_in_floating_cells=melt_in_floating_cells,
+    icefront_migration=icefront_migration,
+    open_melt_type=open_melt_type,
+    standard_melt_type=standard_melt_type,
+    initial_year=initial_year,
 )
+
+# OR, TO RUN AS A PARTICULAR MODEL...
+# inputs = ISEFlowAISInputs(
+#     year=years,
+#     sector=sector,
+#     pr_anomaly=pr_anomaly,
+#     evspsbl_anomaly=evspsbl_anomaly,
+#     smb_anomaly=smb_anomaly,
+#     ts_anomaly=ts_anomaly,
+#     ocean_thermal_forcing=ocean_thermal_forcing,
+#     ocean_salinity=ocean_salinity,
+#     ocean_temperature=ocean_temp,
+#     model_configs="AWI_PISM1"
+# )
+
+pred, uq = iseflowais.predict(inputs,)
 
 print(prediction)
 print(uq['aleatoric'])
