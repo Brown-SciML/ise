@@ -1,3 +1,9 @@
+"""Input dataclasses for ISEFlow-AIS and ISEFlow-GrIS predictions.
+
+This module defines ISEFlowAISInputs and ISEFlowGrISInputs, which encapsulate
+climate forcings, experiment configuration, and ice sheet model settings
+required for running pretrained ISEFlow emulators.
+"""
 from dataclasses import dataclass, field
 from typing import Optional, List
 import numpy as np
@@ -6,6 +12,7 @@ import pandas as pd
 import warnings
 
 from ise.utils import ismip6_model_configs_path
+
 
 @dataclass
 class ISEFlowAISInputs:

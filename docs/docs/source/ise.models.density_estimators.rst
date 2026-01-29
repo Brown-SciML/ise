@@ -1,11 +1,13 @@
-ise.models.density\_estimators
-======================================
+ise.models.density_estimators
+=============================
 
-.. Submodules
-.. ----------
+Normalizing flow and other density estimators for aleatoric uncertainty in ice sheet emulation.
 
-ise.models.density\_estimators.normalizing\_flow
--------------------------------------------------------
+Submodules
+----------
+
+ise.models.density_estimators.normalizing_flow
+----------------------------------------------
 
 .. automodule:: ise.models.density_estimators.normalizing_flow
    :members:
@@ -13,9 +15,9 @@ ise.models.density\_estimators.normalizing\_flow
    :show-inheritance:
 
 .. Module contents
-.. ---------------
+------------------
 
-.. .. automodule:: ise.models.density_estimators
-..    :members:
-..    :undoc-members:
-..    :show-inheritance:
+.. automodule:: ise.models.density_estimators
+   :members:
+   :undoc-members:
+   :show-inheritance:

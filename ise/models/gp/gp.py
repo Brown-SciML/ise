@@ -1,4 +1,8 @@
+"""Gaussian process emulators for ice sheet projections.
 
+This module provides PowerExponentialKernel, NuggetKernel, GP, and EmulandiceGP
+for GP-based regression and uncertainty quantification.
+"""
 import numpy as np
 from joblib import dump, load
 from scipy.spatial.distance import cdist, pdist, squareform

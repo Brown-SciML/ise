@@ -1,3 +1,9 @@
+"""Data loading, scaling, and tensor utilities for ice sheet emulation.
+
+This module provides functions for loading models and ML data, file discovery,
+NetCDF variable handling, DataFrame undummify/combine, uncertainty bands,
+distribution metrics, scaling/unscaling, and get_X_y / get_data for training.
+"""
 import os
 import pickle as pkl
 from itertools import product

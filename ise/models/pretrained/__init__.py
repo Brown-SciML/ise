@@ -1,3 +1,8 @@
+"""Paths and variable lists for pretrained ISEFlow models.
+
+This module defines directory paths and expected feature names for
+ISEFlow-AIS and ISEFlow-GrIS v1.0.0 and v1.1.0 pretrained checkpoints.
+"""
 import os
 ISEFlow_AIS_v1_0_0_path = os.path.join(os.path.dirname(__file__), 'ISEFlow/v1.0.0/ISEFlow_AIS_v1-0-0')
 ISEFlow_GrIS_v1_0_0_path = os.path.join(os.path.dirname(__file__), 'ISEFlow/v1.0.0/ISEFlow_GrIS_v1-0-0')

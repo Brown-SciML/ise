@@ -1,4 +1,8 @@
+"""Time conversion and subsetting utilities for xarray datasets.
 
+This module provides convert_and_subset_times for standardizing time coordinates
+to a 2015–2100 range and handling various time formats (cftime, numeric, datetime64).
+"""
 import cftime
 import numpy as np
 import xarray as xr

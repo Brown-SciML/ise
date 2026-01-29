@@ -1,3 +1,9 @@
+"""ISMIP6 projection and forcing processing for ice sheet emulation.
+
+This module provides ProjectionProcessor for IVAF calculation and control
+subtraction, plus functions for merging forcings, processing atmospheric/oceanic
+sectors, and combining datasets for AIS and GrIS.
+"""
 import os
 import time
 import warnings

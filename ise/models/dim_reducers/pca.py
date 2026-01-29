@@ -1,9 +1,15 @@
+"""Dimensionality reduction for ice sheet emulator inputs.
+
+This module provides PCA and DimensionProcessor for reducing input feature
+dimensions and aligning data with fitted transforms (e.g. after scaling).
+"""
 import torch
 from torch import nn
 import pandas as pd
 import numpy as np
 
 from ise.data.ISMIP6.scaler import LogScaler, RobustScaler, StandardScaler
+
 
 class PCA(nn.Module):
     """

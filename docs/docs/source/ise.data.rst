@@ -1,31 +1,56 @@
 ise.data
-================
+========
 
-.. Submodules
-.. ----------
+Data loading, processing, and utilities for ice sheet emulation.
 
-ise.data.ISMIP6
----------------------------
+Subpackages
+-----------
 
-.. automodule:: ise.data.ISMIP6
+.. toctree::
+   :maxdepth: 2
+
+   ise.data.ISMIP6
+   ise.data.CMIP6
+
+Submodules
+----------
+
+ise.data.forcings
+-----------------
+
+.. automodule:: ise.data.forcings
    :members:
    :undoc-members:
    :show-inheritance:
 
-ise.data.CMIP
----------------------------------
+ise.data.grids
+--------------
 
-.. automodule:: ise.data.CMIP
+.. automodule:: ise.data.grids
    :members:
    :undoc-members:
    :show-inheritance:
 
+ise.data.inputs
+---------------
 
+.. automodule:: ise.data.inputs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+ise.data.utils
+--------------
+
+.. automodule:: ise.data.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 .. Module contents
-.. ---------------
+------------------
 
-.. .. automodule:: ise.data
-..    :members:
-..    :undoc-members:
-..    :show-inheritance:
+.. automodule:: ise.data
+   :members:
+   :undoc-members:
+   :show-inheritance:

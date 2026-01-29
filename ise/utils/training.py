@@ -1,5 +1,11 @@
+"""Checkpointing and early stopping for model training.
+
+This module provides CheckpointSaver and EarlyStoppingCheckpointer for saving
+model state when loss improves and stopping when validation loss plateaus.
+"""
 import torch
 import warnings
+
 
 class CheckpointSaver:
     """

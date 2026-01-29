@@ -1,45 +1,47 @@
-ise.data
-================
+ise.data.ISMIP6
+===============
 
-.. Submodules
-.. ----------
+ISMIP6-specific data structures, feature engineering, processing, and scaling.
 
-ise.data.dataclasses
+Submodules
+----------
+
+ise.data.ISMIP6.dataclasses
 ---------------------------
 
-.. automodule:: ise.data.dataclasses
+.. automodule:: ise.data.ISMIP6.dataclasses
    :members:
    :undoc-members:
    :show-inheritance:
 
-ise.data.feature\_engineer
----------------------------------
+ise.data.ISMIP6.feature_engineer
+--------------------------------
 
-.. automodule:: ise.data.feature_engineer
+.. automodule:: ise.data.ISMIP6.feature_engineer
    :members:
    :undoc-members:
    :show-inheritance:
 
-ise.data.process
+ise.data.ISMIP6.process
 -----------------------
 
-.. automodule:: ise.data.process
+.. automodule:: ise.data.ISMIP6.process
    :members:
    :undoc-members:
    :show-inheritance:
 
-ise.data.scaler
+ise.data.ISMIP6.scaler
 ----------------------
 
-.. automodule:: ise.data.scaler
+.. automodule:: ise.data.ISMIP6.scaler
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. Module contents
-.. ---------------
+------------------
 
-.. .. automodule:: ise.data
-..    :members:
-..    :undoc-members:
-..    :show-inheritance:
+.. automodule:: ise.data.ISMIP6
+   :members:
+   :undoc-members:
+   :show-inheritance:

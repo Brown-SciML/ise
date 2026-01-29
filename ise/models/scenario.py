@@ -1,3 +1,8 @@
+"""Scenario-level predictor for ice sheet emulation.
+
+This module provides ScenarioPredictor, a feedforward network for predicting
+scenario-level outcomes (e.g. binary or regression targets) from input features.
+"""
 import torch
 import torch.nn as nn
 import torch.optim as optim

@@ -1,3 +1,9 @@
+"""Feature engineering for ISMIP6 emulator datasets.
+
+This module provides the FeatureEngineer class and standalone functions for
+scaling, splitting, lag variables, outlier handling, and model characteristic
+merging for ice sheet emulation training data.
+"""
 import json
 import os
 import pickle

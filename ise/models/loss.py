@@ -1,3 +1,9 @@
+"""Loss functions for ice sheet emulator training.
+
+This module provides weighted and grid-aware loss modules: WeightedGridLoss,
+WeightedMSELoss, WeightedMSEPCALoss, WeightedMSELossWithSignPenalty,
+GridCriterion, WeightedPCALoss, and MSEDeviationLoss for sector/grid predictions.
+"""
 import torch
 
 

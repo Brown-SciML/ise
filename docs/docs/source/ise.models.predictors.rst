@@ -1,11 +1,13 @@
 ise.models.predictors
-=============================
+=====================
 
-.. Submodules
-.. ----------
+LSTM and deep ensemble predictors for ice sheet emulation.
 
-ise.models.predictors.deep\_ensemble
--------------------------------------------
+Submodules
+----------
+
+ise.models.predictors.deep_ensemble
+-----------------------------------
 
 .. automodule:: ise.models.predictors.deep_ensemble
    :members:
@@ -13,7 +15,7 @@ ise.models.predictors.deep\_ensemble
    :show-inheritance:
 
 ise.models.predictors.lstm
----------------------------------
+--------------------------
 
 .. automodule:: ise.models.predictors.lstm
    :members:
@@ -21,9 +23,9 @@ ise.models.predictors.lstm
    :show-inheritance:
 
 .. Module contents
-.. ---------------
+------------------
 
-.. .. automodule:: ise.models.predictors
-..    :members:
-..    :undoc-members:
-..    :show-inheritance:
+.. automodule:: ise.models.predictors
+   :members:
+   :undoc-members:
+   :show-inheritance:

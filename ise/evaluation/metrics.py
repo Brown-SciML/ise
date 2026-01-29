@@ -1,3 +1,9 @@
+"""Evaluation metrics for ice sheet emulator predictions.
+
+This module provides sector-wise aggregation (sum_by_sector), point metrics
+(R², MSE, MAE, MAPE, CRPS), distribution metrics (KL/JS divergence, KS, t-test),
+and uncertainty metrics (ECE, prediction interval width, Winkler score).
+"""
 import numpy as np
 import torch
 import xarray as xr

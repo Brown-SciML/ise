@@ -1,3 +1,9 @@
+"""CMIP6 atmospheric and oceanic forcing processing.
+
+This module provides process_atmos_forcings and process_ocean_forcings for
+converting NetCDF CMIP6 forcings to sector-averaged DataFrames for use in
+ice sheet emulation.
+"""
 from ise.data.forcings import ForcingFile
 from ise.data.grids import GridFile
 from ise.utils import functions as f
@@ -6,7 +12,20 @@ import pandas as pd
 import os
 import warnings
 
+
 def process_atmos_forcings(forcing_filepath: str, grid_filepath: str, aogcm_name: str) -> pd.DataFrame:
+    """
+    Process atmospheric CMIP6 forcing NetCDF into a sector-averaged DataFrame.
+
+    Args:
+        forcing_filepath (str): Path to the atmospheric forcing NetCDF file.
+        grid_filepath (str): Path to the AIS sector grid NetCDF file.
+        aogcm_name (str): Name of the atmosphere-ocean GCM (for labeling).
+
+    Returns:
+        pandas.DataFrame: Sector-averaged atmospheric forcings with columns
+            including time, sector, aogcm, and year (years since 2014).
+    """
     datafile = ForcingFile(
         ice_sheet="AIS",
         realm="atmos",
@@ -38,7 +57,20 @@ def process_atmos_forcings(forcing_filepath: str, grid_filepath: str, aogcm_name
     return sector_averages
 
 def process_ocean_forcings(tf_filepath: str, sal_filepath: str, ts_filepath: str, grid_filepath: str, aogcm_name: str):
-    
+    """
+    Process oceanic CMIP6 forcing NetCDFs (thermal forcing, salinity, temperature) into a combined DataFrame.
+
+    Args:
+        tf_filepath (str): Path to thermal forcing NetCDF.
+        sal_filepath (str): Path to salinity NetCDF.
+        ts_filepath (str): Path to temperature NetCDF.
+        grid_filepath (str): Path to the AIS sector grid NetCDF file.
+        aogcm_name (str): Name of the atmosphere-ocean GCM (for labeling).
+
+    Returns:
+        pandas.DataFrame: Combined oceanic forcings (depth-averaged, sector-averaged)
+            with thermal_forcing, salinity, temperature, sector, aogcm, and year.
+    """
     gridfile = GridFile(ice_sheet="AIS", filepath=grid_filepath)
     gridfile.load()
     gridfile.format_grids()

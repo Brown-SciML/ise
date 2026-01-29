@@ -1,3 +1,8 @@
+"""PyTorch dataset classes for ISMIP6 emulator training and inference.
+
+This module provides EmulatorDataset, PyTorchDataset, TSDataset, and ScenarioDataset
+for sequence-based and projection-based data loading with optional padding.
+"""
 import warnings
 import numpy as np
 import pandas as pd
