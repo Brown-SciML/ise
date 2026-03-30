@@ -1,7 +1,7 @@
 [project]
 name = "ise"
 version = "0.1.0"
-description = "Add your description here"
+description = "ISE (Ice Sheet Emulator) is a Python package for training and analyzing ice sheet emulators, including ISEFlow, a flow-based neural network emulator designed for improved sea level projections and uncertainty quantification."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

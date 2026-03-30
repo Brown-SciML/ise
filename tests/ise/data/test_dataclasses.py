@@ -2,7 +2,7 @@ import pytest
 import torch
 import numpy as np
 from torch.utils.data import DataLoader
-from ise.data.dataclasses import EmulatorDataset, PyTorchDataset, TSDataset, ScenarioDataset
+from ise.data.ISMIP6.dataclasses import EmulatorDataset, PyTorchDataset, TSDataset, ScenarioDataset
 
 ### ---------------------- EmulatorDataset Tests ---------------------- ###
 @pytest.fixture
