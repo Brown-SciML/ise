@@ -1,0 +1,103 @@
+{
+    "model_type": "DeepEnsemble",
+    "version": "1.0",
+    "device": "cuda",
+    "ensemble_members": [
+        {
+            "lstm_num_layers": 2,
+            "lstm_num_hidden": 329,
+            "criterion": "MSELoss",
+            "input_size": 91,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/member_1.pth",
+            "best_loss": 0.04332404583692551,
+            "epochs_trained": 6,
+            "sequence_length": 5
+        },
+        {
+            "lstm_num_layers": 3,
+            "lstm_num_hidden": 467,
+            "criterion": "MSELoss",
+            "input_size": 91,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/member_2.pth",
+            "best_loss": 0.028697332367300987,
+            "epochs_trained": 107,
+            "sequence_length": 5
+        },
+        {
+            "lstm_num_layers": 2,
+            "lstm_num_hidden": 532,
+            "criterion": "MSELoss",
+            "input_size": 91,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/member_3.pth",
+            "best_loss": 0.032341308891773224,
+            "epochs_trained": 103,
+            "sequence_length": 10
+        },
+        {
+            "lstm_num_layers": 2,
+            "lstm_num_hidden": 279,
+            "criterion": "MSELoss",
+            "input_size": 91,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/member_4.pth",
+            "best_loss": 0.02627352438867092,
+            "epochs_trained": 111,
+            "sequence_length": 5
+        },
+        {
+            "lstm_num_layers": 3,
+            "lstm_num_hidden": 560,
+            "criterion": "MSELoss",
+            "input_size": 91,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/member_5.pth",
+            "best_loss": 0.027658622711896896,
+            "epochs_trained": 170,
+            "sequence_length": 10
+        },
+        {
+            "lstm_num_layers": 2,
+            "lstm_num_hidden": 71,
+            "criterion": "MSELoss",
+            "input_size": 91,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/member_6.pth",
+            "best_loss": 0.025830918923020363,
+            "epochs_trained": 55,
+            "sequence_length": 5
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 265,
+            "criterion": "MSELoss",
+            "input_size": 91,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/member_7.pth",
+            "best_loss": 0.02692815288901329,
+            "epochs_trained": 65,
+            "sequence_length": 10
+        },
+        {
+            "lstm_num_layers": 3,
+            "lstm_num_hidden": 111,
+            "criterion": "MSELoss",
+            "input_size": 91,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/member_8.pth",
+            "best_loss": 0.031420767307281494,
+            "epochs_trained": 19,
+            "sequence_length": 5
+        }
+    ]
+}

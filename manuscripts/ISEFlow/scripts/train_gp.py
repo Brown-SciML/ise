@@ -14,7 +14,7 @@ try:
     from ise.evaluation import metrics as m
 except:
     sys.path.append('/users/pvankatw/research/ise/')
-    from ise.models.gp import GP
+    from ise.models.gp.gp import GP
     from ise.utils import functions as f
     from ise.evaluation import metrics as m
 
@@ -83,21 +83,22 @@ def train_gp(ice_sheet, temp_only, smb_only):
 
     # Select appropriate columns based on the type of model being trained (temp_only, smb_only, or all variables)
     ocean_sensitivity_columns = [x for x in train.columns if 'Ocean sensitivity' in x]
+    melt_parameterization = [x for x in train.columns if "Ocean forcing" in x]
     if ice_sheet == 'AIS':
         if temp_only:
-            cols = ['ts_anomaly', spatial_unit, 'ice_shelf_collapse', 'year', 'sle'] + ocean_sensitivity_columns
+            cols = ['ts_anomaly', spatial_unit, 'ice_shelf_collapse', 'year', 'sle'] + ocean_sensitivity_columns + melt_parameterization
         elif smb_only:
-            cols = ['smb_anomaly', spatial_unit, 'ice_shelf_collapse', 'year', 'sle'] + ocean_sensitivity_columns
+            cols = ['smb_anomaly', spatial_unit, 'ice_shelf_collapse', 'year', 'sle'] + ocean_sensitivity_columns + melt_parameterization
         else:
             cols = ['pr_anomaly', 'evspsbl_anomaly', 'ice_shelf_collapse', 'mrro_anomaly', 'smb_anomaly',
-                    'ts_anomaly', 'thermal_forcing', 'salinity', 'temperature', 'year', spatial_unit, 'sle'] + ocean_sensitivity_columns
+                    'ts_anomaly', 'thermal_forcing', 'salinity', 'temperature', 'year', spatial_unit, 'sle'] + ocean_sensitivity_columns + melt_parameterization
     else:
         if temp_only:
-            cols = ['aST', 'year', spatial_unit, 'sle'] + ocean_sensitivity_columns
+            cols = ['aST', 'year', spatial_unit, 'sle'] + ocean_sensitivity_columns + melt_parameterization
         elif smb_only:
-            cols = ['aSMB', spatial_unit, 'year', 'sle'] + ocean_sensitivity_columns
+            cols = ['aSMB', spatial_unit, 'year', 'sle'] + ocean_sensitivity_columns + melt_parameterization
         else:
-            cols = ['aSMB', 'aST', 'thermal_forcing', 'basin_runoff', spatial_unit, 'year', 'sle'] + ocean_sensitivity_columns
+            cols = ['aSMB', 'aST', 'thermal_forcing', 'basin_runoff', spatial_unit, 'year', 'sle'] + ocean_sensitivity_columns + melt_parameterization
 
     print(f'Columns used for training: {cols}')
 
@@ -169,7 +170,8 @@ def train_gp(ice_sheet, temp_only, smb_only):
     # Evaluation and summary statistics
     print(f"Time taken: {time.time() - start_time} seconds")
     print(f"Inference time per 86-year Projection: {inference_time}")
-    print(f"MSE on validation set: {np.mean((val['pred'] - val['sle'])**2)}")
+    val_sle_unscaled = f.unscale(val['sle'].to_numpy().reshape(-1, 1), f'{dir_}/scaler_y.pkl').squeeze()
+    print(f"MSE on validation set: {np.mean((val['pred'] - val_sle_unscaled)**2)}")
 
     # Statistical differences between scenarios
     print('\nStatistical differences between RCP2.6 and RCP8.5 scenarios:')
