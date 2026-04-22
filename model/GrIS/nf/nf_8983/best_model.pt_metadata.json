@@ -1,9 +1,0 @@
-{
-    "input_size": 90,
-    "output_size": 1,
-    "device": "cuda",
-    "best_loss": -0.42218807801280334,
-    "epochs_trained": 36,
-    "flow_hidden_size": 2,
-    "num_flows": 5
-}
