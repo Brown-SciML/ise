@@ -1,0 +1,25 @@
+{
+    "model_type": "LSTM",
+    "version": "1.0",
+    "device": "cuda",
+    "architecture": {
+        "lstm_num_layers": 1,
+        "lstm_num_hidden": 398,
+        "input_size": 91,
+        "output_size": 1,
+        "output_sequence_length": 86,
+        "sequence_length": 5,
+        "fc_hidden": 32,
+        "dropout_p": 0.3
+    },
+    "criterion": "MSELoss",
+    "optimizer": {
+        "type": "AdamW",
+        "lr": 0.001970604872263347,
+        "weight_decay": 7.809893903347241e-05
+    },
+    "trained": true,
+    "best_loss": 0.029577083885669708,
+    "epochs_trained": 30,
+    "path": "lstm.pt"
+}

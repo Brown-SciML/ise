@@ -63,6 +63,7 @@ class ISEFlow(torch.nn.Module):
         self.normalizing_flow = normalizing_flow.to(self.device)
         self.trained = self.deep_ensemble.trained and self.normalizing_flow.trained
         self.scaler_path = None
+        self.model_dir = normalizing_flow.model_dir
 
     def fit(self, X, y, nf_epochs, de_epochs, batch_size=64, X_val=None, y_val=None, save_checkpoints=True, checkpoint_path='checkpoint_ensemble', early_stopping=True,  
              sequence_length=5, patience=10, verbose=True):

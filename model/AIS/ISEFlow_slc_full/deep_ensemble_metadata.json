@@ -1,0 +1,127 @@
+{
+    "model_type": "DeepEnsemble",
+    "version": "1.0",
+    "device": "cpu",
+    "ensemble_members": [
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 322,
+            "criterion": "MSELoss",
+            "input_size": 93,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/member_1.pth",
+            "best_loss": 0.09698355197906494,
+            "epochs_trained": 3,
+            "sequence_length": 5
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 404,
+            "criterion": "MSELoss",
+            "input_size": 93,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/member_2.pth",
+            "best_loss": 0.0779726654291153,
+            "epochs_trained": 22,
+            "sequence_length": 10
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 199,
+            "criterion": "MSELoss",
+            "input_size": 93,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/member_3.pth",
+            "best_loss": 0.06901329755783081,
+            "epochs_trained": 29,
+            "sequence_length": 10
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 200,
+            "criterion": "MSELoss",
+            "input_size": 93,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/member_4.pth",
+            "best_loss": 0.07009675353765488,
+            "epochs_trained": 46,
+            "sequence_length": 10
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 545,
+            "criterion": "MSELoss",
+            "input_size": 93,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/member_5.pth",
+            "best_loss": 0.07041510939598083,
+            "epochs_trained": 18,
+            "sequence_length": 10
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 386,
+            "criterion": "MSELoss",
+            "input_size": 93,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/member_6.pth",
+            "best_loss": 0.08459392935037613,
+            "epochs_trained": 7,
+            "sequence_length": 5
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 316,
+            "criterion": "MSELoss",
+            "input_size": 93,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/member_7.pth",
+            "best_loss": 0.06625343859195709,
+            "epochs_trained": 16,
+            "sequence_length": 10
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 407,
+            "criterion": "MSELoss",
+            "input_size": 93,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/member_8.pth",
+            "best_loss": 0.06802818924188614,
+            "epochs_trained": 36,
+            "sequence_length": 10
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 526,
+            "criterion": "MSELoss",
+            "input_size": 93,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/member_9.pth",
+            "best_loss": 0.06666944175958633,
+            "epochs_trained": 51,
+            "sequence_length": 5
+        },
+        {
+            "lstm_num_layers": 1,
+            "lstm_num_hidden": 364,
+            "criterion": "MSELoss",
+            "input_size": 93,
+            "output_size": 1,
+            "trained": true,
+            "path": "ensemble_members/member_10.pth",
+            "best_loss": 0.0699843168258667,
+            "epochs_trained": 34,
+            "sequence_length": 5
+        }
+    ]
+}

@@ -272,7 +272,6 @@ class NormalizingFlow(nn.Module):
         Returns:
             NormalizingFlow: A restored instance of the NormalizingFlow model.
         """
-
         metadata_path = path + "_metadata.json"
         with open(metadata_path, "r") as f:
             metadata = json.load(f)
@@ -293,6 +292,7 @@ class NormalizingFlow(nn.Module):
             model.trained = True
             
         model.trained = True
+        model.model_dir = os.path.dirname(path)
         model.to(model.device)
         model.eval()
         return model
