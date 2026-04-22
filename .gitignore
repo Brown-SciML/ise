@@ -17,9 +17,6 @@ supplemental/
 *.png
 *.svg
 *.pdf
-*.pkl
-*.pt
-*.pth
 
 .vscode/
 .vscode
