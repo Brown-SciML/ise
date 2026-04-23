@@ -1,31 +1,38 @@
-# BROKEN, NEEDS UPDATE TO v1.1.0
+"""Example: run ISEFlow-AIS predictions over a full preprocessed dataset.
 
-from ise.models.ISEFlow import ISEFlow_AIS, ISEFlow_GrIS
+This script loads a preprocessed training/test dataset from a directory,
+runs ISEFlow-AIS inference on the test split, and saves results to CSV.
+
+Expected directory layout (produced by FeatureEngineer):
+    data_directory/
+        X_test.csv
+        y_test.csv
+        scaler_y.pkl
+"""
+
+from ise.models.ISEFlow import ISEFlow_AIS
 from ise.utils import get_data, unscale_output
 import numpy as np
 
-iseflowais = ISEFlow_AIS(version="v1.0.0")
+# ── Configuration ─────────────────────────────────────────────────────────────
+data_directory = "/path/to/your/ml/data/"   # update this path
+output_csv = "iseflow_ais_preds.csv"
+# ──────────────────────────────────────────────────────────────────────────────
 
-model_paths = ISEFlow_GrIS_v1_0_0_path if ice_sheet == "GrIS" else ISEFlow_AIS_v1_0_0_path
+iseflowais = ISEFlow_AIS(version="v1.1.0")
 
-data_directory = f"/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/ISEFlow/data/ml/{ice_sheet}/"
-X_train, y_train, X_val, y_val, X_test, y_test = get_data(data_directory, return_format='numpy')
-y_test = unscale_output(y_test.reshape(-1,1), f"{data_directory}/scaler_y.pkl")
+X_train, y_train, X_val, y_val, X_test, y_test = get_data(data_directory, return_format="pandas")
 
-de = DeepEnsemble.load(f"{model_paths}/deep_ensemble.pth")
-nf = NormalizingFlow.load(f"{model_paths}/normalizing_flow.pth")
-iseflowais = ISEFlow(de, nf)
-preds, uq = iseflowais.predict(X_test, )
+y_test_unscaled = unscale_output(y_test.values.reshape(-1, 1), f"{data_directory}/scaler_y.pkl")
 
-# iseflowais = ISEFlow.load(version="v1.0.0")
+preds, uq = iseflowais.predict(X_test)
 
-data_directory = f"/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/ISEFlow/data/ml/{ice_sheet}/"
-X_train, y_train, X_val, y_val, X_test, _ = get_data(data_directory, return_format='pandas')
+X_test = X_test.copy()
+X_test["aleatoric"] = np.asarray(uq["aleatoric"]).squeeze()
+X_test["epistemic"] = np.asarray(uq["epistemic"]).squeeze()
+X_test["preds"] = np.asarray(preds).squeeze()
+X_test["true"] = y_test_unscaled.squeeze()
 
-X_test['aleatoric'] = uq['aleatoric']
-X_test['epistemic'] = uq['epistemic']
-X_test['preds'] = preds
-X_test['true'] = y_test
-X_test.to_csv(f"iseflow_preds_{ice_sheet}.csv")
-print("MSE: ", np.mean((y_test - preds)**2)) # reported in ISEFlow paper: 1.20
-
+X_test.to_csv(output_csv, index=False)
+print(f"Results saved to {output_csv}")
+print(f"MSE: {np.mean((y_test_unscaled.squeeze() - X_test['preds'].values) ** 2):.4f}")

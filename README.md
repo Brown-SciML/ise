@@ -77,10 +77,8 @@ import numpy as np
 year = np.arange(2015, 2101)
 pr_anomaly = np.array([...])
 evspsbl_anomaly = np.array([...])
-mrro_anomaly = np.array([...])
 smb_anomaly = np.array([...])
 ts_anomaly = np.array([...])
-ocean_thermal_forcing = np.array([...])
 ocean_thermal_forcing = np.array([...])
 ocean_salinity = np.array([...])
 ocean_temp = np.array([...])
@@ -139,7 +137,7 @@ inputs = ISEFlowAISInputs(
 
 pred, uq = iseflowais.predict(inputs,)
 
-print(prediction)
+print(pred)
 print(uq['aleatoric'])
 print(uq['epistemic'])
 ```
@@ -148,7 +146,7 @@ print(uq['epistemic'])
 ```python
 from ise.models.ISEFlow import ISEFlow, DeepEnsemble, NormalizingFlow
 
-# Load trianing data
+# Load training data
 data_directory = r"./ISMIP6-data/"
 X_train, y_train, X_val, y_val, X_test, y_test = get_data(data_directory, return_format='numpy')
 
@@ -175,7 +173,7 @@ emulator = ISEFlow.load("./ISEFlow/")
 
 # Evaluate the model on validation data
 predictions, uncertainties = emulator.predict(X_val, output_scaler=f"{data_directory}/scaler_y.pkl")
-y_val = f.unscale(y_val.reshape(-1,1), f"{data_directory}/scaler_y.pkl")
+y_val = f.unscale_output(y_val.reshape(-1,1), f"{data_directory}/scaler_y.pkl")
 
 # Calculate MSE
 mse = m.mean_squared_error(y_val, predictions)
@@ -198,19 +196,19 @@ pytest tests/
 ---
 
 ## 📌 **Known Issues & Future Work**
-- Creating more unit tests. I know, maybe one day I'll get around it.
+- Test coverage is limited to data and evaluation modules; model-level tests are not yet included.
 - Expanding **support for additional climate scenarios** and additional ISM runs (ISMIP7).
-- Better documentation and improvements to the readthedocs page.
-- Documentation was written with the help of Generative AI (ChatGPT & GitHub Copilot). Please report any issues you find!
+- Further improvements to the readthedocs documentation page.
+- Some docstrings were written with the assistance of Generative AI. Please report any inaccuracies via GitHub Issues.
 
 ---
 
 ## 📧 **Contact & Support**
-This repository is actively maintained by **Peter Van Katwyk**, Ph.D. student at **Brown University**.
+Developed by **Peter Van Katwyk** (Ph.D., Brown University).
 
 📩 **Email:** [peter_van_katwyk@brown.edu](mailto:peter_van_katwyk@brown.edu)  
 🐙 **GitHub Issues:** [Report a bug](https://github.com/Brown-SciML/ise/issues)  
 
 ---
 
-🚀 **ISE is a work in progress!** If you use this in research, please consider citing our work. See [CITATION.md](CITATION.md) for details.
+If you use this in research, please consider citing our work. See [CITATION.md](CITATION.md) for details.

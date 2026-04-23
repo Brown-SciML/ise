@@ -26,6 +26,6 @@ To use it as a package, navigate to the cloned directory and run the following c
 pip install -e .
 ```
 
-*This repository is a work in progress that is actively being updated and improved. Feel free to contact Peter Van Katwyk, Ph.D. Candidate @ Brown University at peter_van_katwyk@brown.edu with further questions.*
+Feel free to contact Peter Van Katwyk (Ph.D., Brown University) at peter_van_katwyk@brown.edu with questions.
 
 """
