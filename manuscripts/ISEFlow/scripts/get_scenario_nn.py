@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 # export PYTHONPATH=/users/pvankatw/research/ise:$PYTHONPATH
 from ise.data.dataclasses import ScenarioDataset
-from ise.models.scenario import ScenarioPredictor
+from ise.models._experimental.scenario import ScenarioPredictor
 from ise.utils import functions as f
 from ise.evaluation import metrics as m
 

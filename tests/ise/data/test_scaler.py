@@ -3,7 +3,7 @@ import torch
 import numpy as np
 import os
 from ise.utils.functions import to_tensor
-from ise.data.ISMIP6.scaler import StandardScaler, RobustScaler, LogScaler
+from ise.data.scaler import StandardScaler, RobustScaler, LogScaler
 
 ### ---------------------- Fixtures for Sample Data ---------------------- ###
 @pytest.fixture

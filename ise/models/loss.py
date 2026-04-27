@@ -29,6 +29,7 @@ class WeightedGridLoss(torch.nn.Module):
 
     def __init__(self):
         super(WeightedGridLoss, self).__init__()
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.to(self.device)
 
     def total_variation_regularization(self, grid):

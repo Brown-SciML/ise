@@ -9,13 +9,13 @@ import json
 
 try:
     from ise.data.feature_engineer import FeatureEngineer
-    from ise.models.ISEFlow import ISEFlow, LSTM
+    from ise.models.iseflow import ISEFlow, LSTM
     from ise.utils.functions import get_X_y, unscale_output
 except ModuleNotFoundError:
     import sys
     sys.path.append('/users/pvankatw/research/ise/')
     from ise.data.feature_engineer import FeatureEngineer
-    from ise.models.ISEFlow import ISEFlow, LSTM
+    from ise.models.iseflow import ISEFlow, LSTM
     from ise.utils.functions import get_X_y, unscale_output
 
 def add_lagged_shaps(shap_df):

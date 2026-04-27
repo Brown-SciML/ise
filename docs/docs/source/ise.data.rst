@@ -9,7 +9,7 @@ Subpackages
 .. toctree::
    :maxdepth: 2
 
-   ise.data.ISMIP6
+   ise.data.ismip6
    ise.data.CMIP6
 
 Submodules

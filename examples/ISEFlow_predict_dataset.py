@@ -10,7 +10,7 @@ Expected directory layout (produced by FeatureEngineer):
         scaler_y.pkl
 """
 
-from ise.models.ISEFlow import ISEFlow_AIS
+from ise.models.iseflow import ISEFlow_AIS
 from ise.utils import get_data, unscale_output
 import numpy as np
 

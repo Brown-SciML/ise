@@ -1,11 +1,11 @@
 try:
-    from ise.models.ISEFlow import ISEFlow, DeepEnsemble, NormalizingFlow
+    from ise.models.iseflow import ISEFlow, DeepEnsemble, NormalizingFlow
     from ise.utils import functions as f
     from ise.evaluation import metrics as m
 except:
     import sys
     sys.path.append('/users/pvankatw/research/ise/')
-    from ise.models.ISEFlow import ISEFlow, DeepEnsemble, NormalizingFlow
+    from ise.models.iseflow import ISEFlow, DeepEnsemble, NormalizingFlow
     from ise.utils import functions as f
     from ise.evaluation import metrics as m
 import pandas as pd

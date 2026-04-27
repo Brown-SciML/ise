@@ -14,7 +14,7 @@ try:
     from ise.evaluation import metrics as m
 except:
     sys.path.append('/users/pvankatw/research/ise/')
-    from ise.models.gp.gp import GP
+    from ise.models._experimental.gp import GP
     from ise.utils import functions as f
     from ise.evaluation import metrics as m
 

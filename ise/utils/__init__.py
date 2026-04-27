@@ -1,8 +1,8 @@
-"""Utilities for I/O, training, data loading, and package paths.
+"""Utilities for I/O, data loading, and package paths.
 
-This package provides functions for loading/saving data, checkpointing,
+This package provides functions for loading/saving data,
 path helpers (e.g. ismip6_model_configs_path), and tensor/data transformations.
 """
 import os
 from .functions import get_X_y, get_data, unscale_output
-ismip6_model_configs_path = os.path.join(os.path.dirname(__file__), 'data_files', 'ismip6_model_configs.json')
+ismip6_model_configs_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'data_files', 'ismip6_model_configs.json')

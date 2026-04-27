@@ -1,31 +1,31 @@
-r"""
+"""ISE — Ice Sheet Emulator package.
 
-# ISE
+ISE provides end-to-end tools for training and running ice sheet emulators,
+with a focus on ISEFlow: a hybrid normalizing-flow + deep-ensemble model that
+produces sea level projections with full uncertainty quantification (epistemic
+and aleatoric) for the Antarctic Ice Sheet (AIS) and Greenland Ice Sheet (GrIS).
 
-ISE, or ice-sheet emulators, is a package for end-to-end creation and analysis of ice-sheet emulators.
+Quickstart
+----------
+Install the package::
 
-The main features of ISE include loading and processing of ISMIP6 sea level contribution simulations,
-data preparation and feature engineering for machine learning, and training and testing of trained neural network emulators.
-The package is divided into two sections: `sectors` and `grids`. The sectors module provides all necessary functions for
-creating and training emulators based on the 18 ISMIP6 sectors, while the grids module provides the same functionality
-for smaller kilometer-scale grids.
+    pip install -e .
 
-# Quickstart
+Load the pretrained AIS emulator and make a prediction::
 
-To get started, you must first have access to the Globus Archive containing the ISMIP6 climate
-forcings and ISMIP6 model outputs. For information on gaining access to these datasets, see the [ISMIP
-wiki page](https://theghub.org/groups/ismip6/wiki).
+    from ise.models import ISEFlow_AIS
+    from ise.data.inputs import ISEFlowAISInputs
 
-Next, clone the repository by running the following command in your terminal:
-```shell
-git clone https://github.com/Brown-SciML/ise.git
-```
+    model = ISEFlow_AIS(version="v1.1.0")
+    inputs = ISEFlowAISInputs(...)
+    predictions, uncertainties = model.predict(inputs)
 
-To use it as a package, navigate to the cloned directory and run the following command:
-```shell
-pip install -e .
-```
+Package layout
+--------------
+- ``ise.data``       — forcing/grid loading, feature engineering, dataset classes
+- ``ise.models``     — ISEFlow, DeepEnsemble, NormalizingFlow, LSTM, loss functions
+- ``ise.evaluation`` — point, probabilistic, and distribution metrics
+- ``ise.utils``      — data helpers, tensor utilities
 
-Feel free to contact Peter Van Katwyk (Ph.D., Brown University) at peter_van_katwyk@brown.edu with questions.
-
+For questions contact Peter Van Katwyk at pvankatwyk@gmail.com.
 """

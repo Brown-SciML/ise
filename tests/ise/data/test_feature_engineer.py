@@ -6,7 +6,7 @@ import os
 import json
 import torch
 from sklearn.preprocessing import StandardScaler
-from ise.data.ISMIP6.feature_engineer import FeatureEngineer, scale_data, split_training_data, drop_outliers, fill_mrro_nans
+from ise.data.feature_engineer import FeatureEngineer, scale_data, split_training_data, drop_outliers, fill_mrro_nans
 
 ### ---------------------- Fixtures for Sample Data ---------------------- ###
 @pytest.fixture

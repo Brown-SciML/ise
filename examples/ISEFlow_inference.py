@@ -1,5 +1,5 @@
 from ise.data.inputs import ISEFlowAISInputs
-from ise.models.ISEFlow import ISEFlow_AIS
+from ise.models.iseflow import ISEFlow_AIS
 import numpy as np
 import matplotlib.pyplot as plt
 
