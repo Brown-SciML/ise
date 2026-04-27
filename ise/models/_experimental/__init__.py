@@ -2,15 +2,16 @@
 
 These models (GP, PCA, ScenarioPredictor, VariationalLSTMEmulator) were used in
 earlier versions of the package and prior publications. They are no longer actively
-maintained. Use ISEFlow (ise.models.ISEFlow) for current ice sheet emulation.
+maintained. Use ``ise.models.iseflow.ISEFlow`` (or the pretrained convenience
+classes ``ISEFlow_AIS`` / ``ISEFlow_GrIS``) for current ice sheet emulation.
 
 All classes in this subpackage emit a DeprecationWarning on import.
 """
 import warnings
 
 warnings.warn(
-    "ise.models.experimental contains legacy models that are no longer maintained. "
-    "Use ise.models.ISEFlow for current ice sheet emulation.",
+    "ise.models._experimental contains legacy models that are no longer maintained. "
+    "Use ise.models.iseflow.ISEFlow for current ice sheet emulation.",
     DeprecationWarning,
     stacklevel=2,
 )

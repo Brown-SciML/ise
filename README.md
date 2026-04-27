@@ -20,20 +20,16 @@ This codebase has been used in **peer-reviewed research**, including:
 ---
 
 ## 🚀 **Installation**
-ISE uses **[uv](https://github.com/astral-sh/uv)** for dependency management. To set up the environment:
 
-```sh
-uv venv
-uv pip install -r requirements.txt
-```
-or using **pip** directly:
-```sh
-pip install -r requirements.txt
-```
-
-To install in **editable mode** (for development):
+Install in **editable mode**:
 ```sh
 pip install -e .
+```
+
+Or with **[uv](https://github.com/astral-sh/uv)**:
+```sh
+uv venv
+uv pip install -e .
 ```
 
 ---
@@ -41,21 +37,33 @@ pip install -e .
 ## 📂 **Project Structure**
 ```
 ise/
-├── examples                 # Example scripts for using ISEFlow
-├── ise                      # Main ISEFlow package
-│   ├── data                 # Data handling and preprocessing
-│   ├── evaluation           # Model evaluation
-│   ├── models               # ISEFlow model architectures
-│   └── utils                # Utility functions
-├── LICENSE.md               # License information
-├── manuscripts              # Related research papers
-├── pyproject.toml           # Project metadata
-├── README.md                # ISEFlow documentation
-├── requirements.txt         # Required Python dependencies
-├── setup.py                 # Installation script
-├── tests                    # Unit tests
-└── uv.lock                  # Dependency lock file
-
+├── examples/                # Example scripts for using ISEFlow
+├── ise/                     # Main package
+│   ├── data/                # Forcing/grid loading, feature engineering, dataset classes
+│   │   ├── dataclasses.py   # EmulatorDataset, PyTorchDataset, TSDataset, ScenarioDataset
+│   │   ├── feature_engineer.py
+│   │   ├── forcings.py      # ForcingFile
+│   │   ├── grids.py         # GridFile
+│   │   ├── inputs.py        # ISEFlowAISInputs, ISEFlowGrISInputs
+│   │   ├── process.py       # ProjectionProcessor, sector processing helpers
+│   │   ├── scaler.py        # PyTorch StandardScaler, RobustScaler, LogScaler
+│   │   └── utils.py         # convert_and_subset_times()
+│   ├── evaluation/          # Metrics
+│   │   └── metrics.py
+│   ├── models/              # Model architectures
+│   │   ├── iseflow.py       # ISEFlow, ISEFlow_AIS, ISEFlow_GrIS
+│   │   ├── deep_ensemble.py # DeepEnsemble
+│   │   ├── lstm.py          # LSTM
+│   │   ├── normalizing_flow.py
+│   │   ├── training.py      # CheckpointSaver, EarlyStoppingCheckpointer
+│   │   ├── loss.py          # WeightedGridLoss, WeightedMSELoss, and variants
+│   │   ├── experimental/    # Legacy models (deprecated)
+│   │   └── pretrained/      # Pretrained weights (v1.0.0, v1.1.0)
+│   └── utils/               # Data helpers and tensor utilities
+├── manuscripts/             # Research paper scripts
+├── tests/                   # Unit tests
+├── pyproject.toml
+└── uv.lock
 ```
 
 ---
@@ -63,10 +71,10 @@ ise/
 ## 🏠 **Usage**
 ### **1️⃣ Loading a Pretrained ISEFlow-AIS Model**
 ```python
-from ise.models.ISEFlow import ISEFlow_AIS
+from ise.models import ISEFlow_AIS
 
-# Load v1.0.0 of ISEFlow-AIS
-iseflowais = ISEFlow_AIS(version="v1.1.0", )
+# Load the pretrained v1.1.0 AIS emulator
+iseflowais = ISEFlow_AIS(version="v1.1.0")
 ```
 
 ### **2️⃣ Running Predictions**
@@ -144,7 +152,7 @@ print(uq['epistemic'])
 
 ### **3️⃣ Training a New Model**
 ```python
-from ise.models.ISEFlow import ISEFlow, DeepEnsemble, NormalizingFlow
+from ise.models import ISEFlow, DeepEnsemble, NormalizingFlow
 
 # Load training data
 data_directory = r"./ISMIP6-data/"
@@ -164,7 +172,7 @@ emulator.save("./ISEFlow/")
 
 ### **4️⃣ Evaluating Model Performance**
 ```python
-from ise.models.ISEFlow import ISEFlow
+from ise.models import ISEFlow
 from ise.evaluation import metrics as m
 from ise.utils import functions as f
 
@@ -195,10 +203,9 @@ pytest tests/
 
 ---
 
-## 📌 **Known Issues & Future Work**
+## 📌 **Known Issues**
+
 - Test coverage is limited to data and evaluation modules; model-level tests are not yet included.
-- Expanding **support for additional climate scenarios** and additional ISM runs (ISMIP7).
-- Further improvements to the readthedocs documentation page.
 - Some docstrings were written with the assistance of Generative AI. Please report any inaccuracies via GitHub Issues.
 
 ---

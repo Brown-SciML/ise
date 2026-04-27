@@ -1,3 +1,14 @@
+"""Deep ensemble of LSTM models for epistemic uncertainty estimation.
+
+This module provides ``DeepEnsemble``, which wraps a list of ``LSTM`` instances.
+At inference time each member produces an independent prediction; the mean is
+returned as the point estimate and the standard deviation across members is
+returned as the epistemic uncertainty.
+
+Members can be supplied explicitly (e.g. with different hidden sizes / loss
+functions) or auto-generated randomly.  ``save()`` / ``load()`` preserve the
+full ensemble including each member's state dict and metadata.
+"""
 import torch
 from torch import nn
 import numpy as np

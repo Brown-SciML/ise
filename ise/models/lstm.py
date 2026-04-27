@@ -1,3 +1,16 @@
+"""Single LSTM network for time series forecasting.
+
+This module provides the ``LSTM`` class — a multi-layer LSTM with a two-layer
+fully-connected head (hidden → 32 → output).  It is used both stand-alone and
+as the constituent member of ``DeepEnsemble``.
+
+Key features:
+- Supports optional MC-Dropout at inference time (set ``dropout > 0``).
+- ``fit()`` accepts optional validation data for early stopping.
+- ``save()`` / ``load()`` persist weights *and* architecture metadata so the
+  model can be reconstructed without the original constructor call.
+- Integrates with ``wandb`` for experiment tracking when a run is provided.
+"""
 import torch
 from torch import nn, optim
 import torch.nn.functional as F

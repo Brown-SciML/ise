@@ -1,3 +1,31 @@
+"""ISEFlow hybrid ice sheet emulator and pretrained AIS/GrIS variants.
+
+This module provides:
+
+- **ISEFlow** — base hybrid model combining a ``NormalizingFlow`` (aleatoric
+  uncertainty) and a ``DeepEnsemble`` of LSTMs (epistemic uncertainty).
+  Train with ``fit()``, run inference with ``predict()`` or ``forward()``,
+  save/load with ``save()`` / ``load()``.
+
+- **ISEFlow_AIS** — pretrained AIS emulator.  Instantiate with
+  ``ISEFlow_AIS(version="v1.1.0")`` and call ``predict(inputs)`` where
+  ``inputs`` is an ``ISEFlowAISInputs`` instance.
+
+- **ISEFlow_GrIS** — pretrained GrIS emulator (deprecated; kept for backwards
+  compatibility).  Use ``ISEFlow_GrIS(version="v1.1.0")`` with
+  ``ISEFlowGrISInputs``.
+
+Training order matters: ``NormalizingFlow`` is trained first via maximum
+likelihood; ``DeepEnsemble`` is then trained on the original features
+concatenated with the NF latent representation ``z``.
+
+Uncertainty decomposition: total = epistemic + aleatoric (summed scalar per
+timestep, not a product).
+
+Legacy architecture helpers ``ISEFlow_AIS_DE_v1_0_0``, ``ISEFlow_GrIS_DE_v1_0_0``,
+``ISEFlow_AIS_NF_v1_0_0``, and ``ISEFlow_GrIS_NF_v1_0_0`` are deprecated and
+will be removed in a future release.
+"""
 import json
 import os
 import pickle
@@ -414,15 +442,28 @@ class ISEFlow_AIS(ISEFlow):
         
     ):
         """
-        Predicts ice sheet evolution using the trained ISEFlow_AIS model.
+        Predicts AIS sea level contribution using the pretrained ISEFlow_AIS model.
+
+        Internally calls ``process()`` to scale, add lag variables, and one-hot
+        encode the inputs before running the hybrid forward pass.
 
         Args:
-            (Same as process method)
+            inputs (ISEFlowAISInputs): Validated input dataclass containing climate
+                forcings and ISM configuration for a single sector.
+            smoothing_window (int, optional): If > 0, applies a uniform moving-average
+                smoother of this width to the output time series. Defaults to 0 (no
+                smoothing).
 
         Returns:
             tuple: A tuple containing:
-                - unscaled_predictions (numpy.ndarray): Model predictions in the original scale.
-                - uncertainties (dict): Dictionary containing different uncertainty components.
+
+                - **predictions** (*numpy.ndarray*, shape ``(86, 1)``): Unscaled sea
+                  level equivalent (SLE) projections in mm for years 2015–2100.
+                - **uncertainties** (*dict*): Dictionary with keys:
+
+                  - ``'total'``: total uncertainty (epistemic + aleatoric).
+                  - ``'epistemic'``: uncertainty from ensemble disagreement.
+                  - ``'aleatoric'``: uncertainty from normalizing-flow sampling.
         """
 
         data = self.process(

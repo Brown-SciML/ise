@@ -1,3 +1,24 @@
+"""Autoregressive masked affine normalizing flow for aleatoric uncertainty.
+
+This module provides ``NormalizingFlow`` — a conditional normalizing flow built
+with ``nflows`` that models P(y | X) via a ``ConditionalDiagonalNormal`` base
+distribution and a sequence of ``MaskedAffineAutoregressiveTransform`` steps.
+
+Roles in ISEFlow:
+- Trained first (maximum likelihood) to learn the conditional distribution of
+  sea level equivalent (SLE) given climate forcing features.
+- Used at inference time to (a) extract latent features ``z`` for the
+  ``DeepEnsemble`` and (b) estimate **aleatoric** uncertainty via
+  ``aleatoric(features, num_samples)``.
+
+Key methods:
+- ``fit(X, y, ...)`` — maximum-likelihood training with optional validation and
+  early stopping.
+- ``get_latent(x)`` — sample ``z`` from the base distribution conditioned on ``x``.
+- ``sample(features, num_samples)`` — draw SLE samples from the full flow.
+- ``aleatoric(features, num_samples)`` — return per-sample std across flow draws.
+- ``save(path)`` / ``load(path)`` — checkpoint with architecture metadata JSON.
+"""
 import torch
 from torch import nn, optim
 from nflows import distributions, flows, transforms

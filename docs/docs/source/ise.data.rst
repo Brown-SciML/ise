@@ -1,16 +1,22 @@
 ise.data
 ========
 
-Data loading, processing, and utilities for ice sheet emulation.
+Data loading, processing, and feature engineering for ice sheet emulation.
 
-Subpackages
------------
+This package covers the full data pipeline:
 
-.. toctree::
-   :maxdepth: 2
-
-   ise.data.ismip6
-   ise.data.CMIP6
+- **ForcingFile** / **GridFile** — load and sector-average climate forcing and
+  grid NetCDF files.
+- **ISEFlowAISInputs** / **ISEFlowGrISInputs** — validated input dataclasses
+  for running pretrained ISEFlow emulators.
+- **FeatureEngineer** — train/val/test splitting, scaling, lag variables,
+  outlier handling, and ISM characteristic merging.
+- **ProjectionProcessor** / **DatasetMerger** — IVAF calculation from raw
+  ISMIP6 NetCDF outputs and sector-level forcing/projection merging.
+- **EmulatorDataset** / **PyTorchDataset** / **TSDataset** / **ScenarioDataset**
+  — PyTorch ``Dataset`` subclasses for LSTM and normalizing-flow training.
+- **StandardScaler** / **RobustScaler** / **LogScaler** — GPU-compatible
+  ``nn.Module`` scalers for use in training loops.
 
 Submodules
 ----------
@@ -39,6 +45,38 @@ ise.data.inputs
    :undoc-members:
    :show-inheritance:
 
+ise.data.feature\_engineer
+--------------------------
+
+.. automodule:: ise.data.feature_engineer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+ise.data.process
+----------------
+
+.. automodule:: ise.data.process
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+ise.data.dataclasses
+--------------------
+
+.. automodule:: ise.data.dataclasses
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+ise.data.scaler
+---------------
+
+.. automodule:: ise.data.scaler
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ise.data.utils
 --------------
 
@@ -47,8 +85,8 @@ ise.data.utils
    :undoc-members:
    :show-inheritance:
 
-.. Module contents
-------------------
+Module contents
+---------------
 
 .. automodule:: ise.data
    :members:

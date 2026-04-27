@@ -1,5 +1,11 @@
-ise documentation
-===========
+ise
+===
+
+ISE (Ice Sheet Emulator) package root. Provides end-to-end tools for training
+and running ice sheet emulators, centred on **ISEFlow** — a hybrid normalizing-flow
++ deep-ensemble model that produces sea level projections with full uncertainty
+quantification (epistemic and aleatoric) for the Antarctic Ice Sheet (AIS) and
+Greenland Ice Sheet (GrIS).
 
 Subpackages
 -----------
@@ -8,14 +14,14 @@ Subpackages
    :maxdepth: 3
 
    ise.data
-   ise.evaluation
    ise.models
+   ise.evaluation
    ise.utils
 
-.. Module contents
-.. ---------------
+Module contents
+---------------
 
-.. .. automodule:: ise
-..    :members:
-..    :undoc-members:
-..    :show-inheritance:
+.. automodule:: ise
+   :members:
+   :undoc-members:
+   :show-inheritance:

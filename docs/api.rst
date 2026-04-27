@@ -2,9 +2,6 @@ API Reference
 =============
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
-.. automodule:: ise
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   docs/source/ise
