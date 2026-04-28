@@ -11,9 +11,8 @@ This module provides:
   ``ISEFlow_AIS(version="v1.1.0")`` and call ``predict(inputs)`` where
   ``inputs`` is an ``ISEFlowAISInputs`` instance.
 
-- **ISEFlow_GrIS** — pretrained GrIS emulator (deprecated; kept for backwards
-  compatibility).  Use ``ISEFlow_GrIS(version="v1.1.0")`` with
-  ``ISEFlowGrISInputs``.
+- **ISEFlow_GrIS** — pretrained GrIS emulator.  Use
+  ``ISEFlow_GrIS(version="v1.1.0")`` with ``ISEFlowGrISInputs``.
 
 Training order matters: ``NormalizingFlow`` is trained first via maximum
 likelihood; ``DeepEnsemble`` is then trained on the original features
@@ -24,7 +23,7 @@ timestep, not a product).
 
 Legacy architecture helpers ``ISEFlow_AIS_DE_v1_0_0``, ``ISEFlow_GrIS_DE_v1_0_0``,
 ``ISEFlow_AIS_NF_v1_0_0``, and ``ISEFlow_GrIS_NF_v1_0_0`` are deprecated and
-will be removed in a future release.
+will be removed in a future release; prefer ``ISEFlow_AIS`` / ``ISEFlow_GrIS``.
 """
 import json
 import os
@@ -45,7 +44,7 @@ from ise.models.training import EarlyStoppingCheckpointer, CheckpointSaver
 from ise.data import feature_engineer as fe
 from ise.models.deep_ensemble import DeepEnsemble
 from ise.models.normalizing_flow import NormalizingFlow
-from ise.models.pretrained import ISEFlow_AIS_v1_0_0_path, ISEFlow_GrIS_v1_0_0_path, ISEFlow_AIS_v1_1_0_path, ISEFlow_GrIS_v1_1_0_path, ISEFlow_AIS_v1_1_0_variables, ISEFlow_AIS_v1_0_0_variables
+from ise.models.pretrained import ISEFlow_AIS_v1_0_0_path, ISEFlow_GrIS_v1_0_0_path, ISEFlow_AIS_v1_1_0_path, ISEFlow_GrIS_v1_1_0_path, ISEFlow_AIS_v1_1_0_variables, ISEFlow_AIS_v1_0_0_variables, ISEFlow_GrIS_v1_0_0_variables, ISEFlow_GrIS_v1_1_0_variables
 from ise.models.lstm import LSTM
 from ise.data.inputs import ISEFlowAISInputs, ISEFlowGrISInputs
 
@@ -507,8 +506,6 @@ class ISEFlow_GrIS(ISEFlow):
         and normalizing flow models specific to GrIS.
         """
         
-        warnings.warn("ISEFlow_GrIS is deprecated and will be removed in future versions. Please use ISEFlow with custom models instead.", DeprecationWarning)
-
         self.ice_sheet = "GrIS"
         self.version = version
         
@@ -543,9 +540,9 @@ class ISEFlow_GrIS(ISEFlow):
     
         # need to add other columns as zeros from get_dummies (all true)
         if self.version == "v1.1.0":
-            columns = ISEFlow_AIS_v1_1_0_variables
+            columns = ISEFlow_GrIS_v1_1_0_variables
         elif self.version == "v1.0.0":
-            columns = ISEFlow_AIS_v1_0_0_variables
+            columns = ISEFlow_GrIS_v1_0_0_variables
         else:
             raise NotImplementedError(f"Version {self.version} not implemented. Use v1.0.0 or v1.1.0")
         
@@ -555,6 +552,7 @@ class ISEFlow_GrIS(ISEFlow):
                 
         data = data[columns]
         data = data.loc[:, ~data.columns.duplicated()]
+        # print(data.head())
         return data
 
     def predict(
@@ -708,7 +706,6 @@ class ISEFlow_GrIS_NF_v1_0_0(NormalizingFlow):
 
         Calls the `NormalizingFlow` constructor with these preset parameters.
         """
-        warnings.warn("ISEFlow_GrIS_NF_v1_0_0 is deprecated and will be removed in future versions. Please use ISEFlow with custom models instead.", DeprecationWarning)
         self.input_size = 90
         self.output_size = 1
         self.num_flow_transforms = 5

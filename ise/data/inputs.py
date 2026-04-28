@@ -81,11 +81,11 @@ class ISEFlowAISInputs:
          # check inputs
          
         if self.year[0] == 2015:
-            self.year = self.year - 2015
-            
+            self.year = self.year - 2015 + 1  # convert 2015–2100 → 1–86 (model encoding)
+
         if isinstance(self.sector, int):
             self.sector = np.ones_like(self.year) * self.sector
-            
+
         if not self.model_configs and (not self.numerics or not self.stress_balance or not self.resolution or not self.init_method or not self.initial_year or not self.melt_in_floating_cells or not self.icefront_migration or not self.ocean_forcing_type or not self.ocean_sensitivity or self.ice_shelf_fracture is None):
             raise ValueError("Either 'model_configs' must be provided or all individual configuration parameters must be specified.")
         
@@ -155,7 +155,7 @@ class ISEFlowAISInputs:
                 'sp+': 'SP_icethickness',
             },
             "melt_in_floating_cells": {
-                'floating condition': 'Floating condition',
+                'floating condition': 'Floating_condition',
                 'sub-grid': 'Sub-grid',
                 "No": "No",
                 'None': None
@@ -189,20 +189,22 @@ class ISEFlowAISInputs:
             "standard_melt_type": {
                 'local': 'Local',
                 'nonlocal': 'Nonlocal',
-                'local anom': 'Local anom',
-                'nonlocal anom': 'Nonlocal anom',
+                'local anom': 'Local_anom',
+                'nonlocal anom': 'Nonlocal_anom',
                 'None': None,
             }
         }
         
     
         for key, value in vars(self).items():
-            current_value = getattr(self, key,)
+            current_value = getattr(self, key)
 
             if key in arg_map:
-                new_value = arg_map[key][current_value]
+                # Normalise Python None to the string 'None' so the lookup succeeds
+                lookup_key = 'None' if current_value is None else current_value
+                new_value = arg_map[key][lookup_key]
                 setattr(self, key, new_value)
-                
+
         if self.override_params:
             if not isinstance(self.override_params, dict):
                 raise ValueError("override_params must be a dictionary")
@@ -265,6 +267,54 @@ class ISEFlowAISInputs:
         # self.df = self._order_columns(self.df)
         return self.df
     
+    def __str__(self):
+        def _arr_summary(arr):
+            if arr is None:
+                return "None"
+            a = np.asarray(arr)
+            return f"array(shape={a.shape}, min={a.min():.4g}, max={a.max():.4g}, mean={a.mean():.4g})"
+
+        lines = [
+            f"ISEFlowAISInputs (version={self.version})",
+            "",
+            "  Forcings:",
+            f"    year                  : {_arr_summary(self.year)}",
+            f"    sector                : {_arr_summary(self.sector)}",
+            f"    pr_anomaly            : {_arr_summary(self.pr_anomaly)}",
+            f"    evspsbl_anomaly       : {_arr_summary(self.evspsbl_anomaly)}",
+            f"    smb_anomaly           : {_arr_summary(self.smb_anomaly)}",
+            f"    ts_anomaly            : {_arr_summary(self.ts_anomaly)}",
+            f"    ocean_thermal_forcing : {_arr_summary(self.ocean_thermal_forcing)}",
+            f"    ocean_salinity        : {_arr_summary(self.ocean_salinity)}",
+            f"    ocean_temperature     : {_arr_summary(self.ocean_temperature)}",
+        ]
+        if self.version == "v1.0.0":
+            lines.append(f"    mrro_anomaly          : {_arr_summary(self.mrro_anomaly)}")
+
+        lines += [
+            "",
+            "  Experiment config:",
+            f"    ice_shelf_fracture    : {self.ice_shelf_fracture}",
+            f"    ocean_sensitivity     : {self.ocean_sensitivity}",
+            f"    ocean_forcing_type    : {self.ocean_forcing_type}",
+            f"    standard_melt_type    : {self.standard_melt_type}",
+            f"    open_melt_type        : {self.open_melt_type}",
+            "",
+            "  Model config:",
+            f"    model_configs         : {self.model_configs}",
+            f"    initial_year          : {self.initial_year}",
+            f"    numerics              : {self.numerics}",
+            f"    stress_balance        : {self.stress_balance}",
+            f"    resolution            : {self.resolution}",
+            f"    init_method           : {self.init_method}",
+            f"    melt_in_floating_cells: {self.melt_in_floating_cells}",
+            f"    icefront_migration    : {self.icefront_migration}",
+        ]
+        return "\n".join(lines)
+
+    def __repr__(self):
+        return self.__str__()
+
     def _load_all_ism_configs(self,):
         if not self.model_configs:
             raise ValueError("model_configs must be provided to get ISM characteristics.")
@@ -353,15 +403,17 @@ class ISEFlowGrISInputs:
          # check inputs
          
         if self.year[0] == 2015:
-            self.year = self.year - 2015
-            
+            self.year = self.year - 2015 + 1  # convert 2015–2100 → 1–86 (model encoding)
+
         if isinstance(self.sector, int):
             self.sector = np.ones_like(self.year) * self.sector
-        
+
         if not isinstance(self.initial_year, int):
             raise ValueError("initial_year must be an integer")
-    
-        if not self.model_configs and (not self.numerics or not self.ice_flow_model or not self.initialization or not self.initial_smb or not self.velocity or not self.bedrock_topography or not self.surface_thickness or not self.geothermal_heat_flux or not self.res_min or not self.res_max or not self.standard_ocean_forcing or not self.ocean_sensitivity or self.ice_shelf_fracture is None):
+
+        # velocity, surface_thickness, and geothermal_heat_flux are legitimately absent
+        # for some models (stored as None/'None'). Only the core ISM config fields are required.
+        if not self.model_configs and (not self.numerics or not self.ice_flow_model or not self.initialization or not self.initial_smb or not self.bedrock_topography or not self.res_min or not self.res_max or self.standard_ocean_forcing is None or not self.ocean_sensitivity or self.ice_shelf_fracture is None):
             raise ValueError("Either 'model_configs' must be provided or all individual configuration parameters must be specified.")
 
         elif self.model_configs and (self.numerics or self.ice_flow_model or self.initialization or self.initial_smb or self.velocity or self.bedrock_topography or self.surface_thickness or self.geothermal_heat_flux or self.res_min or self.res_max or self.standard_ocean_forcing or self.ocean_sensitivity):
@@ -418,11 +470,11 @@ class ISEFlowGrISInputs:
                 'fd': 'FD',
                 'fd/fv': 'FD_FV5',
             },
-            'ice_flow': {
+            'ice_flow_model': {
                 'ho': 'HO',
                 'ssa': 'SSA',
                 'sia': 'SIA',
-                'hybrid': 'Hybrid',
+                'hybrid': 'HYB',
             },
             "initialization": {
                 'dav': 'DAV',
@@ -439,12 +491,12 @@ class ISEFlowGrISInputs:
                 'ra3': 'RA3',
                 'hir': 'HIR',
                 'ismb': 'ISMB',
-                'box/mar': 'Box_MAR',
-                'box/ra3': 'Box_RA3',
+                'box/mar': 'BOX_MAR',
+                'box/ra3': 'BOX_RA3',
                 'mar': 'MAR',
                 'ra1': 'RA1',
             },
-            'bed': {
+            'bedrock_topography': {
                 'morlighem': 'M',
                 'bamber': 'B',
             },
@@ -456,25 +508,32 @@ class ISEFlowGrISInputs:
                 'g': 'G',
                 'None': None,
                 'sr': 'SR',
-                'mix': 'Mix',
+                'mix': 'MIX',
             },
             'velocity': {
                 'joughin': 'J',
                 'rignot': 'RM',
                 'None': None,
-            }
+            },
+            'ocean_sensitivity': {
+                'low': 'Low',
+                'medium': 'Medium',
+                'high': 'High',
+            },
         }
-        
-    
+
+
         for key, value in vars(self).items():
-            current_value = getattr(self, key,)
+            current_value = getattr(self, key)
 
             if key == "res_min" or key == "res_max":
                 new_value = str(float(current_value))
                 setattr(self, key, new_value)
-                
+
             elif key in arg_map:
-                new_value = arg_map[key][current_value]
+                # Normalise Python None to the string 'None' so the lookup succeeds
+                lookup_key = 'None' if current_value is None else current_value
+                new_value = arg_map[key][lookup_key]
                 setattr(self, key, new_value)
             
                 
@@ -520,6 +579,48 @@ class ISEFlowGrISInputs:
         self.df = pd.DataFrame(data)
         return self.df
 
+
+    def __str__(self):
+        def _arr_summary(arr):
+            if arr is None:
+                return "None"
+            a = np.asarray(arr)
+            return f"array(shape={a.shape}, min={a.min():.4g}, max={a.max():.4g}, mean={a.mean():.4g})"
+
+        lines = [
+            f"ISEFlowGrISInputs (version={self.version})",
+            "",
+            "  Forcings:",
+            f"    year                  : {_arr_summary(self.year)}",
+            f"    sector                : {_arr_summary(self.sector)}",
+            f"    aST                   : {_arr_summary(self.aST)}",
+            f"    aSMB                  : {_arr_summary(self.aSMB)}",
+            f"    ocean_thermal_forcing : {_arr_summary(self.ocean_thermal_forcing)}",
+            f"    basin_runoff          : {_arr_summary(self.basin_runoff)}",
+            "",
+            "  Experiment config:",
+            f"    ice_shelf_fracture    : {self.ice_shelf_fracture}",
+            f"    ocean_sensitivity     : {self.ocean_sensitivity}",
+            f"    standard_ocean_forcing: {self.standard_ocean_forcing}",
+            "",
+            "  Model config:",
+            f"    model_configs         : {self.model_configs}",
+            f"    initial_year          : {self.initial_year}",
+            f"    numerics              : {self.numerics}",
+            f"    ice_flow_model        : {self.ice_flow_model}",
+            f"    initialization        : {self.initialization}",
+            f"    initial_smb           : {self.initial_smb}",
+            f"    velocity              : {self.velocity}",
+            f"    bedrock_topography    : {self.bedrock_topography}",
+            f"    surface_thickness     : {self.surface_thickness}",
+            f"    geothermal_heat_flux  : {self.geothermal_heat_flux}",
+            f"    res_min               : {self.res_min}",
+            f"    res_max               : {self.res_max}",
+        ]
+        return "\n".join(lines)
+
+    def __repr__(self):
+        return self.__str__()
 
     def _assign_model_configs(self, model_name, characteristics_json=ismip6_model_configs_path):
         with open(characteristics_json, 'r') as file:

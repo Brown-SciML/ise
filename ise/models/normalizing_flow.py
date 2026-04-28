@@ -228,6 +228,7 @@ class NormalizingFlow(nn.Module):
                 print(f"Training already completed ({epochs}/{epochs}).")
                     
         self.trained = True
+        self.model_dir = None
         
         if save_checkpoints:
             if self.wandb_run:
@@ -380,6 +381,7 @@ class NormalizingFlow(nn.Module):
             model.trained = True
             
         model.trained = True
+        model.model_dir = os.path.dirname(path)
         model.best_loss = metadata.get("best_loss", None)
         model.epochs_trained = metadata.get("epochs_trained", None)
         model.flow_hidden_size = metadata.get("flow_hidden_size", None)
