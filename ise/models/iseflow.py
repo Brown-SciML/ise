@@ -422,14 +422,30 @@ class ISEFlow(torch.nn.Module):
 
 
 class ISEFlow_AIS(ISEFlow):
-    """
-    ISEFlow_AIS is a specialized version of ISEFlow for the Antarctic Ice Sheet (AIS).
+    """Pretrained ISEFlow emulator for the Antarctic Ice Sheet (AIS).
 
-    This subclass initializes the deep ensemble and normalizing flow models specifically
-    for AIS and provides a loading method with pre-trained model paths.
+    Loads bundled pretrained weights for AIS (18 sectors, 8 km resolution) and
+    exposes ``predict(inputs)`` where ``inputs`` is an ``ISEFlowAISInputs`` instance.
+
+    Supported versions:
+
+    - ``v1.0.0``: includes ``mrro_anomaly`` as a forcing variable.
+    - ``v1.1.0`` (default): ``mrro_anomaly`` removed; improved GrIS+AIS joint training.
+
+    Args:
+        version (str, optional): Model version string. One of ``'v1.0.0'`` or
+            ``'v1.1.0'``. Defaults to ``'v1.1.0'``.
+
+    Raises:
+        NotImplementedError: If an unsupported version string is provided.
     """
 
     def __init__(self, version="v1.1.0"):
+        """Load pretrained AIS weights for the specified version.
+
+        Args:
+            version (str, optional): ``'v1.0.0'`` or ``'v1.1.0'``. Defaults to ``'v1.1.0'``.
+        """
         self.ice_sheet = "AIS"
         self.version = version
 
@@ -440,11 +456,8 @@ class ISEFlow_AIS(ISEFlow):
         else:
             raise NotImplementedError(f"Version {version} not implemented. Try v1.0.0 or v1.1.0")
 
-        # Load the actual submodules
         deep_ensemble = DeepEnsemble.load(os.path.join(model_dir, "deep_ensemble.pth"))
         normalizing_flow = NormalizingFlow.load(os.path.join(model_dir, "normalizing_flow.pth"))
-
-        # ✅ This calls nn.Module.__init__ properly and registers submodules
         super(ISEFlow_AIS, self).__init__(deep_ensemble, normalizing_flow)
 
         self.model_dir = model_dir
@@ -454,6 +467,22 @@ class ISEFlow_AIS(ISEFlow):
         self,
         inputs: ISEFlowAISInputs,
     ):
+        """Preprocess ISEFlowAISInputs into the feature matrix expected by the model.
+
+        Applies input scaling (using the version-specific ``scaler_X.pkl``), adds
+        5-step lag variables, one-hot encodes ISM configuration columns, and pads
+        any missing one-hot columns with ``False``.
+
+        Args:
+            inputs (ISEFlowAISInputs): Validated input dataclass for a single AIS sector.
+
+        Returns:
+            pandas.DataFrame: Feature matrix aligned to the column order expected by
+            the pretrained model weights for the current version.
+
+        Raises:
+            ValueError: If ``mrro_anomaly`` is ``None`` when using v1.0.0.
+        """
 
         if inputs.mrro_anomaly is None and self.version == "v1.0.0":
             raise ValueError("mrro_anomaly is required for version v1.0.0")
@@ -662,21 +691,30 @@ class ISEFlow_AIS(ISEFlow):
 
 
 class ISEFlow_GrIS(ISEFlow):
-    """
-    ISEFlow_GrIS is a specialized version of ISEFlow for the Greenland Ice Sheet (GrIS).
+    """Pretrained ISEFlow emulator for the Greenland Ice Sheet (GrIS).
 
-    This subclass initializes the deep ensemble and normalizing flow models specifically
-    for GrIS and provides a loading method with pre-trained model paths.
+    Loads bundled pretrained weights for GrIS (6 drainage basins, 5 km resolution)
+    and exposes ``predict(inputs)`` where ``inputs`` is an ``ISEFlowGrISInputs`` instance.
+
+    Supported versions:
+
+    - ``v1.0.0``: initial GrIS release.
+    - ``v1.1.0`` (default): improved AIS+GrIS joint training.
+
+    Args:
+        version (str, optional): Model version string. One of ``'v1.0.0'`` or
+            ``'v1.1.0'``. Defaults to ``'v1.1.0'``.
+
+    Raises:
+        NotImplementedError: If an unsupported version string is provided.
     """
 
     def __init__(self, version="v1.1.0"):
-        """
-        Initializes the ISEFlow_GrIS model.
+        """Load pretrained GrIS weights for the specified version.
 
-        Sets the ice sheet type to 'GrIS' and initializes pre-configured deep ensemble
-        and normalizing flow models specific to GrIS.
+        Args:
+            version (str, optional): ``'v1.0.0'`` or ``'v1.1.0'``. Defaults to ``'v1.1.0'``.
         """
-
         self.ice_sheet = "GrIS"
         self.version = version
 
@@ -687,11 +725,8 @@ class ISEFlow_GrIS(ISEFlow):
         else:
             raise NotImplementedError(f"Version {version} not implemented. Try v1.0.0 or v1.1.0")
 
-        # Load the actual submodules
         deep_ensemble = DeepEnsemble.load(os.path.join(model_dir, "deep_ensemble.pth"))
         normalizing_flow = NormalizingFlow.load(os.path.join(model_dir, "normalizing_flow.pth"))
-
-        # ✅ This calls nn.Module.__init__ properly and registers submodules
         super(ISEFlow_GrIS, self).__init__(deep_ensemble, normalizing_flow)
 
         self.model_dir = model_dir
@@ -701,6 +736,19 @@ class ISEFlow_GrIS(ISEFlow):
         self,
         inputs: ISEFlowGrISInputs,
     ):
+        """Preprocess ISEFlowGrISInputs into the feature matrix expected by the model.
+
+        Applies input scaling (using the version-specific ``scaler_X.pkl``), adds
+        5-step lag variables, one-hot encodes ISM configuration columns, and pads
+        any missing one-hot columns with ``False``.
+
+        Args:
+            inputs (ISEFlowGrISInputs): Validated input dataclass for a single GrIS basin.
+
+        Returns:
+            pandas.DataFrame: Feature matrix aligned to the column order expected by
+            the pretrained model weights for the current version.
+        """
 
         data = inputs.to_df()
 
@@ -750,6 +798,29 @@ class ISEFlow_GrIS(ISEFlow):
         inputs: ISEFlowGrISInputs,
         smoothing_window: int = 0,
     ):
+        """Predicts GrIS sea level contribution using the pretrained ISEFlow_GrIS model.
+
+        Internally calls ``process()`` to scale, add lag variables, and one-hot
+        encode the inputs before running the hybrid forward pass.
+
+        Args:
+            inputs (ISEFlowGrISInputs): Validated input dataclass containing climate
+                forcings and ISM configuration for a single GrIS drainage basin.
+            smoothing_window (int, optional): If > 0, applies a uniform moving-average
+                smoother of this width to the output time series. Defaults to 0 (no
+                smoothing).
+
+        Returns:
+            tuple: A tuple containing:
+
+                - **predictions** (*numpy.ndarray*, shape ``(86, 1)``): Unscaled sea
+                  level equivalent (SLE) projections in mm for years 2015-2100.
+                - **uncertainties** (*dict*): Dictionary with keys:
+
+                  - ``'total'``: total uncertainty (epistemic + aleatoric).
+                  - ``'epistemic'``: uncertainty from ensemble disagreement.
+                  - ``'aleatoric'``: uncertainty from normalizing-flow sampling.
+        """
         data = self.process(
             inputs=inputs,
         )
@@ -783,20 +854,19 @@ class ISEFlow_GrIS(ISEFlow):
 
 class ISEFlow_AIS_DE_v1_0_0(DeepEnsemble):
     """
-    ISEFlow Deep ensemble model for Antarctic Ice Sheet (AIS) emulation.
+    Deprecated AIS deep ensemble (v1.0.0). Use ``ISEFlow_AIS`` instead.
 
-    This class implements an ensemble of Long Short-Term Memory (LSTM) networks
-    to predict ice sheet dynamics using deep learning. It extends the `DeepEnsemble`
-    class and combines multiple LSTM models to enhance predictive performance.
+    This hard-coded 10-member LSTM ensemble was used in ISEFlow v1.0.0 for AIS
+    emulation (input_size=99, includes ``mrro_anomaly``).  It is kept for
+    backward compatibility with saved v1.0.0 checkpoints only.
+
+    .. deprecated::
+        Use ``ISEFlow_AIS(version='v1.0.0')`` or ``ISEFlow_AIS(version='v1.1.0')``
+        instead.  This class will be removed in a future release.
 
     Attributes:
-        input_size (int): The number of input features, Defaults to 99.
-        output_size (int): The number of output features, Defaults to 1.
-        iseflow_ais_ensemble (list): A list of LSTM models with different architectures and loss functions.
-
-    Inherits from:
-        DeepEnsemble: A base class for deep ensemble models.
-
+        input_size (int): 99 (includes mrro_anomaly).
+        output_size (int): 1.
     """
 
     def __init__(
@@ -831,19 +901,19 @@ class ISEFlow_AIS_DE_v1_0_0(DeepEnsemble):
 
 class ISEFlow_GrIS_DE_v1_0_0(DeepEnsemble):
     """
-    ISEFlow Deep ensemble model for Greenland Ice Sheet (GrIS) emulation.
+    Deprecated GrIS deep ensemble (v1.0.0). Use ``ISEFlow_GrIS`` instead.
 
-    This class constructs an ensemble of LSTM models to predict ice sheet behavior
-    for the Greenland Ice Sheet (GrIS). It extends the `DeepEnsemble` framework
-    and integrates multiple LSTM-based predictors to improve accuracy.
+    This hard-coded 10-member LSTM ensemble was used in ISEFlow v1.0.0 for GrIS
+    emulation (input_size=90).  It is kept for backward compatibility with saved
+    v1.0.0 checkpoints only.
+
+    .. deprecated::
+        Use ``ISEFlow_GrIS(version='v1.0.0')`` or ``ISEFlow_GrIS(version='v1.1.0')``
+        instead.  This class will be removed in a future release.
 
     Attributes:
-        input_size (int): The number of input features (90).
-        output_size (int): The number of output features (1).
-        iseflow_gris_ensemble (list): A list of LSTM models with varying architectures and loss functions.
-
-    Inherits from:
-        DeepEnsemble: A base class for deep ensemble models.
+        input_size (int): 90.
+        output_size (int): 1.
     """
 
     def __init__(
@@ -873,21 +943,19 @@ class ISEFlow_GrIS_DE_v1_0_0(DeepEnsemble):
 
 class ISEFlow_AIS_NF_v1_0_0(NormalizingFlow):
     """
-    ISEFlow_AIS_NF is a specialized normalizing flow model for the Antarctic Ice Sheet (AIS).
+    Deprecated AIS normalizing flow (v1.0.0). Use ``ISEFlow_AIS`` instead.
 
-    This class extends the `NormalizingFlow` class, configuring it with AIS-specific input sizes and transformations.
+    This pre-configured NormalizingFlow was used in ISEFlow v1.0.0 for AIS
+    aleatoric uncertainty estimation.
+
+    .. deprecated::
+        Use ``ISEFlow_AIS(version='v1.0.0')`` or ``ISEFlow_AIS(version='v1.1.0')``
+        instead.  This class will be removed in a future release.
     """
 
     def __init__(self, version="1.0.0"):
         """
-        Initializes the ISEFlow_AIS_NF model.
-
-        This model is pre-configured with:
-        - `input_size` of 99, representing the number of input features.
-        - `output_size` of 1, representing the target variable.
-        - `num_flow_transforms` of 5, specifying the number of flow transformations.
-
-        Calls the `NormalizingFlow` constructor with these preset parameters.
+        Initialize with AIS-specific defaults (input_size=99 for v1.0.0, 93 otherwise).
         """
         warnings.warn(
             "ISEFlow_AIS_NF_v1_0_0 is deprecated and will be removed in future versions. Please use ISEFlow_AIS instead.",
@@ -906,24 +974,20 @@ class ISEFlow_AIS_NF_v1_0_0(NormalizingFlow):
 
 class ISEFlow_GrIS_NF_v1_0_0(NormalizingFlow):
     """
-    ISEFlow_GrIS_NF is a specialized normalizing flow model for the Greenland Ice Sheet (GrIS).
+    Deprecated GrIS normalizing flow (v1.0.0). Use ``ISEFlow_GrIS`` instead.
 
-    This class extends the `NormalizingFlow` class, configuring it with GrIS-specific input sizes and transformations.
+    This pre-configured NormalizingFlow was used in ISEFlow v1.0.0 for GrIS
+    aleatoric uncertainty estimation (input_size=90).
+
+    .. deprecated::
+        Use ``ISEFlow_GrIS(version='v1.0.0')`` or ``ISEFlow_GrIS(version='v1.1.0')``
+        instead.  This class will be removed in a future release.
     """
 
     def __init__(
         self,
     ):
-        """
-        Initializes the ISEFlow_GrIS_NF model.
-
-        This model is pre-configured with:
-        - `input_size` of 90, representing the number of input features.
-        - `output_size` of 1, representing the target variable.
-        - `num_flow_transforms` of 5, specifying the number of flow transformations.
-
-        Calls the `NormalizingFlow` constructor with these preset parameters.
-        """
+        """Initialize with GrIS-specific defaults (input_size=90, 5 flow transforms)."""
         self.input_size = 90
         self.output_size = 1
         self.num_flow_transforms = 5

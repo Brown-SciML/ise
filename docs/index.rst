@@ -14,9 +14,9 @@ Supported ice sheets
 ~~~~~~~~~~~~~~~~~~~~
 
 - **AIS** (Antarctic Ice Sheet): 18 sectors, 8 km standard resolution
-- **GrIS** (Greenland Ice Sheet): 6 regions, 5 km standard resolution
+- **GrIS** (Greenland Ice Sheet): 6 drainage basins, 5 km standard resolution
 
-Projection period: **2015-2100** (86 annual timesteps).
+Projection period: **2015–2100** (86 annual timesteps).
 
 About ISEFlow
 =============
@@ -31,6 +31,12 @@ ISEFlow combines two sub-models trained in sequence:
    **epistemic** (model) uncertainty as disagreement across members.
 
 Total uncertainty = epistemic + aleatoric.
+
+Model versions
+~~~~~~~~~~~~~~
+
+- **v1.0.0** — AIS only; includes ``mrro_anomaly`` as a forcing variable.
+- **v1.1.0** — AIS + GrIS; ``mrro_anomaly`` removed from AIS inputs.
 
 This codebase has been used in peer-reviewed research, including:
 
@@ -76,11 +82,10 @@ Quickstart — pretrained ISEFlow-AIS
 
    # Build the input dataclass for a single sector (sector 1)
    year = np.arange(2015, 2101)          # 86 years
-   sector = np.ones(86, dtype=int)       # sector 1
 
    inputs = ISEFlowAISInputs(
        year=year,
-       sector=sector,
+       sector=np.ones(86, dtype=int),    # AIS sector 1 of 18
        pr_anomaly=np.zeros(86),
        evspsbl_anomaly=np.zeros(86),
        smb_anomaly=np.zeros(86),
@@ -88,7 +93,7 @@ Quickstart — pretrained ISEFlow-AIS
        ocean_thermal_forcing=np.zeros(86),
        ocean_salinity=np.zeros(86),
        ocean_temperature=np.zeros(86),
-       # ISM configuration (use model_configs shortcut or set individually)
+       # ISM configuration — use model_configs shortcut or set individually
        model_configs="AWI_PISM1",
        ice_shelf_fracture=False,
        ocean_sensitivity="medium",
@@ -100,9 +105,13 @@ Quickstart — pretrained ISEFlow-AIS
    model = ISEFlow_AIS(version="v1.1.0")
    predictions, uncertainties = model.predict(inputs)
 
-   print(predictions.shape)          # (86, 1)  — SLE in mm
+   print(predictions.shape)          # (86, 1)  — SLE in mm, 2015-2100
    print(uncertainties["epistemic"]) # epistemic uncertainty per timestep
    print(uncertainties["aleatoric"]) # aleatoric uncertainty per timestep
+   print(uncertainties["total"])     # total (epistemic + aleatoric)
+
+For more examples including GrIS inference and training from scratch, see the
+:doc:`quickstart` page.
 
 Package layout
 ==============
@@ -111,6 +120,7 @@ Package layout
 
    ise/
    ├── data/
+   │   ├── anomaly.py           AnomalyConverter: raw forcings → ISMIP6 anomalies
    │   ├── forcings.py          ForcingFile: load/process climate NetCDF data
    │   ├── grids.py             GridFile: sector boundary definitions
    │   ├── inputs.py            ISEFlowAISInputs, ISEFlowGrISInputs
@@ -163,6 +173,7 @@ If you use ISE in research, please consider citing our work.  See
 
 .. toctree::
    :maxdepth: 2
-   :caption: API Reference:
+   :caption: Contents:
 
+   quickstart
    docs/source/ise

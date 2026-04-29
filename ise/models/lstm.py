@@ -74,6 +74,22 @@ class LSTM(nn.Module):
         wd=1e-6,
         dropout=0.0,
     ):
+        """Construct the LSTM network.
+
+        Args:
+            lstm_num_layers (int): Number of stacked LSTM layers.
+            lstm_hidden_size (int): Hidden units per LSTM layer.
+            input_size (int, optional): Number of input features. Defaults to 83.
+            output_size (int, optional): Number of output features. Defaults to 1.
+            criterion (torch.nn.Module, optional): Loss function. Defaults to MSELoss.
+            output_sequence_length (int, optional): Projection length (used in dataset batching).
+                Defaults to 86.
+            optimizer (type, optional): Optimizer class. Defaults to ``optim.AdamW``.
+            lr (float, optional): Learning rate. Defaults to 1e-4.
+            wd (float, optional): Weight decay. Defaults to 1e-6.
+            dropout (float, optional): Dropout probability applied inside LSTM layers.
+                Defaults to 0.0 (no dropout).
+        """
         super(LSTM, self).__init__()
 
         # Initialize attributes

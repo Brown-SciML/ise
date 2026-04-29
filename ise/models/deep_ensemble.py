@@ -58,6 +58,25 @@ class DeepEnsemble(nn.Module):
         output_sequence_length=86,
         latent_dim=1,
     ):
+        """Construct the deep ensemble.
+
+        Args:
+            ensemble_members (list of LSTM, optional): Pre-built LSTM members.  If
+                ``None``, ``num_ensemble_members`` members are created randomly.
+            input_size (int, optional): Number of input features (before latent concat).
+                Defaults to 83.
+            output_size (int, optional): Number of output features. Defaults to 1.
+            num_ensemble_members (int, optional): Members to generate when
+                ``ensemble_members`` is ``None``. Defaults to 3.
+            output_sequence_length (int, optional): Projection length passed to each
+                LSTM. Defaults to 86.
+            latent_dim (int, optional): Latent dimension appended to ``input_size``
+                (i.e. effective input = input_size + latent_dim). Defaults to 1.
+
+        Raises:
+            ValueError: If ``ensemble_members`` is provided but is not a list of
+                ``LSTM`` instances.
+        """
         super(DeepEnsemble, self).__init__()
         self.input_size = input_size + latent_dim
         self.output_size = output_size

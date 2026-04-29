@@ -255,9 +255,13 @@ class ISEFlowAISInputs:
     def _check_inputs(
         self,
     ):
-        """Check the validity of input parameters."""
-        # This method can be used for additional checks if needed
-        # check inputs
+        """Validate all AIS input parameters and normalise array encodings.
+
+        Converts ``year`` from calendar years (2015-2100) to model-internal
+        encoding (1-86), broadcasts a scalar ``sector`` to an array, and raises
+        ``ValueError`` for any out-of-range or mutually exclusive parameter
+        combinations.
+        """
 
         if self.year[0] == 2015:
             self.year = self.year - 2015 + 1  # convert 2015-2100 → 1-86 (model encoding)
@@ -354,6 +358,12 @@ class ISEFlowAISInputs:
     def _map_args(
         self,
     ):
+        """Map user-facing string values to the internal encodings expected by the model.
+
+        For example, ``numerics='fd'`` becomes ``'FD'``,
+        ``init_method='da'`` becomes ``'DA'``, etc.  Also applies any
+        overrides specified in ``self.override_params``.
+        """
 
         # map from accepted input to how the model expects variable names
         arg_map = {
@@ -446,6 +456,7 @@ class ISEFlowAISInputs:
                 setattr(self, key, arg_map[key][value])
 
     def _convert_arrays(self):
+        """Coerce all forcing arrays to ``numpy.ndarray``."""
 
         forcings = (
             "year",
@@ -470,7 +481,12 @@ class ISEFlowAISInputs:
                 ) from e
 
     def to_df(self):
-        """Convert the dataclass to a pandas DataFrame."""
+        """Convert the dataclass fields to a pandas DataFrame.
+
+        Returns:
+            pandas.DataFrame: One row per timestep (86 rows) with all forcing
+            and configuration columns needed by ``ISEFlow_AIS.process()``.
+        """
 
         data = {
             "year": self.year,
@@ -784,9 +800,13 @@ class ISEFlowGrISInputs:
     def _check_inputs(
         self,
     ):
-        """Check the validity of input parameters."""
-        # This method can be used for additional checks if needed
-        # check inputs
+        """Validate all GrIS input parameters and normalise array encodings.
+
+        Converts ``year`` from calendar years (2015-2100) to model-internal
+        encoding (1-86), broadcasts a scalar ``sector`` to an array, and raises
+        ``ValueError`` for any out-of-range or mutually exclusive parameter
+        combinations.
+        """
 
         if self.year[0] == 2015:
             self.year = self.year - 2015 + 1  # convert 2015-2100 → 1-86 (model encoding)
@@ -923,6 +943,13 @@ class ISEFlowGrISInputs:
     def _map_args(
         self,
     ):
+        """Map user-facing string values to the internal encodings expected by the model.
+
+        For example, ``numerics='fe'`` becomes ``'FE'``,
+        ``ice_flow_model='ho'`` becomes ``'HO'``, etc.  Numeric resolution
+        fields (``res_min``, ``res_max``) are converted to string representations
+        of their float values (e.g. ``1.0`` → ``'1.0'``).
+        """
 
         # map from accepted input to how the model expects variable names
         arg_map = {
@@ -998,6 +1025,7 @@ class ISEFlowGrISInputs:
                 setattr(self, key, new_value)
 
     def _convert_arrays(self):
+        """Coerce all GrIS forcing arrays to ``numpy.ndarray``."""
 
         forcings = ("year", "aST", "aSMB", "ocean_thermal_forcing", "basin_runoff")
 
@@ -1012,7 +1040,12 @@ class ISEFlowGrISInputs:
                 ) from e
 
     def to_df(self):
-        """Convert the dataclass to a pandas DataFrame."""
+        """Convert the dataclass fields to a pandas DataFrame.
+
+        Returns:
+            pandas.DataFrame: One row per timestep (86 rows) with all forcing
+            and configuration columns needed by ``ISEFlow_GrIS.process()``.
+        """
 
         data = {
             "year": self.year,

@@ -66,6 +66,17 @@ class NormalizingFlow(nn.Module):
         num_flow_transforms=5,
         flow_hidden_features=16,
     ):
+        """Construct the normalizing flow architecture.
+
+        Args:
+            input_size (int, optional): Number of conditioning features. Defaults to 43.
+            output_size (int, optional): Dimensionality of the target variable (SLE). Defaults to 1.
+            output_sequence_length (int, optional): Projection length used in dataset batching. Defaults to 86.
+            num_flow_transforms (int, optional): Number of RandomPermutation + MaskedAffineAutoregressive
+                transform pairs. Defaults to 5.
+            flow_hidden_features (int, optional): Width of the context encoder and autoregressive
+                hidden layers. Defaults to 16.
+        """
         super(NormalizingFlow, self).__init__()
         self.num_flow_transforms = num_flow_transforms
         self.num_input_features = input_size

@@ -11,7 +11,7 @@ import sys
 sys.path.insert(0, os.path.abspath('..'))  # Adjust if needed
 
 project = 'ise'
-copyright = '2025, Peter Van Katwyk'
+copyright = '2025-2026, Peter Van Katwyk'
 author = 'Peter Van Katwyk'
 release = '1.1.0'
 

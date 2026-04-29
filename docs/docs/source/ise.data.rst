@@ -21,6 +21,14 @@ This package covers the full data pipeline:
 Submodules
 ----------
 
+ise.data.anomaly
+----------------
+
+.. automodule:: ise.data.anomaly
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ise.data.forcings
 -----------------
 
