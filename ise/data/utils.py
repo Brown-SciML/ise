@@ -1,7 +1,37 @@
-"""Time conversion and subsetting utilities for xarray datasets.
+"""Time coordinate normalisation for ISMIP6 xarray datasets.
 
-This module provides convert_and_subset_times for standardizing time coordinates
-to a 2015-2100 range and handling various time formats (cftime, numeric, datetime64).
+ISMIP6 models encode the ``time`` dimension in a wide variety of formats:
+``cftime.DatetimeNoLeap``, ``cftime.Datetime360Day``, "days since" numeric
+offsets, plain ``numpy.datetime64``, or integer year labels.  Before any
+spatial or sector-level processing can be performed, all datasets must share
+a uniform ``numpy.datetime64`` time axis covering 2015-2100 (86 years).
+
+This module exposes a single function, ``convert_and_subset_times``, that
+handles all known ISMIP6 time encodings and edge cases encountered in the
+GHub dataset collection, including:
+
+- ``cftime`` calendar types (NoLeap, 360-day) → ``pandas.DatetimeIndex``
+- Numeric "days since X" offsets → ``numpy.datetime64``
+- VUW PISM "seconds since 0001-01-01" offsets
+- UAF every-5-years datasets (assume 2015-2100)
+- Datasets with duplicate time stamps (de-duplicated by unique index)
+- Datasets shorter than 86 years (padded with forward-fill)
+- Datasets longer than 86 years (trimmed to the last 86 steps)
+
+Usage
+-----
+::
+
+    import xarray as xr
+    from ise.data.utils import convert_and_subset_times
+
+    ds = xr.open_dataset("lithk_AIS_NCAR_CISM_exp01.nc", decode_times=False)
+    ds = convert_and_subset_times(ds)
+    # ds.time is now numpy.datetime64 with 86 annual steps from 2015 to 2100
+
+This function is called internally by ``ForcingFile.format_timestamps()``,
+``ProjectionProcessor._calculate_ivaf_single_file()``, and the sector
+aggregation functions in ``ise.data.process``.
 """
 
 import warnings

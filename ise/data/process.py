@@ -1,34 +1,70 @@
-"""ISMIP6 projection and forcing processing for ice sheet emulation.
+"""End-to-end ISMIP6 data processing pipeline for ISEFlow training data.
 
-Public API
-----------
-process_sectors(ice_sheet, forcing_directory, grid_file, zenodo_directory, ...)
-    End-to-end pipeline: reads raw ISMIP6 forcing and projection files,
-    aggregates them to sector-level time series, merges them, and returns
-    (or saves) a single analysis-ready DataFrame.
+This module converts raw ISMIP6 forcing and projection files into the
+sector-level, analysis-ready ``dataset.csv`` consumed by ``FeatureEngineer``
+and ultimately by ``ISEFlow.fit()``.
 
-    Internally it calls:
-      - process_AIS/GrIS_atmospheric_sectors()  - atmospheric forcing by sector
-      - process_AIS/GrIS_oceanic_sectors()       - oceanic forcing by sector
-      - process_AIS/GrIS_outputs()               - IVAF projections by sector
-      - merge_datasets()                          - joins forcings + projections
+Public entry points
+-------------------
+``process_sectors`` (main entry point):
+    End-to-end pipeline.  Reads raw ISMIP6 forcing NetCDFs from the GHub
+    directory layout and pre-computed IVAF scalar projection files from
+    Zenodo, aggregates both to sector-level annual time series (86 years,
+    2015-2100), joins them on (aogcm, year, sector), and returns a single
+    ``pandas.DataFrame``::
 
-ProjectionProcessor
-    Computes Ice Volume Above Flotation (IVAF) from raw ISMIP6 3-D NetCDF
-    outputs, subtracts the matched control run, and writes per-experiment
-    ivaf_*.nc files.  Call process() to run; not needed when starting from
-    the pre-computed Zenodo scalar files used by process_sectors().
+        from ise.data.process import process_sectors
 
-DatasetMerger
-    Lower-level class that merges pre-processed CSV forcing and projection
-    files.  merge_dataset() is an alternative to process_sectors() when the
-    intermediate CSVs already exist.
+        dataset = process_sectors(
+            ice_sheet="AIS",
+            forcing_directory="/path/to/GHub/AIS/",
+            grid_file="/path/to/AIS_sectors_8km.nc",
+            zenodo_directory="/path/to/zenodo_download/",
+            export_directory="outputs/",
+        )
+
+    Intermediate CSVs (``AIS_atmospheric.csv``, ``AIS_oceanic.csv``,
+    ``forcings.csv``, ``projections.csv``, ``dataset.csv``) are written to
+    ``export_directory`` so individual stages are skipped on re-runs
+    (controlled by ``overwrite=False``).
+
+``ProjectionProcessor``:
+    Only needed when starting from **raw 3-D ISMIP6 NetCDF output files**
+    rather than the pre-computed Zenodo scalar files.  Computes Ice Volume
+    Above Flotation (IVAF) from bed topography, ice thickness, and ice/grounded
+    fraction at each grid cell, subtracts the matched control-run IVAF, and
+    writes ``ivaf_<ice_sheet>_<group>_<model>_<exp>.nc`` files::
+
+        from ise.data.process import ProjectionProcessor
+
+        processor = ProjectionProcessor(
+            ice_sheet="AIS",
+            forcings_directory="/path/to/forcing/",
+            projections_directory="/path/to/projections/",
+            scalefac_path="af2_scalefac.nc",
+            densities_path="AIS_densities.csv",
+        )
+        processor.process()
+
+``DatasetMerger``:
+    Lower-level alternative to ``process_sectors()`` for when intermediate
+    per-run CSV files already exist on disk.  Performs only the join step
+    (forcing ↔ projection matched by CMIP model and pathway).
 
 Supporting functions
 --------------------
-get_model_densities()  - extract ice/water densities from raw ISMIP6 NetCDFs
-merge_datasets()       - join sector-level forcings and projections DataFrames
-combine_gris_forcings() - combine annual GrIS atmospheric NetCDF files
+``process_AIS_atmospheric_sectors`` / ``process_GrIS_atmospheric_sectors``
+    Aggregate atmospheric forcing NetCDFs to sector-level annual means.
+``process_AIS_oceanic_sectors`` / ``process_GrIS_oceanic_sectors``
+    Aggregate oceanic forcing NetCDFs to sector-level annual means.
+``process_AIS_outputs`` / ``process_GrIS_outputs``
+    Load pre-computed IVAF scalar projections from Zenodo and convert to SLE.
+``merge_datasets``
+    Join sector-level forcings and projections DataFrames on (aogcm, year, sector).
+``get_model_densities``
+    Extract ice/water density values (rhoi, rhow) from raw ISMIP6 NetCDFs.
+``combine_gris_forcings``
+    Concatenate annual GrIS atmospheric NetCDF files into per-AOGCM combined files.
 """
 
 import os

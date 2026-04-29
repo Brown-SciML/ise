@@ -1,6 +1,16 @@
-"""Type-checking and I/O utilities for the ise package.
+"""Runtime type-checking utilities for the ise package.
 
-This module provides check_type for validating argument types at runtime.
+This module provides ``check_type``, a thin wrapper around ``isinstance`` that
+raises a descriptive ``TypeError`` when an argument does not match the expected
+type.  It is used at the boundaries of public-facing functions to give clear
+error messages rather than cryptic internal AttributeErrors::
+
+    from ise.utils.io import check_type
+
+    def process(data, grid):
+        check_type(data, pd.DataFrame)
+        check_type(grid, (str, xr.Dataset))
+        ...
 """
 
 

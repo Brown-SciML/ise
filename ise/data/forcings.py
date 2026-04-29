@@ -1,8 +1,49 @@
-"""Climate forcing file handling for ice sheet emulation.
+"""NetCDF climate forcing file loading and sector aggregation.
 
-This module provides the ForcingFile class for loading, validating, and
-processing NetCDF forcing data (atmospheric and oceanic) with sector-level
-aggregation.
+``ForcingFile`` wraps a single ISMIP6 atmospheric or oceanic forcing NetCDF
+and provides a chainable API for loading, cleaning, depth-aggregating, sector
+assigning, and spatially averaging the data into the per-sector time series
+required by the ISEFlow training pipeline.
+
+Supported ice sheets
+--------------------
+AIS:
+    Atmospheric variables ``pr``, ``evspsbl``, ``smb``, ``ts`` and oceanic
+    variables ``thermal_forcing``, ``salinity``, ``temperature``.
+GrIS:
+    Atmospheric variables ``aSMB``, ``aST`` and oceanic variables
+    ``thermal_forcing``, ``basin_runoff``.
+
+Typical workflow
+----------------
+::
+
+    from ise.data.grids import GridFile
+    from ise.data.forcings import ForcingFile
+
+    gridfile = GridFile("AIS", "AIS_sectors_8km.nc")
+    gridfile.format_grids()
+
+    forcing = ForcingFile("AIS", realm="atmos", filepath="pr_AIS_noresm1-m_rcp85.nc")
+    forcing.load(decode_times=False)
+    forcing.format_timestamps()
+    forcing.drop_vars(["lat", "lon", "mapping"])
+    forcing.assign_sectors(gridfile)
+    sector_df = forcing.average_over_sector(sector_number=10).to_dataframe()
+
+Ocean realm requires depth aggregation before sector assignment::
+
+    ocean = ForcingFile("AIS", realm="ocean", filepath="thermal_forcing.nc",
+                        varname="thermal_forcing")
+    ocean.load(decode_times=False)
+    ocean.format_timestamps()
+    ocean.aggregate_depth(method="mean")
+    ocean.assign_sectors(gridfile)
+    tf_df = ocean.average_over_sector(sector_number=10).to_dataframe()
+
+These steps are orchestrated automatically by ``process_AIS_atmospheric_sectors()``,
+``process_AIS_oceanic_sectors()``, and their GrIS counterparts in
+``ise.data.process``.
 """
 
 from typing import List

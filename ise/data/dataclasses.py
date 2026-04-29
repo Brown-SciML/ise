@@ -1,7 +1,46 @@
-"""PyTorch dataset classes for ISMIP6 emulator training and inference.
+"""PyTorch Dataset classes for ISEFlow training and inference.
 
-This module provides EmulatorDataset, PyTorchDataset, TSDataset, and ScenarioDataset
-for sequence-based and projection-based data loading with optional padding.
+This module provides four ``torch.utils.data.Dataset`` subclasses for loading
+ice-sheet emulator data.  The default for ISEFlow is ``EmulatorDataset``,
+which handles the 86-timestep projection structure and the sequence padding
+needed by the LSTM members of ``DeepEnsemble``.
+
+Dataset classes
+---------------
+EmulatorDataset (default for ISEFlow):
+    Wraps a flat ``(N_projections * 86, features)`` or batched
+    ``(N_projections, 86, features)`` feature matrix.  ``__getitem__``
+    returns a zero-padded sliding window of ``sequence_length`` timesteps so
+    that the LSTM always receives a fixed-length context window even at the
+    start of a projection.  Used by both ``LSTM.fit()`` and
+    ``NormalizingFlow.fit()``::
+
+        from ise.data.dataclasses import EmulatorDataset
+        from torch.utils.data import DataLoader
+
+        ds = EmulatorDataset(X, y, sequence_length=5, projection_length=86)
+        loader = DataLoader(ds, batch_size=64, shuffle=True)
+
+PyTorchDataset:
+    Minimal ``(X[i], y[i])`` pair dataset with no sequence logic.  Used when
+    data is already structured as individual feature vectors (e.g. for the
+    normalizing flow, which uses ``sequence_length=1``).
+
+TSDataset:
+    Similar to ``EmulatorDataset`` but expects pre-batched 3-D tensors
+    ``(N, T, F)``.  Kept for backward compatibility.
+
+ScenarioDataset:
+    Simple ``(features[idx], labels[idx])`` pair dataset used in the
+    experimental scenario-classification models.
+
+Padding convention
+------------------
+All sequence-aware datasets pad *at the beginning* of each projection with
+the zero vector so that the most recent timestep is always at index ``-1``
+of the returned sequence.  This means the LSTM sees a causal context that
+grows from zero padding at t=1 to a full ``sequence_length`` window by
+t=``sequence_length``.
 """
 
 import warnings

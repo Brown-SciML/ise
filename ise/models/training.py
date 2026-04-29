@@ -1,7 +1,41 @@
-"""Checkpointing and early stopping for model training.
+"""Checkpointing and early-stopping callbacks for PyTorch model training.
 
-This module provides CheckpointSaver and EarlyStoppingCheckpointer for saving
-model state when loss improves and stopping when validation loss plateaus.
+Both ``LSTM.fit()`` and ``NormalizingFlow.fit()`` accept a ``checkpoint_path``
+and use the classes in this module to save the best model state and optionally
+stop training when the validation loss stops improving.
+
+Classes
+-------
+CheckpointSaver:
+    Saves a full checkpoint dict ``{epoch, model_state_dict,
+    optimizer_state_dict, best_loss}`` whenever the monitored loss improves.
+    The saved file can be passed back to ``fit()`` on a later run to resume
+    training from where it left off::
+
+        from ise.models.training import CheckpointSaver
+
+        saver = CheckpointSaver(model, optimizer, "checkpoint.pt", verbose=True)
+        for epoch in range(1, epochs + 1):
+            loss = train_one_epoch(...)
+            saver(loss, epoch)          # saves only if loss < best_loss
+
+EarlyStoppingCheckpointer (extends CheckpointSaver):
+    Adds a patience counter on top of ``CheckpointSaver``.  Sets
+    ``self.early_stop = True`` when the loss has not improved for ``patience``
+    consecutive calls.  The training loop should check this flag and break::
+
+        from ise.models.training import EarlyStoppingCheckpointer
+
+        stopper = EarlyStoppingCheckpointer(model, optimizer, "ckpt.pt",
+                                            patience=10, verbose=True)
+        for epoch in range(1, max_epochs + 1):
+            val_loss = evaluate(...)
+            stopper(val_loss, epoch)
+            if stopper.early_stop:
+                print("Early stopping")
+                break
+        # After the loop, load the best checkpoint:
+        stopper.load_checkpoint()
 """
 
 import warnings

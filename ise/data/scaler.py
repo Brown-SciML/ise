@@ -1,7 +1,50 @@
-"""Scalers for ISMIP6 emulator inputs and outputs.
+"""GPU-compatible PyTorch scalers for ISEFlow inputs and outputs.
 
-This module provides PyTorch-based StandardScaler, RobustScaler, and LogScaler
-for fitting and transforming data with optional Yeo-Johnson for target variables.
+This module provides ``StandardScaler``, ``RobustScaler``, and ``LogScaler``
+as ``torch.nn.Module`` subclasses.  They mirror the scikit-learn scaler API
+(``fit`` / ``transform`` / ``inverse_transform`` / ``save`` / ``load``) but
+operate on ``torch.Tensor`` objects and can be kept on GPU throughout the
+forward pass.
+
+Why not use sklearn?
+--------------------
+Scikit-learn scalers require a CPU round-trip and cannot participate in the
+autograd graph.  These subclasses keep scaling arithmetic on whichever device
+the model is running on (CUDA or CPU), avoiding expensive device transfers
+during inference.
+
+Scalers in the ISEFlow pipeline
+--------------------------------
+The pretrained ISEFlow models ship a ``scaler_X.pkl`` (sklearn) for input
+features and a ``scaler_y.pkl`` (sklearn) for the SLE output target.  These
+are **sklearn** scalers used inside ``ise.data.feature_engineer.scale_data``
+and ``ISEFlow.predict()``.
+
+The PyTorch scalers in **this** module are used during model training when
+GPU-resident tensors must be transformed inside the training loop without
+leaving the GPU::
+
+    from ise.data.scaler import StandardScaler
+
+    scaler = StandardScaler()
+    scaler.fit(X_train_tensor)                 # computes mean/std on GPU
+    X_scaled = scaler.transform(X_train_tensor)
+    X_orig   = scaler.inverse_transform(X_scaled)
+
+    scaler.save("scaler.pt")
+    scaler_loaded = StandardScaler.load("scaler.pt")
+
+Scaler summary
+--------------
+StandardScaler:
+    ``(x - mean) / std``.  Zero-variance columns are replaced with a small
+    epsilon to prevent division by zero.
+RobustScaler:
+    ``(x - median) / IQR``.  More resistant to outliers than StandardScaler.
+LogScaler:
+    ``log(x - min + epsilon)``.  Useful for strictly positive, right-skewed
+    targets.  A shift is computed from the training-set minimum so that all
+    values remain positive before taking the log.
 """
 
 import numpy as np

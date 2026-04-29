@@ -1,8 +1,55 @@
-"""Loss functions for ice sheet emulator training.
+"""Custom loss functions for ice-sheet emulator training.
 
-This module provides weighted and grid-aware loss modules: WeightedGridLoss,
-WeightedMSELoss, WeightedMSEPCALoss, WeightedMSELossWithSignPenalty,
-GridCriterion, WeightedPCALoss, and MSEDeviationLoss for sector/grid predictions.
+Standard MSE treats all timesteps and sectors equally, but ice sheet
+projections have two properties that motivate custom losses:
+
+1. **Extreme-value importance** — large SLE departures (high melt scenarios)
+   are scientifically most consequential and are underrepresented in the
+   training set.  Weighted losses upweight these samples.
+2. **Spatial smoothness** — when predicting full 2-D grid fields (rather than
+   sector-averaged scalars), neighbouring cells should vary smoothly.  The
+   grid-aware losses add a total-variation regularisation term.
+
+All classes are ``torch.nn.Module`` subclasses with the standard
+``forward(input, target)`` signature.
+
+Loss classes
+------------
+WeightedMSELoss:
+    MSE with per-sample weights proportional to the deviation of the target
+    from the dataset mean, normalised by the dataset std.  Extreme targets
+    receive up to ``(1 + weight_factor * |z|) × MSE`` penalty::
+
+        from ise.models.loss import WeightedMSELoss
+        criterion = WeightedMSELoss(data_mean=y_mean, data_std=y_std, weight_factor=2.0)
+        loss = criterion(predictions, targets)
+
+WeightedMSELossWithSignPenalty:
+    Extends ``WeightedMSELoss`` with an extra additive penalty when the
+    predicted sign differs from the true sign.  Useful for preventing the
+    model from predicting sea-level fall when rise is expected.
+
+WeightedMSEPCALoss:
+    Adds user-supplied per-batch ``custom_weights`` on top of the deviation
+    weights.  Intended for PCA-based training where different principal
+    components should have different loss contributions.
+
+WeightedGridLoss:
+    Pixel-wise weighted MSE + total variation regularisation (TVR) for
+    full 2-D grid predictions.  TVR penalises large spatial gradients in
+    ``predicted`` to encourage smooth output fields.
+
+GridCriterion:
+    Simpler grid loss: pixel-wise MSE + TVR with a fixed ``smoothness_weight``,
+    without the extreme-value weighting.
+
+WeightedPCALoss:
+    MSE with fixed per-component weights for PCA coefficient regression.  The
+    first (dominant) principal component can be penalised more heavily.
+
+MSEDeviationLoss:
+    MSE plus an extra ``penalty_multiplier * MSE`` term applied to samples
+    whose absolute error exceeds a ``threshold``.
 """
 
 import torch

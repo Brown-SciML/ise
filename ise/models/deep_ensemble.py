@@ -1,13 +1,61 @@
 """Deep ensemble of LSTM models for epistemic uncertainty estimation.
 
-This module provides ``DeepEnsemble``, which wraps a list of ``LSTM`` instances.
-At inference time each member produces an independent prediction; the mean is
-returned as the point estimate and the standard deviation across members is
-returned as the epistemic uncertainty.
+This module provides ``DeepEnsemble``, which wraps a collection of ``LSTM``
+instances and exposes a single ``forward()`` that returns the **mean
+prediction** and the **epistemic uncertainty** (standard deviation across
+ensemble members) simultaneously.
 
-Members can be supplied explicitly (e.g. with different hidden sizes / loss
-functions) or auto-generated randomly.  ``save()`` / ``load()`` preserve the
-full ensemble including each member's state dict and metadata.
+Epistemic uncertainty in ISEFlow
+---------------------------------
+The ensemble captures uncertainty that arises from limited training data and
+model capacity — the kind that would shrink if more ISMIP6 simulations were
+available.  Disagreement between members is used as a proxy: if all members
+agree, the epistemic uncertainty is low; if they diverge, it is high.  This
+is combined additively with the aleatoric uncertainty from ``NormalizingFlow``
+to form the total reported uncertainty.
+
+Ensemble construction
+---------------------
+Members can be supplied explicitly (allowing heterogeneous architectures and
+loss functions, as in the pretrained ISEFlow weights) or auto-generated
+randomly::
+
+    from ise.models.deep_ensemble import DeepEnsemble
+    from ise.models.lstm import LSTM
+    import torch.nn as nn
+
+    # Explicit heterogeneous ensemble (matches pretrained v1.1.0 AIS members)
+    members = [
+        LSTM(1, 128, input_size=84, output_size=1, criterion=nn.HuberLoss()),
+        LSTM(2, 256, input_size=84, output_size=1, criterion=nn.MSELoss()),
+        # ... more members
+    ]
+    de = DeepEnsemble(ensemble_members=members)
+
+    # Auto-generated random ensemble
+    de = DeepEnsemble(input_size=83, num_ensemble_members=10)
+
+Note: ``input_size`` passed to ``DeepEnsemble`` is the feature dimensionality
+*before* the NF latent is appended.  The constructor automatically adds
+``latent_dim`` (default 1) so each LSTM member receives ``input_size + 1``
+features.
+
+Training
+--------
+``fit()`` trains each member independently on the same ``(X_latent, y)`` data,
+where ``X_latent = [X, z]`` and ``z`` is the latent from the pretrained
+``NormalizingFlow``::
+
+    de.fit(X_latent, y, X_val=X_val_latent, y_val=y_val,
+           epochs=200, batch_size=128, sequence_length=5,
+           early_stopping=True, patience=15)
+
+Persistence
+-----------
+``save(path)`` writes a ``deep_ensemble.pth`` state dict, a
+``deep_ensemble_metadata.json`` with per-member architecture configs, and
+individual ``ensemble_members/member_N.pth`` files.  ``load(path)`` fully
+reconstructs the ensemble from these artifacts.
 """
 
 import json

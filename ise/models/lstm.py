@@ -1,16 +1,57 @@
-"""Single LSTM network for time series forecasting.
+"""Single LSTM network for time series sea-level projection.
 
-This module provides the ``LSTM`` class — a multi-layer LSTM with a two-layer
-fully-connected head (hidden → 32 → output).  It is used both stand-alone and
-as the constituent member of ``DeepEnsemble``.
+This module provides the ``LSTM`` class — the constituent building block of
+``DeepEnsemble``.  Each instance is an independent stacked LSTM followed by a
+two-layer fully-connected head::
 
-Key features:
+    LSTM layers (num_layers, hidden_size)
+        → FC layer (hidden_size → 32) + ReLU
+        → FC output layer (32 → output_size)
 
-- Supports optional MC-Dropout at inference time (set ``dropout > 0``).
-- ``fit()`` accepts optional validation data for early stopping.
-- ``save()`` / ``load()`` persist weights *and* architecture metadata so the
-  model can be reconstructed without the original constructor call.
-- Integrates with ``wandb`` for experiment tracking when a run is provided.
+The architecture is deliberately simple: hidden-to-output mapping uses only
+the final hidden state ``hn[-1]``, making this a many-to-one sequence model
+that takes a window of ``sequence_length`` feature vectors and predicts a
+single SLE value for the last timestep.
+
+Usage — stand-alone
+-------------------
+::
+
+    from ise.models.lstm import LSTM
+    import torch.nn as nn
+
+    model = LSTM(
+        lstm_num_layers=2,
+        lstm_hidden_size=256,
+        input_size=84,    # features after NF latent concat
+        output_size=1,
+        criterion=nn.HuberLoss(),
+    )
+    model.fit(X_train, y_train, epochs=200, sequence_length=5,
+              X_val=X_val, y_val=y_val, early_stopping=True, patience=15)
+
+    preds = model.predict(X_test, sequence_length=5)  # Tensor shape (N, 1)
+
+    model.save("lstm.pth")
+    model_loaded = LSTM.load("lstm.pth")
+
+Usage — inside DeepEnsemble
+---------------------------
+``LSTM`` instances are assembled into a ``DeepEnsemble`` by passing a list of
+them to the constructor.  The ensemble calls ``member.predict(x)`` on each
+member and aggregates the results.  In this context the ``LSTM`` is never
+called with ``fit()`` directly — ``DeepEnsemble.fit()`` handles that.
+
+Checkpointing and early stopping
+---------------------------------
+``fit()`` uses ``CheckpointSaver`` / ``EarlyStoppingCheckpointer`` from
+``ise.models.training``.  If a checkpoint already exists at the given path,
+training resumes from the saved epoch.  After training, the best checkpoint
+is reloaded before ``fit()`` returns.
+
+``save()`` writes both a ``.pth`` state dict and a ``_metadata.json`` file
+storing the full architecture and optimizer hyperparameters.  ``load()``
+reads both to reconstruct the model without any prior constructor call.
 """
 
 import json

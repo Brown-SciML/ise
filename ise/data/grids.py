@@ -1,7 +1,40 @@
-"""Grid file handling for sector definitions in ice sheet emulation.
+"""NetCDF sector-definition grid file loading and formatting.
 
-This module provides the GridFile class for loading and formatting NetCDF
-grid files that define sector boundaries (e.g. AIS 18 sectors, GrIS 6 regions).
+``GridFile`` wraps the ice-sheet sector boundary grids used to assign each
+spatial grid cell to a drainage sector (AIS: 18 sectors; GrIS: 6 drainage
+basins).  The sector array it exposes is consumed by ``ForcingFile.assign_sectors()``
+during the data processing pipeline.
+
+Grid files expected
+-------------------
+AIS:
+    ``AIS_sectors_8km.nc`` — sector variable named ``'sectors'``.
+GrIS:
+    ``GrIS_Basins_Rignot_sectors_5km.nc`` — sector variable named ``'ID'``.
+
+Typical workflow
+----------------
+Sector grids need a time dimension that matches the forcing data (86 years)
+before they can be broadcast alongside a forcing ``xarray.Dataset``.  The
+``format_grids()`` convenience method handles the three required steps::
+
+    from ise.data.grids import GridFile
+
+    gridfile = GridFile("AIS", filepath="AIS_sectors_8km.nc")
+    gridfile.format_grids()           # load → expand time to 86 → align dims
+    sectors = gridfile.get_sectors()  # xr.DataArray of shape (time, x, y)
+
+To perform steps individually (e.g. for a custom time length)::
+
+    gridfile = GridFile("GrIS", filepath="GrIS_Basins_Rignot_sectors_5km.nc")
+    gridfile.load()
+    gridfile.expand_dims(dim="time", size=86)
+    gridfile.align_dims(dims=["time", "x", "y"])
+    sectors = gridfile.get_sectors()
+
+In both cases the returned ``DataArray`` is passed directly to
+``ForcingFile.assign_sectors(gridfile)`` or used as a mask in the sector-level
+aggregation functions in ``ise.data.process``.
 """
 
 import xarray as xr

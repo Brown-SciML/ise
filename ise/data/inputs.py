@@ -1,13 +1,68 @@
 """Input dataclasses for ISEFlow-AIS and ISEFlow-GrIS predictions.
 
-This module defines ISEFlowAISInputs and ISEFlowGrISInputs, which encapsulate
-climate forcings, experiment configuration, and ice sheet model settings
-required for running pretrained ISEFlow emulators.
+This module defines ``ISEFlowAISInputs`` and ``ISEFlowGrISInputs``, which
+validate, encode, and package the climate forcing arrays and ice sheet model
+(ISM) configuration required by the pretrained ISEFlow emulators.
 
-Both classes expose a ``from_raw_values()`` classmethod for users who have
-raw (non-anomaly) forcing arrays.  That path uses ``AnomalyConverter`` to
-subtract the ISMIP6 climatological baseline before constructing the inputs
-object.  See ``ise.data.anomaly.AnomalyConverter`` for details.
+Both dataclasses perform the following on construction:
+
+1. **Validation** — all parameter values are checked against the enumerated
+   sets of allowed options (numerics, stress balance, resolution, etc.).
+2. **Encoding** — human-readable strings (e.g. ``'fd'``, ``'hybrid'``) are
+   mapped to the internal categorical encodings expected by the model weights
+   (e.g. ``'FD'``, ``'Hybrid'``).
+3. **Array coercion** — all forcing arrays are cast to ``numpy.ndarray``.
+4. **Year encoding** — calendar years 2015-2100 are converted to the
+   model-internal 1-86 encoding.
+
+Alternative constructor — raw absolute forcings
+-----------------------------------------------
+If you have raw (non-anomaly) atmospheric forcing values, use
+``from_raw_values()``.  It calls ``AnomalyConverter`` internally to subtract
+the ISMIP6 climatological baseline before building the dataclass::
+
+    from ise.data.inputs import ISEFlowAISInputs
+    import numpy as np
+
+    inputs = ISEFlowAISInputs.from_raw_values(
+        year=np.arange(2015, 2101),
+        sector=10,
+        pr=pr_array,           # kg m⁻² s⁻¹, raw absolute values
+        evspsbl=evspsbl_array,
+        smb=smb_array,
+        ts=ts_array,           # K
+        ocean_thermal_forcing=otf_array,
+        ocean_salinity=sal_array,
+        ocean_temperature=temp_array,
+        aogcm="noresm1-m_rcp85",   # or custom_climatology={...} for new CMIP models
+        # ISM configuration:
+        numerics="fd",
+        stress_balance="hybrid",
+        resolution="8",
+        init_method="eq",
+        initial_year=2005,
+        melt_in_floating_cells="sub-grid",
+        icefront_migration="str",
+        ocean_forcing_type="open",
+        ocean_sensitivity="medium",
+        ice_shelf_fracture=False,
+        open_melt_type="quad",
+        standard_melt_type=None,
+    )
+
+If the ISM configuration matches one of the bundled ISMIP6 models, you can
+pass ``model_configs="BISICLES_UBC"`` (or whichever model key appears in
+``ismip6_model_configs.json``) instead of specifying all parameters
+individually.
+
+Output
+------
+Call ``inputs.to_df()`` to obtain a ``pandas.DataFrame`` (86 rows × features)
+that can be passed directly to ``ISEFlow_AIS.process()`` or
+``ISEFlow_GrIS.process()``.  The pretrained wrappers call ``process()``
+internally when you invoke ``model.predict(inputs)``.
+
+See also: ``ise.data.anomaly.AnomalyConverter``
 """
 
 import json

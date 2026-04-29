@@ -1,8 +1,52 @@
-"""Feature engineering for ISMIP6 emulator datasets.
+"""Feature engineering for ISMIP6 emulator training datasets.
 
-This module provides the FeatureEngineer class and standalone functions for
-scaling, splitting, lag variables, outlier handling, and model characteristic
-merging for ice sheet emulation training data.
+This module transforms the raw merged dataset (output of ``ise.data.process``)
+into the scaled, lagged, train/val/test-split arrays consumed by
+``ISEFlow.fit()``.  The primary interface is the ``FeatureEngineer`` class,
+backed by a set of standalone functions that can also be called independently.
+
+Pipeline stages
+---------------
+The typical preprocessing sequence is::
+
+    from ise.data.feature_engineer import FeatureEngineer
+
+    fe = FeatureEngineer("AIS", data=df)
+    fe.add_model_characteristics()        # merge ISM config one-hot columns
+    fe.drop_outliers(                      # remove SLE < -26.3 mm (physics bound)
+        method="explicit",
+        column="sle",
+        expression=[("sle", "<", -26.3)],
+    )
+    fe.backfill_outliers()                 # replace extreme spikes with prev value
+    fe.add_lag_variables(lag=5)            # add t-1 … t-5 copies of forcing vars
+    fe.split_data(output_directory="splits/")  # 70/15/15 by simulation id
+    X_scaled, y_scaled = fe.scale_data(method="standard", save_dir="splits/")
+
+Key design choices
+------------------
+- **Split granularity:** train/val/test is done by *simulation id*, not by
+  individual rows, so no future data leaks into the validation set.  The
+  default split is 70/15/15 with ``random_state=42``.
+- **Outlier threshold:** ``drop_outliers`` with ``expression=[("sle", "<", -26.3)]``
+  removes physically implausible projections (sea level rise of more than
+  26.3 mm is considered a physical bound for individual sectors).
+- **Lag variables:** ``add_lag_variables(lag=5)`` adds t-1 through t-5 copies
+  of each atmospheric and oceanic forcing column within each 86-year segment,
+  respecting projection boundaries so lag values do not cross between runs.
+- **Model characteristics:** ``add_model_characteristics()`` merges the
+  ISM configuration CSV (e.g. ``AIS_model_characteristics.csv``) and
+  one-hot encodes categorical columns such as numerics, stress balance, etc.
+
+Standalone functions (also usable without FeatureEngineer)
+----------------------------------------------------------
+``split_training_data``    — train/val/test split by simulation id.
+``add_lag_variables``      — add t-k lag columns within each 86-step segment.
+``backfill_outliers``      — replace extreme y-values with previous-row value.
+``drop_outliers``          — remove entire runs containing outlier timesteps.
+``add_model_characteristics`` — merge and encode ISM config metadata.
+``scale_data``             — apply a pre-fitted sklearn scaler from disk.
+``fill_mrro_nans``         — impute missing ``mrro_anomaly`` values.
 """
 
 import json

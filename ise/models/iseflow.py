@@ -1,29 +1,70 @@
-"""ISEFlow hybrid ice sheet emulator and pretrained AIS/GrIS variants.
+"""ISEFlow hybrid ice sheet emulator — base class and pretrained variants.
 
-This module provides:
+This module is the primary user-facing entry point for running and training
+ISEFlow emulators.  It provides:
 
-- **ISEFlow** — base hybrid model combining a ``NormalizingFlow`` (aleatoric
-  uncertainty) and a ``DeepEnsemble`` of LSTMs (epistemic uncertainty).
-  Train with ``fit()``, run inference with ``predict()`` or ``forward()``,
-  save/load with ``save()`` / ``load()``.
+ISEFlow (base class)
+--------------------
+A hybrid ``torch.nn.Module`` combining:
 
-- **ISEFlow_AIS** — pretrained AIS emulator.  Instantiate with
-  ``ISEFlow_AIS(version="v1.1.0")`` and call ``predict(inputs)`` where
-  ``inputs`` is an ``ISEFlowAISInputs`` instance.
+- ``NormalizingFlow`` — conditional autoregressive flow trained first via
+  maximum likelihood.  At inference time it provides (a) a latent
+  representation ``z`` fed as extra context to the ensemble, and (b) the
+  **aleatoric** uncertainty estimate via Monte Carlo sampling.
+- ``DeepEnsemble`` — ensemble of LSTMs trained on ``[X, z]`` (original
+  features concatenated with the NF latent).  Disagreement across members
+  gives the **epistemic** uncertainty.
 
-- **ISEFlow_GrIS** — pretrained GrIS emulator.  Use
-  ``ISEFlow_GrIS(version="v1.1.0")`` with ``ISEFlowGrISInputs``.
+Training is sequential and order-sensitive: the NF must be trained before
+the DE so that the latent features ``z`` are meaningful::
 
-Training order matters: ``NormalizingFlow`` is trained first via maximum
-likelihood; ``DeepEnsemble`` is then trained on the original features
-concatenated with the NF latent representation ``z``.
+    from ise.models.iseflow import ISEFlow
+    from ise.models.normalizing_flow import NormalizingFlow
+    from ise.models.deep_ensemble import DeepEnsemble
 
-Uncertainty decomposition: total = epistemic + aleatoric (summed scalar per
-timestep, not a product).
+    nf = NormalizingFlow(input_size=83, output_size=1, num_flow_transforms=5)
+    de = DeepEnsemble(input_size=83, output_size=1, num_ensemble_members=10)
+    model = ISEFlow(de, nf)
+    model.fit(X_train, y_train, nf_epochs=500, de_epochs=200, X_val=X_val, y_val=y_val)
+    model.save("my_model/")
 
-Legacy architecture helpers ``ISEFlow_AIS_DE_v1_0_0``, ``ISEFlow_GrIS_DE_v1_0_0``,
-``ISEFlow_AIS_NF_v1_0_0``, and ``ISEFlow_GrIS_NF_v1_0_0`` are deprecated and
-will be removed in a future release; prefer ``ISEFlow_AIS`` / ``ISEFlow_GrIS``.
+Uncertainty decomposition::
+
+    predictions, uncertainties = model.predict(X)
+    # uncertainties = {"total": ..., "epistemic": ..., "aleatoric": ...}
+    # total = epistemic + aleatoric  (scalar sum per timestep)
+
+ISEFlow_AIS / ISEFlow_GrIS (pretrained)
+----------------------------------------
+Convenience subclasses that load bundled pretrained weights and expose a
+simplified ``predict(inputs)`` interface::
+
+    from ise.models.iseflow import ISEFlow_AIS
+    from ise.data.inputs import ISEFlowAISInputs
+
+    model = ISEFlow_AIS(version="v1.1.0")   # loads pretrained weights from package
+    inputs = ISEFlowAISInputs(...)           # or ISEFlowAISInputs.from_raw_values(...)
+    predictions, uncertainties = model.predict(inputs)
+    # predictions: numpy array shape (86, 1), SLE in mm, years 2015-2100
+
+Supported versions
+------------------
+- ``v1.0.0``: AIS only; includes ``mrro_anomaly`` as a forcing variable.
+- ``v1.1.0`` (default): AIS + GrIS; ``mrro_anomaly`` removed from AIS inputs.
+
+Output smoothing
+----------------
+Both ``ISEFlow.predict()`` and ``ISEFlow_AIS/GrIS.predict()`` accept a
+``smoothing_window`` argument.  When ``> 0``, a uniform moving-average filter
+of that width is applied *after* inverse-scaling so the smoothing acts on
+physical SLE values rather than scaled outputs.  Projection boundaries are
+respected (no mixing between runs).
+
+Deprecated classes
+------------------
+``ISEFlow_AIS_DE_v1_0_0``, ``ISEFlow_GrIS_DE_v1_0_0``,
+``ISEFlow_AIS_NF_v1_0_0``, ``ISEFlow_GrIS_NF_v1_0_0`` are kept for loading
+old v1.0.0 checkpoints only.  Use ``ISEFlow_AIS`` / ``ISEFlow_GrIS`` instead.
 """
 
 import json

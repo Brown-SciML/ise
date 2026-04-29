@@ -1,8 +1,62 @@
-"""Data loading, scaling, and tensor utilities for ice sheet emulation.
+"""General-purpose utilities for the ISE package.
 
-This module provides functions for loading models and ML data, file discovery,
-NetCDF variable handling, DataFrame undummify/combine, uncertainty bands,
-distribution metrics, scaling/unscaling, and get_X_y / get_data for training.
+This module collects helper functions used across the codebase for tensor
+conversion, file discovery, data loading, scaling, and training-data extraction.
+
+Tensor utilities
+----------------
+``to_tensor(x)``
+    Convert a ``pd.DataFrame``, ``np.ndarray``, or ``torch.Tensor`` to a
+    ``torch.float32`` tensor.  Used pervasively in model ``fit()`` / ``predict()``
+    methods to accept any of the three common input types without requiring
+    callers to pre-convert.
+
+File utilities
+--------------
+``get_all_filepaths(path, filetype, contains, not_contains)``
+    Recursively walk ``path`` and return all file paths matching the given
+    extension and substring filters.  Used by ``process_sectors()`` and
+    ``DatasetMerger`` to discover NetCDF and CSV files in the GHub directory.
+
+Training data helpers
+---------------------
+``get_X_y(data, dataset_type, return_format, cols, with_chars)``
+    Split a merged dataset CSV into feature matrix X and target vector y,
+    dropping metadata columns (exp, model, aogcm, etc.) and optionally
+    dropping ISM characteristic columns.  Supports ``'numpy'``, ``'tensor'``,
+    and ``'pandas'`` return formats::
+
+        from ise.utils.functions import get_X_y, get_data
+
+        X, y = get_X_y("splits/train.csv", dataset_type="sectors",
+                        return_format="tensor")
+
+``get_data(data_dir, dataset_type, return_format)``
+    Convenience wrapper that calls ``get_X_y`` on ``train.csv``, ``val.csv``, 
+    and ``test.csv`` in a single call::
+
+        X_train, y_train, X_val, y_val, X_test, y_test = get_data("splits/")
+
+Scaling / unscaling
+-------------------
+``unscale_output(y, scaler_path)``   — inverse-transform y with a saved sklearn scaler.
+``unscale_input(X, scaler_path)``    — inverse-transform X features (DataFrame only).
+``unscale_column(dataset, column)``  — revert MinMax scaling on ``year`` / ``sector`` columns back to their original ranges (2015-2100 and 1-18/1-6 respectively).
+
+Post-processing
+---------------
+``combine_testing_results(...)``  — join test predictions with true values and metadata
+    into a single DataFrame for analysis.
+``get_uncertainty_bands(data, confidence, quantiles)``
+    — compute mean, std, confidence intervals, and quantile bands across an
+    ensemble of projection arrays.
+
+Misc
+----
+``check_input(input, options, argname)``   — validate a string argument against an allowed list.
+``undummify(df, prefix_sep)``             — reverse ``pd.get_dummies`` encoding.
+``create_distribution(dataset, ...)``     — build a KDE probability density function.
+``calculate_distribution_metrics(...)``   — compute KL and JS divergence between true and predicted distributions.
 """
 
 import os

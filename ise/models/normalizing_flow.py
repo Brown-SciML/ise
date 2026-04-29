@@ -1,25 +1,59 @@
-"""Autoregressive masked affine normalizing flow for aleatoric uncertainty.
+"""Conditional autoregressive normalizing flow for aleatoric uncertainty.
 
-This module provides ``NormalizingFlow`` — a conditional normalizing flow built
-with ``nflows`` that models P(y | X) via a ``ConditionalDiagonalNormal`` base
-distribution and a sequence of ``MaskedAffineAutoregressiveTransform`` steps.
+This module provides ``NormalizingFlow`` — a conditional density estimator
+built with the ``nflows`` library.  It models the conditional distribution
+P(y | X) of sea level equivalent (SLE) output given climate forcing features
+X, enabling both probabilistic sampling and aleatoric uncertainty estimation.
 
-Roles in ISEFlow:
+Architecture
+------------
+- **Base distribution:** ``ConditionalDiagonalNormal`` with a 2-layer MLP
+  context encoder (input_size → flow_hidden_features → output_size * 2),
+  mapping forcing features X to the mean and log-variance of the latent z.
+- **Transforms:** ``num_flow_transforms`` alternating pairs of
+  ``RandomPermutation`` and ``MaskedAffineAutoregressiveTransform`` steps,
+  each conditioned on the full feature vector X.
+- **Flow:** ``nflows.flows.base.Flow`` wrapping the composite transform and
+  the base distribution.
 
-- Trained first (maximum likelihood) to learn the conditional distribution of
-  sea level equivalent (SLE) given climate forcing features.
-- Used at inference time to (a) extract latent features ``z`` for the
-  ``DeepEnsemble`` and (b) estimate **aleatoric** uncertainty via
-  ``aleatoric(features, num_samples)``.
+Role in ISEFlow
+---------------
+The ``NormalizingFlow`` is trained **first** (before the ``DeepEnsemble``)
+via maximum likelihood (negative log-probability).  Once trained it serves
+two roles:
 
-Key methods:
+1. **Latent features:** ``get_latent(X)`` samples ``z ~ q(z | X)`` from the
+   base distribution, providing a single low-dimensional context variable that
+   the ``DeepEnsemble`` members receive as extra input alongside X.
+2. **Aleatoric uncertainty:** ``aleatoric(X, num_samples)`` draws ``num_samples``
+   SLE values from the full flow for each input row and returns the std across
+   draws, interpreted as the inherent data uncertainty (aleatoric component).
 
-- ``fit(X, y, ...)`` — maximum-likelihood training with optional validation and
-  early stopping.
-- ``get_latent(x)`` — sample ``z`` from the base distribution conditioned on ``x``.
-- ``sample(features, num_samples)`` — draw SLE samples from the full flow.
-- ``aleatoric(features, num_samples)`` — return per-sample std across flow draws.
-- ``save(path)`` / ``load(path)`` — checkpoint with architecture metadata JSON.
+Usage
+-----
+::
+
+    from ise.models.normalizing_flow import NormalizingFlow
+
+    nf = NormalizingFlow(input_size=83, output_size=1, num_flow_transforms=5,
+                         flow_hidden_features=16)
+    nf.fit(X_train, y_train, epochs=500, batch_size=64,
+           X_val=X_val, y_val=y_val, early_stopping=True, patience=20)
+
+    z = nf.get_latent(X_val)          # shape (N, 1) — latent context for DeepEnsemble
+    uncertainty = nf.aleatoric(X_val, num_samples=100)  # shape (N,)
+    samples = nf.sample(X_val[:5], num_samples=200)     # shape (5, 200)
+
+    nf.save("nf_checkpoint.pth")
+    nf_loaded = NormalizingFlow.load("nf_checkpoint.pth")
+
+Checkpointing and early stopping
+---------------------------------
+``fit()`` integrates with ``CheckpointSaver`` / ``EarlyStoppingCheckpointer``
+from ``ise.models.training``.  If a checkpoint file already exists at
+``checkpoint_path``, training resumes from the saved epoch.  After training
+completes the best checkpoint is loaded back and the temporary file is deleted.
+Optional ``wandb`` logging is supported via the ``wandb_run`` argument.
 """
 
 import json

@@ -1,8 +1,57 @@
-"""Evaluation metrics for ice sheet emulator predictions.
+"""Evaluation metrics for ISEFlow sea-level projections.
 
-This module provides sector-wise aggregation (sum_by_sector), point metrics
-(R², MSE, MAE, MAPE, CRPS), distribution metrics (KL/JS divergence, KS, t-test),
-and uncertainty metrics (ECE, prediction interval width, Winkler score).
+This module collects the full set of metrics used to assess ISEFlow prediction
+quality across three dimensions: point accuracy, distributional fidelity, and
+uncertainty calibration.
+
+Point accuracy metrics
+----------------------
+``r2_score``              — coefficient of determination (R²).
+``mean_squared_error``    — MSE between predicted and true SLE.
+``mean_absolute_error``   — MAE.
+``mape``                  — mean absolute percentage error (skips zero targets).
+``relative_squared_error``— RSE = SS_res / SS_tot (0 = perfect, 1 = baseline mean).
+``crps``                  — continuous ranked probability score for Gaussian forecasts (lower is better; uses ``properscoring`` library).
+
+Distribution metrics
+--------------------
+These compare the *distribution* of projected SLE values at 2100 across many
+runs, rather than individual timestep accuracy:
+
+``kl_divergence``    — Kullback-Leibler divergence between predicted and true PDFs.
+``js_divergence``    — Jensen-Shannon divergence (symmetric, bounded [0, 1]).
+``kolmogorov_smirnov``— KS two-sample test statistic and p-value.
+``t_test``           — two-sample t-test statistic and p-value.
+
+Uncertainty calibration metrics
+--------------------------------
+``calculate_ece``              — Expected Calibration Error (ECE).  Measures
+    how well the predicted std aligns with actual errors by binning predictions
+    by uncertainty level and checking what fraction of true values fall within
+    ±2σ (expected ≈ 95.4 % for a Gaussian).  Lower ECE = better calibrated.
+``mean_prediction_interval_width`` — average width of prediction intervals
+    (sharpness proxy; should be small while ECE stays low).
+``winkler_score``              — proper scoring rule for interval forecasts at
+    significance level α.  Penalises both wide intervals and violations.
+
+Sector aggregation
+------------------
+``sum_by_sector``    — given a full 2-D (x, y) grid array and a sector-definition
+    NetCDF file, sums values within each sector mask to produce an
+    ``(N_timesteps, N_sectors)`` matrix::
+
+        from ise.evaluation.metrics import sum_by_sector
+        sector_sums = sum_by_sector(predicted_grid, "AIS_sectors_8km.nc")
+
+Usage example
+-------------
+::
+
+    from ise.evaluation.metrics import r2_score, crps, calculate_ece
+
+    r2  = r2_score(y_true, predictions)
+    score = crps(y_true, predictions, uncertainties["total"])
+    ece = calculate_ece(predictions, uncertainties["total"], y_true)
 """
 
 import numpy as np
