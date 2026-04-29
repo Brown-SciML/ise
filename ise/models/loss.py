@@ -14,17 +14,10 @@ class WeightedGridLoss(torch.nn.Module):
 
     This loss function consists of two components:
     1. **Pixel-wise Weighted Mean Squared Error (MSE):** Higher weight is assigned to extreme values.
-    2. **Total Variation Regularization (TVR):** Enforces spatial smoothness by penalizing large differences
-       between adjacent grid values.
+    2. **Total Variation Regularization (TVR):** Enforces spatial smoothness by penalizing large differences between adjacent grid values.
 
     Attributes:
         device (str): The device on which the model runs ('cuda' or 'cpu').
-
-    Methods:
-        - total_variation_regularization: Computes TVR penalty for smoothness.
-        - weighted_pixelwise_mse: Computes MSE loss with per-pixel weighting.
-        - forward: Computes the final weighted loss.
-
     """
 
     def __init__(self):

@@ -5,6 +5,7 @@ fully-connected head (hidden → 32 → output).  It is used both stand-alone an
 as the constituent member of ``DeepEnsemble``.
 
 Key features:
+
 - Supports optional MC-Dropout at inference time (set ``dropout > 0``).
 - ``fit()`` accepts optional validation data for early stopping.
 - ``save()`` / ``load()`` persist weights *and* architecture metadata so the

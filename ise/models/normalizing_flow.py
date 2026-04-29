@@ -5,6 +5,7 @@ with ``nflows`` that models P(y | X) via a ``ConditionalDiagonalNormal`` base
 distribution and a sequence of ``MaskedAffineAutoregressiveTransform`` steps.
 
 Roles in ISEFlow:
+
 - Trained first (maximum likelihood) to learn the conditional distribution of
   sea level equivalent (SLE) given climate forcing features.
 - Used at inference time to (a) extract latent features ``z`` for the
@@ -12,6 +13,7 @@ Roles in ISEFlow:
   ``aleatoric(features, num_samples)``.
 
 Key methods:
+
 - ``fit(X, y, ...)`` — maximum-likelihood training with optional validation and
   early stopping.
 - ``get_latent(x)`` — sample ``z`` from the base distribution conditioned on ``x``.

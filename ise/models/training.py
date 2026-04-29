@@ -23,22 +23,6 @@ class CheckpointSaver:
         best_loss (float): The best recorded loss value. Initially set to infinity.
         verbose (bool): If True, logs messages when a checkpoint is saved.
         log (str or None): Stores log messages for saving actions.
-
-    Methods:
-        __call__(loss, epoch, save_best_only=True):
-            Checks whether to save the checkpoint based on loss improvement.
-
-        _determine_if_better(loss):
-            Determines if the new loss is an improvement over the best recorded loss.
-
-        _update_best_loss(loss):
-            Updates the best recorded loss.
-
-        save_checkpoint(epoch, loss, path=None):
-            Saves the model's state, optimizer state, and epoch information.
-
-        load_checkpoint(path=None):
-            Loads a saved checkpoint and restores model and optimizer states.
     """
 
     def __init__(
