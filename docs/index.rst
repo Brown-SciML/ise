@@ -166,7 +166,7 @@ If you use ISE in research, please consider citing our work.  See
 ``CITATION.md`` for details.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
    quickstart
