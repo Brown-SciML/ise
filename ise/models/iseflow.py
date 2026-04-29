@@ -622,7 +622,7 @@ class ISEFlow_AIS(ISEFlow):
             tuple: A tuple containing:
 
                 - **predictions** (*numpy.ndarray*, shape ``(86, 1)``): Unscaled sea
-                  level equivalent (SLE) projections in mm for years 2015–2100.
+                  level equivalent (SLE) projections in mm for years 2015-2100.
                 - **uncertainties** (*dict*): Dictionary with keys:
 
                   - ``'total'``: total uncertainty (epistemic + aleatoric).

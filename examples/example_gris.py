@@ -1,21 +1,21 @@
 """Example: ISEFlow-GrIS sea level projection with uncertainty.
 
 This script shows how to use ISEFlow to project Greenland Ice Sheet (GrIS)
-sea level contributions for a single drainage basin over 2015–2100.
+sea level contributions for a single drainage basin over 2015-2100.
 
 The inputs used here correspond to the AWI_ISSM1 ice sheet model run,
 basin 1, with standard ocean forcing and medium ocean sensitivity.
 
 Input categories
 ----------------
-Forcings (86-element arrays, one value per year 2015–2100):
+Forcings (86-element arrays, one value per year 2015-2100):
   - aST                  atmospheric surface temperature anomaly (K)
   - aSMB                 atmospheric surface mass balance anomaly (m/yr ice equivalent)
   - ocean_thermal_forcing  ocean thermal forcing (°C)
   - basin_runoff         basin-integrated runoff (m/yr)
 
 Scalar configuration:
-  - sector               GrIS drainage basin (1–6)
+  - sector               GrIS drainage basin (1-6)
   - initial_year         model spin-up year
   - numerics             numerical scheme: 'fe', 'fv', 'fd', 'fd/fv'
   - ice_flow_model       ice dynamics: 'ho', 'ssa', 'sia', 'hybrid'
@@ -44,7 +44,7 @@ from ise.data.inputs import ISEFlowGrISInputs
 from ise.models.iseflow import ISEFlow_GrIS
 
 
-# ── 1. Define your forcing time series (86 values: 2015–2100) ─────────────────
+# ── 1. Define your forcing time series (86 values: 2015-2100) ─────────────────
 #
 # Source: AWI_ISSM1, basin 1, ISMIP6 GrIS test dataset
 
@@ -141,7 +141,7 @@ basin_runoff = np.array([
 # These settings describe the ISM used to generate the target projection.
 # See ISEFlowGrISInputs docstring for all accepted values.
 
-sector                = 1          # GrIS drainage basin (1–6)
+sector                = 1          # GrIS drainage basin (1-6)
 initial_year          = 1990       # model spin-up start year
 
 numerics              = 'fe'       # numerical scheme
@@ -200,7 +200,7 @@ epistemic = np.asarray(uq["epistemic"]).squeeze()
 aleatoric = np.asarray(uq["aleatoric"]).squeeze()
 total     = epistemic + aleatoric
 
-print(f"\nPrediction range: {pred.min():.2f} – {pred.max():.2f} mm SLE")
+print(f"\nPrediction range: {pred.min():.2f} - {pred.max():.2f} mm SLE")
 print(f"Mean epistemic uncertainty: {epistemic.mean():.3f} mm")
 print(f"Mean aleatoric uncertainty: {aleatoric.mean():.3f} mm")
 
@@ -217,7 +217,7 @@ ax.plot(years, pred, color="#d62728", linewidth=2.0, label="ISEFlow prediction")
 
 ax.set_xlabel("Year", fontsize=12)
 ax.set_ylabel("Sea Level Equivalent (mm SLE)", fontsize=12)
-ax.set_title("ISEFlow-GrIS: AWI_ISSM1, Basin 1 (2015–2100)", fontsize=13)
+ax.set_title("ISEFlow-GrIS: AWI_ISSM1, Basin 1 (2015-2100)", fontsize=13)
 ax.legend(fontsize=10)
 ax.grid(True, alpha=0.3)
 ax.set_xlim(years[0], years[-1])

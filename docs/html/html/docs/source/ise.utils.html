@@ -96,13 +96,13 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>source_file_path</strong> (<em>str</em>) – Path to the source NetCDF file.</p></li>
-<li><p><strong>target_file_path</strong> (<em>str</em>) – Path to the target NetCDF file.</p></li>
-<li><p><strong>variable_name</strong> (<em>str</em>) – Name of the variable to be copied.</p></li>
+<li><p><strong>source_file_path</strong> (<em>str</em>) - Path to the source NetCDF file.</p></li>
+<li><p><strong>target_file_path</strong> (<em>str</em>) - Path to the target NetCDF file.</p></li>
+<li><p><strong>variable_name</strong> (<em>str</em>) - Name of the variable to be copied.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>FileNotFoundError</strong> – If the specified variable is not found in the source file.</p>
+<dd class="field-even"><p><strong>FileNotFoundError</strong> - If the specified variable is not found in the source file.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -117,9 +117,9 @@ Kullback-Leibler (KL) and Jensen-Shannon (JS) divergences.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) – The dataset containing true and predicted values.</p></li>
-<li><p><strong>column</strong> (<em>str</em><em>, </em><em>optional</em>) – Column name to subset on. Defaults to None.</p></li>
-<li><p><strong>condition</strong> (<em>str</em><em>, </em><em>optional</em>) – Value to filter the dataset based on the specified column. Defaults to None.</p></li>
+<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) - The dataset containing true and predicted values.</p></li>
+<li><p><strong>column</strong> (<em>str</em><em>, </em><em>optional</em>) - Column name to subset on. Defaults to None.</p></li>
+<li><p><strong>condition</strong> (<em>str</em><em>, </em><em>optional</em>) - Value to filter the dataset based on the specified column. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -145,13 +145,13 @@ Kullback-Leibler (KL) and Jensen-Shannon (JS) divergences.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>input</strong> (<em>str</em>) – The input value to validate.</p></li>
-<li><p><strong>options</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – A list of valid options.</p></li>
-<li><p><strong>argname</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the argument being checked for better error messaging. Defaults to None.</p></li>
+<li><p><strong>input</strong> (<em>str</em>) - The input value to validate.</p></li>
+<li><p><strong>options</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) - A list of valid options.</p></li>
+<li><p><strong>argname</strong> (<em>str</em><em>, </em><em>optional</em>) - Name of the argument being checked for better error messaging. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the input is not in the list of allowed options.</p>
+<dd class="field-even"><p><strong>ValueError</strong> - If the input is not in the list of allowed options.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -163,12 +163,12 @@ Kullback-Leibler (KL) and Jensen-Shannon (JS) divergences.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_directory</strong> (<em>str</em>) – Directory containing training and testing data.</p></li>
-<li><p><strong>preds</strong> (<em>np.ndarray</em><em> | </em><em>pd.Series</em><em> | </em><em>str</em>) – Predictions array, Series, or path to a CSV file with predictions.</p></li>
-<li><p><strong>sd</strong> (<em>dict</em><em> | </em><em>pd.DataFrame</em><em>, </em><em>optional</em>) – Standard deviations for uncertainty estimation. Defaults to None.</p></li>
-<li><p><strong>gp_data</strong> (<em>dict</em><em> | </em><em>pd.DataFrame</em><em>, </em><em>optional</em>) – Gaussian process predictions and standard deviations. Defaults to None.</p></li>
-<li><p><strong>time_series</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to process time-series data. Defaults to True.</p></li>
-<li><p><strong>save_directory</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory where results should be saved. Defaults to None.</p></li>
+<li><p><strong>data_directory</strong> (<em>str</em>) - Directory containing training and testing data.</p></li>
+<li><p><strong>preds</strong> (<em>np.ndarray</em><em> | </em><em>pd.Series</em><em> | </em><em>str</em>) - Predictions array, Series, or path to a CSV file with predictions.</p></li>
+<li><p><strong>sd</strong> (<em>dict</em><em> | </em><em>pd.DataFrame</em><em>, </em><em>optional</em>) - Standard deviations for uncertainty estimation. Defaults to None.</p></li>
+<li><p><strong>gp_data</strong> (<em>dict</em><em> | </em><em>pd.DataFrame</em><em>, </em><em>optional</em>) - Gaussian process predictions and standard deviations. Defaults to None.</p></li>
+<li><p><strong>time_series</strong> (<em>bool</em><em>, </em><em>optional</em>) - Whether to process time-series data. Defaults to True.</p></li>
+<li><p><strong>save_directory</strong> (<em>str</em><em>, </em><em>optional</em>) - Directory where results should be saved. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -187,10 +187,10 @@ Kullback-Leibler (KL) and Jensen-Shannon (JS) divergences.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>dataset</strong> (<em>np.ndarray</em>) – Input data for KDE.</p></li>
-<li><p><strong>min_range</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum range for support values. Defaults to -30.</p></li>
-<li><p><strong>max_range</strong> (<em>float</em><em>, </em><em>optional</em>) – Maximum range for support values. Defaults to 20.</p></li>
-<li><p><strong>step</strong> (<em>float</em><em>, </em><em>optional</em>) – Step size for the support values. Defaults to 0.01.</p></li>
+<li><p><strong>dataset</strong> (<em>np.ndarray</em>) - Input data for KDE.</p></li>
+<li><p><strong>min_range</strong> (<em>float</em><em>, </em><em>optional</em>) - Minimum range for support values. Defaults to -30.</p></li>
+<li><p><strong>max_range</strong> (<em>float</em><em>, </em><em>optional</em>) - Maximum range for support values. Defaults to 20.</p></li>
+<li><p><strong>step</strong> (<em>float</em><em>, </em><em>optional</em>) - Step size for the support values. Defaults to 0.01.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -218,11 +218,11 @@ Kullback-Leibler (KL) and Jensen-Shannon (JS) divergences.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>str</em><em> or </em><em>pd.DataFrame</em>) – Filepath to the dataset CSV or a pandas DataFrame.</p></li>
-<li><p><strong>dataset_type</strong> (<em>str</em><em>, </em><em>optional</em>) – The type of dataset (‘sectors’, ‘regions’, ‘scenarios’). Defaults to “sectors”.</p></li>
-<li><p><strong>return_format</strong> (<em>str</em><em>, </em><em>optional</em>) – Format of the returned data (‘numpy’, ‘tensor’, or ‘pandas’). Defaults to None.</p></li>
-<li><p><strong>cols</strong> (<em>str</em><em> or </em><em>list</em><em>, </em><em>optional</em>) – Columns to include in the features. Defaults to “all”.</p></li>
-<li><p><strong>with_chars</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to include characteristic columns in features. Defaults to True.</p></li>
+<li><p><strong>data</strong> (<em>str</em><em> or </em><em>pd.DataFrame</em>) - Filepath to the dataset CSV or a pandas DataFrame.</p></li>
+<li><p><strong>dataset_type</strong> (<em>str</em><em>, </em><em>optional</em>) - The type of dataset (‘sectors’, ‘regions’, ‘scenarios’). Defaults to “sectors”.</p></li>
+<li><p><strong>return_format</strong> (<em>str</em><em>, </em><em>optional</em>) - Format of the returned data (‘numpy’, ‘tensor’, or ‘pandas’). Defaults to None.</p></li>
+<li><p><strong>cols</strong> (<em>str</em><em> or </em><em>list</em><em>, </em><em>optional</em>) - Columns to include in the features. Defaults to “all”.</p></li>
+<li><p><strong>with_chars</strong> (<em>bool</em><em>, </em><em>optional</em>) - Whether to include characteristic columns in features. Defaults to True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -250,10 +250,10 @@ and substring search.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>path</strong> (<em>str</em>) – Path to directory to be searched.</p></li>
-<li><p><strong>filetype</strong> (<em>str</em><em>, </em><em>optional</em>) – File type to be returned (e.g. csv, nc). Defaults to None.</p></li>
-<li><p><strong>contains</strong> (<em>str</em><em>, </em><em>optional</em>) – Substring that files found must contain. Defaults to None.</p></li>
-<li><p><strong>not_contains</strong> (<em>str</em><em>, </em><em>optional</em>) – Substring that files found must NOT contain. Defaults to None.</p></li>
+<li><p><strong>path</strong> (<em>str</em>) - Path to directory to be searched.</p></li>
+<li><p><strong>filetype</strong> (<em>str</em><em>, </em><em>optional</em>) - File type to be returned (e.g. csv, nc). Defaults to None.</p></li>
+<li><p><strong>contains</strong> (<em>str</em><em>, </em><em>optional</em>) - Substring that files found must contain. Defaults to None.</p></li>
+<li><p><strong>not_contains</strong> (<em>str</em><em>, </em><em>optional</em>) - Substring that files found must NOT contain. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -272,9 +272,9 @@ and substring search.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_dir</strong> (<em>str</em>) – Path to the directory containing the dataset files.</p></li>
-<li><p><strong>dataset_type</strong> (<em>str</em><em>, </em><em>optional</em>) – Type of dataset (‘sectors’ or ‘scenarios’). Defaults to ‘sectors’.</p></li>
-<li><p><strong>return_format</strong> (<em>str</em><em>, </em><em>optional</em>) – Format of the returned data (‘tensor’, ‘numpy’, or ‘pandas’). Defaults to ‘tensor’.</p></li>
+<li><p><strong>data_dir</strong> (<em>str</em>) - Path to the directory containing the dataset files.</p></li>
+<li><p><strong>dataset_type</strong> (<em>str</em><em>, </em><em>optional</em>) - Type of dataset (‘sectors’ or ‘scenarios’). Defaults to ‘sectors’.</p></li>
+<li><p><strong>return_format</strong> (<em>str</em><em>, </em><em>optional</em>) - Format of the returned data (‘tensor’, ‘numpy’, or ‘pandas’). Defaults to ‘tensor’.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -304,9 +304,9 @@ and substring search.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – Data matrix of shape (N, M), where N is samples and M is time steps.</p></li>
-<li><p><strong>confidence</strong> (<em>str</em><em>, </em><em>optional</em>) – Confidence level (‘95’ or ‘99’). Defaults to “95”.</p></li>
-<li><p><strong>quantiles</strong> (<em>List</em><em>[</em><em>float</em><em>]</em><em>, </em><em>optional</em>) – Quantiles for uncertainty bands. Defaults to [0.05, 0.95].</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) - Data matrix of shape (N, M), where N is samples and M is time steps.</p></li>
+<li><p><strong>confidence</strong> (<em>str</em><em>, </em><em>optional</em>) - Confidence level (‘95’ or ‘99’). Defaults to “95”.</p></li>
+<li><p><strong>quantiles</strong> (<em>List</em><em>[</em><em>float</em><em>]</em><em>, </em><em>optional</em>) - Quantiles for uncertainty bands. Defaults to [0.05, 0.95].</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -336,9 +336,9 @@ and substring search.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) – Dataset containing simulation results.</p></li>
-<li><p><strong>column</strong> (<em>str</em><em>, </em><em>optional</em>) – Column name to subset on. Defaults to None.</p></li>
-<li><p><strong>condition</strong> (<em>str</em><em>, </em><em>optional</em>) – Condition for filtering the dataset. Defaults to None.</p></li>
+<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) - Dataset containing simulation results.</p></li>
+<li><p><strong>column</strong> (<em>str</em><em>, </em><em>optional</em>) - Column name to subset on. Defaults to None.</p></li>
+<li><p><strong>condition</strong> (<em>str</em><em>, </em><em>optional</em>) - Condition for filtering the dataset. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -365,8 +365,8 @@ and substring search.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_directory</strong> (<em>str</em>) – Directory containing the processed data files.</p></li>
-<li><p><strong>time_series</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to load the time-series version of the data. Defaults to True.</p></li>
+<li><p><strong>data_directory</strong> (<em>str</em>) - Directory containing the processed data files.</p></li>
+<li><p><strong>time_series</strong> (<em>bool</em><em>, </em><em>optional</em>) - Whether to load the time-series version of the data. Defaults to True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -395,11 +395,11 @@ and substring search.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model_path</strong> (<em>str</em>) – Path to the model’s state dictionary file.</p></li>
-<li><p><strong>model_class</strong> (<em>type</em>) – Class reference of the model to be loaded.</p></li>
-<li><p><strong>architecture</strong> (<em>dict</em>) – Dictionary specifying the architecture of the model.</p></li>
-<li><p><strong>mc_dropout</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether the model uses Monte Carlo Dropout. Defaults to False.</p></li>
-<li><p><strong>dropout_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – Dropout probability if MC Dropout is used. Defaults to 0.1.</p></li>
+<li><p><strong>model_path</strong> (<em>str</em>) - Path to the model’s state dictionary file.</p></li>
+<li><p><strong>model_class</strong> (<em>type</em>) - Class reference of the model to be loaded.</p></li>
+<li><p><strong>architecture</strong> (<em>dict</em>) - Dictionary specifying the architecture of the model.</p></li>
+<li><p><strong>mc_dropout</strong> (<em>bool</em><em>, </em><em>optional</em>) - Whether the model uses Monte Carlo Dropout. Defaults to False.</p></li>
+<li><p><strong>dropout_prob</strong> (<em>float</em><em>, </em><em>optional</em>) - Dropout probability if MC Dropout is used. Defaults to 0.1.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -417,7 +417,7 @@ and substring search.</p>
 <dd><p>Converts input data into a PyTorch tensor with float32 dtype.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>pd.DataFrame</em><em>, </em><em>np.ndarray</em><em>, or </em><em>torch.Tensor</em>) – Input data.</p>
+<dd class="field-odd"><p><strong>x</strong> (<em>pd.DataFrame</em><em>, </em><em>np.ndarray</em><em>, or </em><em>torch.Tensor</em>) - Input data.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Converted tensor.</p>
@@ -426,7 +426,7 @@ and substring search.</p>
 <dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the input data type is not supported.</p>
+<dd class="field-even"><p><strong>ValueError</strong> - If the input data type is not supported.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -438,8 +438,8 @@ and substring search.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – DataFrame containing one-hot encoded categorical columns.</p></li>
-<li><p><strong>prefix_sep</strong> (<em>str</em><em>, </em><em>optional</em>) – Separator used in column names to identify categories. Defaults to “-“.</p></li>
+<li><p><strong>df</strong> (<em>pd.DataFrame</em>) - DataFrame containing one-hot encoded categorical columns.</p></li>
+<li><p><strong>prefix_sep</strong> (<em>str</em><em>, </em><em>optional</em>) - Separator used in column names to identify categories. Defaults to “-“.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -458,8 +458,8 @@ and substring search.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>y</strong> (<em>np.ndarray</em>) – The scaled data.</p></li>
-<li><p><strong>scaler_path</strong> (<em>str</em>) – Path to the saved MinMaxScaler object.</p></li>
+<li><p><strong>y</strong> (<em>np.ndarray</em>) - The scaled data.</p></li>
+<li><p><strong>scaler_path</strong> (<em>str</em>) - Path to the saved MinMaxScaler object.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -480,8 +480,8 @@ and substring search.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) – Dataset containing the scaled columns.</p></li>
-<li><p><strong>column</strong> (<em>str</em><em> or </em><em>list</em><em>, </em><em>optional</em>) – Column(s) to be unscaled.
+<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) - Dataset containing the scaled columns.</p></li>
+<li><p><strong>column</strong> (<em>str</em><em> or </em><em>list</em><em>, </em><em>optional</em>) - Column(s) to be unscaled.
 Can be ‘year’, ‘sectors’, or a list containing both. Defaults to “year”.</p></li>
 </ul>
 </dd>
@@ -606,7 +606,7 @@ It can also be configured to save the model at every epoch.</p>
 <dd><p>Loads a checkpoint and restores the model and optimizer states.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>str</em><em>, </em><em>optional</em>) – The file path to load the checkpoint from. If None, the default path is used.</p>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em><em>, </em><em>optional</em>) - The file path to load the checkpoint from. If None, the default path is used.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The epoch number from which training should resume.</p>
@@ -624,9 +624,9 @@ It can also be configured to save the model at every epoch.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>epoch</strong> (<em>int</em>) – The current epoch number.</p></li>
-<li><p><strong>loss</strong> (<em>float</em>) – The loss value associated with this checkpoint.</p></li>
-<li><p><strong>path</strong> (<em>str</em><em>, </em><em>optional</em>) – The file path to save the checkpoint. If None, the default path is used.</p></li>
+<li><p><strong>epoch</strong> (<em>int</em>) - The current epoch number.</p></li>
+<li><p><strong>loss</strong> (<em>float</em>) - The loss value associated with this checkpoint.</p></li>
+<li><p><strong>path</strong> (<em>str</em><em>, </em><em>optional</em>) - The file path to save the checkpoint. If None, the default path is used.</p></li>
 </ul>
 </dd>
 </dl>

@@ -86,7 +86,7 @@ def bootstrap_ks(path, label, n_bootstrap=10000, seed=0):
 
     print(
         f"{label}: KS D = {d_obs:.3f}, p = {p_obs:.3e} "
-        f"(95% bootstrap CI: {ci_lower:.3f}–{ci_upper:.3f})"
+        f"(95% bootstrap CI: {ci_lower:.3f}-{ci_upper:.3f})"
     )
 
     return result
@@ -152,7 +152,7 @@ def bootstrap_ks_difference(path_a, label_a, path_b, label_b, n_bootstrap=10000,
 
     print(
         f"{label_a} - {label_b}: ΔKS D = {delta_obs:.3f} "
-        f"(95% bootstrap CI: {ci_lower:.3f}–{ci_upper:.3f}), "
+        f"(95% bootstrap CI: {ci_lower:.3f}-{ci_upper:.3f}), "
         f"bootstrap p = {p_bootstrap_two_sided:.3e}"
     )
 

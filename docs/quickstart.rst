@@ -27,7 +27,7 @@ Running the pretrained AIS emulator
    from ise.models import ISEFlow_AIS
    from ise.data.inputs import ISEFlowAISInputs
 
-   # 86 annual timesteps covering 2015–2100
+   # 86 annual timesteps covering 2015-2100
    year   = np.arange(2015, 2101)
    sector = np.ones(86, dtype=int)   # AIS sector 1 of 18
 

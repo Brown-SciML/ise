@@ -91,7 +91,7 @@ class ForcingFile:
         self,
     ) -> xr.Dataset:
         """
-        Convert and subset time coordinate to 2015–2100 (86 years).
+        Convert and subset time coordinate to 2015-2100 (86 years).
 
         Returns:
             xarray.Dataset: The dataset with formatted time.

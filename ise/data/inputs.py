@@ -92,7 +92,7 @@ class ISEFlowAISInputs:
         # check inputs
 
         if self.year[0] == 2015:
-            self.year = self.year - 2015 + 1  # convert 2015–2100 → 1–86 (model encoding)
+            self.year = self.year - 2015 + 1  # convert 2015-2100 → 1-86 (model encoding)
 
         if isinstance(self.sector, int):
             self.sector = np.ones_like(self.year) * self.sector
@@ -484,7 +484,7 @@ class ISEFlowGrISInputs:
         # check inputs
 
         if self.year[0] == 2015:
-            self.year = self.year - 2015 + 1  # convert 2015–2100 → 1–86 (model encoding)
+            self.year = self.year - 2015 + 1  # convert 2015-2100 → 1-86 (model encoding)
 
         if isinstance(self.sector, int):
             self.sector = np.ones_like(self.year) * self.sector

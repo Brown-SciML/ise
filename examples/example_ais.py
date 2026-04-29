@@ -1,14 +1,14 @@
 """Example: ISEFlow-AIS sea level projection with uncertainty.
 
 This script shows how to use ISEFlow to project Antarctic Ice Sheet (AIS)
-sea level contributions for a single drainage sector over 2015–2100.
+sea level contributions for a single drainage sector over 2015-2100.
 
 The inputs used here correspond to the AWI_PISM1 ice sheet model run,
 sector 10, with open-ocean forcing and medium ocean sensitivity.
 
 Input categories
 ----------------
-Forcings (86-element arrays, one value per year 2015–2100):
+Forcings (86-element arrays, one value per year 2015-2100):
   - pr_anomaly           precipitation anomaly (kg/m²/s)
   - evspsbl_anomaly      evaporation anomaly (kg/m²/s)
   - smb_anomaly          surface mass balance anomaly (kg/m²/s)
@@ -18,7 +18,7 @@ Forcings (86-element arrays, one value per year 2015–2100):
   - ocean_temperature    ocean temperature (°C)
 
 Scalar configuration:
-  - sector               AIS drainage sector (1–18)
+  - sector               AIS drainage sector (1-18)
   - initial_year         model spin-up year
   - numerics             numerical scheme: 'fe', 'fd', or 'fe/fv'
   - stress_balance       ice dynamics: 'ho', 'hybrid', 'l1l2', 'sia+ssa', 'ssa', 'stokes'
@@ -40,7 +40,7 @@ from ise.data.inputs import ISEFlowAISInputs
 from ise.models.iseflow import ISEFlow_AIS
 
 
-# ── 1. Define your forcing time series (86 values: 2015–2100) ─────────────────
+# ── 1. Define your forcing time series (86 values: 2015-2100) ─────────────────
 #
 # Source: AWI_PISM1, sector 10, ISMIP6 AIS test dataset
 
@@ -205,7 +205,7 @@ ocean_temperature = np.array([
 # These settings describe the ISM used to generate the target projection.
 # See ISEFlowAISInputs docstring for all accepted values.
 
-sector        = 10          # AIS drainage sector (1–18)
+sector        = 10          # AIS drainage sector (1-18)
 initial_year  = 2005        # model spin-up start year
 
 numerics      = 'fd'        # numerical scheme
@@ -262,7 +262,7 @@ epistemic = np.asarray(uq["epistemic"]).squeeze()
 aleatoric = np.asarray(uq["aleatoric"]).squeeze()
 total     = epistemic + aleatoric
 
-print(f"\nPrediction range: {pred.min():.2f} – {pred.max():.2f} mm SLE")
+print(f"\nPrediction range: {pred.min():.2f} - {pred.max():.2f} mm SLE")
 print(f"Mean epistemic uncertainty: {epistemic.mean():.3f} mm")
 print(f"Mean aleatoric uncertainty: {aleatoric.mean():.3f} mm")
 
@@ -279,7 +279,7 @@ ax.plot(years, pred, color="#1f77b4", linewidth=2.0, label="ISEFlow prediction")
 
 ax.set_xlabel("Year", fontsize=12)
 ax.set_ylabel("Sea Level Equivalent (mm SLE)", fontsize=12)
-ax.set_title("ISEFlow-AIS: AWI_PISM1, Sector 10 (2015–2100)", fontsize=13)
+ax.set_title("ISEFlow-AIS: AWI_PISM1, Sector 10 (2015-2100)", fontsize=13)
 ax.legend(fontsize=10)
 ax.grid(True, alpha=0.3)
 ax.set_xlim(years[0], years[-1])

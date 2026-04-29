@@ -241,9 +241,9 @@ samples drawn from the normalizing flow model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>features</strong> (<em>array-like</em><em> or </em><em>torch.Tensor</em>) – Input features for sampling.</p></li>
-<li><p><strong>num_samples</strong> (<em>int</em>) – Number of samples per input feature set.</p></li>
-<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Batch size for processing features. Defaults to 128.</p></li>
+<li><p><strong>features</strong> (<em>array-like</em><em> or </em><em>torch.Tensor</em>) - Input features for sampling.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) - Number of samples per input feature set.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) - Batch size for processing features. Defaults to 128.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -262,19 +262,19 @@ samples drawn from the normalizing flow model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>array-like</em>) – Input features of shape (num_samples, num_features).</p></li>
-<li><p><strong>y</strong> (<em>array-like</em>) – Target values of shape (num_samples, output_size).</p></li>
-<li><p><strong>epochs</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of training epochs. Defaults to 100.</p></li>
-<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Batch size for training. Defaults to 64.</p></li>
-<li><p><strong>save_checkpoints</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to save model checkpoints. Defaults to True.</p></li>
-<li><p><strong>checkpoint_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to save model checkpoints. Defaults to ‘checkpoint.pt’.</p></li>
-<li><p><strong>early_stopping</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to use early stopping. Defaults to True.</p></li>
-<li><p><strong>patience</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of epochs to wait before early stopping. Defaults to 10.</p></li>
-<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to print training progress. Defaults to True.</p></li>
+<li><p><strong>X</strong> (<em>array-like</em>) - Input features of shape (num_samples, num_features).</p></li>
+<li><p><strong>y</strong> (<em>array-like</em>) - Target values of shape (num_samples, output_size).</p></li>
+<li><p><strong>epochs</strong> (<em>int</em><em>, </em><em>optional</em>) - Number of training epochs. Defaults to 100.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) - Batch size for training. Defaults to 64.</p></li>
+<li><p><strong>save_checkpoints</strong> (<em>bool</em><em>, </em><em>optional</em>) - Whether to save model checkpoints. Defaults to True.</p></li>
+<li><p><strong>checkpoint_path</strong> (<em>str</em><em>, </em><em>optional</em>) - Path to save model checkpoints. Defaults to ‘checkpoint.pt’.</p></li>
+<li><p><strong>early_stopping</strong> (<em>bool</em><em>, </em><em>optional</em>) - Whether to use early stopping. Defaults to True.</p></li>
+<li><p><strong>patience</strong> (<em>int</em><em>, </em><em>optional</em>) - Number of epochs to wait before early stopping. Defaults to 10.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) - Whether to print training progress. Defaults to True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If checkpoint loading fails.</p>
+<dd class="field-even"><p><strong>ValueError</strong> - If checkpoint loading fails.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -286,8 +286,8 @@ samples drawn from the normalizing flow model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>array-like</em><em> or </em><em>torch.Tensor</em>) – Input data of shape (num_samples, num_features).</p></li>
-<li><p><strong>latent_constant</strong> (<em>float</em><em>, </em><em>optional</em>) – Constant value used for latent variable sampling. Defaults to 0.0.</p></li>
+<li><p><strong>x</strong> (<em>array-like</em><em> or </em><em>torch.Tensor</em>) - Input data of shape (num_samples, num_features).</p></li>
+<li><p><strong>latent_constant</strong> (<em>float</em><em>, </em><em>optional</em>) - Constant value used for latent variable sampling. Defaults to 0.0.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -305,7 +305,7 @@ samples drawn from the normalizing flow model.</p>
 <dd><p>Loads a trained normalizing flow model from a saved checkpoint.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – Path to the saved model checkpoint.</p>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) - Path to the saved model checkpoint.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A restored instance of the NormalizingFlow model.</p>
@@ -323,9 +323,9 @@ samples drawn from the normalizing flow model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>features</strong> (<em>array-like</em><em> or </em><em>torch.Tensor</em>) – Input features to condition the samples on.</p></li>
-<li><p><strong>num_samples</strong> (<em>int</em>) – Number of samples to generate per input feature set.</p></li>
-<li><p><strong>return_type</strong> (<em>str</em><em>, </em><em>optional</em>) – Return type, either “numpy” or “tensor”. Defaults to “numpy”.</p></li>
+<li><p><strong>features</strong> (<em>array-like</em><em> or </em><em>torch.Tensor</em>) - Input features to condition the samples on.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) - Number of samples to generate per input feature set.</p></li>
+<li><p><strong>return_type</strong> (<em>str</em><em>, </em><em>optional</em>) - Return type, either “numpy” or “tensor”. Defaults to “numpy”.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -343,10 +343,10 @@ samples drawn from the normalizing flow model.</p>
 <dd><p>Saves the trained model and its metadata.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – Path to save the model checkpoint.</p>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) - Path to save the model checkpoint.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the model has not been trained before saving.</p>
+<dd class="field-even"><p><strong>ValueError</strong> - If the model has not been trained before saving.</p>
 </dd>
 </dl>
 </dd></dl>

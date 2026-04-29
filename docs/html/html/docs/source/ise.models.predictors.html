@@ -170,16 +170,16 @@ prediction along with an epistemic uncertainty estimate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ensemble_members</strong> (<em>list</em><em>, </em><em>optional</em>) – Pretrained LSTM models. If None, a new ensemble is created.</p></li>
-<li><p><strong>input_size</strong> (<em>int</em>) – Number of input features.</p></li>
-<li><p><strong>output_size</strong> (<em>int</em>) – Number of output features.</p></li>
-<li><p><strong>num_ensemble_members</strong> (<em>int</em>) – Number of ensemble members to create if <cite>ensemble_members</cite> is None.</p></li>
-<li><p><strong>output_sequence_length</strong> (<em>int</em>) – Length of the output sequence to predict.</p></li>
-<li><p><strong>latent_dim</strong> (<em>int</em>) – Additional latent dimension added to the input.</p></li>
+<li><p><strong>ensemble_members</strong> (<em>list</em><em>, </em><em>optional</em>) - Pretrained LSTM models. If None, a new ensemble is created.</p></li>
+<li><p><strong>input_size</strong> (<em>int</em>) - Number of input features.</p></li>
+<li><p><strong>output_size</strong> (<em>int</em>) - Number of output features.</p></li>
+<li><p><strong>num_ensemble_members</strong> (<em>int</em>) - Number of ensemble members to create if <cite>ensemble_members</cite> is None.</p></li>
+<li><p><strong>output_sequence_length</strong> (<em>int</em>) - Length of the output sequence to predict.</p></li>
+<li><p><strong>latent_dim</strong> (<em>int</em>) - Additional latent dimension added to the input.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If <cite>ensemble_members</cite> is provided but does not contain only LSTM instances.</p>
+<dd class="field-even"><p><strong>ValueError</strong> - If <cite>ensemble_members</cite> is provided but does not contain only LSTM instances.</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -191,22 +191,22 @@ Checkpoints can be saved for each model, and early stopping is available to prev
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – Training input data.</p></li>
-<li><p><strong>y</strong> (<em>Tensor</em>) – Training target data.</p></li>
-<li><p><strong>X_val</strong> (<em>Tensor</em><em>, </em><em>optional</em>) – Validation input data for early stopping.</p></li>
-<li><p><strong>y_val</strong> (<em>Tensor</em><em>, </em><em>optional</em>) – Validation target data for early stopping.</p></li>
-<li><p><strong>save_checkpoints</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to save checkpoints during training. Defaults to True.</p></li>
-<li><p><strong>checkpoint_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path prefix for saving model checkpoints.</p></li>
-<li><p><strong>early_stopping</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to use early stopping. Defaults to False.</p></li>
-<li><p><strong>epochs</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of training epochs. Defaults to 100.</p></li>
-<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Batch size for training. Defaults to 128.</p></li>
-<li><p><strong>sequence_length</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of input sequences. Defaults to 5.</p></li>
-<li><p><strong>patience</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of epochs to wait before early stopping. Defaults to 10.</p></li>
-<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to print training progress. Defaults to True.</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em>) - Training input data.</p></li>
+<li><p><strong>y</strong> (<em>Tensor</em>) - Training target data.</p></li>
+<li><p><strong>X_val</strong> (<em>Tensor</em><em>, </em><em>optional</em>) - Validation input data for early stopping.</p></li>
+<li><p><strong>y_val</strong> (<em>Tensor</em><em>, </em><em>optional</em>) - Validation target data for early stopping.</p></li>
+<li><p><strong>save_checkpoints</strong> (<em>bool</em><em>, </em><em>optional</em>) - Whether to save checkpoints during training. Defaults to True.</p></li>
+<li><p><strong>checkpoint_path</strong> (<em>str</em><em>, </em><em>optional</em>) - Path prefix for saving model checkpoints.</p></li>
+<li><p><strong>early_stopping</strong> (<em>bool</em><em>, </em><em>optional</em>) - Whether to use early stopping. Defaults to False.</p></li>
+<li><p><strong>epochs</strong> (<em>int</em><em>, </em><em>optional</em>) - Number of training epochs. Defaults to 100.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) - Batch size for training. Defaults to 128.</p></li>
+<li><p><strong>sequence_length</strong> (<em>int</em><em>, </em><em>optional</em>) - Length of input sequences. Defaults to 5.</p></li>
+<li><p><strong>patience</strong> (<em>int</em><em>, </em><em>optional</em>) - Number of epochs to wait before early stopping. Defaults to 10.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) - Whether to print training progress. Defaults to True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>Warning</strong> – If the model has already been trained, a warning is issued before proceeding.</p>
+<dd class="field-even"><p><strong>Warning</strong> - If the model has already been trained, a warning is issued before proceeding.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -219,7 +219,7 @@ Checkpoints can be saved for each model, and early stopping is available to prev
 of these predictions are computed to provide an estimate of epistemic uncertainty.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – Input tensor of shape (batch_size, sequence_length, input_size).</p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) - Input tensor of shape (batch_size, sequence_length, input_size).</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
@@ -250,7 +250,7 @@ LSTM members. The ensemble members are reinitialized and their state dictionarie
 are loaded from disk.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>model_path</strong> (<em>str</em>) – Path to the saved model file.</p>
+<dd class="field-odd"><p><strong>model_path</strong> (<em>str</em>) - Path to the saved model file.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>An instance of the loaded ensemble model.</p>
@@ -260,8 +260,8 @@ are loaded from disk.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>FileNotFoundError</strong> – If any ensemble member’s file is missing.</p></li>
-<li><p><strong>ValueError</strong> – If the saved model type does not match <cite>DeepEnsemble</cite>.</p></li>
+<li><p><strong>FileNotFoundError</strong> - If any ensemble member’s file is missing.</p></li>
+<li><p><strong>ValueError</strong> - If the saved model type does not match <cite>DeepEnsemble</cite>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -280,7 +280,7 @@ are loaded from disk.</p>
 <p>This method calls <cite>forward</cite> while ensuring the model is in evaluation mode.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – Input tensor for prediction.</p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) - Input tensor for prediction.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
@@ -304,10 +304,10 @@ The metadata includes information about the ensemble members, such as their arch
 loss function, and training status.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>model_path</strong> (<em>str</em>) – File path to save the model.</p>
+<dd class="field-odd"><p><strong>model_path</strong> (<em>str</em>) - File path to save the model.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If attempting to save the model before it has been trained.</p>
+<dd class="field-even"><p><strong>ValueError</strong> - If attempting to save the model before it has been trained.</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
@@ -487,13 +487,13 @@ layers to generate predictions for sequential data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>lstm_num_layers</strong> (<em>int</em>) – Number of LSTM layers.</p></li>
-<li><p><strong>lstm_hidden_size</strong> (<em>int</em>) – Number of hidden units in each LSTM layer.</p></li>
-<li><p><strong>input_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of input features. Defaults to 83.</p></li>
-<li><p><strong>output_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of output features. Defaults to 1.</p></li>
-<li><p><strong>criterion</strong> (<em>torch.nn.modules.loss._Loss</em><em>, </em><em>optional</em>) – Loss function. Defaults to MSELoss.</p></li>
-<li><p><strong>output_sequence_length</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of output time steps. Defaults to 86.</p></li>
-<li><p><strong>optimizer</strong> (<em>torch.optim.Optimizer</em><em>, </em><em>optional</em>) – Optimizer type. Defaults to Adam.</p></li>
+<li><p><strong>lstm_num_layers</strong> (<em>int</em>) - Number of LSTM layers.</p></li>
+<li><p><strong>lstm_hidden_size</strong> (<em>int</em>) - Number of hidden units in each LSTM layer.</p></li>
+<li><p><strong>input_size</strong> (<em>int</em><em>, </em><em>optional</em>) - Number of input features. Defaults to 83.</p></li>
+<li><p><strong>output_size</strong> (<em>int</em><em>, </em><em>optional</em>) - Number of output features. Defaults to 1.</p></li>
+<li><p><strong>criterion</strong> (<em>torch.nn.modules.loss._Loss</em><em>, </em><em>optional</em>) - Loss function. Defaults to MSELoss.</p></li>
+<li><p><strong>output_sequence_length</strong> (<em>int</em><em>, </em><em>optional</em>) - Number of output time steps. Defaults to 86.</p></li>
+<li><p><strong>optimizer</strong> (<em>torch.optim.Optimizer</em><em>, </em><em>optional</em>) - Optimizer type. Defaults to Adam.</p></li>
 </ul>
 </dd>
 </dl>
@@ -506,24 +506,24 @@ training resumes from the last saved state.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em><em> or </em><em>DataFrame</em>) – Input training data.</p></li>
-<li><p><strong>y</strong> (<em>Tensor</em><em> or </em><em>DataFrame</em>) – Target values corresponding to the input data.</p></li>
-<li><p><strong>epochs</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of epochs for training. Defaults to 100.</p></li>
-<li><p><strong>sequence_length</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of input sequences. Defaults to 5.</p></li>
-<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Batch size used in training. Defaults to 64.</p></li>
-<li><p><strong>criterion</strong> (<em>torch.nn.modules.loss._Loss</em><em>, </em><em>optional</em>) – Loss function. Defaults to None.</p></li>
-<li><p><strong>X_val</strong> (<em>Tensor</em><em> or </em><em>DataFrame</em><em>, </em><em>optional</em>) – Validation input data. Defaults to None.</p></li>
-<li><p><strong>y_val</strong> (<em>Tensor</em><em> or </em><em>DataFrame</em><em>, </em><em>optional</em>) – Validation target data. Defaults to None.</p></li>
-<li><p><strong>save_checkpoints</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to save model checkpoints. Defaults to True.</p></li>
-<li><p><strong>checkpoint_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to save model checkpoints. Defaults to ‘checkpoint.pt’.</p></li>
-<li><p><strong>early_stopping</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to enable early stopping. Defaults to False.</p></li>
-<li><p><strong>patience</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of epochs to wait before stopping. Defaults to 10.</p></li>
-<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to print training progress. Defaults to True.</p></li>
-<li><p><strong>dataclass</strong> (<em>type</em><em>, </em><em>optional</em>) – Dataset class for handling data. Defaults to EmulatorDataset.</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> or </em><em>DataFrame</em>) - Input training data.</p></li>
+<li><p><strong>y</strong> (<em>Tensor</em><em> or </em><em>DataFrame</em>) - Target values corresponding to the input data.</p></li>
+<li><p><strong>epochs</strong> (<em>int</em><em>, </em><em>optional</em>) - Number of epochs for training. Defaults to 100.</p></li>
+<li><p><strong>sequence_length</strong> (<em>int</em><em>, </em><em>optional</em>) - Length of input sequences. Defaults to 5.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) - Batch size used in training. Defaults to 64.</p></li>
+<li><p><strong>criterion</strong> (<em>torch.nn.modules.loss._Loss</em><em>, </em><em>optional</em>) - Loss function. Defaults to None.</p></li>
+<li><p><strong>X_val</strong> (<em>Tensor</em><em> or </em><em>DataFrame</em><em>, </em><em>optional</em>) - Validation input data. Defaults to None.</p></li>
+<li><p><strong>y_val</strong> (<em>Tensor</em><em> or </em><em>DataFrame</em><em>, </em><em>optional</em>) - Validation target data. Defaults to None.</p></li>
+<li><p><strong>save_checkpoints</strong> (<em>bool</em><em>, </em><em>optional</em>) - Whether to save model checkpoints. Defaults to True.</p></li>
+<li><p><strong>checkpoint_path</strong> (<em>str</em><em>, </em><em>optional</em>) - Path to save model checkpoints. Defaults to ‘checkpoint.pt’.</p></li>
+<li><p><strong>early_stopping</strong> (<em>bool</em><em>, </em><em>optional</em>) - Whether to enable early stopping. Defaults to False.</p></li>
+<li><p><strong>patience</strong> (<em>int</em><em>, </em><em>optional</em>) - Number of epochs to wait before stopping. Defaults to 10.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) - Whether to print training progress. Defaults to True.</p></li>
+<li><p><strong>dataclass</strong> (<em>type</em><em>, </em><em>optional</em>) - Dataset class for handling data. Defaults to EmulatorDataset.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If no loss function is provided.</p>
+<dd class="field-even"><p><strong>ValueError</strong> - If no loss function is provided.</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
@@ -542,7 +542,7 @@ training resumes from the last saved state.</p>
 which are passed through a fully connected network to generate predictions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – Input tensor of shape (batch_size, sequence_length, input_size).</p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) - Input tensor of shape (batch_size, sequence_length, input_size).</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Output tensor of shape (batch_size, output_size), representing
@@ -563,10 +563,10 @@ in a batch-wise manner to optimize memory usage.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em><em> or </em><em>DataFrame</em>) – Input data for prediction.</p></li>
-<li><p><strong>sequence_length</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of input sequences. Defaults to 5.</p></li>
-<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Batch size used for inference. Defaults to 64.</p></li>
-<li><p><strong>dataclass</strong> (<em>type</em><em>, </em><em>optional</em>) – Dataset class for handling data. Defaults to EmulatorDataset.</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> or </em><em>DataFrame</em>) - Input data for prediction.</p></li>
+<li><p><strong>sequence_length</strong> (<em>int</em><em>, </em><em>optional</em>) - Length of input sequences. Defaults to 5.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) - Batch size used for inference. Defaults to 64.</p></li>
+<li><p><strong>dataclass</strong> (<em>type</em><em>, </em><em>optional</em>) - Dataset class for handling data. Defaults to EmulatorDataset.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

@@ -130,9 +130,9 @@ calculate individual distributions from the arrays and calculates the divergence
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) – Dataset to be grouped</p></li>
-<li><p><strong>column</strong> (<em>str</em><em>, </em><em>optional</em>) – Column to subset on. Defaults to None.</p></li>
-<li><p><strong>condition</strong> (<em>str</em><em>, </em><em>optional</em>) – Condition to subset with. Can be int, str, float, etc. Defaults to None.</p></li>
+<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) - Dataset to be grouped</p></li>
+<li><p><strong>column</strong> (<em>str</em><em>, </em><em>optional</em>) - Column to subset on. Defaults to None.</p></li>
+<li><p><strong>condition</strong> (<em>str</em><em>, </em><em>optional</em>) - Condition to subset with. Can be int, str, float, etc. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -151,9 +151,9 @@ calculate individual distributions from the arrays and calculates the divergence
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>input</strong> (<em>str</em>) – Input value.</p></li>
-<li><p><strong>options</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – Valid options for the input value.</p></li>
-<li><p><strong>argname</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the argument being tested. Defaults to None.</p></li>
+<li><p><strong>input</strong> (<em>str</em>) - Input value.</p></li>
+<li><p><strong>options</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) - Valid options for the input value.</p></li>
+<li><p><strong>argname</strong> (<em>str</em><em>, </em><em>optional</em>) - Name of the argument being tested. Defaults to None.</p></li>
 </ul>
 </dd>
 </dl>
@@ -167,12 +167,12 @@ predictions, losses, and uncertainty bounds. Useful for plotting purposes and ov
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_directory</strong> (<em>str</em>) – Directory containing training and testing data.</p></li>
-<li><p><strong>preds</strong> (<em>np.ndarray</em><em> | </em><em>pd.Series</em><em> | </em><em>str</em>) – Array/Series of neural network predictions, or the path to the csv containing predictions.</p></li>
-<li><p><strong>bounds</strong> (<em>dict</em><em> | </em><em>pd.DataFrame</em>) – Dictionary or pd.DataFrame of uncertainty bounds to be added to the dataframe, generally outputted from ise.models.testing.pretrained.test_pretrained_model. Defaults to None.</p></li>
-<li><p><strong>gp_data</strong> (<em>dict</em><em> | </em><em>pd.DataFrame</em>) – Dictionary or pd.DataFrame containing gaussian process predictions to add to the dataset. Columns/keys must be <cite>preds</cite> and <cite>std</cite>. Defaults to None.</p></li>
-<li><p><strong>time_series</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag denoting whether to process the data as a time-series dataset or traditional non-time dataset. Defaults to True.</p></li>
-<li><p><strong>save_directory</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory where output files will be saved. Defaults to None.</p></li>
+<li><p><strong>data_directory</strong> (<em>str</em>) - Directory containing training and testing data.</p></li>
+<li><p><strong>preds</strong> (<em>np.ndarray</em><em> | </em><em>pd.Series</em><em> | </em><em>str</em>) - Array/Series of neural network predictions, or the path to the csv containing predictions.</p></li>
+<li><p><strong>bounds</strong> (<em>dict</em><em> | </em><em>pd.DataFrame</em>) - Dictionary or pd.DataFrame of uncertainty bounds to be added to the dataframe, generally outputted from ise.models.testing.pretrained.test_pretrained_model. Defaults to None.</p></li>
+<li><p><strong>gp_data</strong> (<em>dict</em><em> | </em><em>pd.DataFrame</em>) - Dictionary or pd.DataFrame containing gaussian process predictions to add to the dataset. Columns/keys must be <cite>preds</cite> and <cite>std</cite>. Defaults to None.</p></li>
+<li><p><strong>time_series</strong> (<em>bool</em><em>, </em><em>optional</em>) - Flag denoting whether to process the data as a time-series dataset or traditional non-time dataset. Defaults to True.</p></li>
+<li><p><strong>save_directory</strong> (<em>str</em><em>, </em><em>optional</em>) - Directory where output files will be saved. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -202,10 +202,10 @@ and substring search.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>path</strong> (<em>str</em>) – Path to directory to be searched.</p></li>
-<li><p><strong>filetype</strong> (<em>str</em><em>, </em><em>optional</em>) – File type to be returned (e.g. csv, nc). Defaults to None.</p></li>
-<li><p><strong>contains</strong> (<em>str</em><em>, </em><em>optional</em>) – Substring that files found must contain. Defaults to None.</p></li>
-<li><p><strong>not_contains</strong> (<em>str</em><em>, </em><em>optional</em>) – Substring that files found must NOT contain. Defaults to None.</p></li>
+<li><p><strong>path</strong> (<em>str</em>) - Path to directory to be searched.</p></li>
+<li><p><strong>filetype</strong> (<em>str</em><em>, </em><em>optional</em>) - File type to be returned (e.g. csv, nc). Defaults to None.</p></li>
+<li><p><strong>contains</strong> (<em>str</em><em>, </em><em>optional</em>) - Substring that files found must contain. Defaults to None.</p></li>
+<li><p><strong>not_contains</strong> (<em>str</em><em>, </em><em>optional</em>) - Substring that files found must NOT contain. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -230,9 +230,9 @@ confidence interval calculation as well as a quantile-based approach.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – Dataframe or array of NXM, typically from ise.utils.functions.group_by_run.</p></li>
-<li><p><strong>confidence</strong> (<em>str</em><em>, </em><em>optional</em>) – Confidence level, must be in [95, 99]. Defaults to ‘95’.</p></li>
-<li><p><strong>quantiles</strong> (<em>list</em><em>[</em><em>float</em><em>]</em><em>, </em><em>optional</em>) – Quantiles of uncertainty bands. Defaults to [0.05, 0.95].</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) - Dataframe or array of NXM, typically from ise.utils.functions.group_by_run.</p></li>
+<li><p><strong>confidence</strong> (<em>str</em><em>, </em><em>optional</em>) - Confidence level, must be in [95, 99]. Defaults to ‘95’.</p></li>
+<li><p><strong>quantiles</strong> (<em>list</em><em>[</em><em>float</em><em>]</em><em>, </em><em>optional</em>) - Quantiles of uncertainty bands. Defaults to [0.05, 0.95].</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -253,9 +253,9 @@ N being the number of simulations and M being 85, or the length of the series.</
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) – Dataset to be grouped</p></li>
-<li><p><strong>column</strong> (<em>str</em><em>, </em><em>optional</em>) – Column to subset on. Defaults to None.</p></li>
-<li><p><strong>condition</strong> (<em>str</em><em>, </em><em>optional</em>) – Condition to subset with. Can be int, str, float, etc. Defaults to None.</p></li>
+<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) - Dataset to be grouped</p></li>
+<li><p><strong>column</strong> (<em>str</em><em>, </em><em>optional</em>) - Column to subset on. Defaults to None.</p></li>
+<li><p><strong>condition</strong> (<em>str</em><em>, </em><em>optional</em>) - Condition to subset with. Can be int, str, float, etc. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -275,8 +275,8 @@ functions in the ise.data.processing modules or process_data in the ise.pipeline
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_directory</strong> (<em>str</em>) – Directory containing processed files.</p></li>
-<li><p><strong>time_series</strong> (<em>bool</em>) – Flag denoting whether to load the time-series version of the data.</p></li>
+<li><p><strong>data_directory</strong> (<em>str</em>) - Directory containing processed files.</p></li>
+<li><p><strong>time_series</strong> (<em>bool</em>) - Flag denoting whether to load the time-series version of the data.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -295,11 +295,11 @@ functions in the ise.data.processing modules or process_data in the ise.pipeline
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model_path</strong> (<em>str</em>) – Filepath to model state_dict.</p></li>
-<li><p><strong>model_class</strong> (<em>Model</em>) – Model class.</p></li>
-<li><p><strong>architecture</strong> (<em>dict</em>) – Defined architecture of pretrained model.</p></li>
-<li><p><strong>mc_dropout</strong> (<em>bool</em>) – Flag denoting wether the model was trained using MC Dropout.</p></li>
-<li><p><strong>dropout_prob</strong> (<em>float</em>) – Value between 0 and 1 denoting the dropout probability.</p></li>
+<li><p><strong>model_path</strong> (<em>str</em>) - Filepath to model state_dict.</p></li>
+<li><p><strong>model_class</strong> (<em>Model</em>) - Model class.</p></li>
+<li><p><strong>architecture</strong> (<em>dict</em>) - Defined architecture of pretrained model.</p></li>
+<li><p><strong>mc_dropout</strong> (<em>bool</em>) - Flag denoting wether the model was trained using MC Dropout.</p></li>
+<li><p><strong>dropout_prob</strong> (<em>float</em>) - Value between 0 and 1 denoting the dropout probability.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -317,7 +317,7 @@ functions in the ise.data.processing modules or process_data in the ise.pipeline
 <dd><p>Converts input data to a PyTorch tensor of type float.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> – Input data to be converted. Must be a pandas dataframe, numpy array, or PyTorch tensor.</p>
+<dd class="field-odd"><p><strong>x</strong> - Input data to be converted. Must be a pandas dataframe, numpy array, or PyTorch tensor.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A PyTorch tensor of type float.</p>
@@ -333,8 +333,8 @@ variable columns (boolean indices), and converts them back into the original dat
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – Dataframe to be converted.</p></li>
-<li><p><strong>prefix_sep</strong> (<em>str</em><em>, </em><em>optional</em>) – Prefix separator used in pd.get_dummies. Recommended not to change this. Defaults to “-“.</p></li>
+<li><p><strong>df</strong> (<em>pd.DataFrame</em>) - Dataframe to be converted.</p></li>
+<li><p><strong>prefix_sep</strong> (<em>str</em><em>, </em><em>optional</em>) - Prefix separator used in pd.get_dummies. Recommended not to change this. Defaults to “-“.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -353,8 +353,8 @@ variable columns (boolean indices), and converts them back into the original dat
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>y</strong> – Input data to be unscaled.</p></li>
-<li><p><strong>scaler_path</strong> – Path to the scaler used for scaling the data.</p></li>
+<li><p><strong>y</strong> - Input data to be unscaled.</p></li>
+<li><p><strong>scaler_path</strong> - Path to the scaler used for scaling the data.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -371,8 +371,8 @@ they have a known range of values (2016-2100 and 1-18 respectively).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) – Dataset containing columns to unscale.</p></li>
-<li><p><strong>column</strong> (<em>str</em><em> | </em><em>list</em><em>, </em><em>optional</em>) – Columns to be unscaled, must be in [year, sectors]. Can be both. Defaults to ‘year’.</p></li>
+<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) - Dataset containing columns to unscale.</p></li>
+<li><p><strong>column</strong> (<em>str</em><em> | </em><em>list</em><em>, </em><em>optional</em>) - Columns to be unscaled, must be in [year, sectors]. Can be both. Defaults to ‘year’.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

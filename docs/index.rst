@@ -16,7 +16,7 @@ Supported ice sheets
 - **AIS** (Antarctic Ice Sheet): 18 sectors, 8 km standard resolution
 - **GrIS** (Greenland Ice Sheet): 6 regions, 5 km standard resolution
 
-Projection period: **2015–2100** (86 annual timesteps).
+Projection period: **2015-2100** (86 annual timesteps).
 
 About ISEFlow
 =============

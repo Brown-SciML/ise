@@ -100,10 +100,10 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) – The input data.</p></li>
-<li><p><strong>y</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) – The target data.</p></li>
-<li><p><strong>sequence_length</strong> (<em>int</em><em>, </em><em>optional</em>) – The length of the input sequence. Default is 5.</p></li>
-<li><p><strong>projection_length</strong> (<em>int</em><em> or </em><em>tuple</em><em>, </em><em>optional</em>) – The length of the projection period. Default is 86.</p></li>
+<li><p><strong>X</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) - The input data.</p></li>
+<li><p><strong>y</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) - The target data.</p></li>
+<li><p><strong>sequence_length</strong> (<em>int</em><em>, </em><em>optional</em>) - The length of the input sequence. Default is 5.</p></li>
+<li><p><strong>projection_length</strong> (<em>int</em><em> or </em><em>tuple</em><em>, </em><em>optional</em>) - The length of the projection period. Default is 86.</p></li>
 </ul>
 </dd>
 </dl>
@@ -212,8 +212,8 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>torch.Tensor</em>) – The input data.</p></li>
-<li><p><strong>y</strong> (<em>torch.Tensor</em>) – The target data.</p></li>
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) - The input data.</p></li>
+<li><p><strong>y</strong> (<em>torch.Tensor</em>) - The target data.</p></li>
 </ul>
 </dd>
 </dl>
@@ -239,8 +239,8 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>features</strong> (<em>torch.Tensor</em>) – The input features.</p></li>
-<li><p><strong>labels</strong> (<em>torch.Tensor</em>) – The target labels.</p></li>
+<li><p><strong>features</strong> (<em>torch.Tensor</em>) - The input features.</p></li>
+<li><p><strong>labels</strong> (<em>torch.Tensor</em>) - The target labels.</p></li>
 </ul>
 </dd>
 </dl>
@@ -288,9 +288,9 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>torch.Tensor</em>) – The input data.</p></li>
-<li><p><strong>y</strong> (<em>torch.Tensor</em>) – The target data.</p></li>
-<li><p><strong>sequence_length</strong> (<em>int</em><em>, </em><em>optional</em>) – The length of the input sequence. Default is 5.</p></li>
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) - The input data.</p></li>
+<li><p><strong>y</strong> (<em>torch.Tensor</em>) - The target data.</p></li>
+<li><p><strong>sequence_length</strong> (<em>int</em><em>, </em><em>optional</em>) - The length of the input sequence. Default is 5.</p></li>
 </ul>
 </dd>
 </dl>
@@ -353,14 +353,14 @@ scaling, dataset splitting, and outlier handling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ice_sheet</strong> (<em>str</em>) – The name of the ice sheet being analyzed.</p></li>
-<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – The input dataset.</p></li>
-<li><p><strong>fill_mrro_nans</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to fill missing values in the ‘mrro’ column. Defaults to False.</p></li>
-<li><p><strong>split_dataset</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to split the dataset into training, validation, and test sets. Defaults to False.</p></li>
-<li><p><strong>train_size</strong> (<em>float</em><em>, </em><em>optional</em>) – Proportion of data to use for training. Defaults to 0.7.</p></li>
-<li><p><strong>val_size</strong> (<em>float</em><em>, </em><em>optional</em>) – Proportion of data to use for validation. Defaults to 0.15.</p></li>
-<li><p><strong>test_size</strong> (<em>float</em><em>, </em><em>optional</em>) – Proportion of data to use for testing. Defaults to 0.15.</p></li>
-<li><p><strong>output_directory</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory to save the split datasets. Defaults to None.</p></li>
+<li><p><strong>ice_sheet</strong> (<em>str</em>) - The name of the ice sheet being analyzed.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) - The input dataset.</p></li>
+<li><p><strong>fill_mrro_nans</strong> (<em>bool</em><em>, </em><em>optional</em>) - Whether to fill missing values in the ‘mrro’ column. Defaults to False.</p></li>
+<li><p><strong>split_dataset</strong> (<em>bool</em><em>, </em><em>optional</em>) - Whether to split the dataset into training, validation, and test sets. Defaults to False.</p></li>
+<li><p><strong>train_size</strong> (<em>float</em><em>, </em><em>optional</em>) - Proportion of data to use for training. Defaults to 0.7.</p></li>
+<li><p><strong>val_size</strong> (<em>float</em><em>, </em><em>optional</em>) - Proportion of data to use for validation. Defaults to 0.15.</p></li>
+<li><p><strong>test_size</strong> (<em>float</em><em>, </em><em>optional</em>) - Proportion of data to use for testing. Defaults to 0.15.</p></li>
+<li><p><strong>output_directory</strong> (<em>str</em><em>, </em><em>optional</em>) - Directory to save the split datasets. Defaults to None.</p></li>
 </ul>
 </dd>
 </dl>
@@ -562,8 +562,8 @@ scaling, dataset splitting, and outlier handling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>lag</strong> (<em>int</em>) – Number of time steps to lag the variables.</p></li>
-<li><p><strong>data</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) – The dataset. If not provided, the class attribute ‘data’ is used.</p></li>
+<li><p><strong>lag</strong> (<em>int</em>) - Number of time steps to lag the variables.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) - The dataset. If not provided, the class attribute ‘data’ is used.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -582,10 +582,10 @@ scaling, dataset splitting, and outlier handling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) – The dataset. If not provided, the class attribute ‘data’ is used.</p></li>
-<li><p><strong>model_char_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to the model characteristics file. Defaults to the internal path.</p></li>
-<li><p><strong>encode</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to one-hot encode categorical characteristics. Defaults to True.</p></li>
-<li><p><strong>ids_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to an additional ID mapping file. Defaults to None.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) - The dataset. If not provided, the class attribute ‘data’ is used.</p></li>
+<li><p><strong>model_char_path</strong> (<em>str</em><em>, </em><em>optional</em>) - Path to the model characteristics file. Defaults to the internal path.</p></li>
+<li><p><strong>encode</strong> (<em>bool</em><em>, </em><em>optional</em>) - Whether to one-hot encode categorical characteristics. Defaults to True.</p></li>
+<li><p><strong>ids_path</strong> (<em>str</em><em>, </em><em>optional</em>) - Path to an additional ID mapping file. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -604,8 +604,8 @@ scaling, dataset splitting, and outlier handling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>percentile</strong> (<em>float</em><em>, </em><em>optional</em>) – Percentile threshold for identifying outliers. Defaults to 99.999.</p></li>
-<li><p><strong>data</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) – The dataset. If not provided, the class attribute ‘data’ is used.</p></li>
+<li><p><strong>percentile</strong> (<em>float</em><em>, </em><em>optional</em>) - Percentile threshold for identifying outliers. Defaults to 99.999.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) - The dataset. If not provided, the class attribute ‘data’ is used.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -624,11 +624,11 @@ scaling, dataset splitting, and outlier handling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>method</strong> (<em>str</em>) – Method of outlier deletion (‘quantile’ or ‘explicit’).</p></li>
-<li><p><strong>column</strong> (<em>str</em>) – Column used for detecting outliers.</p></li>
-<li><p><strong>expression</strong> (<em>list</em><em>[</em><em>tuple</em><em>]</em><em>, </em><em>optional</em>) – List of filtering expressions in the form [(column, operator, value)]. Defaults to None.</p></li>
-<li><p><strong>quantiles</strong> (<em>list</em><em>[</em><em>float</em><em>]</em><em>, </em><em>optional</em>) – Quantiles for ‘quantile’ method. Defaults to [0.01, 0.99].</p></li>
-<li><p><strong>data</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) – The dataset. If not provided, the class attribute ‘data’ is used.</p></li>
+<li><p><strong>method</strong> (<em>str</em>) - Method of outlier deletion (‘quantile’ or ‘explicit’).</p></li>
+<li><p><strong>column</strong> (<em>str</em>) - Column used for detecting outliers.</p></li>
+<li><p><strong>expression</strong> (<em>list</em><em>[</em><em>tuple</em><em>]</em><em>, </em><em>optional</em>) - List of filtering expressions in the form [(column, operator, value)]. Defaults to None.</p></li>
+<li><p><strong>quantiles</strong> (<em>list</em><em>[</em><em>float</em><em>]</em><em>, </em><em>optional</em>) - Quantiles for ‘quantile’ method. Defaults to [0.01, 0.99].</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) - The dataset. If not provided, the class attribute ‘data’ is used.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -647,8 +647,8 @@ scaling, dataset splitting, and outlier handling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>method</strong> (<em>str</em>) – The method used to fill missing values.</p></li>
-<li><p><strong>data</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) – The dataset. Defaults to None.</p></li>
+<li><p><strong>method</strong> (<em>str</em>) - The method used to fill missing values.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) - The dataset. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -667,10 +667,10 @@ scaling, dataset splitting, and outlier handling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>pd.DataFrame</em><em> or </em><em>np.ndarray</em><em>, </em><em>optional</em>) – Input data. Defaults to None.</p></li>
-<li><p><strong>y</strong> (<em>pd.DataFrame</em><em> or </em><em>np.ndarray</em><em>, </em><em>optional</em>) – Target data. Defaults to None.</p></li>
-<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – Scaling method (‘standard’, ‘minmax’, ‘robust’). Defaults to ‘standard’.</p></li>
-<li><p><strong>save_dir</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory to save scalers. Defaults to None.</p></li>
+<li><p><strong>X</strong> (<em>pd.DataFrame</em><em> or </em><em>np.ndarray</em><em>, </em><em>optional</em>) - Input data. Defaults to None.</p></li>
+<li><p><strong>y</strong> (<em>pd.DataFrame</em><em> or </em><em>np.ndarray</em><em>, </em><em>optional</em>) - Target data. Defaults to None.</p></li>
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) - Scaling method (‘standard’, ‘minmax’, ‘robust’). Defaults to ‘standard’.</p></li>
+<li><p><strong>save_dir</strong> (<em>str</em><em>, </em><em>optional</em>) - Directory to save scalers. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -689,12 +689,12 @@ scaling, dataset splitting, and outlier handling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) – The input dataset. Defaults to None.</p></li>
-<li><p><strong>train_size</strong> (<em>float</em><em>, </em><em>optional</em>) – Proportion of training data. Defaults to None.</p></li>
-<li><p><strong>val_size</strong> (<em>float</em><em>, </em><em>optional</em>) – Proportion of validation data. Defaults to None.</p></li>
-<li><p><strong>test_size</strong> (<em>float</em><em>, </em><em>optional</em>) – Proportion of testing data. Defaults to None.</p></li>
-<li><p><strong>output_directory</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory to save split datasets. Defaults to None.</p></li>
-<li><p><strong>random_state</strong> (<em>int</em><em>, </em><em>optional</em>) – Random seed for reproducibility. Defaults to 42.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) - The input dataset. Defaults to None.</p></li>
+<li><p><strong>train_size</strong> (<em>float</em><em>, </em><em>optional</em>) - Proportion of training data. Defaults to None.</p></li>
+<li><p><strong>val_size</strong> (<em>float</em><em>, </em><em>optional</em>) - Proportion of validation data. Defaults to None.</p></li>
+<li><p><strong>test_size</strong> (<em>float</em><em>, </em><em>optional</em>) - Proportion of testing data. Defaults to None.</p></li>
+<li><p><strong>output_directory</strong> (<em>str</em><em>, </em><em>optional</em>) - Directory to save split datasets. Defaults to None.</p></li>
+<li><p><strong>random_state</strong> (<em>int</em><em>, </em><em>optional</em>) - Random seed for reproducibility. Defaults to 42.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -713,10 +713,10 @@ scaling, dataset splitting, and outlier handling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>pd.DataFrame</em><em> or </em><em>np.ndarray</em><em>, </em><em>optional</em>) – The input data to be unscaled. Defaults to None.</p></li>
-<li><p><strong>y</strong> (<em>pd.DataFrame</em><em>, </em><em>np.ndarray</em><em>, or </em><em>torch.Tensor</em><em>, </em><em>optional</em>) – The target data to be unscaled. Defaults to None.</p></li>
-<li><p><strong>scaler_X_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to the stored input scaler. Defaults to None.</p></li>
-<li><p><strong>scaler_y_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to the stored target scaler. Defaults to None.</p></li>
+<li><p><strong>X</strong> (<em>pd.DataFrame</em><em> or </em><em>np.ndarray</em><em>, </em><em>optional</em>) - The input data to be unscaled. Defaults to None.</p></li>
+<li><p><strong>y</strong> (<em>pd.DataFrame</em><em>, </em><em>np.ndarray</em><em>, or </em><em>torch.Tensor</em><em>, </em><em>optional</em>) - The target data to be unscaled. Defaults to None.</p></li>
+<li><p><strong>scaler_X_path</strong> (<em>str</em><em>, </em><em>optional</em>) - Path to the stored input scaler. Defaults to None.</p></li>
+<li><p><strong>scaler_y_path</strong> (<em>str</em><em>, </em><em>optional</em>) - Path to the stored target scaler. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -737,9 +737,9 @@ scaling, dataset splitting, and outlier handling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – The dataset containing time series data.</p></li>
-<li><p><strong>lag</strong> (<em>int</em>) – The number of time steps to lag the variables.</p></li>
-<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to display a progress bar. Defaults to True.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) - The dataset containing time series data.</p></li>
+<li><p><strong>lag</strong> (<em>int</em>) - The number of time steps to lag the variables.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) - Whether to display a progress bar. Defaults to True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -758,10 +758,10 @@ scaling, dataset splitting, and outlier handling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – The input dataset.</p></li>
-<li><p><strong>model_char_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to the model characteristics file. Defaults to internal path.</p></li>
-<li><p><strong>encode</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to one-hot encode categorical characteristics. Defaults to True.</p></li>
-<li><p><strong>ids_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to an additional ID mapping file. Defaults to None.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) - The input dataset.</p></li>
+<li><p><strong>model_char_path</strong> (<em>str</em><em>, </em><em>optional</em>) - Path to the model characteristics file. Defaults to internal path.</p></li>
+<li><p><strong>encode</strong> (<em>bool</em><em>, </em><em>optional</em>) - Whether to one-hot encode categorical characteristics. Defaults to True.</p></li>
+<li><p><strong>ids_path</strong> (<em>str</em><em>, </em><em>optional</em>) - Path to an additional ID mapping file. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -781,8 +781,8 @@ with the value from the previous row.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – The dataset containing y-values.</p></li>
-<li><p><strong>percentile</strong> (<em>float</em><em>, </em><em>optional</em>) – The percentile threshold to define upper extreme values. Defaults to 99.999.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) - The dataset containing y-values.</p></li>
+<li><p><strong>percentile</strong> (<em>float</em><em>, </em><em>optional</em>) - The percentile threshold to define upper extreme values. Defaults to 99.999.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -801,11 +801,11 @@ with the value from the previous row.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – The dataset containing the column with potential outliers.</p></li>
-<li><p><strong>column</strong> (<em>str</em>) – The column to assess for outliers.</p></li>
-<li><p><strong>method</strong> (<em>str</em>) – The method of outlier detection (‘quantile’ or ‘explicit’).</p></li>
-<li><p><strong>expression</strong> (<em>list</em><em> of </em><em>tuples</em><em>, </em><em>optional</em>) – A list of conditions in the format [(column, operator, value)] for explicit filtering. Defaults to None.</p></li>
-<li><p><strong>quantiles</strong> (<em>list</em><em> of </em><em>float</em><em>, </em><em>optional</em>) – Quantiles for filtering when using the ‘quantile’ method. Defaults to [0.01, 0.99].</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) - The dataset containing the column with potential outliers.</p></li>
+<li><p><strong>column</strong> (<em>str</em>) - The column to assess for outliers.</p></li>
+<li><p><strong>method</strong> (<em>str</em>) - The method of outlier detection (‘quantile’ or ‘explicit’).</p></li>
+<li><p><strong>expression</strong> (<em>list</em><em> of </em><em>tuples</em><em>, </em><em>optional</em>) - A list of conditions in the format [(column, operator, value)] for explicit filtering. Defaults to None.</p></li>
+<li><p><strong>quantiles</strong> (<em>list</em><em> of </em><em>float</em><em>, </em><em>optional</em>) - Quantiles for filtering when using the ‘quantile’ method. Defaults to [0.01, 0.99].</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -816,9 +816,9 @@ with the value from the previous row.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>AttributeError</strong> – If the method is ‘quantile’ but no quantiles are provided.</p></li>
-<li><p><strong>AttributeError</strong> – If the method is ‘explicit’ but no expression is provided.</p></li>
-<li><p><strong>ValueError</strong> – If the operator in the expression is not recognized.</p></li>
+<li><p><strong>AttributeError</strong> - If the method is ‘quantile’ but no quantiles are provided.</p></li>
+<li><p><strong>AttributeError</strong> - If the method is ‘explicit’ but no expression is provided.</p></li>
+<li><p><strong>ValueError</strong> - If the operator in the expression is not recognized.</p></li>
 </ul>
 </dd>
 </dl>
@@ -831,8 +831,8 @@ with the value from the previous row.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – The input DataFrame.</p></li>
-<li><p><strong>method</strong> (<em>str</em><em> or </em><em>int</em>) – The method to fill NaN values. Must be one of ‘zero’, ‘mean’, ‘median’, or ‘drop’.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) - The input DataFrame.</p></li>
+<li><p><strong>method</strong> (<em>str</em><em> or </em><em>int</em>) - The method to fill NaN values. Must be one of ‘zero’, ‘mean’, ‘median’, or ‘drop’.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -842,7 +842,7 @@ with the value from the previous row.</p>
 <dd class="field-odd"><p>pd.DataFrame</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the method is not one of ‘zero’, ‘mean’, ‘median’, or ‘drop’.</p>
+<dd class="field-even"><p><strong>ValueError</strong> - If the method is not one of ‘zero’, ‘mean’, ‘median’, or ‘drop’.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -854,8 +854,8 @@ with the value from the previous row.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – The dataset to be scaled.</p></li>
-<li><p><strong>scaler_path</strong> (<em>str</em>) – Path to the saved scaler.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) - The dataset to be scaled.</p></li>
+<li><p><strong>scaler_path</strong> (<em>str</em>) - Path to the saved scaler.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -874,12 +874,12 @@ with the value from the previous row.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>str</em><em> or </em><em>pd.DataFrame</em>) – The dataset or path to the dataset to be split.</p></li>
-<li><p><strong>train_size</strong> (<em>float</em>) – Proportion of data to use for training.</p></li>
-<li><p><strong>val_size</strong> (<em>float</em>) – Proportion of data to use for validation.</p></li>
-<li><p><strong>test_size</strong> (<em>float</em><em>, </em><em>optional</em>) – Proportion of data to use for testing. Defaults to the remainder.</p></li>
-<li><p><strong>output_directory</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory to save the split datasets as CSV files. Defaults to None.</p></li>
-<li><p><strong>random_state</strong> (<em>int</em><em>, </em><em>optional</em>) – Seed for reproducibility. Defaults to 42.</p></li>
+<li><p><strong>data</strong> (<em>str</em><em> or </em><em>pd.DataFrame</em>) - The dataset or path to the dataset to be split.</p></li>
+<li><p><strong>train_size</strong> (<em>float</em>) - Proportion of data to use for training.</p></li>
+<li><p><strong>val_size</strong> (<em>float</em>) - Proportion of data to use for validation.</p></li>
+<li><p><strong>test_size</strong> (<em>float</em><em>, </em><em>optional</em>) - Proportion of data to use for testing. Defaults to the remainder.</p></li>
+<li><p><strong>output_directory</strong> (<em>str</em><em>, </em><em>optional</em>) - Directory to save the split datasets as CSV files. Defaults to None.</p></li>
+<li><p><strong>random_state</strong> (<em>int</em><em>, </em><em>optional</em>) - Seed for reproducibility. Defaults to 42.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -890,8 +890,8 @@ with the value from the previous row.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>ValueError</strong> – If the dataset length is not divisible by 86, indicating incomplete projections.</p></li>
-<li><p><strong>ValueError</strong> – If the dataset does not contain an ‘id’ column.</p></li>
+<li><p><strong>ValueError</strong> - If the dataset length is not divisible by 86, indicating incomplete projections.</p></li>
+<li><p><strong>ValueError</strong> - If the dataset does not contain an ‘id’ column.</p></li>
 </ul>
 </dd>
 </dl>
@@ -908,11 +908,11 @@ with the value from the previous row.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ice_sheet</strong> (<em>str</em>) – The ice sheet name (‘AIS’ or ‘GrIS’).</p></li>
-<li><p><strong>forcings</strong> (<em>str</em>) – The directory path containing forcing files.</p></li>
-<li><p><strong>projections</strong> (<em>str</em>) – The directory path containing projection files.</p></li>
-<li><p><strong>experiment_file</strong> (<em>str</em>) – The file path to the experiment metadata (CSV or JSON).</p></li>
-<li><p><strong>output_dir</strong> (<em>str</em>) – The directory path to save the merged dataset.</p></li>
+<li><p><strong>ice_sheet</strong> (<em>str</em>) - The ice sheet name (‘AIS’ or ‘GrIS’).</p></li>
+<li><p><strong>forcings</strong> (<em>str</em>) - The directory path containing forcing files.</p></li>
+<li><p><strong>projections</strong> (<em>str</em>) - The directory path containing projection files.</p></li>
+<li><p><strong>experiment_file</strong> (<em>str</em>) - The file path to the experiment metadata (CSV or JSON).</p></li>
+<li><p><strong>output_dir</strong> (<em>str</em>) - The directory path to save the merged dataset.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1008,11 +1008,11 @@ Ice Volume Above Flotation (IVAF), handling control projections, and processing 
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ice_sheet</strong> (<em>str</em>) – The ice sheet being analyzed (‘AIS’ or ‘GIS’).</p></li>
-<li><p><strong>forcings_directory</strong> (<em>str</em>) – Path to the directory containing forcing datasets.</p></li>
-<li><p><strong>projections_directory</strong> (<em>str</em>) – Path to the directory containing projection datasets.</p></li>
-<li><p><strong>scalefac_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to the NetCDF file containing scaling factors for each grid cell. Defaults to None.</p></li>
-<li><p><strong>densities_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to the CSV file containing density data for models. Defaults to None.</p></li>
+<li><p><strong>ice_sheet</strong> (<em>str</em>) - The ice sheet being analyzed (‘AIS’ or ‘GIS’).</p></li>
+<li><p><strong>forcings_directory</strong> (<em>str</em>) - Path to the directory containing forcing datasets.</p></li>
+<li><p><strong>projections_directory</strong> (<em>str</em>) - Path to the directory containing projection datasets.</p></li>
+<li><p><strong>scalefac_path</strong> (<em>str</em><em>, </em><em>optional</em>) - Path to the NetCDF file containing scaling factors for each grid cell. Defaults to None.</p></li>
+<li><p><strong>densities_path</strong> (<em>str</em><em>, </em><em>optional</em>) - Path to the CSV file containing density data for models. Defaults to None.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1113,7 +1113,7 @@ subtracting out control IVAF from experiments, and exporting IVAF files.</p>
 <dd class="field-even"><p>int</p>
 </dd>
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>ValueError</strong> – If projections_directory is not specified.</p>
+<dd class="field-odd"><p><strong>ValueError</strong> - If projections_directory is not specified.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1126,7 +1126,7 @@ subtracting out control IVAF from experiments, and exporting IVAF files.</p>
 <dd><p>Combines GrIS forcings from multiple CMIP model directories into consolidated NetCDF files.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>forcing_dir</strong> (<em>str</em>) – Directory containing the GrIS forcing files.</p>
+<dd class="field-odd"><p><strong>forcing_dir</strong> (<em>str</em>) - Directory containing the GrIS forcing files.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>0 upon successful processing.</p>
@@ -1143,7 +1143,7 @@ subtracting out control IVAF from experiments, and exporting IVAF files.</p>
 <dd><p>Converts time variables in an xarray dataset to a uniform format and subsets time to the range 2015-2100.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>dataset</strong> (<em>xarray.Dataset</em>) – The dataset with time values to be converted and subset.</p>
+<dd class="field-odd"><p><strong>dataset</strong> (<em>xarray.Dataset</em>) - The dataset with time values to be converted and subset.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The dataset with standardized time format and subset to the correct time range.</p>
@@ -1152,7 +1152,7 @@ subtracting out control IVAF from experiments, and exporting IVAF files.</p>
 <dd class="field-odd"><p>xarray.Dataset</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If time values are not in a recognizable format.</p>
+<dd class="field-even"><p><strong>ValueError</strong> - If time values are not in a recognizable format.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1164,8 +1164,8 @@ subtracting out control IVAF from experiments, and exporting IVAF files.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>zenodo_directory</strong> (<em>str</em>) – Path to the directory containing the NetCDF files.</p></li>
-<li><p><strong>output_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to save the extracted density values as a CSV file. Defaults to None.</p></li>
+<li><p><strong>zenodo_directory</strong> (<em>str</em>) - Path to the directory containing the NetCDF files.</p></li>
+<li><p><strong>output_path</strong> (<em>str</em><em>, </em><em>optional</em>) - Path to save the extracted density values as a CSV file. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1184,10 +1184,10 @@ subtracting out control IVAF from experiments, and exporting IVAF files.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>dataset_fp</strong> (<em>str</em>) – The file path to the xarray dataset.</p></li>
-<li><p><strong>var_name</strong> (<em>str</em><em>, </em><em>optional</em>) – The name of the variable to retrieve from the dataset. Defaults to None.</p></li>
-<li><p><strong>ice_sheet</strong> (<em>str</em><em>, </em><em>optional</em>) – The ice sheet type (‘AIS’ or ‘GrIS’). Defaults to ‘AIS’.</p></li>
-<li><p><strong>convert_and_subset</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, converts and subsets the dataset for the target time range. Defaults to False.</p></li>
+<li><p><strong>dataset_fp</strong> (<em>str</em>) - The file path to the xarray dataset.</p></li>
+<li><p><strong>var_name</strong> (<em>str</em><em>, </em><em>optional</em>) - The name of the variable to retrieve from the dataset. Defaults to None.</p></li>
+<li><p><strong>ice_sheet</strong> (<em>str</em><em>, </em><em>optional</em>) - The ice sheet type (‘AIS’ or ‘GrIS’). Defaults to ‘AIS’.</p></li>
+<li><p><strong>convert_and_subset</strong> (<em>bool</em><em>, </em><em>optional</em>) - If True, converts and subsets the dataset for the target time range. Defaults to False.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1206,7 +1206,7 @@ subtracting out control IVAF from experiments, and exporting IVAF files.</p>
 Ensures that first and last values are properly adjusted to maintain consistency.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>data</strong> (<em>xarray.Dataset</em>) – A dataset containing x and y dimensions with potential missing values.</p>
+<dd class="field-odd"><p><strong>data</strong> (<em>xarray.Dataset</em>) - A dataset containing x and y dimensions with potential missing values.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A tuple containing the interpolated x and y arrays.</p>
@@ -1224,11 +1224,11 @@ Ensures that first and last values are properly adjusted to maintain consistency
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>forcings</strong> (<em>pd.DataFrame</em>) – Forcing dataset.</p></li>
-<li><p><strong>projections</strong> (<em>pd.DataFrame</em>) – Projection dataset.</p></li>
-<li><p><strong>experiments_file</strong> (<em>str</em><em> or </em><em>pd.DataFrame</em>) – Path to the experiment metadata file or a DataFrame.</p></li>
-<li><p><strong>ice_sheet</strong> (<em>str</em><em>, </em><em>optional</em>) – The ice sheet type (‘AIS’ or ‘GrIS’). Defaults to ‘AIS’.</p></li>
-<li><p><strong>export_directory</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory to save the merged dataset. Defaults to None.</p></li>
+<li><p><strong>forcings</strong> (<em>pd.DataFrame</em>) - Forcing dataset.</p></li>
+<li><p><strong>projections</strong> (<em>pd.DataFrame</em>) - Projection dataset.</p></li>
+<li><p><strong>experiments_file</strong> (<em>str</em><em> or </em><em>pd.DataFrame</em>) - Path to the experiment metadata file or a DataFrame.</p></li>
+<li><p><strong>ice_sheet</strong> (<em>str</em><em>, </em><em>optional</em>) - The ice sheet type (‘AIS’ or ‘GrIS’). Defaults to ‘AIS’.</p></li>
+<li><p><strong>export_directory</strong> (<em>str</em><em>, </em><em>optional</em>) - Directory to save the merged dataset. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1247,8 +1247,8 @@ Ensures that first and last values are properly adjusted to maintain consistency
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>forcing_directory</strong> (<em>str</em>) – Directory containing atmospheric forcing data.</p></li>
-<li><p><strong>grid_file</strong> (<em>str</em><em> or </em><em>xarray.Dataset</em>) – Grid file defining sector boundaries.</p></li>
+<li><p><strong>forcing_directory</strong> (<em>str</em>) - Directory containing atmospheric forcing data.</p></li>
+<li><p><strong>grid_file</strong> (<em>str</em><em> or </em><em>xarray.Dataset</em>) - Grid file defining sector boundaries.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1267,8 +1267,8 @@ Ensures that first and last values are properly adjusted to maintain consistency
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>forcing_directory</strong> (<em>str</em>) – Directory containing oceanic forcing data.</p></li>
-<li><p><strong>grid_file</strong> (<em>str</em><em> or </em><em>xarray.Dataset</em>) – Grid file defining sector boundaries.</p></li>
+<li><p><strong>forcing_directory</strong> (<em>str</em>) - Directory containing oceanic forcing data.</p></li>
+<li><p><strong>grid_file</strong> (<em>str</em><em> or </em><em>xarray.Dataset</em>) - Grid file defining sector boundaries.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1287,8 +1287,8 @@ Ensures that first and last values are properly adjusted to maintain consistency
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>zenodo_directory</strong> (<em>str</em>) – Directory containing AIS output files.</p></li>
-<li><p><strong>with_ctrl</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, includes control projections. Defaults to False.</p></li>
+<li><p><strong>zenodo_directory</strong> (<em>str</em>) - Directory containing AIS output files.</p></li>
+<li><p><strong>with_ctrl</strong> (<em>bool</em><em>, </em><em>optional</em>) - If True, includes control projections. Defaults to False.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1307,8 +1307,8 @@ Ensures that first and last values are properly adjusted to maintain consistency
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>forcing_directory</strong> (<em>str</em>) – Directory containing atmospheric forcing data.</p></li>
-<li><p><strong>grid_file</strong> (<em>str</em><em> or </em><em>xarray.Dataset</em>) – Grid file defining sector boundaries.</p></li>
+<li><p><strong>forcing_directory</strong> (<em>str</em>) - Directory containing atmospheric forcing data.</p></li>
+<li><p><strong>grid_file</strong> (<em>str</em><em> or </em><em>xarray.Dataset</em>) - Grid file defining sector boundaries.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1327,8 +1327,8 @@ Ensures that first and last values are properly adjusted to maintain consistency
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>forcing_directory</strong> (<em>str</em>) – Directory containing oceanic forcing data.</p></li>
-<li><p><strong>grid_file</strong> (<em>str</em><em> or </em><em>xarray.Dataset</em>) – Grid file defining sector boundaries.</p></li>
+<li><p><strong>forcing_directory</strong> (<em>str</em>) - Directory containing oceanic forcing data.</p></li>
+<li><p><strong>grid_file</strong> (<em>str</em><em> or </em><em>xarray.Dataset</em>) - Grid file defining sector boundaries.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1346,7 +1346,7 @@ Ensures that first and last values are properly adjusted to maintain consistency
 <dd><p>Processes GrIS model outputs by extracting Ice Volume Above Flotation (IVAF) data and computing sea-level equivalents.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>zenodo_directory</strong> (<em>str</em>) – Directory containing GrIS output files.</p>
+<dd class="field-odd"><p><strong>zenodo_directory</strong> (<em>str</em>) - Directory containing GrIS output files.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>DataFrame containing processed GrIS output data.</p>
@@ -1364,14 +1364,14 @@ Ensures that first and last values are properly adjusted to maintain consistency
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ice_sheet</strong> (<em>str</em>) – The ice sheet being processed (‘AIS’ or ‘GrIS’).</p></li>
-<li><p><strong>forcing_directory</strong> (<em>str</em>) – Directory containing forcing data.</p></li>
-<li><p><strong>grid_file</strong> (<em>str</em>) – Path to the grid file defining sectors.</p></li>
-<li><p><strong>zenodo_directory</strong> (<em>str</em>) – Directory containing projection data.</p></li>
-<li><p><strong>experiments_file</strong> (<em>str</em>) – Path to the experiment metadata file.</p></li>
-<li><p><strong>export_directory</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory to save processed datasets. Defaults to None.</p></li>
-<li><p><strong>overwrite</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, overwrites existing datasets. Defaults to False.</p></li>
-<li><p><strong>with_ctrl</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, includes control projections. Defaults to False.</p></li>
+<li><p><strong>ice_sheet</strong> (<em>str</em>) - The ice sheet being processed (‘AIS’ or ‘GrIS’).</p></li>
+<li><p><strong>forcing_directory</strong> (<em>str</em>) - Directory containing forcing data.</p></li>
+<li><p><strong>grid_file</strong> (<em>str</em>) - Path to the grid file defining sectors.</p></li>
+<li><p><strong>zenodo_directory</strong> (<em>str</em>) - Directory containing projection data.</p></li>
+<li><p><strong>experiments_file</strong> (<em>str</em>) - Path to the experiment metadata file.</p></li>
+<li><p><strong>export_directory</strong> (<em>str</em><em>, </em><em>optional</em>) - Directory to save processed datasets. Defaults to None.</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em><em>, </em><em>optional</em>) - If True, overwrites existing datasets. Defaults to False.</p></li>
+<li><p><strong>with_ctrl</strong> (<em>bool</em><em>, </em><em>optional</em>) - If True, includes control projections. Defaults to False.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1394,7 +1394,7 @@ Ensures that first and last values are properly adjusted to maintain consistency
 ensuring all values are positive by applying a shift.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>epsilon</strong> (<em>float</em><em>, </em><em>optional</em>) – A small constant to avoid log(0) errors. Defaults to 1e-8.</p>
+<dd class="field-odd"><p><strong>epsilon</strong> (<em>float</em><em>, </em><em>optional</em>) - A small constant to avoid log(0) errors. Defaults to 1e-8.</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -1466,7 +1466,7 @@ ensuring all values are positive by applying a shift.</p>
 <dd><p>Computes the minimum value in the dataset to ensure all values remain positive during transformation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – The input data to be scaled.</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) - The input data to be scaled.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1477,7 +1477,7 @@ ensuring all values are positive by applying a shift.</p>
 <dd><p>Reverses the log transformation to recover the original scale of the data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – The log-transformed input data.</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) - The log-transformed input data.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The transformed input data in its original scale.</p>
@@ -1504,7 +1504,7 @@ ensuring all values are positive by applying a shift.</p>
 <dd><p>Applies the logarithmic transformation to the input data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – The input data to be transformed.</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) - The input data to be transformed.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The log-transformed input data.</p>
@@ -1525,7 +1525,7 @@ ensuring all values are positive by applying a shift.</p>
 making it robust to outliers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>nn.Module</strong> – The base class for all neural network modules in PyTorch.</p>
+<dd class="field-odd"><p><strong>nn.Module</strong> - The base class for all neural network modules in PyTorch.</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -1597,7 +1597,7 @@ making it robust to outliers.</p>
 <dd><p>Computes the median and interquartile range (IQR) of the input data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – The input data to be scaled.</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) - The input data to be scaled.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1608,7 +1608,7 @@ making it robust to outliers.</p>
 <dd><p>Reverses the scaling operation on the input data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – The scaled input data to be transformed back.</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) - The scaled input data to be transformed back.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The transformed input data.</p>
@@ -1617,7 +1617,7 @@ making it robust to outliers.</p>
 <dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>RuntimeError</strong> – If the RobustScaler instance is not fitted yet.</p>
+<dd class="field-even"><p><strong>RuntimeError</strong> - If the RobustScaler instance is not fitted yet.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1638,7 +1638,7 @@ making it robust to outliers.</p>
 <dd><p>Scales the input data using the computed median and IQR.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – The input data to be scaled.</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) - The input data to be scaled.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The scaled input data.</p>
@@ -1647,7 +1647,7 @@ making it robust to outliers.</p>
 <dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>RuntimeError</strong> – If the RobustScaler instance is not fitted yet.</p>
+<dd class="field-even"><p><strong>RuntimeError</strong> - If the RobustScaler instance is not fitted yet.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1661,7 +1661,7 @@ making it robust to outliers.</p>
 <p>A class for scaling input data using mean and standard deviation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>nn.Module</strong> – The base class for all neural network modules in PyTorch.</p>
+<dd class="field-odd"><p><strong>nn.Module</strong> - The base class for all neural network modules in PyTorch.</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -1733,7 +1733,7 @@ making it robust to outliers.</p>
 <dd><p>Computes the mean and standard deviation of the input data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – The input data to be scaled.</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) - The input data to be scaled.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1744,7 +1744,7 @@ making it robust to outliers.</p>
 <dd><p>Reverses the scaling operation on the input data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – The scaled input data to be transformed back.</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) - The scaled input data to be transformed back.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The transformed input data.</p>
@@ -1753,7 +1753,7 @@ making it robust to outliers.</p>
 <dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>RuntimeError</strong> – If the Scaler instance is not fitted yet.</p>
+<dd class="field-even"><p><strong>RuntimeError</strong> - If the Scaler instance is not fitted yet.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1764,7 +1764,7 @@ making it robust to outliers.</p>
 <dd><p>Loads the mean and standard deviation from a file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – The path to load the file from.</p>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) - The path to load the file from.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A Scaler instance with the loaded mean and standard deviation.</p>
@@ -1781,7 +1781,7 @@ making it robust to outliers.</p>
 <dd><p>Saves the mean and standard deviation to a file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – The path to save the file.</p>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) - The path to save the file.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1792,7 +1792,7 @@ making it robust to outliers.</p>
 <dd><p>Scales the input data using the computed mean and standard deviation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – The input data to be scaled.</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) - The input data to be scaled.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The scaled input data.</p>
@@ -1801,7 +1801,7 @@ making it robust to outliers.</p>
 <dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>RuntimeError</strong> – If the Scaler instance is not fitted yet.</p>
+<dd class="field-even"><p><strong>RuntimeError</strong> - If the Scaler instance is not fitted yet.</p>
 </dd>
 </dl>
 </dd></dl>

@@ -215,9 +215,9 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) – The input data.</p></li>
-<li><p><strong>y</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) – The target data.</p></li>
-<li><p><strong>sequence_length</strong> (<em>int</em>) – The length of the input sequence.</p></li>
+<li><p><strong>X</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) - The input data.</p></li>
+<li><p><strong>y</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) - The target data.</p></li>
+<li><p><strong>sequence_length</strong> (<em>int</em>) - The length of the input sequence.</p></li>
 </ul>
 </dd>
 </dl>
@@ -282,8 +282,8 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) – The input data.</p></li>
-<li><p><strong>y</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) – The target data.</p></li>
+<li><p><strong>X</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) - The input data.</p></li>
+<li><p><strong>y</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) - The target data.</p></li>
 </ul>
 </dd>
 </dl>
@@ -315,9 +315,9 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) – The input data.</p></li>
-<li><p><strong>y</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) – The target data.</p></li>
-<li><p><strong>sequence_length</strong> (<em>int</em>) – The length of the input sequence.</p></li>
+<li><p><strong>X</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) - The input data.</p></li>
+<li><p><strong>y</strong> (<em>pandas.DataFrame</em><em>, </em><em>numpy.ndarray</em><em>, or </em><em>torch.Tensor</em>) - The target data.</p></li>
+<li><p><strong>sequence_length</strong> (<em>int</em>) - The length of the input sequence.</p></li>
 </ul>
 </dd>
 </dl>
@@ -379,13 +379,13 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – The input dataset.</p></li>
-<li><p><strong>fill_mrro_nans</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag indicating whether to fill missing values in the ‘mrro’ column. Defaults to False.</p></li>
-<li><p><strong>split_dataset</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag indicating whether to split the dataset into training, validation, and test sets. Defaults to False.</p></li>
-<li><p><strong>train_size</strong> (<em>float</em><em>, </em><em>optional</em>) – The proportion of the dataset to be used for training. Defaults to 0.7.</p></li>
-<li><p><strong>val_size</strong> (<em>float</em><em>, </em><em>optional</em>) – The proportion of the dataset to be used for validation. Defaults to 0.15.</p></li>
-<li><p><strong>test_size</strong> (<em>float</em><em>, </em><em>optional</em>) – The proportion of the dataset to be used for testing. Defaults to 0.15.</p></li>
-<li><p><strong>output_directory</strong> (<em>str</em><em>, </em><em>optional</em>) – The directory to save the split datasets. Defaults to None.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) - The input dataset.</p></li>
+<li><p><strong>fill_mrro_nans</strong> (<em>bool</em><em>, </em><em>optional</em>) - Flag indicating whether to fill missing values in the ‘mrro’ column. Defaults to False.</p></li>
+<li><p><strong>split_dataset</strong> (<em>bool</em><em>, </em><em>optional</em>) - Flag indicating whether to split the dataset into training, validation, and test sets. Defaults to False.</p></li>
+<li><p><strong>train_size</strong> (<em>float</em><em>, </em><em>optional</em>) - The proportion of the dataset to be used for training. Defaults to 0.7.</p></li>
+<li><p><strong>val_size</strong> (<em>float</em><em>, </em><em>optional</em>) - The proportion of the dataset to be used for validation. Defaults to 0.15.</p></li>
+<li><p><strong>test_size</strong> (<em>float</em><em>, </em><em>optional</em>) - The proportion of the dataset to be used for testing. Defaults to 0.15.</p></li>
+<li><p><strong>output_directory</strong> (<em>str</em><em>, </em><em>optional</em>) - The directory to save the split datasets. Defaults to None.</p></li>
 </ul>
 </dd>
 </dl>
@@ -416,8 +416,8 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>method</strong> (<em>str</em>) – The method to use for filling missing values.</p></li>
-<li><p><strong>data</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) – The input dataset. If not provided, the class attribute ‘data’ will be used. Defaults to None.</p></li>
+<li><p><strong>method</strong> (<em>str</em>) - The method to use for filling missing values.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) - The input dataset. If not provided, the class attribute ‘data’ will be used. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -441,12 +441,12 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) – The input dataset. If not provided, the class attribute ‘data’ will be used. Defaults to None.</p></li>
-<li><p><strong>train_size</strong> (<em>float</em><em>, </em><em>optional</em>) – The proportion of the dataset to be used for training. If not provided, the class attribute ‘train_size’ will be used. Defaults to None.</p></li>
-<li><p><strong>val_size</strong> (<em>float</em><em>, </em><em>optional</em>) – The proportion of the dataset to be used for validation. If not provided, the class attribute ‘val_size’ will be used. Defaults to None.</p></li>
-<li><p><strong>test_size</strong> (<em>float</em><em>, </em><em>optional</em>) – The proportion of the dataset to be used for testing. If not provided, the class attribute ‘test_size’ will be used. Defaults to None.</p></li>
-<li><p><strong>output_directory</strong> (<em>str</em><em>, </em><em>optional</em>) – The directory to save the split datasets. If not provided, the class attribute ‘output_directory’ will be used. Defaults to None.</p></li>
-<li><p><strong>random_state</strong> (<em>int</em><em>, </em><em>optional</em>) – The random seed for reproducibility. Defaults to 42.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) - The input dataset. If not provided, the class attribute ‘data’ will be used. Defaults to None.</p></li>
+<li><p><strong>train_size</strong> (<em>float</em><em>, </em><em>optional</em>) - The proportion of the dataset to be used for training. If not provided, the class attribute ‘train_size’ will be used. Defaults to None.</p></li>
+<li><p><strong>val_size</strong> (<em>float</em><em>, </em><em>optional</em>) - The proportion of the dataset to be used for validation. If not provided, the class attribute ‘val_size’ will be used. Defaults to None.</p></li>
+<li><p><strong>test_size</strong> (<em>float</em><em>, </em><em>optional</em>) - The proportion of the dataset to be used for testing. If not provided, the class attribute ‘test_size’ will be used. Defaults to None.</p></li>
+<li><p><strong>output_directory</strong> (<em>str</em><em>, </em><em>optional</em>) - The directory to save the split datasets. If not provided, the class attribute ‘output_directory’ will be used. Defaults to None.</p></li>
+<li><p><strong>random_state</strong> (<em>int</em><em>, </em><em>optional</em>) - The random seed for reproducibility. Defaults to 42.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -472,8 +472,8 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – The input DataFrame.</p></li>
-<li><p><strong>lag</strong> (<em>int</em>) – The number of time steps to lag the variables.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) - The input DataFrame.</p></li>
+<li><p><strong>lag</strong> (<em>int</em>) - The number of time steps to lag the variables.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -497,7 +497,7 @@
 with the value from the previous row.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>percentile</strong> (<em>float</em>) – The percentile to use for defining upper extreme values across all y-values. Defaults to 99.999.</p>
+<dd class="field-odd"><p><strong>percentile</strong> (<em>float</em>) - The percentile to use for defining upper extreme values across all y-values. Defaults to 99.999.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -516,10 +516,10 @@ chosen, expression must contain a list of tuples such that the tuple contains
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – The input DataFrame.</p></li>
-<li><p><strong>method</strong> (<em>str</em>) – Method of outlier deletion, must be in [quantile, explicit]</p></li>
-<li><p><strong>expression</strong> (<em>list</em><em>[</em><em>tuple</em><em>]</em>) – List of subset expressions in the form [column, operator, value], defaults to None.</p></li>
-<li><p><strong>quantiles</strong> (<em>list</em><em>[</em><em>float</em><em>]</em>) – List of quantiles for quantile method, defaults to [0.01, 0.99].</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) - The input DataFrame.</p></li>
+<li><p><strong>method</strong> (<em>str</em>) - Method of outlier deletion, must be in [quantile, explicit]</p></li>
+<li><p><strong>expression</strong> (<em>list</em><em>[</em><em>tuple</em><em>]</em>) - List of subset expressions in the form [column, operator, value], defaults to None.</p></li>
+<li><p><strong>quantiles</strong> (<em>list</em><em>[</em><em>float</em><em>]</em>) - List of quantiles for quantile method, defaults to [0.01, 0.99].</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -538,8 +538,8 @@ chosen, expression must contain a list of tuples such that the tuple contains
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – The input DataFrame.</p></li>
-<li><p><strong>method</strong> (<em>str</em><em> or </em><em>int</em>) – The method to fill NaN values. Must be one of ‘zero’, ‘mean’, ‘median’, or ‘drop’.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) - The input DataFrame.</p></li>
+<li><p><strong>method</strong> (<em>str</em><em> or </em><em>int</em>) - The method to fill NaN values. Must be one of ‘zero’, ‘mean’, ‘median’, or ‘drop’.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -549,7 +549,7 @@ chosen, expression must contain a list of tuples such that the tuple contains
 <dd class="field-odd"><p>pd.DataFrame</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the method is not one of ‘zero’, ‘mean’, ‘median’, or ‘drop’.</p>
+<dd class="field-even"><p><strong>ValueError</strong> - If the method is not one of ‘zero’, ‘mean’, ‘median’, or ‘drop’.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -566,12 +566,12 @@ chosen, expression must contain a list of tuples such that the tuple contains
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>str</em><em> or </em><em>pandas.DataFrame</em>) – The input data to be split. It can be either a file path (str) or a pandas DataFrame.</p></li>
-<li><p><strong>train_size</strong> (<em>float</em>) – The proportion of data to be used for training.</p></li>
-<li><p><strong>val_size</strong> (<em>float</em>) – The proportion of data to be used for validation.</p></li>
-<li><p><strong>test_size</strong> (<em>float</em><em>, </em><em>optional</em>) – The proportion of data to be used for testing. If not provided, the remaining data after training and validation will be used for testing. Defaults to None.</p></li>
-<li><p><strong>output_directory</strong> (<em>str</em><em>, </em><em>optional</em>) – The directory where the split data will be saved as CSV files. Defaults to None.</p></li>
-<li><p><strong>random_state</strong> (<em>int</em><em>, </em><em>optional</em>) – The random seed for shuffling the data. Defaults to 42.</p></li>
+<li><p><strong>data</strong> (<em>str</em><em> or </em><em>pandas.DataFrame</em>) - The input data to be split. It can be either a file path (str) or a pandas DataFrame.</p></li>
+<li><p><strong>train_size</strong> (<em>float</em>) - The proportion of data to be used for training.</p></li>
+<li><p><strong>val_size</strong> (<em>float</em>) - The proportion of data to be used for validation.</p></li>
+<li><p><strong>test_size</strong> (<em>float</em><em>, </em><em>optional</em>) - The proportion of data to be used for testing. If not provided, the remaining data after training and validation will be used for testing. Defaults to None.</p></li>
+<li><p><strong>output_directory</strong> (<em>str</em><em>, </em><em>optional</em>) - The directory where the split data will be saved as CSV files. Defaults to None.</p></li>
+<li><p><strong>random_state</strong> (<em>int</em><em>, </em><em>optional</em>) - The random seed for shuffling the data. Defaults to 42.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -582,8 +582,8 @@ chosen, expression must contain a list of tuples such that the tuple contains
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>ValueError</strong> – If the length of data is not divisible by 86, indicating incomplete projections.</p></li>
-<li><p><strong>ValueError</strong> – If the data does not have a column named ‘id’.</p></li>
+<li><p><strong>ValueError</strong> - If the length of data is not divisible by 86, indicating incomplete projections.</p></li>
+<li><p><strong>ValueError</strong> - If the data does not have a column named ‘id’.</p></li>
 </ul>
 </dd>
 </dl>
@@ -629,9 +629,9 @@ chosen, expression must contain a list of tuples such that the tuple contains
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>forcing_files</strong> (<em>list</em><em>, </em><em>optional</em>) – List of specific forcing files to convert. If not provided, all files in the directory will be used. Default is None.</p></li>
-<li><p><strong>pca_model_directory</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory containing the pretrained PCA models. If not provided, the directory specified during object initialization will be used. Default is None.</p></li>
-<li><p><strong>output_dir</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory to save the converted files. If not provided, the directory specified during object initialization will be used. Default is None.</p></li>
+<li><p><strong>forcing_files</strong> (<em>list</em><em>, </em><em>optional</em>) - List of specific forcing files to convert. If not provided, all files in the directory will be used. Default is None.</p></li>
+<li><p><strong>pca_model_directory</strong> (<em>str</em><em>, </em><em>optional</em>) - Directory containing the pretrained PCA models. If not provided, the directory specified during object initialization will be used. Default is None.</p></li>
+<li><p><strong>output_dir</strong> (<em>str</em><em>, </em><em>optional</em>) - Directory to save the converted files. If not provided, the directory specified during object initialization will be used. Default is None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -673,9 +673,9 @@ chosen, expression must contain a list of tuples such that the tuple contains
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>pca_x</strong> (<em>array-like</em>) – The input array containing the variables in PCA space.</p></li>
-<li><p><strong>variable</strong> (<em>str</em>) – The name of the variable to transform.</p></li>
-<li><p><strong>pca_models_paths</strong> (<em>dict</em>) – A dictionary containing the filepaths for the PCA models.</p></li>
+<li><p><strong>pca_x</strong> (<em>array-like</em>) - The input array containing the variables in PCA space.</p></li>
+<li><p><strong>variable</strong> (<em>str</em>) - The name of the variable to transform.</p></li>
+<li><p><strong>pca_models_paths</strong> (<em>dict</em>) - A dictionary containing the filepaths for the PCA models.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -694,9 +694,9 @@ chosen, expression must contain a list of tuples such that the tuple contains
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>array-like</em>) – The input array containing the variables.</p></li>
-<li><p><strong>variable</strong> (<em>str</em>) – The name of the variable to transform.</p></li>
-<li><p><strong>pca_models_paths</strong> (<em>dict</em>) – A dictionary containing the filepaths for the PCA models.</p></li>
+<li><p><strong>x</strong> (<em>array-like</em>) - The input array containing the variables.</p></li>
+<li><p><strong>variable</strong> (<em>str</em>) - The name of the variable to transform.</p></li>
+<li><p><strong>pca_models_paths</strong> (<em>dict</em>) - A dictionary containing the filepaths for the PCA models.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -741,10 +741,10 @@ and experiments, subtracting out the control IVAF from experiments,
 and exporting ivaf files.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>output_directory</strong> (<em>str</em>) – The directory to save the processed projections.</p>
+<dd class="field-odd"><p><strong>output_directory</strong> (<em>str</em>) - The directory to save the processed projections.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If projections_directory or output_directory is not specified.</p>
+<dd class="field-even"><p><strong>ValueError</strong> - If projections_directory or output_directory is not specified.</p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>1 indicating successful processing.</p>
@@ -791,8 +791,8 @@ containing the group, model, rhoi, and rhow values for each file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>zenodo_directory</strong> (<em>str</em>) – The path to the directory containing the NetCDF files.</p></li>
-<li><p><strong>output_path</strong> (<em>str</em><em>, </em><em>optional</em>) – The path to save the resulting DataFrame as a CSV file.</p></li>
+<li><p><strong>zenodo_directory</strong> (<em>str</em>) - The path to the directory containing the NetCDF files.</p></li>
+<li><p><strong>output_path</strong> (<em>str</em><em>, </em><em>optional</em>) - The path to save the resulting DataFrame as a CSV file.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -811,10 +811,10 @@ containing the group, model, rhoi, and rhow values for each file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>dataset_fp</strong> (<em>str</em>) – The file path to the xarray dataset.</p></li>
-<li><p><strong>var_name</strong> (<em>str</em><em>, </em><em>optional</em>) – The name of the variable to retrieve from the dataset. Defaults to None.</p></li>
-<li><p><strong>ice_sheet</strong> (<em>str</em><em>, </em><em>optional</em>) – The ice sheet type. Defaults to ‘AIS’.</p></li>
-<li><p><strong>convert_and_subset</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag indicating whether to convert and subset the dataset. Defaults to False.</p></li>
+<li><p><strong>dataset_fp</strong> (<em>str</em>) - The file path to the xarray dataset.</p></li>
+<li><p><strong>var_name</strong> (<em>str</em><em>, </em><em>optional</em>) - The name of the variable to retrieve from the dataset. Defaults to None.</p></li>
+<li><p><strong>ice_sheet</strong> (<em>str</em><em>, </em><em>optional</em>) - The ice sheet type. Defaults to ‘AIS’.</p></li>
+<li><p><strong>convert_and_subset</strong> (<em>bool</em><em>, </em><em>optional</em>) - Flag indicating whether to convert and subset the dataset. Defaults to False.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -832,7 +832,7 @@ containing the group, model, rhoi, and rhow values for each file.</p>
 <dd><p>Interpolates missing values in the x and y dimensions of the input NetCDF data using linear interpolation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>data</strong> – A NetCDF file containing x and y dimensions with missing values.</p>
+<dd class="field-odd"><p><strong>data</strong> - A NetCDF file containing x and y dimensions with missing values.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A tuple containing the interpolated x and y arrays.</p>
@@ -952,7 +952,7 @@ containing the group, model, rhoi, and rhow values for each file.</p>
 <p>A class for scaling input data using mean and standard deviation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>nn.Module</strong> – The base class for all neural network modules in PyTorch.</p>
+<dd class="field-odd"><p><strong>nn.Module</strong> - The base class for all neural network modules in PyTorch.</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -1024,7 +1024,7 @@ containing the group, model, rhoi, and rhow values for each file.</p>
 <dd><p>Computes the mean and standard deviation of the input data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – The input data to be scaled.</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) - The input data to be scaled.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1035,7 +1035,7 @@ containing the group, model, rhoi, and rhow values for each file.</p>
 <dd><p>Reverses the scaling operation on the input data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – The scaled input data to be transformed back.</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) - The scaled input data to be transformed back.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The transformed input data.</p>
@@ -1044,7 +1044,7 @@ containing the group, model, rhoi, and rhow values for each file.</p>
 <dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>RuntimeError</strong> – If the Scaler instance is not fitted yet.</p>
+<dd class="field-even"><p><strong>RuntimeError</strong> - If the Scaler instance is not fitted yet.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1055,7 +1055,7 @@ containing the group, model, rhoi, and rhow values for each file.</p>
 <dd><p>Loads the mean and standard deviation from a file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – The path to load the file from.</p>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) - The path to load the file from.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A Scaler instance with the loaded mean and standard deviation.</p>
@@ -1072,7 +1072,7 @@ containing the group, model, rhoi, and rhow values for each file.</p>
 <dd><p>Saves the mean and standard deviation to a file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – The path to save the file.</p>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) - The path to save the file.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1083,7 +1083,7 @@ containing the group, model, rhoi, and rhow values for each file.</p>
 <dd><p>Scales the input data using the computed mean and standard deviation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – The input data to be scaled.</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) - The input data to be scaled.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The scaled input data.</p>
@@ -1092,7 +1092,7 @@ containing the group, model, rhoi, and rhow values for each file.</p>
 <dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>RuntimeError</strong> – If the Scaler instance is not fitted yet.</p>
+<dd class="field-even"><p><strong>RuntimeError</strong> - If the Scaler instance is not fitted yet.</p>
 </dd>
 </dl>
 </dd></dl>
