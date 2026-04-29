@@ -32,12 +32,6 @@ ISEFlow combines two sub-models trained in sequence:
 
 Total uncertainty = epistemic + aleatoric.
 
-Model versions
-~~~~~~~~~~~~~~
-
-- **v1.0.0** — AIS only; includes ``mrro_anomaly`` as a forcing variable.
-- **v1.1.0** — AIS + GrIS; ``mrro_anomaly`` removed from AIS inputs.
-
 This codebase has been used in peer-reviewed research, including:
 
 - *"A Variational LSTM Emulator of Sea Level Contribution From the Antarctic Ice
