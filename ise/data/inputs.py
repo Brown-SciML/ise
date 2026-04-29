@@ -3,6 +3,11 @@
 This module defines ISEFlowAISInputs and ISEFlowGrISInputs, which encapsulate
 climate forcings, experiment configuration, and ice sheet model settings
 required for running pretrained ISEFlow emulators.
+
+Both classes expose a ``from_raw_values()`` classmethod for users who have
+raw (non-anomaly) forcing arrays.  That path uses ``AnomalyConverter`` to
+subtract the ISMIP6 climatological baseline before constructing the inputs
+object.  See ``ise.data.anomaly.AnomalyConverter`` for details.
 """
 
 import json
@@ -18,7 +23,24 @@ from ise.utils import ismip6_model_configs_path
 
 @dataclass
 class ISEFlowAISInputs:
-    """Configuration settings for an ISEFlow_AIS model run."""
+    """Inputs for an ISEFlow-AIS prediction.
+
+    Expects pre-computed anomaly arrays (``pr_anomaly``, ``evspsbl_anomaly``,
+    ``smb_anomaly``, ``ts_anomaly``).  If you have raw absolute forcing values
+    instead, use the alternative constructor::
+
+        inputs = ISEFlowAISInputs.from_raw_values(
+            year=..., sector=..., pr=..., evspsbl=..., smb=..., ts=...,
+            ocean_thermal_forcing=..., ocean_salinity=..., ocean_temperature=...,
+            aogcm="noresm1-m_rcp85",   # or custom_climatology={...}
+            **ism_config_kwargs,
+        )
+
+    ``from_raw_values()`` subtracts the ISMIP6 1995-2014 climatological
+    baseline automatically.  Pass ``aogcm`` for a bundled ISMIP6 model or
+    ``custom_climatology`` (dict with keys ``'pr'``, ``'evspsbl'``, ``'smb'``,
+    ``'ts'``) for a CMIP model not in the bundled climatology.
+    """
 
     # Forcing data
     year: np.ndarray
@@ -57,6 +79,152 @@ class ISEFlowAISInputs:
     version: str = "v1.1.0"
 
     override_params: dict = None
+
+    # ------------------------------------------------------------------
+    # Alternative constructor: raw (non-anomaly) forcing values
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def from_raw_values(
+        cls,
+        year: np.ndarray,
+        sector: int,
+        pr: np.ndarray,
+        evspsbl: np.ndarray,
+        smb: np.ndarray,
+        ts: np.ndarray,
+        ocean_thermal_forcing: np.ndarray,
+        ocean_salinity: np.ndarray,
+        ocean_temperature: np.ndarray,
+        aogcm: Optional[str] = None,
+        custom_climatology: Optional[dict] = None,
+        mrro: Optional[np.ndarray] = None,
+        **kwargs,
+    ) -> "ISEFlowAISInputs":
+        """Construct ISEFlowAISInputs from raw (non-anomaly) atmospheric forcings.
+
+        Subtracts the ISMIP6 1995-2014 climatological baseline from each
+        atmospheric variable to produce the anomaly arrays required by the
+        model.  Ocean variables (``ocean_thermal_forcing``, ``ocean_salinity``,
+        ``ocean_temperature``) are absolute values and are passed through
+        unchanged.
+
+        Exactly one of ``aogcm`` or ``custom_climatology`` must be provided.
+
+        Parameters
+        ----------
+        year : np.ndarray
+            Years corresponding to the time series (86 values, 2015-2100).
+        sector : int
+            AIS drainage sector (1-18).
+        pr : np.ndarray
+            Raw precipitation (86 values, kg m⁻² s⁻¹).
+        evspsbl : np.ndarray
+            Raw evaporation / sublimation (86 values, kg m⁻² s⁻¹).
+        smb : np.ndarray
+            Raw surface mass balance (86 values, kg m⁻² s⁻¹).
+        ts : np.ndarray
+            Raw surface temperature (86 values, K).
+        ocean_thermal_forcing : np.ndarray
+            Ocean thermal forcing (86 values, °C).  Passed through unchanged.
+        ocean_salinity : np.ndarray
+            Ocean salinity (86 values, PSU).  Passed through unchanged.
+        ocean_temperature : np.ndarray
+            Ocean temperature (86 values, °C).  Passed through unchanged.
+        aogcm : str, optional
+            AOGCM name to look up in the bundled ISMIP6 climatology
+            (e.g. ``'noresm1-m_rcp85'``).  Common alternate spellings are
+            normalised automatically.
+        custom_climatology : dict, optional
+            Baseline means for a CMIP model not in the bundled climatology.
+            Must contain keys ``'pr'``, ``'evspsbl'``, ``'smb'``, ``'ts'``
+            (and ``'mrro'`` if ``mrro`` is also provided).  Values should be
+            in the same units as the raw input arrays.
+        mrro : np.ndarray, optional
+            Raw runoff (86 values).  Only needed for ISEFlow v1.0.0.
+        **kwargs
+            All remaining keyword arguments are forwarded to
+            ``ISEFlowAISInputs.__init__`` (e.g. ISM config fields such as
+            ``numerics``, ``stress_balance``, ``model_configs``, etc.).
+
+        Returns
+        -------
+        ISEFlowAISInputs
+            Fully validated inputs object ready for ``model.predict()``.
+
+        Examples
+        --------
+        Using a bundled ISMIP6 climatology::
+
+            inputs = ISEFlowAISInputs.from_raw_values(
+                year=np.arange(2015, 2101),
+                sector=10,
+                pr=pr_array,
+                evspsbl=evspsbl_array,
+                smb=smb_array,
+                ts=ts_array,
+                ocean_thermal_forcing=otf_array,
+                ocean_salinity=sal_array,
+                ocean_temperature=temp_array,
+                aogcm="noresm1-m_rcp85",
+                numerics="fd",
+                stress_balance="hybrid",
+                resolution="8",
+                init_method="eq",
+                initial_year=2005,
+                melt_in_floating_cells="sub-grid",
+                icefront_migration="str",
+                ocean_forcing_type="open",
+                ocean_sensitivity="medium",
+                ice_shelf_fracture=False,
+                open_melt_type="quad",
+                standard_melt_type="nonlocal",
+            )
+
+        Using a custom climatology for a new CMIP model::
+
+            inputs = ISEFlowAISInputs.from_raw_values(
+                year=np.arange(2015, 2101),
+                sector=10,
+                pr=pr_array, evspsbl=evspsbl_array,
+                smb=smb_array, ts=ts_array,
+                ocean_thermal_forcing=otf_array,
+                ocean_salinity=sal_array,
+                ocean_temperature=temp_array,
+                custom_climatology={
+                    "pr": 1.3e-5, "evspsbl": 3.8e-6,
+                    "smb": 9.0e-6, "ts": 253.7,
+                },
+                numerics="fd", ...
+            )
+        """
+        from ise.data.anomaly import AnomalyConverter
+
+        converter = AnomalyConverter("AIS")
+        anomalies = converter.compute_ais(
+            sector=sector,
+            pr=pr,
+            evspsbl=evspsbl,
+            smb=smb,
+            ts=ts,
+            aogcm=aogcm,
+            custom_climatology=custom_climatology,
+            mrro=mrro,
+        )
+
+        return cls(
+            year=year,
+            sector=sector,
+            pr_anomaly=anomalies["pr_anomaly"],
+            evspsbl_anomaly=anomalies["evspsbl_anomaly"],
+            smb_anomaly=anomalies["smb_anomaly"],
+            ts_anomaly=anomalies["ts_anomaly"],
+            ocean_thermal_forcing=ocean_thermal_forcing,
+            ocean_salinity=ocean_salinity,
+            ocean_temperature=ocean_temperature,
+            mrro_anomaly=anomalies.get("mrro_anomaly"),
+            **kwargs,
+        )
 
     # Validation logic runs after the object is created
     def __post_init__(self):
@@ -433,7 +601,23 @@ class ISEFlowAISInputs:
 
 @dataclass
 class ISEFlowGrISInputs:
-    """Configuration settings for an ISEFlow_GrIS model run."""
+    """Inputs for an ISEFlow-GrIS prediction.
+
+    Expects pre-computed anomaly arrays (``aSMB``, ``aST``).  If you have raw
+    absolute forcing values instead, use the alternative constructor::
+
+        inputs = ISEFlowGrISInputs.from_raw_values(
+            year=..., sector=..., smb=..., st=...,
+            ocean_thermal_forcing=..., basin_runoff=...,
+            aogcm="hadgem2-es_rcp85",  # or custom_climatology={...}
+            **ism_config_kwargs,
+        )
+
+    ``from_raw_values()`` subtracts the ISMIP6 1960-1989 MAR climatological
+    baseline automatically.  Pass ``aogcm`` for a bundled ISMIP6 model or
+    ``custom_climatology`` (dict with keys ``'smb'``, ``'st'``) for a CMIP
+    model not in the bundled climatology.
+    """
 
     # Forcing data
     year: np.ndarray
@@ -467,6 +651,127 @@ class ISEFlowGrISInputs:
 
     # ISEFlow version
     version: str = "v1.1.0"
+
+    # ------------------------------------------------------------------
+    # Alternative constructor: raw (non-anomaly) forcing values
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def from_raw_values(
+        cls,
+        year: np.ndarray,
+        sector: int,
+        smb: np.ndarray,
+        st: np.ndarray,
+        ocean_thermal_forcing: np.ndarray,
+        basin_runoff: np.ndarray,
+        aogcm: Optional[str] = None,
+        custom_climatology: Optional[dict] = None,
+        **kwargs,
+    ) -> "ISEFlowGrISInputs":
+        """Construct ISEFlowGrISInputs from raw (non-anomaly) atmospheric forcings.
+
+        Subtracts the ISMIP6 1960-1989 MAR climatological baseline from each
+        atmospheric variable to produce the anomaly arrays (``aSMB``, ``aST``)
+        required by the model.  Ocean variables (``ocean_thermal_forcing``,
+        ``basin_runoff``) are absolute values and are passed through unchanged.
+
+        Exactly one of ``aogcm`` or ``custom_climatology`` must be provided.
+
+        Parameters
+        ----------
+        year : np.ndarray
+            Years (86 values, 2015-2100).
+        sector : int
+            GrIS drainage basin number (1-6).
+        smb : np.ndarray
+            Raw surface mass balance (86 values, in MAR units — mm w.e. yr⁻¹
+            or equivalent, consistent with the reference file).
+        st : np.ndarray
+            Raw surface temperature (86 values, K or °C, consistent with
+            the MAR reference).
+        ocean_thermal_forcing : np.ndarray
+            Ocean thermal forcing (86 values).  Passed through unchanged.
+        basin_runoff : np.ndarray
+            Basin-integrated runoff (86 values).  Passed through unchanged.
+        aogcm : str, optional
+            AOGCM name to look up in the bundled ISMIP6 climatology
+            (e.g. ``'hadgem2-es_rcp85'``).  Common alternate spellings are
+            normalised automatically.
+        custom_climatology : dict, optional
+            Baseline means for a CMIP model not in the bundled climatology.
+            Must contain keys ``'smb'`` and ``'st'`` in MAR units.
+        **kwargs
+            All remaining keyword arguments are forwarded to
+            ``ISEFlowGrISInputs.__init__`` (e.g. ISM config fields such as
+            ``numerics``, ``ice_flow_model``, ``model_configs``, etc.).
+
+        Returns
+        -------
+        ISEFlowGrISInputs
+            Fully validated inputs object ready for ``model.predict()``.
+
+        Examples
+        --------
+        Using a bundled ISMIP6 climatology::
+
+            inputs = ISEFlowGrISInputs.from_raw_values(
+                year=np.arange(2015, 2101),
+                sector=1,
+                smb=smb_array,
+                st=st_array,
+                ocean_thermal_forcing=otf_array,
+                basin_runoff=runoff_array,
+                aogcm="hadgem2-es_rcp85",
+                initial_year=1990,
+                numerics="fe",
+                ice_flow_model="ho",
+                initialization="dav",
+                initial_smb="ra3",
+                velocity="joughin",
+                bedrock_topography="morlighem",
+                surface_thickness="None",
+                geothermal_heat_flux="g",
+                res_min=1.0,
+                res_max=7.5,
+                standard_ocean_forcing=True,
+                ocean_sensitivity="medium",
+                ice_shelf_fracture=False,
+            )
+
+        Using a custom climatology for a new CMIP model::
+
+            inputs = ISEFlowGrISInputs.from_raw_values(
+                year=np.arange(2015, 2101),
+                sector=1,
+                smb=smb_array,
+                st=st_array,
+                ocean_thermal_forcing=otf_array,
+                basin_runoff=runoff_array,
+                custom_climatology={"smb": -241.2, "st": -22.8},
+                initial_year=1990, ...
+            )
+        """
+        from ise.data.anomaly import AnomalyConverter
+
+        converter = AnomalyConverter("GrIS")
+        anomalies = converter.compute_gris(
+            sector=sector,
+            smb=smb,
+            st=st,
+            aogcm=aogcm,
+            custom_climatology=custom_climatology,
+        )
+
+        return cls(
+            year=year,
+            sector=sector,
+            aSMB=anomalies["aSMB"],
+            aST=anomalies["aST"],
+            ocean_thermal_forcing=ocean_thermal_forcing,
+            basin_runoff=basin_runoff,
+            **kwargs,
+        )
 
     # Validation logic runs after the object is created
     def __post_init__(self):

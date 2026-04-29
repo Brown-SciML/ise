@@ -44,6 +44,10 @@ from ise.models.iseflow import ISEFlow_AIS
 #
 # Source: AWI_PISM1, sector 10, ISMIP6 AIS test dataset
 
+# Note: ISE has the capability to calculate the anomaly from absolute forcing values using an 
+# existing climatology already in ISMIP6 or using a custom climatology for each forcing variable.
+# see: examples/example_raw_values.py
+
 years = np.arange(2015, 2101)
 
 pr_anomaly = np.array([
@@ -206,8 +210,8 @@ ocean_temperature = np.array([
 # See ISEFlowAISInputs docstring for all accepted values.
 
 sector        = 10          # AIS drainage sector (1-18)
-initial_year  = 2005        # model spin-up start year
 
+initial_year  = 2005        # model spin-up start year
 numerics      = 'fd'        # numerical scheme
 stress_balance = 'hybrid'   # ice-dynamics approximation
 resolution    = '8'         # grid resolution in km
@@ -249,7 +253,7 @@ inputs = ISEFlowAISInputs(
     standard_melt_type=standard_melt_type,
 )
 
-print(inputs)  # inspect the validated, internally-encoded inputs
+print(inputs)
 
 
 # ── 4. Load the pretrained model and predict ──────────────────────────────────
