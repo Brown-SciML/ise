@@ -72,14 +72,6 @@ ise.models.pretrained
    :undoc-members:
    :show-inheritance:
 
-Experimental subpackage
------------------------
-
-.. toctree::
-   :maxdepth: 2
-
-   ise.models._experimental
-
 Module contents
 ---------------
 

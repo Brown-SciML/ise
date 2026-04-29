@@ -15,6 +15,7 @@ Subpackages
 
    ise.data
    ise.models
+   ise.models._experimental
    ise.evaluation
    ise.utils
 
