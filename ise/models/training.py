@@ -3,8 +3,10 @@
 This module provides CheckpointSaver and EarlyStoppingCheckpointer for saving
 model state when loss improves and stopping when validation loss plateaus.
 """
-import torch
+
 import warnings
+
+import torch
 
 
 class CheckpointSaver:
@@ -39,7 +41,13 @@ class CheckpointSaver:
             Loads a saved checkpoint and restores model and optimizer states.
     """
 
-    def __init__(self, model: torch.nn.Module, optimizer: torch.optim.Optimizer, checkpoint_path: str, verbose: bool = False):
+    def __init__(
+        self,
+        model: torch.nn.Module,
+        optimizer: torch.optim.Optimizer,
+        checkpoint_path: str,
+        verbose: bool = False,
+    ):
         """
         Initializes the CheckpointSaver instance.
 
@@ -53,10 +61,10 @@ class CheckpointSaver:
         self.checkpoint_path = checkpoint_path
         self.model = model
         self.optimizer = optimizer
-        self.best_loss = float('inf')
+        self.best_loss = float("inf")
         self.verbose = verbose
         self.log = None
-        
+
     def __call__(self, loss, epoch, save_best_only=True):
         """
         Determines whether to save the checkpoint based on the loss.
@@ -82,7 +90,7 @@ class CheckpointSaver:
         else:
             self.log = ""
         return False
-        
+
     def _determine_if_better(self, loss: float):
         """
         Checks if the new loss value is lower than the best recorded loss.
@@ -96,7 +104,7 @@ class CheckpointSaver:
 
         # Determine if current loss is better than best_loss
         return loss < self.best_loss
-        
+
     def _update_best_loss(self, loss):
         """
         Updates the best recorded loss with the new value.
@@ -106,7 +114,7 @@ class CheckpointSaver:
         """
 
         self.best_loss = loss
-    
+
     def save_checkpoint(self, epoch, loss, path: str = None):
         """
         Saves the model checkpoint, including model state, optimizer state, and epoch.
@@ -119,15 +127,15 @@ class CheckpointSaver:
 
         checkpoint_path = path or self.checkpoint_path
         checkpoint = {
-            'epoch': epoch,
-            'model_state_dict': self.model.state_dict(),
-            'optimizer_state_dict': self.optimizer.state_dict(),
-            'best_loss': self.best_loss,
+            "epoch": epoch,
+            "model_state_dict": self.model.state_dict(),
+            "optimizer_state_dict": self.optimizer.state_dict(),
+            "best_loss": self.best_loss,
         }
         torch.save(checkpoint, checkpoint_path)
         # if self.verbose:
         #     print(f"Checkpoint saved to {checkpoint_path}")
-    
+
     def load_checkpoint(self, path: str = None):
         """
         Loads a checkpoint and restores the model and optimizer states.
@@ -141,19 +149,20 @@ class CheckpointSaver:
 
         checkpoint_path = path or self.checkpoint_path
         checkpoint = torch.load(checkpoint_path)
-        self.model.load_state_dict(checkpoint['model_state_dict'])
-        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        self.best_loss = checkpoint.get('best_loss', float('inf'))
-        start_epoch = checkpoint.get('epoch', 0) + 1
+        self.model.load_state_dict(checkpoint["model_state_dict"])
+        self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        self.best_loss = checkpoint.get("best_loss", float("inf"))
+        start_epoch = checkpoint.get("epoch", 0) + 1
         if self.verbose:
             print(f"Loaded checkpoint from {checkpoint_path}, resuming from epoch {start_epoch}")
         return start_epoch
+
 
 class EarlyStoppingCheckpointer(CheckpointSaver):
     """
     A class that extends CheckpointSaver to implement early stopping.
 
-    This class tracks model performance and stops training when the validation loss does not improve 
+    This class tracks model performance and stops training when the validation loss does not improve
     for a specified number of epochs (patience).
 
     Attributes:
@@ -166,7 +175,9 @@ class EarlyStoppingCheckpointer(CheckpointSaver):
             Saves the checkpoint and updates early stopping conditions.
     """
 
-    def __init__(self, model, optimizer, checkpoint_path='checkpoint.pt', patience=10, verbose=False):
+    def __init__(
+        self, model, optimizer, checkpoint_path="checkpoint.pt", patience=10, verbose=False
+    ):
         """
         Initializes the EarlyStoppingCheckpointer.
 
@@ -199,7 +210,11 @@ class EarlyStoppingCheckpointer(CheckpointSaver):
             - Sets the `early_stop` flag to True if the counter reaches the patience threshold.
         """
 
-        saved = super().__call__(loss, epoch, save_best_only,)
+        saved = super().__call__(
+            loss,
+            epoch,
+            save_best_only,
+        )
         if saved:
             self.counter = 0  # Reset counter if the model improved
         else:

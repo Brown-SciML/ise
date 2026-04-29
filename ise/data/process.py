@@ -4,6 +4,7 @@ This module provides ProjectionProcessor for IVAF calculation and control
 subtraction, plus functions for merging forcings, processing atmospheric/oceanic
 sectors, and combining datasets for AIS and GrIS.
 """
+
 import os
 import time
 import warnings
@@ -15,12 +16,12 @@ import pandas as pd
 import xarray as xr
 from tqdm import tqdm
 
-from ise.data.scaler import LogScaler, RobustScaler, StandardScaler
-from ise.models._experimental.pca import PCA
-from ise.utils.functions import get_all_filepaths
 from ise.data.forcings import ForcingFile
 from ise.data.grids import GridFile
+from ise.data.scaler import LogScaler, RobustScaler, StandardScaler
 from ise.data.utils import convert_and_subset_times
+from ise.models._experimental.pca import PCA
+from ise.utils.functions import get_all_filepaths
 
 
 class ProjectionProcessor:
@@ -48,7 +49,6 @@ class ProjectionProcessor:
         _calculate_ivaf_minus_control(): Computes IVAF and subtracts control values for experimental projections.
         _calculate_ivaf_single_file(): Computes IVAF for a single model run, accounting for control projections.
     """
-
 
     def __init__(
         self,
@@ -98,7 +98,9 @@ class ProjectionProcessor:
 
         return 1
 
-    def _calculate_ivaf_minus_control(self, data_directory: str, densities_fp: str, scalefac_path: str):
+    def _calculate_ivaf_minus_control(
+        self, data_directory: str, densities_fp: str, scalefac_path: str
+    ):
         """
         Calculates the Ice Volume Above Flotation (IVAF) for each model run within the given directory.
         This method processes control projections first and then processes experimental projections
@@ -115,7 +117,6 @@ class ProjectionProcessor:
         Raises:
             ValueError: If densities_fp is not provided or is of an invalid type.
         """
-
 
         # error handling for densities argument (must be str filepath or dataframe)
         if densities_fp is None:
@@ -181,7 +182,6 @@ class ProjectionProcessor:
         Returns:
             int: 1 if successful, -1 if the run is skipped due to missing or corrupted data.
         """
-
 
         # directory = r"/gpfs/data/kbergen/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Projection-GrIS/AWI/ISSM1/exp09"
         # get metadata from path
@@ -557,7 +557,7 @@ class ProjectionProcessor:
         # save ivaf file (copied format from bed_data, change accordingly.)
         ivaf_nc["ivaf"] = (("x", "y", "time"), ivaf)
         if not ctrl_proj:
-            ivaf_nc['ivaf_with_control'] = (("x", "y", "time"), ivaf_with_ctrl)
+            ivaf_nc["ivaf_with_control"] = (("x", "y", "time"), ivaf_with_ctrl)
         ivaf_nc = ivaf_nc.drop_vars(
             [
                 "topg",
@@ -567,14 +567,11 @@ class ProjectionProcessor:
         export_nc_path = os.path.join(directory, f"ivaf_{self.ice_sheet}_{group}_{model}_{exp}.nc")
         if os.path.exists(export_nc_path):
             os.remove(export_nc_path)
-        ivaf_nc.to_netcdf(
-            export_nc_path
-        )
+        ivaf_nc.to_netcdf(export_nc_path)
 
         print(f"{group}_{model}_{exp}: Processing successful.")
 
         return 1
-
 
 
 def get_model_densities(zenodo_directory: str, output_path: str = None):
@@ -680,7 +677,6 @@ def interpolate_values(data):
     return x, y
 
 
-
 def get_xarray_data(dataset_fp, var_name=None, ice_sheet="AIS", convert_and_subset=False):
     """
     Retrieves and processes data from an xarray dataset.
@@ -694,7 +690,6 @@ def get_xarray_data(dataset_fp, var_name=None, ice_sheet="AIS", convert_and_subs
     Returns:
         np.ndarray or xarray.Dataset: The extracted variable as a NumPy array or the entire processed dataset.
     """
-
 
     dataset = xr.open_dataset(
         dataset_fp,
@@ -795,7 +790,6 @@ class DatasetMerger:
         merge_sectors(): (Placeholder) Method to merge sectors based on specified criteria.
         _get_forcing_metadata(): Extracts metadata from forcing files.
     """
-
 
     def __init__(self, ice_sheet, forcings, projections, experiment_file, output_dir):
         self.ice_sheet = ice_sheet
@@ -921,7 +915,6 @@ class DatasetMerger:
 
         pass
 
-
     def _get_forcing_metadata(self):
         """
         Extracts metadata from the forcing files to associate CMIP models with their respective pathways.
@@ -991,7 +984,6 @@ def combine_gris_forcings(forcing_dir):
     Returns:
         int: 0 upon successful processing.
     """
-
 
     atmosphere_dir = f"{forcing_dir}/GrIS/Atmosphere_Forcing/aSMB_observed/v1/"
     cmip_directories = next(os.walk(atmosphere_dir))[1]
@@ -1154,7 +1146,7 @@ def process_AIS_atmospheric_sectors(forcing_directory, grid_file):
     filepaths = get_all_filepaths(path=af_directory, filetype="nc")
     filepaths = [f for f in filepaths if "1995-2100" in f]
     filepaths = [f for f in filepaths if "8km" in f]
-    
+
     if not filepaths:
         raise ValueError("No files found. Check the path to the forcing files.")
 
@@ -1169,13 +1161,14 @@ def process_AIS_atmospheric_sectors(forcing_directory, grid_file):
         print(f'File: {fp.split("/")[-1]}')
         print(f"Time since start: {(time.time()-start_time) // 60} minutes")
 
-        forcingfile = ForcingFile(ice_sheet, realm='atmos', filepath=fp)
+        forcingfile = ForcingFile(ice_sheet, realm="atmos", filepath=fp)
         forcingfile.load(decode_times=False)
         forcingfile.format_timestamps()
 
-        forcingfile.drop_vars(["nv4", "z_bnds", "lat", "lon", "mapping", "time_bounds", "lat2d", "lon2d"])
+        forcingfile.drop_vars(
+            ["nv4", "z_bnds", "lat", "lon", "mapping", "time_bounds", "lat2d", "lon2d"]
+        )
         forcingfile.assign_sectors(gridfile)
-
 
         aogcm_data = []
         for sector in unique_sectors:
@@ -1243,24 +1236,51 @@ def process_AIS_oceanic_sectors(forcing_directory, grid_file):
         thermal_forcing_file = [f for f in files if "thermal_forcing" in f][0]
         salinity_file = [f for f in files if "salinity" in f][0]
         temperature_file = [f for f in files if "temperature" in f][0]
-        
-        tffile = ForcingFile(ice_sheet="AIS", realm='ocean', filepath=f"{directory}/1995-2100/{thermal_forcing_file}", varname='thermal_forcing')
+
+        tffile = ForcingFile(
+            ice_sheet="AIS",
+            realm="ocean",
+            filepath=f"{directory}/1995-2100/{thermal_forcing_file}",
+            varname="thermal_forcing",
+        )
         tffile.load(decode_times=False)
         tffile.format_timestamps()
-        
-        salfile = ForcingFile(ice_sheet="AIS", realm='ocean', filepath=f"{directory}/1995-2100/{salinity_file}", varname='salinity')
+
+        salfile = ForcingFile(
+            ice_sheet="AIS",
+            realm="ocean",
+            filepath=f"{directory}/1995-2100/{salinity_file}",
+            varname="salinity",
+        )
         salfile.load(decode_times=False)
         salfile.format_timestamps()
-        
-        tempfile = ForcingFile(ice_sheet="AIS", realm='ocean', filepath=f"{directory}/1995-2100/{temperature_file}", varname='temperature')
+
+        tempfile = ForcingFile(
+            ice_sheet="AIS",
+            realm="ocean",
+            filepath=f"{directory}/1995-2100/{temperature_file}",
+            varname="temperature",
+        )
         tempfile.load(decode_times=False)
         tempfile.format_timestamps()
 
         aogcm_data = {"thermal_forcing": [], "salinity": [], "temperature": []}
 
         for datafile in [tffile, salfile, tempfile]:
-            
-            datafile.drop_vars(["nv4", "z_bnds", "lat", "lon", "mapping", "time_bounds", "lat2d", "lon2d", "polar_stereographic"])
+
+            datafile.drop_vars(
+                [
+                    "nv4",
+                    "z_bnds",
+                    "lat",
+                    "lon",
+                    "mapping",
+                    "time_bounds",
+                    "lat2d",
+                    "lon2d",
+                    "polar_stereographic",
+                ]
+            )
             datafile.aggregate_depth(method="mean")
             datafile.assign_sectors(gridfile)
 
@@ -1440,7 +1460,6 @@ def process_AIS_outputs(zenodo_directory, with_ctrl=False):
         pandas.DataFrame: DataFrame containing processed AIS output data.
     """
 
-
     directory = (
         f"{zenodo_directory}/ComputedScalarsPaper/"
         if not zenodo_directory.endswith("ComputedScalarsPaper")
@@ -1449,7 +1468,9 @@ def process_AIS_outputs(zenodo_directory, with_ctrl=False):
     if not with_ctrl:
         files = get_all_filepaths(directory, contains="ivaf_minus_ctrl_proj", filetype="nc")
     else:
-        files = get_all_filepaths(directory, contains="ivaf_AIS", filetype="nc", not_contains=['hist', 'ctrl'])
+        files = get_all_filepaths(
+            directory, contains="ivaf_AIS", filetype="nc", not_contains=["hist", "ctrl"]
+        )
     count = 0
 
     all_files_data = []
@@ -1490,9 +1511,11 @@ def process_AIS_outputs(zenodo_directory, with_ctrl=False):
         full_dataset["exp"] = exp
         full_dataset["model"] = model
         all_files_data.append(full_dataset)
-    outputs = pd.concat(all_files_data) 
+    outputs = pd.concat(all_files_data)
     # outputs["sle"] = outputs["ivaf"] / 362.5 / 1e9
-    outputs["sle"] = -outputs['ivaf']/362.5*910/(10**9*1000) # per Seroussi et al., ISMIP6 scripts (910=ice density)
+    outputs["sle"] = (
+        -outputs["ivaf"] / 362.5 * 910 / (10**9 * 1000)
+    )  # per Seroussi et al., ISMIP6 scripts (910=ice density)
 
     return outputs
 
@@ -1526,7 +1549,7 @@ def merge_datasets(forcings, projections, experiments_file, ice_sheet="AIS", exp
     )
     forcings["aogcm"] = forcings["aogcm"].apply(formatting_function)
     projections.rename(columns={"AOGCM": "aogcm"}, inplace=True)
-    forcings['sector'] = forcings.sector.astype(int)
+    forcings["sector"] = forcings.sector.astype(int)
     dataset = pd.merge(forcings, projections, on=["aogcm", "year", "sector"], how="inner")
 
     return dataset
@@ -1542,7 +1565,6 @@ def process_GrIS_outputs(zenodo_directory):
     Returns:
         pandas.DataFrame: DataFrame containing processed GrIS output data.
     """
-
 
     directory = (
         f"{zenodo_directory}/v7_CMIP5_pub/"
@@ -1626,10 +1648,9 @@ def process_sectors(
         pandas.DataFrame: The final merged dataset.
     """
 
-
     forcing_exists = os.path.exists(f"{export_directory}/forcings.csv")
     if not forcing_exists or (forcing_exists and overwrite):
-        
+
         atmospheric_df = (
             process_AIS_atmospheric_sectors(forcing_directory, grid_file)
             if ice_sheet == "AIS"
@@ -1783,7 +1804,6 @@ def _format_GrIS_forcings_aogcm_name(aogcm):
     else:
         pass
     return aogcm
-
 
 
 def _format_GrIS_ocean_aogcm_name(aogcm):

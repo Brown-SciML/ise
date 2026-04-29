@@ -7,6 +7,7 @@ classes ``ISEFlow_AIS`` / ``ISEFlow_GrIS``) for current ice sheet emulation.
 
 All classes in this subpackage emit a DeprecationWarning on import.
 """
+
 import warnings
 
 warnings.warn(
@@ -16,14 +17,18 @@ warnings.warn(
     stacklevel=2,
 )
 
-from .gp import GP, PowerExponentialKernel, NuggetKernel, EmulandiceGP
+from .gp import GP, EmulandiceGP, NuggetKernel, PowerExponentialKernel
 from .pca import PCA, DimensionProcessor
 from .scenario import ScenarioPredictor
 from .variational_lstm_emulator import VariationalLSTMEmulator
 
 __all__ = [
-    "GP", "PowerExponentialKernel", "NuggetKernel", "EmulandiceGP",
-    "PCA", "DimensionProcessor",
+    "GP",
+    "PowerExponentialKernel",
+    "NuggetKernel",
+    "EmulandiceGP",
+    "PCA",
+    "DimensionProcessor",
     "ScenarioPredictor",
     "VariationalLSTMEmulator",
 ]

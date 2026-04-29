@@ -3,9 +3,11 @@
 This module provides ScenarioPredictor, a feedforward network for predicting
 scenario-level outcomes (e.g. binary or regression targets) from input features.
 """
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
+
 from ise.utils import functions as f
 
 
@@ -35,18 +37,18 @@ class ScenarioPredictor(nn.Module):
 
         super(ScenarioPredictor, self).__init__()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        
+
         # Initialize network layers
         self.input_layer = nn.Linear(input_size, hidden_layers[0])
         self.hidden_layers = nn.ModuleList()
         for i in range(1, len(hidden_layers)):
-            self.hidden_layers.append(nn.Linear(hidden_layers[i-1], hidden_layers[i]))
+            self.hidden_layers.append(nn.Linear(hidden_layers[i - 1], hidden_layers[i]))
         self.output_layer = nn.Linear(hidden_layers[-1], output_size)
-        
+
         # Activation and dropout
         self.activation = nn.ReLU()
         self.dropout = nn.Dropout(dropout_rate)
-        
+
         # Sigmoid activation for the output
         self.sigmoid = nn.Sigmoid()
 
@@ -67,7 +69,6 @@ class ScenarioPredictor(nn.Module):
             torch.Tensor: Output tensor with probabilities in the range [0,1].
         """
 
-
         x = self.activation(self.input_layer(x))
         x = self.dropout(x)
         for layer in self.hidden_layers:
@@ -76,8 +77,10 @@ class ScenarioPredictor(nn.Module):
         x = self.output_layer(x)
         x = self.sigmoid(x)
         return x
-      
-    def fit(self, train_loader, val_loader=None, epochs=10, lr=1e-3, print_every=1, save_checkpoint=True):
+
+    def fit(
+        self, train_loader, val_loader=None, epochs=10, lr=1e-3, print_every=1, save_checkpoint=True
+    ):
         """
         Trains the model on the given dataset.
 
@@ -98,27 +101,29 @@ class ScenarioPredictor(nn.Module):
 
         # Update the optimizer learning rate
         for param_group in self.optimizer.param_groups:
-            param_group['lr'] = lr
+            param_group["lr"] = lr
         self.best_val_loss = 10000
         for epoch in range(epochs):
             total_loss = 0
             for batch in train_loader:
                 inputs, targets = batch
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
-                
+
                 # Zero the parameter gradients
                 self.optimizer.zero_grad()
 
                 # Forward + backward + optimize
                 outputs = self.forward(inputs)
-                loss = self.criterion(outputs, targets.unsqueeze(1).float())  # Ensure targets are correctly shaped and typed
+                loss = self.criterion(
+                    outputs, targets.unsqueeze(1).float()
+                )  # Ensure targets are correctly shaped and typed
                 loss.backward()
                 self.optimizer.step()
 
                 total_loss += loss.item()
 
             if epoch % print_every == 0 or epoch == epochs - 1:
-                print(f'Epoch {epoch+1}/{epochs}, Loss: {total_loss/len(train_loader)}')
+                print(f"Epoch {epoch+1}/{epochs}, Loss: {total_loss/len(train_loader)}")
 
                 if val_loader is not None:
                     # Evaluate the model on the validation set
@@ -127,8 +132,8 @@ class ScenarioPredictor(nn.Module):
                     if save_checkpoint:
                         if val_loss < self.best_val_loss:
                             self.best_val_loss = val_loss
-                            torch.save(self.state_dict(), 'checkpoint.pth')
-                    print(f'Validation Loss: {val_loss}, Validation Accuracy: {val_accuracy}')
+                            torch.save(self.state_dict(), "checkpoint.pth")
+                    print(f"Validation Loss: {val_loss}, Validation Accuracy: {val_accuracy}")
                     self.train()  # Set the model back to training mode
 
     def evaluate(self, data_loader):
@@ -162,10 +167,9 @@ class ScenarioPredictor(nn.Module):
 
         avg_loss = total_loss / len(data_loader)
         accuracy = correct_predictions / total_predictions
-        
 
         return avg_loss, accuracy
-    
+
     def predict(self, x):
         """
         Predicts the output for a given input.

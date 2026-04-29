@@ -4,13 +4,14 @@ This module provides sector-wise aggregation (sum_by_sector), point metrics
 (R², MSE, MAE, MAPE, CRPS), distribution metrics (KL/JS divergence, KS, t-test),
 and uncertainty metrics (ECE, prediction interval width, Winkler score).
 """
+
 import numpy as np
+import properscoring as ps
 import torch
 import xarray as xr
 from scipy.spatial.distance import jensenshannon
 from scipy.stats import kstest, ttest_ind
 from sklearn.metrics import r2_score as r2
-import properscoring as ps
 
 
 def sum_by_sector(array, grid_file):
@@ -57,6 +58,7 @@ def sum_by_sector(array, grid_file):
             sums_by_sector[i, sector - 1] = np.sum(array[i, :, :][sectors == sector])
     return sums_by_sector
 
+
 def r2_score(y_true, y_pred):
     """
     Computes the coefficient of determination (R² score).
@@ -70,7 +72,7 @@ def r2_score(y_true, y_pred):
     """
 
     return r2(y_true, y_pred)
-    
+
 
 def mean_squared_error_sector(sum_sectors_true, sum_sectors_pred):
     """
@@ -105,19 +107,18 @@ def kl_divergence(p: np.ndarray, q: np.ndarray):
 
     p = np.asarray(p, dtype=np.float64)
     q = np.asarray(q, dtype=np.float64)
-    
+
     # Normalize p and q to ensure they are probability distributions
     p /= np.sum(p)
     q /= np.sum(q)
-    
+
     # Clip values to avoid numerical instability
     epsilon = 1e-10
     p = np.clip(p, epsilon, 1)
     q = np.clip(q, epsilon, 1)
-    
+
     # Compute KL divergence
     return np.sum(p * np.log(p / q))
-
 
 
 def js_divergence(p: np.ndarray, q: np.ndarray):
@@ -138,20 +139,23 @@ def js_divergence(p: np.ndarray, q: np.ndarray):
 
     p = np.asarray(p, dtype=np.float64)
     q = np.asarray(q, dtype=np.float64)
-    
+
     # Normalize p and q to ensure they are probability distributions
     p /= np.sum(p)
     q /= np.sum(q)
-    
+
     # Clip values to avoid numerical instability
     epsilon = 1e-10
     p = np.clip(p, epsilon, 1)
     q = np.clip(q, epsilon, 1)
-    
+
     # Calculate the Jensen-Shannon Divergence
-    jsd = jensenshannon(p, q) ** 2  # The function returns the square root, so square it for the divergence
-    
+    jsd = (
+        jensenshannon(p, q) ** 2
+    )  # The function returns the square root, so square it for the divergence
+
     return jsd
+
 
 def crps(y_true, y_pred, y_std):
     """
@@ -167,6 +171,7 @@ def crps(y_true, y_pred, y_std):
     """
 
     return ps.crps_gaussian(y_true, mu=y_pred, sig=y_std)
+
 
 def mape(y_true, y_pred):
     """
@@ -268,12 +273,12 @@ def calculate_ece(predictions, uncertainties, true_values, bins=10):
         - A lower ECE indicates better-calibrated uncertainty estimates.
     """
 
-    bin_limits = np.linspace(np.min(uncertainties), np.max(uncertainties), bins+1)
+    bin_limits = np.linspace(np.min(uncertainties), np.max(uncertainties), bins + 1)
     ece = 0.0
     total_count = len(predictions)
 
     for i in range(bins):
-        bin_mask = (uncertainties >= bin_limits[i]) & (uncertainties < bin_limits[i+1])
+        bin_mask = (uncertainties >= bin_limits[i]) & (uncertainties < bin_limits[i + 1])
         if np.sum(bin_mask) == 0:
             continue
         bin_predictions = predictions[bin_mask]
@@ -292,6 +297,7 @@ def calculate_ece(predictions, uncertainties, true_values, bins=10):
 
     return ece
 
+
 def mean_squared_error(y_true, y_pred):
     """
     Computes the Mean Squared Error (MSE).
@@ -307,6 +313,7 @@ def mean_squared_error(y_true, y_pred):
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     mse = np.mean((y_true - y_pred) ** 2)
     return mse
+
 
 def mean_absolute_error(y_true, y_pred):
     """
@@ -324,6 +331,7 @@ def mean_absolute_error(y_true, y_pred):
     mae = np.mean(np.abs(y_true - y_pred))
     return mae
 
+
 def mean_prediction_interval_width(upper_bound, lower_bound):
     """
     Computes the Mean Prediction Interval Width (MPIW).
@@ -339,6 +347,7 @@ def mean_prediction_interval_width(upper_bound, lower_bound):
     upper_bound, lower_bound = np.array(upper_bound), np.array(lower_bound)
     mpiw = np.mean(upper_bound - lower_bound)
     return mpiw
+
 
 def winkler_score(y_true, y_pred, lower_bound, upper_bound, alpha=0.05):
     """
@@ -361,9 +370,13 @@ def winkler_score(y_true, y_pred, lower_bound, upper_bound, alpha=0.05):
 
     for i in range(n):
         if y_true[i] < lower_bound[i]:
-            score[i] = (upper_bound[i] - lower_bound[i]) + (2 / alpha) * (lower_bound[i] - y_true[i])
+            score[i] = (upper_bound[i] - lower_bound[i]) + (2 / alpha) * (
+                lower_bound[i] - y_true[i]
+            )
         elif y_true[i] > upper_bound[i]:
-            score[i] = (upper_bound[i] - lower_bound[i]) + (2 / alpha) * (y_true[i] - upper_bound[i])
+            score[i] = (upper_bound[i] - lower_bound[i]) + (2 / alpha) * (
+                y_true[i] - upper_bound[i]
+            )
         else:
             score[i] = upper_bound[i] - lower_bound[i]
 

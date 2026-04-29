@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 
 from ise.data.dataclasses import TSDataset
 
+
 class VariationalLSTMEmulator(torch.nn.Module):
     """Variational LSTM Emulator model for time series data."""
 

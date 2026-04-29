@@ -4,18 +4,20 @@ This module provides the FeatureEngineer class and standalone functions for
 scaling, splitting, lag variables, outlier handling, and model characteristic
 merging for ice sheet emulation training data.
 """
+
 import json
 import os
 import pickle
+import warnings
 from typing import List
 
 import numpy as np
 import pandas as pd
 import torch
 from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
-from ise.utils import functions as f
 from tqdm import tqdm
-import warnings
+
+from ise.utils import functions as f
 
 
 class FeatureEngineer:
@@ -155,9 +157,9 @@ class FeatureEngineer:
         if data is not None:
             self.data = data
         if "mrro_anomaly" not in self.data.columns:
-            print('mrro_anomaly not in columns, skipping fill_mrro_nans()')
+            print("mrro_anomaly not in columns, skipping fill_mrro_nans()")
             return self.data
-        
+
         self.data = fill_mrro_nans(self.data, method)
 
         return self.data
@@ -175,7 +177,7 @@ class FeatureEngineer:
         Returns:
             tuple: Scaled X and y values.
         """
-        
+
         if X is not None:
             self.X = X
         else:
@@ -193,7 +195,7 @@ class FeatureEngineer:
                     "exp",
                     "model",
                     "ivaf",
-                    "year"
+                    "year",
                 ] + list(self.data.columns[self.data.dtypes == bool])
             else:
                 dropped_columns = [
@@ -253,8 +255,6 @@ class FeatureEngineer:
 
         # Store scalers in the class instance for potential future use
         self.scaler_X, self.scaler_y = scaler_X, scaler_y
-        
-        
 
         # # Fit and transform X
         # if isinstance(self.X, pd.DataFrame):
@@ -266,7 +266,7 @@ class FeatureEngineer:
 
         scaler_X.fit(self.X)
         X_scaled = scaler_X.transform(self.X)
-        
+
         # categorical_cols = [x for x in self.X.columns if len(set(self.X[x])) <= 2]
         # self.X[categorical_cols] = self.X[categorical_cols].astype('category')
 
@@ -330,7 +330,9 @@ class FeatureEngineer:
         # Load scaler for X
         if X is not None:
             if self.scaler_X_path is None and self.scaler_X is None:
-                raise ValueError("scaler_X_path must be provided if X is not None and self.scaler_X is None.")
+                raise ValueError(
+                    "scaler_X_path must be provided if X is not None and self.scaler_X is None."
+                )
             if self.scaler_X is None:
                 with open(self.scaler_X_path, "rb") as f:
                     scaler_X = pickle.load(f)
@@ -345,7 +347,9 @@ class FeatureEngineer:
         # Load scaler for y
         if y is not None:
             if self.scaler_y_path is None and self.scaler_y is None:
-                raise ValueError("scaler_y_path must be provided if y is not None and self.scaler_y is None.")
+                raise ValueError(
+                    "scaler_y_path must be provided if y is not None and self.scaler_y is None."
+                )
             if self.scaler_y is None:
                 with open(self.scaler_y_path, "rb") as f:
                     scaler_y = pickle.load(f)
@@ -429,17 +433,21 @@ class FeatureEngineer:
         Returns:
             FeatureEngineer: The modified instance with model characteristics added.
         """
-        
+
         if data is not None:
             self.data = data
         if model_char_path is None:
-            model_char_path = os.path.join(os.path.dirname(__file__), 'data_files', f'{self.ice_sheet}_model_characteristics.csv')
+            model_char_path = os.path.join(
+                os.path.dirname(__file__),
+                "data_files",
+                f"{self.ice_sheet}_model_characteristics.csv",
+            )
         self.data = add_model_characteristics(self.data, model_char_path, encode, ids_path=ids_path)
         self._including_model_characteristics = True
 
         return self
 
-    def exclude_fetish_models(self, data=None, exclude='both'):
+    def exclude_fetish_models(self, data=None, exclude="both"):
         """
         Excludes specific models from the dataset.
 
@@ -454,6 +462,7 @@ class FeatureEngineer:
         self.data = exclude_fetish_models(self.data, exclude)
         return self
 
+
 def scale_data(data, scaler_path):
     """
     Scales the provided dataset using a pre-trained scaler.
@@ -467,17 +476,26 @@ def scale_data(data, scaler_path):
     """
     # Columns to drop regardless
     always_drop = {
-        "id", "cmip_model", "pathway", "exp", "ice_sheet", "Scenario",
-        "Tier", "aogcm", "model", "ivaf", "outlier"
+        "id",
+        "cmip_model",
+        "pathway",
+        "exp",
+        "ice_sheet",
+        "Scenario",
+        "Tier",
+        "aogcm",
+        "model",
+        "ivaf",
+        "outlier",
     }
     column_order = data.columns
-    
+
     scaler = pickle.load(open(scaler_path, "rb"))
     columns_to_scale = scaler.get_feature_names_out()
     columns_not_to_scale = [c for c in data.columns if c not in columns_to_scale]
     data_to_scale = data[columns_to_scale]
     data_not_to_scale = data[columns_not_to_scale]
-    
+
     scaled = scaler.transform(data_to_scale)
     scaled = pd.DataFrame(scaled, columns=columns_to_scale, index=data.index)
     data = pd.concat([scaled, data_not_to_scale], axis=1)
@@ -505,7 +523,9 @@ def add_model_characteristics(
         pd.DataFrame: The dataset with model characteristics added.
     """
     if model_char_path is None:
-        model_char_path = os.path.join(os.path.dirname(__file__), 'data_files', 'AIS_model_characteristics.csv')
+        model_char_path = os.path.join(
+            os.path.dirname(__file__), "data_files", "AIS_model_characteristics.csv"
+        )
     model_chars = pd.read_csv(model_char_path)
     all_data = pd.merge(data, model_chars, on="model", how="left")
     existing_char_columns = [
@@ -588,9 +608,26 @@ def add_lag_variables(data: pd.DataFrame, lag: int, verbose=True) -> pd.DataFram
         pd.DataFrame: The dataset with lagged variables added.
     """
 
-
     # Separate columns that won't be lagged and shouldn't be dropped
-    cols_to_exclude = [x for x in data.columns if x not in ("year", "pr_anomaly", "evspsbl_anomaly", "mrro_anomaly", "smb_anomaly", "ts_anomaly", "thermal_forcing", "salinity", "temperature", 'aST', 'aSMB', 'basin_runoff')]
+    cols_to_exclude = [
+        x
+        for x in data.columns
+        if x
+        not in (
+            "year",
+            "pr_anomaly",
+            "evspsbl_anomaly",
+            "mrro_anomaly",
+            "smb_anomaly",
+            "ts_anomaly",
+            "thermal_forcing",
+            "salinity",
+            "temperature",
+            "aST",
+            "aSMB",
+            "basin_runoff",
+        )
+    ]
     cols_to_exclude = [x for x in cols_to_exclude if x in data.columns]
     temporal_indicator = "time" if "time" in data.columns else "year"
     non_temporal_cols = [temporal_indicator] + [
@@ -625,8 +662,14 @@ def add_lag_variables(data: pd.DataFrame, lag: int, verbose=True) -> pd.DataFram
             # Fill missing values caused by shifting
             lag_columns.bfill(inplace=True)
             lags.append(lag_columns)
-        full_segment_data = pd.concat([non_lagged_data.reset_index(drop=True), base_temporal_columns.reset_index(drop=True), pd.concat(lags, axis=1).reset_index(drop=True)], axis=1)
-
+        full_segment_data = pd.concat(
+            [
+                non_lagged_data.reset_index(drop=True),
+                base_temporal_columns.reset_index(drop=True),
+                pd.concat(lags, axis=1).reset_index(drop=True),
+            ],
+            axis=1,
+        )
 
         # Store the processed segment
         processed_segments.append(full_segment_data)
@@ -636,7 +679,8 @@ def add_lag_variables(data: pd.DataFrame, lag: int, verbose=True) -> pd.DataFram
 
     return final_data
 
-def exclude_fetish_models(data: pd.DataFrame, exclude: str='both') -> pd.DataFrame:
+
+def exclude_fetish_models(data: pd.DataFrame, exclude: str = "both") -> pd.DataFrame:
     """
     Excludes specific models from the dataset.
 
@@ -646,12 +690,12 @@ def exclude_fetish_models(data: pd.DataFrame, exclude: str='both') -> pd.DataFra
     Returns:
         pd.DataFrame: The filtered DataFrame.
     """
-    
-    if exclude == '16km':
+
+    if exclude == "16km":
         return data[data.model != "fETISh_16km"]
-    elif exclude == '32km':
+    elif exclude == "32km":
         return data[data.model != "fETISh_32km"]
-    elif exclude == 'both':
+    elif exclude == "both":
         return data[(data.model != "fETISh_16km") & (data.model != "fETISh_32km")]
     else:
         raise ValueError("exclude must be '16km', '32km', or 'both'")
@@ -684,8 +728,10 @@ def fill_mrro_nans(data: pd.DataFrame, method) -> pd.DataFrame:
             data[col] = data[col].fillna(data[col].median())
     elif method.lower() == "drop":
         data = data.dropna(subset=mrro_columns)
-    elif method.lower() == 'mean_by_year':
-        data['mrro_anomaly'] = data.groupby('year')['mrro_anomaly'].transform(lambda x: x.fillna(x.mean()))
+    elif method.lower() == "mean_by_year":
+        data["mrro_anomaly"] = data.groupby("year")["mrro_anomaly"].transform(
+            lambda x: x.fillna(x.mean())
+        )
     else:
         raise ValueError("method must be 'zero', 'mean', 'median', or 'drop'")
     return data
@@ -713,7 +759,6 @@ def split_training_data(
         ValueError: If the dataset does not contain an 'id' column.
     """
 
-
     if isinstance(data, str):
         data = pd.read_csv(data)
     elif not isinstance(data, pd.DataFrame):
@@ -721,7 +766,8 @@ def split_training_data(
 
     if not len(data) % 86 == 0:
         warnings.warn(
-            "Length of data must be divisible by 86, if not there are incomplete projections.")
+            "Length of data must be divisible by 86, if not there are incomplete projections."
+        )
 
     if "id" not in data.columns:
         raise ValueError("data must have a column named 'id'")
@@ -733,7 +779,7 @@ def split_training_data(
         int(len(total_ids) * train_size) : int(len(total_ids) * (train_size + val_size))
     ]
     test_ids = total_ids[int(len(total_ids) * (train_size + val_size)) :]
-    
+
     # train_ids = list(pd.read_csv(r'/oscar/scratch/pvankatw/datasets/sectors/GrIS/train.csv').id.unique())
     # val_ids = list(pd.read_csv(r'/oscar/scratch/pvankatw/datasets/sectors/GrIS/val.csv').id.unique())
     # test_ids = list(pd.read_csv(r'/oscar/scratch/pvankatw/datasets/sectors/GrIS/test.csv').id.unique())
@@ -785,7 +831,6 @@ def drop_outliers(
         AttributeError: If the method is 'explicit' but no expression is provided.
         ValueError: If the operator in the expression is not recognized.
     """
-
 
     # Check if method is quantile
     if method.lower() == "quantile":

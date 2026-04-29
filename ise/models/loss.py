@@ -4,6 +4,7 @@ This module provides weighted and grid-aware loss modules: WeightedGridLoss,
 WeightedMSELoss, WeightedMSEPCALoss, WeightedMSELossWithSignPenalty,
 GridCriterion, WeightedPCALoss, and MSEDeviationLoss for sector/grid predictions.
 """
+
 import torch
 
 
@@ -13,7 +14,7 @@ class WeightedGridLoss(torch.nn.Module):
 
     This loss function consists of two components:
     1. **Pixel-wise Weighted Mean Squared Error (MSE):** Higher weight is assigned to extreme values.
-    2. **Total Variation Regularization (TVR):** Enforces spatial smoothness by penalizing large differences 
+    2. **Total Variation Regularization (TVR):** Enforces spatial smoothness by penalizing large differences
        between adjacent grid values.
 
     Attributes:
@@ -25,7 +26,6 @@ class WeightedGridLoss(torch.nn.Module):
         - forward: Computes the final weighted loss.
 
     """
-
 
     def __init__(self):
         super(WeightedGridLoss, self).__init__()
@@ -70,8 +70,7 @@ class WeightedGridLoss(torch.nn.Module):
         weighted_error = weights * squared_error
         # Return the mean of the weighted error
         return torch.mean(weighted_error)
-    
-    
+
     def forward(self, true, predicted, smoothness_weight=0.001, extreme_value_threshold=1e-6):
         """
         Computes the final weighted loss combining pixel-wise MSE and TVR.
@@ -108,7 +107,7 @@ class WeightedMSELoss(torch.nn.Module):
     """
     Custom loss function that applies a weighted penalty to extreme values.
 
-    This function increases the weight of extreme values based on their deviation from the 
+    This function increases the weight of extreme values based on their deviation from the
     dataset mean, normalizing by the standard deviation.
 
     Attributes:
@@ -127,7 +126,7 @@ class WeightedMSELoss(torch.nn.Module):
         self.data_std = torch.tensor(data_std, dtype=torch.float32, device=self.device)
         self.weight_factor = torch.tensor(weight_factor, dtype=torch.float32, device=self.device)
         self.to(self.device)
-        
+
     def forward(self, input, target):
         """
         Computes the Weighted Mean Squared Error (MSE) Loss.
@@ -179,6 +178,7 @@ class WeightedMSEPCALoss(torch.nn.Module):
     Methods:
         - forward: Computes the batch-weighted MSE loss.
     """
+
     def __init__(self, data_mean, data_std, weight_factor=1.0, custom_weights=None):
 
         super(WeightedMSEPCALoss, self).__init__()
@@ -206,7 +206,6 @@ class WeightedMSEPCALoss(torch.nn.Module):
         Returns:
             Tensor: Computed loss.
         """
-
 
         input = input.to(self.device)
         target = target.to(self.device)
@@ -412,7 +411,6 @@ class WeightedPCALoss(torch.nn.Module):
         Returns:
             Tensor: Computed loss.
         """
-
 
         input = input.to(self.device)
         target = target.to(self.device)

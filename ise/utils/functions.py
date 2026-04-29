@@ -4,6 +4,7 @@ This module provides functions for loading models and ML data, file discovery,
 NetCDF variable handling, DataFrame undummify/combine, uncertainty bands,
 distribution metrics, scaling/unscaling, and get_X_y / get_data for training.
 """
+
 import os
 import pickle as pkl
 from itertools import product
@@ -58,7 +59,7 @@ def get_all_filepaths(
     """
 
     all_files = list()
-    for (dirpath, dirnames, filenames) in os.walk(path):
+    for dirpath, dirnames, filenames in os.walk(path):
         all_files += [os.path.join(dirpath, file) for file in filenames]
 
     if filetype:
@@ -237,7 +238,6 @@ def combine_testing_results(
         pd.DataFrame: DataFrame containing test results with true values, predictions, errors, and uncertainty bounds.
     """
 
-
     (
         train_features,
         train_labels,
@@ -305,7 +305,6 @@ def group_by_run(
             - all_preds (np.ndarray): Matrix of predicted values.
             - scenarios (list): List of scenario information for each simulation.
     """
-
 
     modelnames = dataset.modelname.unique()
     exp_ids = dataset.exp_id.unique()
@@ -406,8 +405,8 @@ def calculate_distribution_metrics(
     """
     Computes distribution divergence metrics between true and predicted values.
 
-    This function groups the dataset by simulation runs, creates probability 
-    distributions for true and predicted values, and calculates the 
+    This function groups the dataset by simulation runs, creates probability
+    distributions for true and predicted values, and calculates the
     Kullback-Leibler (KL) and Jensen-Shannon (JS) divergences.
 
     Args:
@@ -435,18 +434,17 @@ def unscale_column(dataset: pd.DataFrame, column: str = "year"):
     """
     Unscales specified columns back to their original range using known value distributions.
 
-    This function is specifically used to revert the normalization of 'year' and 
+    This function is specifically used to revert the normalization of 'year' and
     'sectors' columns since they have known value ranges.
 
     Args:
         dataset (pd.DataFrame): Dataset containing the scaled columns.
-        column (str or list, optional): Column(s) to be unscaled. 
+        column (str or list, optional): Column(s) to be unscaled.
             Can be 'year', 'sectors', or a list containing both. Defaults to "year".
 
     Returns:
         pd.DataFrame: Dataset with the specified column(s) unscaled.
     """
-
 
     if isinstance(column, str):
         column = [column]
@@ -464,6 +462,7 @@ def unscale_column(dataset: pd.DataFrame, column: str = "year"):
         dataset["year"] = round(dataset.year).astype(int)
 
     return dataset
+
 
 file_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -506,7 +505,7 @@ def get_all_filepaths(
         List[str]: list of files within the directory matching the input criteria.
     """
     all_files = list()
-    for (dirpath, dirnames, filenames) in os.walk(path):
+    for dirpath, dirnames, filenames in os.walk(path):
         all_files += [os.path.join(dirpath, file) for file in filenames]
 
     if filetype:
@@ -572,7 +571,7 @@ def _structure_architecture_args(architecture, time_series):
     """
     Structures the architecture arguments for model training.
 
-    Ensures that the provided architecture dictionary is appropriate for either 
+    Ensures that the provided architecture dictionary is appropriate for either
     time-series or traditional models.
 
     Args:
@@ -585,7 +584,6 @@ def _structure_architecture_args(architecture, time_series):
     Raises:
         AttributeError: If incompatible architecture arguments are used.
     """
-
 
     # Check to make sure inappropriate args are not used
     if not time_series and (
@@ -623,11 +621,11 @@ def get_X_y(
     return_format=None,
     cols="all",
     with_chars=True,
-):  
+):
     """
     Extracts input features (X) and target labels (y) from a dataset.
 
-    Supports various dataset types (sectors, regions, scenarios) and formats 
+    Supports various dataset types (sectors, regions, scenarios) and formats
     (numpy, tensor, pandas).
 
     Args:
@@ -646,14 +644,16 @@ def get_X_y(
 
     if isinstance(data, str):
         data = pd.read_csv(data)
-    
-    ice_sheet = "AIS" if dataset_type.lower() == "regions" and 'smb_anomaly' in data.columns else 'GrIS'
+
+    ice_sheet = (
+        "AIS" if dataset_type.lower() == "regions" and "smb_anomaly" in data.columns else "GrIS"
+    )
     regions = True if dataset_type.lower() == "regions" else False
     if dataset_type.lower() == "sectors" or regions:
-        
+
         if regions:
             sector_to_region = {}
-            if ice_sheet == 'AIS':
+            if ice_sheet == "AIS":
                 for i, sector in enumerate(data.sector.unique()):
                     if i > 0 and i < 6:
                         sector_to_region[sector] = 1
@@ -664,17 +664,25 @@ def get_X_y(
             else:
                 for i, sector in enumerate(data.sector.unique()):
                     sector_to_region[sector] = 1
-            
-            data['region'] = data.sector.map(sector_to_region)
-            data['id'] = data['id'].apply(lambda x: "_".join(x.split('_')[:-1]))
-            data = data.groupby(['region', 'id', 'year', 'Scenario']).agg({
-                'sle': 'mean',   # for GP, used mean instead of sum so that scales of errors are the same
-                **{col: 'mean' for col in data.columns.difference(['sle']) if data[col].dtype == 'float64'}
-            }, )
-            data = data.drop(columns=['year']) # drop year so that there aren't two year columns after reset_index()
+
+            data["region"] = data.sector.map(sector_to_region)
+            data["id"] = data["id"].apply(lambda x: "_".join(x.split("_")[:-1]))
+            data = data.groupby(["region", "id", "year", "Scenario"]).agg(
+                {
+                    "sle": "mean",  # for GP, used mean instead of sum so that scales of errors are the same
+                    **{
+                        col: "mean"
+                        for col in data.columns.difference(["sle"])
+                        if data[col].dtype == "float64"
+                    },
+                },
+            )
+            data = data.drop(
+                columns=["year"]
+            )  # drop year so that there aren't two year columns after reset_index()
             data = data.reset_index()
             scenarios = data.Scenario
-            
+
         dropped_columns = [
             "id",
             "cmip_model",
@@ -697,11 +705,11 @@ def get_X_y(
         X_drop = [x for x in data.columns if "sle" in x] + dropped_columns
         X = data.drop(columns=X_drop)
         y = data[[x for x in data.columns if "sle" in x]]
-    
-    elif 'scenario' in dataset_type.lower():
+
+    elif "scenario" in dataset_type.lower():
         dropped_columns = [
-            'sector', 
-            'year',
+            "sector",
+            "year",
             "cmip_model",
             "pathway",
             "exp",
@@ -716,23 +724,42 @@ def get_X_y(
             "model",
             "ivaf",
             "outlier",
-            'sle',
+            "sle",
         ]
-        dropped_columns = [x for x in data.columns if x in dropped_columns] + [x for x in data.columns if 'lag' in x]
+        dropped_columns = [x for x in data.columns if x in dropped_columns] + [
+            x for x in data.columns if "lag" in x
+        ]
         X_drop = [x for x in data.columns if "Scenario" in x] + dropped_columns
         X = data.drop(columns=X_drop)
         y = data[[x for x in data.columns if "Scenario" in x]]
-        
+
     if isinstance(cols, list) and cols:
         X = X[list(cols)]
-        
+
     if not with_chars:
-        char_cols = ['initial', 'numerics', 'ice_flow', 'initialization', 'velocity', 'bed', 
-                     'surface', 'ghf', 'res', 'Ocean', 'Ice shelf', 'stress', 'resolution', 'init', 
-                     'melt', 'ice_front', 'open', 'standard', ]
+        char_cols = [
+            "initial",
+            "numerics",
+            "ice_flow",
+            "initialization",
+            "velocity",
+            "bed",
+            "surface",
+            "ghf",
+            "res",
+            "Ocean",
+            "Ice shelf",
+            "stress",
+            "resolution",
+            "init",
+            "melt",
+            "ice_front",
+            "open",
+            "standard",
+        ]
         drop_cols = [col for col in X.columns if any(substring in col for substring in char_cols)]
         X = X.drop(columns=drop_cols)
-        
+
     if return_format is not None:
         if return_format.lower() == "numpy":
             return X.values.astype(float), y.values.astype(float)
@@ -744,7 +771,7 @@ def get_X_y(
             raise ValueError(
                 f"return_format must be in ['numpy', 'tensor', 'pandas'], received {return_format}"
             )
-    
+
     if regions:
         return X, y, scenarios
 
@@ -794,6 +821,7 @@ def unscale_output(y, scaler_path):
     y = scaler.inverse_transform(y)
     return y
 
+
 def unscale_input(X, scaler_path):
     """
     Unscales input features using a previously saved MinMaxScaler.
@@ -806,14 +834,14 @@ def unscale_input(X, scaler_path):
         np.ndarray or pd.DataFrame: The unscaled input features.
     """
     if not isinstance(X, pd.DataFrame):
-        raise NotImplementedError("Only pandas DataFrame input is currently supported.")    
-    
+        raise NotImplementedError("Only pandas DataFrame input is currently supported.")
+
     scaler = pkl.load(open(scaler_path, "rb"))
     column_order = X.columns
     cols_to_scale = scaler.get_feature_names_out()
     data_to_scale = X[cols_to_scale]
     data_to_not_scale = X.drop(columns=cols_to_scale)
-    
+
     # scale data and then concat with the non-scaled data
     data_to_scale = pd.DataFrame(scaler.inverse_transform(data_to_scale), columns=cols_to_scale)
     X = pd.concat([data_to_scale, data_to_not_scale], axis=1)
@@ -821,7 +849,8 @@ def unscale_input(X, scaler_path):
     X = X[column_order]
     return X
 
-def get_data(data_dir, dataset_type='sectors', return_format='tensor'):
+
+def get_data(data_dir, dataset_type="sectors", return_format="tensor"):
     """
     Loads training, validation, and test datasets, formatting them for model training.
 
@@ -840,7 +869,13 @@ def get_data(data_dir, dataset_type='sectors', return_format='tensor'):
             - y_test (pd.DataFrame, np.ndarray, or torch.Tensor): Testing labels.
     """
 
-    X_train, y_train = get_X_y(f"{data_dir}/train.csv", dataset_type=dataset_type, return_format=return_format)
-    X_val, y_val = get_X_y(f"{data_dir}/val.csv", dataset_type=dataset_type, return_format=return_format)
-    X_test, y_test = get_X_y(f"{data_dir}/test.csv", dataset_type=dataset_type, return_format=return_format)
+    X_train, y_train = get_X_y(
+        f"{data_dir}/train.csv", dataset_type=dataset_type, return_format=return_format
+    )
+    X_val, y_val = get_X_y(
+        f"{data_dir}/val.csv", dataset_type=dataset_type, return_format=return_format
+    )
+    X_test, y_test = get_X_y(
+        f"{data_dir}/test.csv", dataset_type=dataset_type, return_format=return_format
+    )
     return X_train, y_train, X_val, y_val, X_test, y_test

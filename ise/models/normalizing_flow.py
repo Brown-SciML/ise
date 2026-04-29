@@ -19,23 +19,27 @@ Key methods:
 - ``aleatoric(features, num_samples)`` — return per-sample std across flow draws.
 - ``save(path)`` / ``load(path)`` — checkpoint with architecture metadata JSON.
 """
-import torch
-from torch import nn, optim
-from nflows import distributions, flows, transforms
-from ise.utils.functions import to_tensor
-from ise.data.dataclasses import EmulatorDataset
-import numpy as np
+
 import json
 import os
-from ise.models.training import EarlyStoppingCheckpointer, CheckpointSaver
+
+import numpy as np
+import torch
 import wandb
+from nflows import distributions, flows, transforms
+from torch import nn, optim
+
+from ise.data.dataclasses import EmulatorDataset
+from ise.models.training import CheckpointSaver, EarlyStoppingCheckpointer
+from ise.utils.functions import to_tensor
+
 
 class NormalizingFlow(nn.Module):
     """
     A normalizing flow model for probabilistic modeling using invertible transformations.
 
-    This model utilizes a sequence of invertible transformations to model complex probability 
-    distributions. It is built with a base distribution and a series of transformations, 
+    This model utilizes a sequence of invertible transformations to model complex probability
+    distributions. It is built with a base distribution and a series of transformations,
     leveraging autoregressive neural networks.
 
     Attributes:
@@ -45,7 +49,7 @@ class NormalizingFlow(nn.Module):
         flow_hidden_features (int): Number of hidden features in the flow model.
         output_sequence_length (int): Length of the output sequence.
         device (str): Device on which the model is run ("cuda" or "cpu").
-        base_distribution (distributions.normal.ConditionalDiagonalNormal): 
+        base_distribution (distributions.normal.ConditionalDiagonalNormal):
             The base normal distribution conditioned on input features.
         t (transforms.base.CompositeTransform): Composite transformation for the normalizing flow.
         flow (flows.base.Flow): The normalizing flow model.
@@ -72,12 +76,11 @@ class NormalizingFlow(nn.Module):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.to(self.device)
 
-
         # Define base distribution
         context_encoder = nn.Sequential(
             nn.Linear(self.num_input_features, self.flow_hidden_features),
             nn.ReLU(),
-            nn.Linear(self.flow_hidden_features, output_size * 2)
+            nn.Linear(self.flow_hidden_features, output_size * 2),
         )
         self.base_distribution = distributions.normal.ConditionalDiagonalNormal(
             shape=[self.num_predicted_sle],
@@ -108,11 +111,27 @@ class NormalizingFlow(nn.Module):
         # Define optimizer and criterion
         self.trained = False
         self.wandb_run = None
-        self.optimizer = optim.AdamW(self.flow.parameters(),)
-        
+        self.optimizer = optim.AdamW(
+            self.flow.parameters(),
+        )
 
-    def fit(self, X, y, X_val=None, y_val=None, epochs=100, batch_size=64, save_checkpoints=True, 
-            checkpoint_path='checkpoint.pt', early_stopping=True, patience=10, verbose=True, wandb_run=None, lr=1e-4, wd=1e-6):
+    def fit(
+        self,
+        X,
+        y,
+        X_val=None,
+        y_val=None,
+        epochs=100,
+        batch_size=64,
+        save_checkpoints=True,
+        checkpoint_path="checkpoint.pt",
+        early_stopping=True,
+        patience=10,
+        verbose=True,
+        wandb_run=None,
+        lr=1e-4,
+        wd=1e-6,
+    ):
         """
         Trains the normalizing flow model using maximum likelihood estimation.
 
@@ -131,48 +150,57 @@ class NormalizingFlow(nn.Module):
         Raises:
             ValueError: If checkpoint loading fails.
         """
-        
-        
+
         if self.trained:
             print("Model is already trained. Skipping training.")
             return
 
         self.optimizer = optim.AdamW(self.flow.parameters(), lr=lr, weight_decay=wd)
         self.criterion = self.flow.log_prob
-        
+
         self.to(self.device)
         X, y = to_tensor(X).to(self.device), to_tensor(y).to(self.device)
         if y.ndimension() == 1:
             y = y.unsqueeze(1)
         self.wandb_run = wandb_run
         validate = True if X_val is not None and y_val is not None else False
-        
+
         start_epoch = 1
         best_loss = float("inf")
         if os.path.exists(checkpoint_path):
             checkpoint = torch.load(checkpoint_path)
-            self.load_state_dict(checkpoint['model_state_dict'])
-            self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-            start_epoch = checkpoint['epoch'] + 1
-            best_loss = checkpoint.get('best_loss', float("inf"))
+            self.load_state_dict(checkpoint["model_state_dict"])
+            self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+            start_epoch = checkpoint["epoch"] + 1
+            best_loss = checkpoint.get("best_loss", float("inf"))
             if verbose:
-                print(f"Resuming from checkpoint at epoch {start_epoch} with validation loss {best_loss:.6f}")
-  
-        dataset = EmulatorDataset(X, y, sequence_length=1, projection_length=self.output_sequence_length)
+                print(
+                    f"Resuming from checkpoint at epoch {start_epoch} with validation loss {best_loss:.6f}"
+                )
+
+        dataset = EmulatorDataset(
+            X, y, sequence_length=1, projection_length=self.output_sequence_length
+        )
         data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
         self.train()
-        
+
         if validate:
             X_val, y_val = to_tensor(X_val).to(self.device), to_tensor(y_val).to(self.device)
             if y_val.ndimension() == 1:
                 y_val = y_val.unsqueeze(1)
 
-            val_dataset = EmulatorDataset(X_val, y_val, sequence_length=1, projection_length=self.output_sequence_length)
-            val_data_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+            val_dataset = EmulatorDataset(
+                X_val, y_val, sequence_length=1, projection_length=self.output_sequence_length
+            )
+            val_data_loader = torch.utils.data.DataLoader(
+                val_dataset, batch_size=batch_size, shuffle=False
+            )
 
         if save_checkpoints:
             if early_stopping:
-                checkpointer = EarlyStoppingCheckpointer(self, self.optimizer, checkpoint_path, patience, verbose)
+                checkpointer = EarlyStoppingCheckpointer(
+                    self, self.optimizer, checkpoint_path, patience, verbose
+                )
             else:
                 checkpointer = CheckpointSaver(self, self.optimizer, checkpoint_path, verbose)
             checkpointer.best_loss = best_loss
@@ -198,10 +226,14 @@ class NormalizingFlow(nn.Module):
                             val_y = val_y.to(self.device)
                             val_loss = torch.mean(-self.flow.log_prob(inputs=val_y, context=val_x))
                             val_losses.append(val_loss.item())
-                    average_epoch_loss = sum(val_losses) / len(val_losses) if val_losses else float("inf")
+                    average_epoch_loss = (
+                        sum(val_losses) / len(val_losses) if val_losses else float("inf")
+                    )
 
-                    train_avg_loss = sum(epoch_loss) / len(epoch_loss) if epoch_loss else float("inf")
-                    
+                    train_avg_loss = (
+                        sum(epoch_loss) / len(epoch_loss) if epoch_loss else float("inf")
+                    )
+
                     if self.wandb_run:
                         log_dict = {"epoch": epoch, "val_loss": average_epoch_loss}
                         if train_avg_loss is not None:
@@ -212,7 +244,7 @@ class NormalizingFlow(nn.Module):
                     average_epoch_loss = sum(epoch_loss) / len(epoch_loss)
                     if self.wandb_run:
                         self.wandb_run.log({"epoch": epoch, "loss": average_epoch_loss})
-                        
+
                 if save_checkpoints:
                     checkpointer(average_epoch_loss, epoch)
                     if hasattr(checkpointer, "early_stop") and checkpointer.early_stop:
@@ -222,27 +254,29 @@ class NormalizingFlow(nn.Module):
                         break
 
                 if verbose:
-                    print(f"[epoch/total]: [{epoch}/{epochs}], loss: {average_epoch_loss}{f' -- {checkpointer.log}' if save_checkpoints else ''}")
+                    print(
+                        f"[epoch/total]: [{epoch}/{epochs}], loss: {average_epoch_loss}{f' -- {checkpointer.log}' if save_checkpoints else ''}"
+                    )
         else:
             if verbose:
                 print(f"Training already completed ({epochs}/{epochs}).")
-                    
+
         self.trained = True
         self.model_dir = None
-        
+
         if save_checkpoints:
             if self.wandb_run:
-                model_name = checkpoint_path.split('/')[-1].replace('.pt', '')
-                artifact = wandb.Artifact(model_name, type='model')
+                model_name = checkpoint_path.split("/")[-1].replace(".pt", "")
+                artifact = wandb.Artifact(model_name, type="model")
                 artifact.add_file(checkpoint_path)
                 self.wandb_run.log_artifact(artifact)
-            
+
             checkpoint = torch.load(checkpoint_path, weights_only=True)
-            if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint.keys():
-                self.load_state_dict(checkpoint['model_state_dict'])
-                self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-                self.best_loss = checkpoint['best_loss']
-                self.epochs_trained = checkpoint['epoch']
+            if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint.keys():
+                self.load_state_dict(checkpoint["model_state_dict"])
+                self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+                self.best_loss = checkpoint["best_loss"]
+                self.epochs_trained = checkpoint["epoch"]
             else:
                 self.load_state_dict(checkpoint)
             os.remove(checkpoint_path)
@@ -261,7 +295,9 @@ class NormalizingFlow(nn.Module):
         """
 
         features = to_tensor(features)
-        samples = self.flow.sample(num_samples, context=features).reshape(features.shape[0], num_samples)
+        samples = self.flow.sample(num_samples, context=features).reshape(
+            features.shape[0], num_samples
+        )
         if return_type == "numpy":
             return samples.detach().cpu().numpy()
         return samples
@@ -281,13 +317,15 @@ class NormalizingFlow(nn.Module):
         x = to_tensor(x).to(self.device)
         # latent_constant_tensor = torch.ones((x.shape[0], 1)).to(self.device) * latent_constant
         # z, _ = self.t(latent_constant_tensor.float(), context=x)
-        
-        z = self.base_distribution.sample(latent_dim, context=x).squeeze(2) # collapse third 1-d dimension
+
+        z = self.base_distribution.sample(latent_dim, context=x).squeeze(
+            2
+        )  # collapse third 1-d dimension
         return z
 
     def aleatoric(self, features, num_samples, batch_size=128):
         """
-        Estimates aleatoric uncertainty by computing the standard deviation of multiple 
+        Estimates aleatoric uncertainty by computing the standard deviation of multiple
         samples drawn from the normalizing flow model.
 
         Args:
@@ -302,16 +340,16 @@ class NormalizingFlow(nn.Module):
         features = to_tensor(features)
         num_batches = (features.shape[0] + batch_size - 1) // batch_size
         aleatoric_uncertainty = []
-        
+
         for i in range(num_batches):
             start_idx = i * batch_size
-            end_idx = min((i+1)*batch_size, features.shape[0])
+            end_idx = min((i + 1) * batch_size, features.shape[0])
             batch_features = features[start_idx:end_idx]
             samples = self.flow.sample(num_samples, context=batch_features)
             samples = samples.detach().cpu().numpy()
             std = np.std(samples, axis=1).squeeze()
             aleatoric_uncertainty.append(std)
-            
+
         return np.concatenate(aleatoric_uncertainty)
 
     def save(self, path):
@@ -334,18 +372,21 @@ class NormalizingFlow(nn.Module):
             "best_loss": self.best_loss,
             "epochs_trained": self.epochs_trained,
             "flow_hidden_size": self.flow_hidden_features,
-            "num_flows": self.num_flow_transforms
+            "num_flows": self.num_flow_transforms,
         }
         metadata_path = path + "_metadata.json"
 
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=4)
 
-        torch.save({
-            'model_state_dict': self.state_dict(),
-            'optimizer_state_dict': self.optimizer.state_dict(),
-            'trained': self.trained,
-        }, path)
+        torch.save(
+            {
+                "model_state_dict": self.state_dict(),
+                "optimizer_state_dict": self.optimizer.state_dict(),
+                "trained": self.trained,
+            },
+            path,
+        )
         print(f"Model and metadata saved to {path} and {metadata_path}, respectively.")
 
     @staticmethod
@@ -364,22 +405,24 @@ class NormalizingFlow(nn.Module):
             metadata = json.load(f)
 
         model = NormalizingFlow(
-            input_size=metadata["input_size"], 
+            input_size=metadata["input_size"],
             output_size=metadata["output_size"],
             flow_hidden_features=metadata["flow_hidden_size"],
-            num_flow_transforms=metadata["num_flows"]
+            num_flow_transforms=metadata["num_flows"],
         )
 
-        checkpoint = torch.load(path, map_location="cpu" if not torch.cuda.is_available() else None, weights_only=True)
-        
-        if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint.keys():
-            model.load_state_dict(checkpoint['model_state_dict'])
-            model.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-            model.trained = checkpoint['trained']
+        checkpoint = torch.load(
+            path, map_location="cpu" if not torch.cuda.is_available() else None, weights_only=True
+        )
+
+        if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint.keys():
+            model.load_state_dict(checkpoint["model_state_dict"])
+            model.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+            model.trained = checkpoint["trained"]
         else:
             model.load_state_dict(checkpoint)
             model.trained = True
-            
+
         model.trained = True
         model.model_dir = os.path.dirname(path)
         model.best_loss = metadata.get("best_loss", None)

@@ -4,9 +4,12 @@ This module provides the ForcingFile class for loading, validating, and
 processing NetCDF forcing data (atmospheric and oceanic) with sector-level
 aggregation.
 """
-import xarray as xr
+
 from typing import List
+
 import numpy as np
+import xarray as xr
+
 from ise.data.grids import GridFile
 from ise.data.utils import convert_and_subset_times
 
@@ -34,7 +37,7 @@ class ForcingFile:
         varname (str or None): Data variable name.
     """
 
-    def __init__(self, ice_sheet: str, realm: str, filepath: str, varname: str=None) -> None:
+    def __init__(self, ice_sheet: str, realm: str, filepath: str, varname: str = None) -> None:
         self.ice_sheet = ice_sheet
         self.realm = realm
         self.filepath = filepath
@@ -59,13 +62,16 @@ class ForcingFile:
             filepath = self.filepath
         if self.data is not None:
             return self.data
-        
+
         self.data = xr.open_dataset(filepath, **kwargs)
         if validate:
             self._validate_data()
         return self.data
 
-    def drop_vars(self, vars: List[str],) -> xr.Dataset:
+    def drop_vars(
+        self,
+        vars: List[str],
+    ) -> xr.Dataset:
         """
         Drop dimensions or variables from the loaded dataset.
 
@@ -81,7 +87,9 @@ class ForcingFile:
             elif var in self.data.variables:
                 self.data = self.data.drop_vars(var)
 
-    def format_timestamps(self,) -> xr.Dataset:
+    def format_timestamps(
+        self,
+    ) -> xr.Dataset:
         """
         Convert and subset time coordinate to 2015–2100 (86 years).
 
@@ -91,7 +99,9 @@ class ForcingFile:
         self.data = convert_and_subset_times(self.data)
         return self.data
 
-    def get_data(self,) -> xr.Dataset:
+    def get_data(
+        self,
+    ) -> xr.Dataset:
         """Return the loaded dataset."""
         return self.data
 
@@ -121,7 +131,7 @@ class ForcingFile:
         else:
             raise ValueError(f"Unsupported aggregation method: {method}")
         return self.data
-    
+
     def assign_sectors(self, sectors: np.ndarray | GridFile) -> xr.Dataset:
         """
         Assign sector IDs to the dataset (e.g. from a GridFile).
@@ -140,14 +150,13 @@ class ForcingFile:
         if isinstance(sectors, GridFile):
             sectors = sectors.get_sectors()
         self.sectors = sectors
-        
-        self.data['sector'] = sectors
+
+        self.data["sector"] = sectors
 
         self._standardize_dims()
         return self.data
 
-    
-    def average_over_sector(self, sector_number: int=None) -> xr.Dataset:
+    def average_over_sector(self, sector_number: int = None) -> xr.Dataset:
         """
         Average data over grid cells within a sector (or all sectors).
 
@@ -165,37 +174,40 @@ class ForcingFile:
             raise ValueError("No data loaded. Call load() before averaging sectors.")
         if self.sectors is None and "sector" not in self.data and "sectors" not in self.data:
             raise ValueError("No sectors assigned. Call assign_sectors() before averaging sectors.")
-        
+
         if self._check_averaged_sectors():
             return self.data
-        
+
         if sector_number is None:
             raise NotImplementedError("Averaging over all sectors at once is not implemented.")
         mask = self.data["sector"] == sector_number
-        sector_averages = self.data.where(mask, drop=True).mean(dim=['x', 'y'], skipna=True)
+        sector_averages = self.data.where(mask, drop=True).mean(dim=["x", "y"], skipna=True)
 
         self.sector_averages = sector_averages
         return sector_averages
-    
+
     def _check_averaged_sectors(self):
         """Return True if data is already sector-averaged (dims sector, time)."""
-        if tuple(self.data.dims) == ("sector", "time") or tuple(self.data.dims) == ("time", "sector"):
+        if tuple(self.data.dims) == ("sector", "time") or tuple(self.data.dims) == (
+            "time",
+            "sector",
+        ):
             self.sector_averages = self.data
             return True
         else:
             return False
-        
+
     def _standardize_dims(self):
         if "sectors" in self.data.dims:
             self.data = self.data.rename_dims({"sectors": "sector"})
         if "sectors" in self.data.coords:
             self.data = self.data.rename({"sectors": "sector"})
-        
+
         var_name = list(self.data.data_vars)[0] if not self.varname else self.varname
         if self.data["sector"].dims != self.data[var_name].dims:
             # print(f"Transposing sector from {self.data['sector'].dims} to {self.data[var_name].dims}")
             self.data["sector"] = self.data["sector"].transpose(*self.data[var_name].dims)
-            
+
         return self.data
 
     def _validate_data(self):

@@ -3,6 +3,7 @@
 This module provides the GridFile class for loading and formatting NetCDF
 grid files that define sector boundaries (e.g. AIS 18 sectors, GrIS 6 regions).
 """
+
 import xarray as xr
 
 
@@ -59,7 +60,7 @@ class GridFile:
         """
         self.data = self.data.expand_dims({dim: size})
         return self.data
-    
+
     def align_dims(self, dims: list = None) -> xr.Dataset:
         """
         Transpose dimensions to a standard order.
@@ -73,14 +74,18 @@ class GridFile:
         if dims is not None:
             self.data = self.data.transpose(*dims)
         else:
-            self.data = self.data.transpose('time', 'x', 'y', ...)
+            self.data = self.data.transpose("time", "x", "y", ...)
         return self.data
-    
-    def get_sectors(self,) -> xr.DataArray:
+
+    def get_sectors(
+        self,
+    ) -> xr.DataArray:
         """Return the sector ID array from the grid dataset."""
         return self.data[self.sector_variable_name]
 
-    def format_grids(self,) -> xr.Dataset:
+    def format_grids(
+        self,
+    ) -> xr.Dataset:
         """
         Load (if needed), expand time to 86, and align dimensions.
 
@@ -92,5 +97,3 @@ class GridFile:
         self.expand_dims(size=86)
         self.align_dims()
         return self.data
-    
-    

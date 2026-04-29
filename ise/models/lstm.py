@@ -11,19 +11,22 @@ Key features:
   model can be reconstructed without the original constructor call.
 - Integrates with ``wandb`` for experiment tracking when a run is provided.
 """
-import torch
-from torch import nn, optim
-import torch.nn.functional as F
-import warnings
-import pandas as pd
-import numpy as np
-import os
-import wandb
-import json
 
-from ise.utils.functions import to_tensor
+import json
+import os
+import warnings
+
+import numpy as np
+import pandas as pd
+import torch
+import torch.nn.functional as F
+import wandb
+from torch import nn, optim
+
 from ise.data.dataclasses import EmulatorDataset
 from ise.models.training import CheckpointSaver, EarlyStoppingCheckpointer
+from ise.utils.functions import to_tensor
+
 
 class LSTM(nn.Module):
     """
@@ -112,7 +115,7 @@ class LSTM(nn.Module):
             x (Tensor): Input tensor of shape (batch_size, sequence_length, input_size).
 
         Returns:
-            Tensor: Output tensor of shape (batch_size, output_size), representing 
+            Tensor: Output tensor of shape (batch_size, output_size), representing
             the model’s predictions.
         """
 
@@ -136,15 +139,29 @@ class LSTM(nn.Module):
         x = self.linear_out(x)
 
         return x
-    
-    
-    def fit(self, X, y, epochs=100, sequence_length=5, batch_size=64, criterion=None, X_val=None, y_val=None, 
-            save_checkpoints=True, checkpoint_path='checkpoint.pt', early_stopping=False, patience=10, 
-            verbose=True, dataclass=EmulatorDataset, wandb_run=None, ):
+
+    def fit(
+        self,
+        X,
+        y,
+        epochs=100,
+        sequence_length=5,
+        batch_size=64,
+        criterion=None,
+        X_val=None,
+        y_val=None,
+        save_checkpoints=True,
+        checkpoint_path="checkpoint.pt",
+        early_stopping=False,
+        patience=10,
+        verbose=True,
+        dataclass=EmulatorDataset,
+        wandb_run=None,
+    ):
         """
         Trains the LSTM model on the provided data.
 
-        Supports optional checkpointing and early stopping. If a checkpoint exists, 
+        Supports optional checkpointing and early stopping. If a checkpoint exists,
         training resumes from the last saved state.
 
         Args:
@@ -184,14 +201,15 @@ class LSTM(nn.Module):
         self.checkpoint_path = checkpoint_path
         if os.path.exists(checkpoint_path):
             checkpoint = torch.load(checkpoint_path)
-            self.load_state_dict(checkpoint['model_state_dict'])
-            self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-            start_epoch = checkpoint['epoch'] + 1
-            best_loss = checkpoint.get('best_loss', float("inf"))
+            self.load_state_dict(checkpoint["model_state_dict"])
+            self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+            start_epoch = checkpoint["epoch"] + 1
+            best_loss = checkpoint.get("best_loss", float("inf"))
             if verbose:
-                print(f"Resuming from checkpoint at epoch {start_epoch} with validation loss {best_loss:.6f}")
+                print(
+                    f"Resuming from checkpoint at epoch {start_epoch} with validation loss {best_loss:.6f}"
+                )
 
-        
         # Check if validation data is provided
         if X_val is not None and y_val is not None:
             validate = True
@@ -217,7 +235,9 @@ class LSTM(nn.Module):
             y = y.values
 
         # Create dataset and data loader
-        dataset = dataclass(X, y, sequence_length=sequence_length, projection_length=self.output_sequence_length)
+        dataset = dataclass(
+            X, y, sequence_length=sequence_length, projection_length=self.output_sequence_length
+        )
         data_loader = torch.utils.data.DataLoader(dataset, batch_size=int(batch_size), shuffle=True)
 
         # Set model to training mode
@@ -227,14 +247,16 @@ class LSTM(nn.Module):
         # Initialize early stopping
         if save_checkpoints:
             if early_stopping:
-                checkpointer = EarlyStoppingCheckpointer(self, self.optimizer, checkpoint_path, patience, verbose)
+                checkpointer = EarlyStoppingCheckpointer(
+                    self, self.optimizer, checkpoint_path, patience, verbose
+                )
             else:
                 checkpointer = CheckpointSaver(self, self.optimizer, checkpoint_path, verbose)
-                
+
             checkpointer.best_loss = best_loss
         else:
             checkpointer = None
-        
+
         # Training loop
         if start_epoch <= epochs:
             for epoch in range(start_epoch, epochs + 1):
@@ -262,39 +284,47 @@ class LSTM(nn.Module):
 
                         if hasattr(checkpointer, "early_stop") and checkpointer.early_stop:
                             if verbose:
-                                print("Early stopping") 
+                                print("Early stopping")
                             break
-                    
+
                     if self.wandb_run:
-                        log_dict = {"epoch": epoch, "train_loss": sum(batch_losses) / len(batch_losses), "val_loss": val_loss.item()}
+                        log_dict = {
+                            "epoch": epoch,
+                            "train_loss": sum(batch_losses) / len(batch_losses),
+                            "val_loss": val_loss.item(),
+                        }
                         wandb.log(log_dict)
 
                     if verbose:
-                        print(f"[epoch/total]: [{epoch}/{epochs}], train loss: {sum(batch_losses) / len(batch_losses)}, val mse: {val_loss:.6f} -- {getattr(checkpointer, 'log', '') if checkpointer is not None else ''}")
+                        print(
+                            f"[epoch/total]: [{epoch}/{epochs}], train loss: {sum(batch_losses) / len(batch_losses)}, val mse: {val_loss:.6f} -- {getattr(checkpointer, 'log', '') if checkpointer is not None else ''}"
+                        )
                 else:
                     average_batch_loss = sum(batch_losses) / len(batch_losses)
                     if verbose:
-                        print(f"[epoch/total]: [{epoch}/{epochs}], train loss: {average_batch_loss}")
+                        print(
+                            f"[epoch/total]: [{epoch}/{epochs}], train loss: {average_batch_loss}"
+                        )
         else:
             if verbose:
                 print(f"Training already completed ({epochs}/{epochs}).")
 
         self.trained = True
-        
+
         # loads best model
         if save_checkpoints:
             if self.wandb_run:
-                model_name = checkpoint_path.split('/')[-1]
+                model_name = checkpoint_path.split("/")[-1]
                 artifact = wandb.Artifact(model_name, type="model")
                 artifact.add_file(checkpoint_path)
                 self.wandb_run.log_artifact(artifact)
 
             checkpoint = torch.load(checkpoint_path, weights_only=False)
-            if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint.keys():
-                self.load_state_dict(checkpoint['model_state_dict'])
-                self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-                self.best_loss = checkpoint['best_loss']
-                self.epochs_trained = checkpoint['epoch']
+            if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint.keys():
+                self.load_state_dict(checkpoint["model_state_dict"])
+                self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+                self.best_loss = checkpoint["best_loss"]
+                self.epochs_trained = checkpoint["epoch"]
             else:
                 self.load_state_dict(checkpoint)
             # os.remove(checkpoint_path)
@@ -323,7 +353,7 @@ class LSTM(nn.Module):
 
         self.eval()
         self.to(self.device)
-        
+
         if sequence_length is None:
             sequence_length = self.sequence_length
 
@@ -332,7 +362,12 @@ class LSTM(nn.Module):
             X = X.values
 
         # Create dataset and data loader
-        dataset = dataclass(X, y=None, sequence_length=sequence_length, projection_length=self.output_sequence_length)
+        dataset = dataclass(
+            X,
+            y=None,
+            sequence_length=sequence_length,
+            projection_length=self.output_sequence_length,
+        )
         data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False)
 
         preds = torch.tensor([]).to(self.device)
@@ -344,7 +379,6 @@ class LSTM(nn.Module):
         self.train()
 
         return preds
-
 
     def save(self, model_path: str):
         """
@@ -388,7 +422,9 @@ class LSTM(nn.Module):
             },
             "criterion": getattr(self.criterion, "__class__", type(self.criterion)).__name__,
             "optimizer": {
-                "type": self.optimizer.__class__.__name__ if hasattr(self, "optimizer") else "AdamW",
+                "type": (
+                    self.optimizer.__class__.__name__ if hasattr(self, "optimizer") else "AdamW"
+                ),
                 "lr": lr,
                 "weight_decay": weight_decay,
             },
@@ -434,7 +470,9 @@ class LSTM(nn.Module):
             FileNotFoundError: If weights or metadata files are missing.
             ValueError: If the saved model_type does not match this class.
         """
-        metadata_path = model_path.replace(".pth", "_metadata.json").replace(".pt", "_metadata.json")
+        metadata_path = model_path.replace(".pth", "_metadata.json").replace(
+            ".pt", "_metadata.json"
+        )
         if not os.path.isfile(metadata_path):
             raise FileNotFoundError(f"Metadata file not found: {metadata_path}")
         if not os.path.isfile(model_path):
@@ -493,7 +531,9 @@ class LSTM(nn.Module):
 
         # Load weights (CPU-safe)
         state_dict = torch.load(
-            model_path, map_location="cpu" if not torch.cuda.is_available() else None, weights_only=True
+            model_path,
+            map_location="cpu" if not torch.cuda.is_available() else None,
+            weights_only=True,
         )
         model.load_state_dict(state_dict)
 

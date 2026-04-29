@@ -3,10 +3,11 @@
 This module provides PCA and DimensionProcessor for reducing input feature
 dimensions and aligning data with fitted transforms (e.g. after scaling).
 """
+
+import numpy as np
+import pandas as pd
 import torch
 from torch import nn
-import pandas as pd
-import numpy as np
 
 from ise.data.scaler import LogScaler, RobustScaler, StandardScaler
 
@@ -15,14 +16,14 @@ class PCA(nn.Module):
     """
     Principal Component Analysis (PCA) using PyTorch.
 
-    This class performs Principal Component Analysis (PCA) for dimensionality 
-    reduction, leveraging PyTorch's built-in operations. The model can be 
-    trained on input data to extract principal components and later transform 
+    This class performs Principal Component Analysis (PCA) for dimensionality
+    reduction, leveraging PyTorch's built-in operations. The model can be
+    trained on input data to extract principal components and later transform
     new data into the reduced-dimensional space.
 
     Attributes:
-        n_components (int or float): Number of principal components to keep. 
-            If an integer, it represents the exact number of components. 
+        n_components (int or float): Number of principal components to keep.
+            If an integer, it represents the exact number of components.
             If a float between 0 and 1, it represents the proportion of variance to retain.
         mean (torch.Tensor): Mean of the input data, computed during fitting.
         components (torch.Tensor): Principal components (eigenvectors) of the fitted data.
@@ -47,7 +48,7 @@ class PCA(nn.Module):
         """
         Fits the PCA model to the input data.
 
-        Computes the principal components, singular values, explained variance, 
+        Computes the principal components, singular values, explained variance,
         and variance ratios using singular value decomposition.
 
         Args:
@@ -101,7 +102,7 @@ class PCA(nn.Module):
             X (np.ndarray or pd.DataFrame): Input data of shape (n_samples, n_features).
 
         Returns:
-            torch.Tensor: Transformed data in the principal component space, 
+            torch.Tensor: Transformed data in the principal component space,
             with shape (n_samples, n_components).
 
         Raises:
@@ -218,15 +219,15 @@ class DimensionProcessor(nn.Module):
     """
     A pipeline for dimensionality reduction using PCA and data scaling.
 
-    This class integrates a PCA model for dimensionality reduction and a 
-    scaling method for normalization. It facilitates transformation between 
+    This class integrates a PCA model for dimensionality reduction and a
+    scaling method for normalization. It facilitates transformation between
     the original data space and the reduced PCA space.
 
     Args:
         pca_model (str or PCA): A pre-trained PCA model or a file path to a saved PCA model.
-        scaler_model (str or StandardScaler, RobustScaler, LogScaler): 
+        scaler_model (str or StandardScaler, RobustScaler, LogScaler):
             A scaler model instance or a file path to a saved scaler model.
-        scaler_method (str, optional): Scaling method to use. 
+        scaler_method (str, optional): Scaling method to use.
             Must be one of 'standard', 'robust', or 'log'. Defaults to 'standard'.
 
     Attributes:
@@ -238,7 +239,6 @@ class DimensionProcessor(nn.Module):
         ValueError: If the `pca_model` or `scaler_model` are invalid.
         RuntimeError: If the PCA model has not been fitted.
     """
-
 
     def __init__(
         self,

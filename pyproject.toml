@@ -87,8 +87,12 @@ dependencies = [
     "torchvision>=0.20.0",
     "transformers>=4.49.0",
     "plotly>=6.3.0",
-    "nbformat>=5.10.4"
-
+    "nbformat>=5.10.4",
+    "black>=26.3.1",
+    "flake8>=7.3.0",
+    "isort>=8.0.1",
+    "mypy>=1.20.1",
+    "packaging>=24.1",
 ]
 
 [dependency-groups]

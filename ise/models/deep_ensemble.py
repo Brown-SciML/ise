@@ -9,14 +9,17 @@ Members can be supplied explicitly (e.g. with different hidden sizes / loss
 functions) or auto-generated randomly.  ``save()`` / ``load()`` preserve the
 full ensemble including each member's state dict and metadata.
 """
+
+import json
+import os
+import warnings
+
+import numpy as np
 import torch
 from torch import nn
-import numpy as np
-import warnings
-import os
-import json
 
 from ise.models.lstm import LSTM
+
 
 class DeepEnsemble(nn.Module):
     """
@@ -41,13 +44,20 @@ class DeepEnsemble(nn.Module):
         num_ensemble_members (int): Number of ensemble members to create if `ensemble_members` is None.
         output_sequence_length (int): Length of the output sequence to predict.
         latent_dim (int): Additional latent dimension added to the input.
-    
+
     Raises:
         ValueError: If `ensemble_members` is provided but does not contain only LSTM instances.
     """
 
-
-    def __init__(self, ensemble_members=None, input_size=83, output_size=1, num_ensemble_members=3, output_sequence_length=86, latent_dim=1):
+    def __init__(
+        self,
+        ensemble_members=None,
+        input_size=83,
+        output_size=1,
+        num_ensemble_members=3,
+        output_sequence_length=86,
+        latent_dim=1,
+    ):
         super(DeepEnsemble, self).__init__()
         self.input_size = input_size + latent_dim
         self.output_size = output_size
@@ -67,7 +77,9 @@ class DeepEnsemble(nn.Module):
                 )
                 for _ in range(num_ensemble_members)
             ]
-        elif isinstance(ensemble_members, list) and all(isinstance(m, LSTM) for m in ensemble_members):
+        elif isinstance(ensemble_members, list) and all(
+            isinstance(m, LSTM) for m in ensemble_members
+        ):
             self.ensemble_members = ensemble_members
         else:
             raise ValueError("ensemble_members must be a list of LSTM instances")
@@ -86,10 +98,10 @@ class DeepEnsemble(nn.Module):
             x (Tensor): Input tensor of shape (batch_size, sequence_length, input_size).
 
         Returns:
-            Tuple[Tensor, Tensor]: 
+            Tuple[Tensor, Tensor]:
                 - Mean prediction across all ensemble members.
                 - Epistemic uncertainty (standard deviation of predictions).
-        
+
         Warnings:
             - If the model is not trained, a warning is issued indicating that predictions
               may be unreliable.
@@ -97,7 +109,9 @@ class DeepEnsemble(nn.Module):
 
         if not self.trained:
             warnings.warn("This model has not been trained. Predictions may be inaccurate.")
-        preds = torch.cat([member.predict(x).unsqueeze(1) for member in self.ensemble_members], dim=1)
+        preds = torch.cat(
+            [member.predict(x).unsqueeze(1) for member in self.ensemble_members], dim=1
+        )
         mean_prediction = preds.mean(dim=1).squeeze()
         epistemic_uncertainty = preds.std(dim=1).squeeze()
         return mean_prediction, epistemic_uncertainty
@@ -112,17 +126,29 @@ class DeepEnsemble(nn.Module):
             x (Tensor): Input tensor for prediction.
 
         Returns:
-            Tuple[Tensor, Tensor]: 
+            Tuple[Tensor, Tensor]:
                 - Mean predictions across ensemble members.
                 - Uncertainty estimates (standard deviation of predictions).
         """
 
         self.eval()
         return self.forward(x)
-    
-    
-    def fit(self, X, y, X_val=None, y_val=None, save_checkpoints=True, checkpoint_path='checkpoint_ensemble',
-            early_stopping=False, epochs=100, batch_size=128, sequence_length=5, patience=10, verbose=True):
+
+    def fit(
+        self,
+        X,
+        y,
+        X_val=None,
+        y_val=None,
+        save_checkpoints=True,
+        checkpoint_path="checkpoint_ensemble",
+        early_stopping=False,
+        epochs=100,
+        batch_size=128,
+        sequence_length=5,
+        patience=10,
+        verbose=True,
+    ):
         """
         Trains each ensemble member on the provided data.
 
@@ -152,7 +178,20 @@ class DeepEnsemble(nn.Module):
         for i, member in enumerate(self.ensemble_members):
             if verbose:
                 print(f"Training Ensemble Member {i+1} of {len(self.ensemble_members)}:")
-            member.fit(X, y, X_val=X_val, y_val=y_val, epochs=epochs, batch_size=batch_size, sequence_length=sequence_length, save_checkpoints=save_checkpoints, checkpoint_path=f'{checkpoint_path}_member{i+1}.pth', early_stopping=early_stopping, patience=patience, verbose=verbose)
+            member.fit(
+                X,
+                y,
+                X_val=X_val,
+                y_val=y_val,
+                epochs=epochs,
+                batch_size=batch_size,
+                sequence_length=sequence_length,
+                save_checkpoints=save_checkpoints,
+                checkpoint_path=f"{checkpoint_path}_member{i+1}.pth",
+                early_stopping=early_stopping,
+                patience=patience,
+                verbose=verbose,
+            )
             print("")
         self.trained = True
 
@@ -178,7 +217,7 @@ class DeepEnsemble(nn.Module):
 
         if not self.trained:
             raise ValueError("Train the model before saving.")
-        
+
         # Ensure the save directory is based on model_path
         model_dir = os.path.dirname(model_path)
         os.makedirs(model_dir, exist_ok=True)
@@ -222,10 +261,13 @@ class DeepEnsemble(nn.Module):
             member_path = os.path.join(ensemble_dir, f"member_{i+1}.pth")
             torch.save(member.state_dict(), member_path)
             print(f"Ensemble Member {i+1} saved to {member_path}")
-        
-        print('Removing checkpoints after saving to model directory...')
-        [os.remove(member.checkpoint_path) for member in self.ensemble_members if hasattr(member, "checkpoint_path")]
-        
+
+        print("Removing checkpoints after saving to model directory...")
+        [
+            os.remove(member.checkpoint_path)
+            for member in self.ensemble_members
+            if hasattr(member, "checkpoint_path")
+        ]
 
     @classmethod
     def load(cls, model_path):
@@ -259,9 +301,15 @@ class DeepEnsemble(nn.Module):
             metadata = json.load(file)
 
         if cls.__name__ != metadata["model_type"]:
-            raise ValueError(f"Metadata type {metadata['model_type']} does not match {cls.__name__}")
+            raise ValueError(
+                f"Metadata type {metadata['model_type']} does not match {cls.__name__}"
+            )
 
-        loss_lookup = {"MSELoss": torch.nn.MSELoss(), "L1Loss": torch.nn.L1Loss(), "HuberLoss": torch.nn.HuberLoss()}
+        loss_lookup = {
+            "MSELoss": torch.nn.MSELoss(),
+            "L1Loss": torch.nn.L1Loss(),
+            "HuberLoss": torch.nn.HuberLoss(),
+        }
         ensemble_members = []
 
         # Load each ensemble member from the same directory
@@ -269,7 +317,7 @@ class DeepEnsemble(nn.Module):
             member_path = os.path.join(model_dir, member_metadata["path"])
             if not os.path.isfile(member_path):
                 raise FileNotFoundError(f"Ensemble member file not found: {member_path}")
-            
+
             criterion = loss_lookup[member_metadata["criterion"]]
             member = LSTM(
                 lstm_num_layers=member_metadata["lstm_num_layers"],
@@ -278,7 +326,11 @@ class DeepEnsemble(nn.Module):
                 output_size=member_metadata["output_size"],
                 criterion=criterion,
             )
-            state_dict = torch.load(member_path, map_location="cpu" if not torch.cuda.is_available() else None, weights_only=True)
+            state_dict = torch.load(
+                member_path,
+                map_location="cpu" if not torch.cuda.is_available() else None,
+                weights_only=True,
+            )
             member.load_state_dict(state_dict)
             member.trained = True
             member.sequence_length = member_metadata.get("sequence_length", None)
@@ -286,7 +338,11 @@ class DeepEnsemble(nn.Module):
             ensemble_members.append(member)
 
         model = cls(ensemble_members=ensemble_members)
-        ensemble_state_dict = torch.load(model_path, map_location="cpu" if not torch.cuda.is_available() else None, weights_only=True)
+        ensemble_state_dict = torch.load(
+            model_path,
+            map_location="cpu" if not torch.cuda.is_available() else None,
+            weights_only=True,
+        )
         model.load_state_dict(ensemble_state_dict, strict=False)
         model.eval()
         return model
