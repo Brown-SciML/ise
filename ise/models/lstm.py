@@ -258,7 +258,7 @@ class LSTM(nn.Module):
         best_loss = float("inf")
         self.checkpoint_path = checkpoint_path
         if os.path.exists(checkpoint_path):
-            checkpoint = torch.load(checkpoint_path)
+            checkpoint = torch.load(checkpoint_path, weights_only=True)
             self.load_state_dict(checkpoint["model_state_dict"])
             self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
             start_epoch = checkpoint["epoch"] + 1
@@ -493,7 +493,7 @@ class LSTM(nn.Module):
         }
 
         # Save metadata JSON
-        metadata_path = model_path.replace(".pt", "_metadata.json")
+        metadata_path = model_path.replace(".pth", "_metadata.json").replace(".pt", "_metadata.json")
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=4)
         print(f"Model metadata saved to {metadata_path}")

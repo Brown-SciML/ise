@@ -1,6 +1,10 @@
 # Ice Sheet Emulator (ISE)
 
 [![Documentation Status](https://readthedocs.org/projects/ise/badge/?version=latest)](https://ise.readthedocs.io/en/latest/)
+[![PyPI version](https://badge.fury.io/py/ise-py.svg)](https://pypi.org/project/ise-py/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
+[![CI](https://github.com/Brown-SciML/ise/actions/workflows/ci.yml/badge.svg)](https://github.com/Brown-SciML/ise/actions/workflows/ci.yml)
 
 **ISE** is a Python package for training and analyzing **ice sheet emulators**, including **ISEFlow** — a hybrid flow-based neural network emulator for improved **sea level projections** and **uncertainty quantification**.
 
@@ -19,17 +23,28 @@ For replication details see the [Releases](https://github.com/Brown-SciML/ise/re
 
 ## Installation
 
-Install in editable mode:
+Install from PyPI:
 
 ```sh
-pip install -e .
+pip install ise-py
+```
+
+> **Pretrained weights** are hosted on [HuggingFace Hub](https://huggingface.co/Brown-SciML/ISEFlow)
+> and downloaded automatically on first use. No manual download required.
+
+For development (editable install):
+
+```sh
+git clone https://github.com/Brown-SciML/ise.git
+cd ise
+pip install -e ".[dev]"
 ```
 
 Or with [uv](https://github.com/astral-sh/uv):
 
 ```sh
 uv venv
-uv pip install -e .
+uv pip install -e ".[dev]"
 ```
 
 ---
@@ -126,8 +141,8 @@ inputs = ISEFlowAISInputs(
     standard_melt_type=None,
 )
 
-# Option C: if you have raw (non-anomaly) forcing values, use from_raw_values()
-inputs = ISEFlowAISInputs.from_raw_values(
+# Option C: if you have raw (non-anomaly) forcing values, use from_absolute_forcings()
+inputs = ISEFlowAISInputs.from_absolute_forcings(
     year=year,
     sector=10,
     pr=pr_array,
@@ -145,7 +160,7 @@ inputs = ISEFlowAISInputs.from_raw_values(
     standard_melt_type="local",
 )
 
-# Load the pretrained v1.1.0 model and run inference
+# Load the pretrained v1.1.0 model (weights auto-downloaded from HuggingFace Hub on first use)
 model = ISEFlow_AIS(version="v1.1.0")
 predictions, uncertainties = model.predict(inputs)
 

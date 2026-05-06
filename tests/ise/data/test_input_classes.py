@@ -1,6 +1,9 @@
 """Pytest tests: ISEFlowAISInputs and ISEFlowGrISInputs produce identical feature
 tensors to direct test-data inference.
 
+NOTE: These tests require external dataset files and are skipped automatically
+when those paths are not present on the current machine.
+
 For each ice sheet we pick held-out projections from test.csv and verify that the
 preprocessed feature tensor produced by the inputs class pipeline (Path B) is
 numerically identical to the tensor produced by directly loading the already-processed
@@ -11,10 +14,22 @@ Path B: unscale continuous columns → decode ISM config → build inputs datacl
         → ISEFlow_AIS/GrIS.process() → numpy array
 """
 
+import os
 import pickle
 import numpy as np
 import pandas as pd
 import pytest
+
+AIS_DATA_DIR_CHECK  = "/oscar/home/pvankatw/research/ise/supplemental/dataset/AIS_slc"
+GRIS_DATA_DIR_CHECK = "/oscar/home/pvankatw/research/ise/supplemental/dataset/GrIS_slc"
+_datasets_available = (
+    os.path.isfile(f"{AIS_DATA_DIR_CHECK}/test.csv")
+    and os.path.isfile(f"{GRIS_DATA_DIR_CHECK}/test.csv")
+)
+pytestmark = pytest.mark.skipif(
+    not _datasets_available,
+    reason="External dataset files not present on this machine",
+)
 
 from ise.models.iseflow import ISEFlow_AIS, ISEFlow_GrIS
 from ise.models.pretrained import (

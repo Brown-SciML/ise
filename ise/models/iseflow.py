@@ -43,7 +43,7 @@ simplified ``predict(inputs)`` interface::
     from ise.data.inputs import ISEFlowAISInputs
 
     model = ISEFlow_AIS(version="v1.1.0")   # loads pretrained weights from package
-    inputs = ISEFlowAISInputs(...)           # or ISEFlowAISInputs.from_raw_values(...)
+    inputs = ISEFlowAISInputs(...)           # or ISEFlowAISInputs.from_absolute_forcings(...)
     predictions, uncertainties = model.predict(inputs)
     # predictions: numpy array shape (86, 1), SLE in mm, years 2015-2100
 
@@ -87,14 +87,12 @@ from ise.models.deep_ensemble import DeepEnsemble
 from ise.models.lstm import LSTM
 from ise.models.normalizing_flow import NormalizingFlow
 from ise.models.pretrained import (
-    ISEFlow_AIS_v1_0_0_path,
+    ISEFLOW_LATEST_MODEL_VERSION,
     ISEFlow_AIS_v1_0_0_variables,
-    ISEFlow_AIS_v1_1_0_path,
     ISEFlow_AIS_v1_1_0_variables,
-    ISEFlow_GrIS_v1_0_0_path,
     ISEFlow_GrIS_v1_0_0_variables,
-    ISEFlow_GrIS_v1_1_0_path,
     ISEFlow_GrIS_v1_1_0_variables,
+    get_model_dir,
 )
 from ise.models.training import CheckpointSaver, EarlyStoppingCheckpointer
 from ise.utils.functions import to_tensor
@@ -465,38 +463,41 @@ class ISEFlow(torch.nn.Module):
 class ISEFlow_AIS(ISEFlow):
     """Pretrained ISEFlow emulator for the Antarctic Ice Sheet (AIS).
 
-    Loads bundled pretrained weights for AIS (18 sectors, 8 km resolution) and
-    exposes ``predict(inputs)`` where ``inputs`` is an ``ISEFlowAISInputs`` instance.
+    Loads pretrained weights for AIS (18 sectors, 8 km resolution) from HuggingFace Hub
+    and exposes ``predict(inputs)`` where ``inputs`` is an ``ISEFlowAISInputs`` instance.
 
-    Supported versions:
+    .. note::
+       ``version`` refers to the **ISEFlow model weights version**, not the ise-py
+       package version. See ``ise.models.pretrained.ISEFLOW_LATEST_MODEL_VERSION``
+       for the current default.
+
+    Supported model versions:
 
     - ``v1.0.0``: includes ``mrro_anomaly`` as a forcing variable.
     - ``v1.1.0`` (default): ``mrro_anomaly`` removed; improved GrIS+AIS joint training.
 
     Args:
-        version (str, optional): Model version string. One of ``'v1.0.0'`` or
-            ``'v1.1.0'``. Defaults to ``'v1.1.0'``.
+        version (str, optional): ISEFlow model weights version. One of ``'v1.0.0'`` or
+            ``'v1.1.0'``. Defaults to the latest: ``'v1.1.0'``.
 
     Raises:
         NotImplementedError: If an unsupported version string is provided.
     """
 
-    def __init__(self, version="v1.1.0"):
-        """Load pretrained AIS weights for the specified version.
+    def __init__(self, version=ISEFLOW_LATEST_MODEL_VERSION):
+        """Load pretrained AIS weights for the specified model version.
 
         Args:
-            version (str, optional): ``'v1.0.0'`` or ``'v1.1.0'``. Defaults to ``'v1.1.0'``.
+            version (str, optional): ISEFlow model weights version.
+                ``'v1.0.0'`` or ``'v1.1.0'``. Defaults to ``'v1.1.0'``.
         """
         self.ice_sheet = "AIS"
         self.version = version
 
-        if version == "v1.0.0":
-            model_dir = ISEFlow_AIS_v1_0_0_path
-        elif version == "v1.1.0":
-            model_dir = ISEFlow_AIS_v1_1_0_path
-        else:
+        if version not in ("v1.0.0", "v1.1.0"):
             raise NotImplementedError(f"Version {version} not implemented. Try v1.0.0 or v1.1.0")
 
+        model_dir = get_model_dir(version, "AIS")
         deep_ensemble = DeepEnsemble.load(os.path.join(model_dir, "deep_ensemble.pth"))
         normalizing_flow = NormalizingFlow.load(os.path.join(model_dir, "normalizing_flow.pth"))
         super(ISEFlow_AIS, self).__init__(deep_ensemble, normalizing_flow)
@@ -734,38 +735,42 @@ class ISEFlow_AIS(ISEFlow):
 class ISEFlow_GrIS(ISEFlow):
     """Pretrained ISEFlow emulator for the Greenland Ice Sheet (GrIS).
 
-    Loads bundled pretrained weights for GrIS (6 drainage basins, 5 km resolution)
-    and exposes ``predict(inputs)`` where ``inputs`` is an ``ISEFlowGrISInputs`` instance.
+    Loads pretrained weights for GrIS (6 drainage basins, 5 km resolution) from
+    HuggingFace Hub and exposes ``predict(inputs)`` where ``inputs`` is an
+    ``ISEFlowGrISInputs`` instance.
 
-    Supported versions:
+    .. note::
+       ``version`` refers to the **ISEFlow model weights version**, not the ise-py
+       package version. See ``ise.models.pretrained.ISEFLOW_LATEST_MODEL_VERSION``
+       for the current default.
+
+    Supported model versions:
 
     - ``v1.0.0``: initial GrIS release.
     - ``v1.1.0`` (default): improved AIS+GrIS joint training.
 
     Args:
-        version (str, optional): Model version string. One of ``'v1.0.0'`` or
-            ``'v1.1.0'``. Defaults to ``'v1.1.0'``.
+        version (str, optional): ISEFlow model weights version. One of ``'v1.0.0'`` or
+            ``'v1.1.0'``. Defaults to the latest: ``'v1.1.0'``.
 
     Raises:
         NotImplementedError: If an unsupported version string is provided.
     """
 
-    def __init__(self, version="v1.1.0"):
-        """Load pretrained GrIS weights for the specified version.
+    def __init__(self, version=ISEFLOW_LATEST_MODEL_VERSION):
+        """Load pretrained GrIS weights for the specified model version.
 
         Args:
-            version (str, optional): ``'v1.0.0'`` or ``'v1.1.0'``. Defaults to ``'v1.1.0'``.
+            version (str, optional): ISEFlow model weights version.
+                ``'v1.0.0'`` or ``'v1.1.0'``. Defaults to ``'v1.1.0'``.
         """
         self.ice_sheet = "GrIS"
         self.version = version
 
-        if version == "v1.0.0":
-            model_dir = ISEFlow_GrIS_v1_0_0_path
-        elif version == "v1.1.0":
-            model_dir = ISEFlow_GrIS_v1_1_0_path
-        else:
+        if version not in ("v1.0.0", "v1.1.0"):
             raise NotImplementedError(f"Version {version} not implemented. Try v1.0.0 or v1.1.0")
 
+        model_dir = get_model_dir(version, "GrIS")
         deep_ensemble = DeepEnsemble.load(os.path.join(model_dir, "deep_ensemble.pth"))
         normalizing_flow = NormalizingFlow.load(os.path.join(model_dir, "normalizing_flow.pth"))
         super(ISEFlow_GrIS, self).__init__(deep_ensemble, normalizing_flow)

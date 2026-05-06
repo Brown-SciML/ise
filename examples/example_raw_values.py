@@ -1,7 +1,7 @@
 """Example: ISEFlow projection from raw (non-anomaly) forcing values.
 
-This script demonstrates ``ISEFlowAISInputs.from_raw_values()`` and
-``ISEFlowGrISInputs.from_raw_values()`` for users who have absolute forcing
+This script demonstrates ``ISEFlowAISInputs.from_absolute_forcings()`` and
+``ISEFlowGrISInputs.from_absolute_forcings()`` for users who have absolute forcing
 values rather than pre-computed anomalies.  Anomaly conversion is handled
 automatically using the existing ISMIP6 climatological baselines.
 
@@ -28,7 +28,7 @@ years = np.arange(2015, 2101)  # 86 years
 # ── 1. Raw absolute atmospheric forcing arrays ────────────────────────────────
 #
 # Illustrative values representative of NorESM1-M RCP8.5, sector 10.
-# from_raw_values() subtracts the 1995-2014 ISMIP6 climatological baseline.
+# from_absolute_forcings() subtracts the 1995-2014 ISMIP6 climatological baseline.
 
 pr_raw      = np.full(86, 1.3e-5)   # precipitation        (kg m⁻² s⁻¹)
 evspsbl_raw = np.full(86, 4.0e-6)   # evaporation          (kg m⁻² s⁻¹)
@@ -45,7 +45,7 @@ temp_ais = np.linspace(-0.4, 0.1, 86)  # ocean temperature    (°C)
 
 print("Available AIS AOGCMs:", AnomalyConverter("AIS").list_aogcms())
 
-inputs_ais_existing = ISEFlowAISInputs.from_raw_values(
+inputs_ais_existing = ISEFlowAISInputs.from_absolute_forcings(
     year=years,
     sector=10,
     pr=pr_raw,
@@ -76,7 +76,7 @@ print(inputs_ais_existing)
 
 # ── 2B. AIS using a custom climatology ───────────────────────────────────────
 
-inputs_ais_custom = ISEFlowAISInputs.from_raw_values(
+inputs_ais_custom = ISEFlowAISInputs.from_absolute_forcings(
     year=years,
     sector=10,
     pr=pr_raw,
@@ -131,7 +131,7 @@ print(f"[AIS] Mean aleatoric uncertainty: {al_ais.mean():.3f} mm")
 
 # ── 4. Raw absolute atmospheric forcing arrays ────────────────────────────────
 #
-# from_raw_values() subtracts the 1960-1989 MAR baseline for smb and st.
+# from_absolute_forcings() subtracts the 1960-1989 MAR baseline for smb and st.
 
 smb_raw_gris = np.full(86, -200.0)   # raw SMB  (mm w.e. yr⁻¹)
 st_raw       = np.full(86, -20.0)    # raw surface temperature (°C)
@@ -145,7 +145,7 @@ runoff    = np.linspace(0.01, 0.10, 86)  # basin runoff
 
 print("\nAvailable GrIS AOGCMs:", AnomalyConverter("GrIS").list_aogcms())
 
-inputs_gris_existing = ISEFlowGrISInputs.from_raw_values(
+inputs_gris_existing = ISEFlowGrISInputs.from_absolute_forcings(
     year=years,
     sector=1,
     smb=smb_raw_gris,
@@ -175,7 +175,7 @@ print(inputs_gris_existing)
 
 # ── 5B. GrIS using a custom climatology ──────────────────────────────────────
 
-inputs_gris_custom = ISEFlowGrISInputs.from_raw_values(
+inputs_gris_custom = ISEFlowGrISInputs.from_absolute_forcings(
     year=years,
     sector=1,
     smb=smb_raw_gris,
@@ -219,4 +219,3 @@ total_gris = ep_gris + al_gris
 print(f"\n[GrIS] Prediction range: {pred_gris.min():.2f} – {pred_gris.max():.2f} mm SLE")
 print(f"[GrIS] Mean epistemic uncertainty: {ep_gris.mean():.3f} mm")
 print(f"[GrIS] Mean aleatoric uncertainty: {al_gris.mean():.3f} mm")
-

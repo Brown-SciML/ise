@@ -5,7 +5,7 @@ import xarray as xr
 from ise.evaluation.metrics import (
     sum_by_sector, r2_score, mean_squared_error_sector, kl_divergence, js_divergence,
     crps, mape, relative_squared_error, kolmogorov_smirnov, t_test, calculate_ece,
-    mean_squared_error, mean_absolute_error
+    mean_squared_error, mean_absolute_error, mean_prediction_interval_width, winkler_score
 )
 from scipy.spatial.distance import jensenshannon
 from scipy.stats import kstest, ttest_ind
@@ -118,7 +118,87 @@ def test_mape_with_zeros():
     y_pred = np.array([1, 1, 1, 1])
     assert mape(y_true, y_pred) == np.inf  # Should return infinity
 
-# def test_kl_divergence_invalid_input():
-#     """Ensure KL divergence raises an error for invalid probability distributions."""
-#     with pytest.raises(ValueError):
-#         kl_divergence(np.array(["0", 0.5]), np.array([0.0, 0.0]))  # q must sum to 1
+
+### ---------------------- CRPS Tests ---------------------- ###
+def test_crps_perfect_low():
+    """Perfect mean with tiny std should yield near-zero CRPS."""
+    y_true = np.array([1.0, 2.0, 3.0])
+    y_pred = np.array([1.0, 2.0, 3.0])
+    y_std  = np.full(3, 1e-6)
+    scores = crps(y_true, y_pred, y_std)
+    assert np.mean(scores) < 0.01
+
+
+def test_crps_returns_array():
+    """crps should return one score per sample."""
+    y_true = np.array([1.0, 2.0, 3.0])
+    y_pred = np.array([1.0, 2.0, 3.0])
+    y_std  = np.array([0.5, 0.5, 0.5])
+    scores = crps(y_true, y_pred, y_std)
+    assert scores.shape == y_true.shape
+
+
+def test_crps_larger_error_gives_higher_score():
+    """A larger prediction error with the same std should increase CRPS."""
+    y_true = np.array([0.0])
+    y_std  = np.array([1.0])
+    score_close = np.mean(crps(y_true, np.array([0.1]), y_std))
+    score_far   = np.mean(crps(y_true, np.array([5.0]), y_std))
+    assert score_far > score_close
+
+
+### ---------------------- relative_squared_error Tests ---------------------- ###
+def test_rse_perfect_predictions():
+    """Perfect predictions give RSE = 0."""
+    y = np.array([1.0, 2.0, 3.0, 4.0])
+    assert relative_squared_error(y, y) == pytest.approx(0.0, abs=1e-9)
+
+
+def test_rse_mean_baseline():
+    """Predicting the mean for every sample gives RSE = 1."""
+    y = np.array([1.0, 2.0, 3.0, 4.0])
+    baseline = np.full_like(y, np.mean(y))
+    assert relative_squared_error(y, baseline) == pytest.approx(1.0, rel=1e-9)
+
+
+def test_rse_positive_for_imperfect_predictions():
+    y_true = np.array([1.0, 2.0, 3.0])
+    y_pred = np.array([1.5, 1.5, 3.5])
+    assert relative_squared_error(y_true, y_pred) > 0.0
+
+
+### ---------------------- mean_prediction_interval_width Tests ---------------------- ###
+def test_mpiw_known_value():
+    """MPIW = mean(upper - lower)."""
+    upper = np.array([3.0, 4.0, 5.0])
+    lower = np.array([1.0, 2.0, 3.0])
+    assert mean_prediction_interval_width(upper, lower) == pytest.approx(2.0, rel=1e-9)
+
+
+def test_mpiw_zero_width_intervals():
+    x = np.array([1.0, 2.0, 3.0])
+    assert mean_prediction_interval_width(x, x) == pytest.approx(0.0, abs=1e-9)
+
+
+### ---------------------- winkler_score Tests ---------------------- ###
+def test_winkler_within_interval_equals_width():
+    """True values inside interval: score = width (no violation penalty)."""
+    y_true  = np.array([1.0, 2.0])
+    y_pred  = np.array([1.0, 2.0])
+    lower   = np.array([0.0, 1.0])
+    upper   = np.array([2.0, 3.0])
+    width   = np.mean(upper - lower)  # 2.0
+    score   = winkler_score(y_true, y_pred, lower, upper, alpha=0.05)
+    assert score == pytest.approx(width, rel=1e-9)
+
+
+def test_winkler_violation_increases_score():
+    """A true value outside the interval raises the score above the interval width."""
+    y_true_in  = np.array([1.0])
+    y_true_out = np.array([10.0])
+    y_pred = np.array([1.0])
+    lower  = np.array([0.0])
+    upper  = np.array([2.0])
+    score_in  = winkler_score(y_true_in,  y_pred, lower, upper)
+    score_out = winkler_score(y_true_out, y_pred, lower, upper)
+    assert score_out > score_in
