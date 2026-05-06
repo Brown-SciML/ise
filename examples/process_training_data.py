@@ -1,21 +1,32 @@
-from ise.data.process import process_sectors
-from ise.data.feature_engineer import FeatureEngineer
 import pandas as pd
+
+from ise.data.feature_engineer import FeatureEngineer
+from ise.data.process import process_sectors
 
 ICE_SHEET = "AIS"
 
 
 if ICE_SHEET == "GrIS":
-    ISMIP6_FORCINGS = r'/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/GrIS'
-    ISMIP6_GRIDS = r'/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/Grid_Files/GrIS_Basins_Rignot_sectors_5km.nc'
-    ISMIP6_OUTPUTS = r'/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/Zenodo_Outputs/v7_CMIP5_pub'
+    ISMIP6_FORCINGS = (
+        r"/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/GrIS"
+    )
+    ISMIP6_GRIDS = r"/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/Grid_Files/GrIS_Basins_Rignot_sectors_5km.nc"
+    ISMIP6_OUTPUTS = (
+        r"/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/Zenodo_Outputs/v7_CMIP5_pub"
+    )
 else:
-    ISMIP6_FORCINGS = r'/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS'
-    ISMIP6_GRIDS = r'/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/Grid_Files/AIS_sectors_8km.nc'
-    ISMIP6_OUTPUTS = r'/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/Zenodo_Outputs/ComputedScalarsPaper'
+    ISMIP6_FORCINGS = (
+        r"/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS"
+    )
+    ISMIP6_GRIDS = (
+        r"/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/Grid_Files/AIS_sectors_8km.nc"
+    )
+    ISMIP6_OUTPUTS = (
+        r"/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/Zenodo_Outputs/ComputedScalarsPaper"
+    )
 
 
-EXPORT_DIR = f'/oscar/home/pvankatw/research/ise/supplemental/dataset/tests/{ICE_SHEET}'
+EXPORT_DIR = f"/oscar/home/pvankatw/research/ise/supplemental/dataset/tests/{ICE_SHEET}"
 
 dataset = process_sectors(
     ice_sheet=ICE_SHEET,
@@ -29,17 +40,17 @@ dataset = process_sectors(
 
 
 fe = FeatureEngineer(
-        ice_sheet=ICE_SHEET,
-        data=pd.read_csv(f"{EXPORT_DIR}/dataset.csv"),
-        split_dataset=False,
-        output_directory=None,
+    ice_sheet=ICE_SHEET,
+    data=pd.read_csv(f"{EXPORT_DIR}/dataset.csv"),
+    split_dataset=False,
+    output_directory=None,
 )
 
-fe.data = fe.data.drop(columns='mrro_anomaly') if ICE_SHEET == "AIS" else fe.data
+fe.data = fe.data.drop(columns="mrro_anomaly") if ICE_SHEET == "AIS" else fe.data
 fe.add_model_characteristics()
 fe.scale_data(save_dir=f"{EXPORT_DIR}/scalers/")
 fe.add_lag_variables(lag=5)
-fe.drop_outliers('quantile', 'sle', quantiles=[0.005, 1-0.005])
+fe.drop_outliers("quantile", "sle", quantiles=[0.005, 1 - 0.005])
 fe.split_data(
     train_size=0.7,
     val_size=0.15,

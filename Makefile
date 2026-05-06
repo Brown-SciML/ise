@@ -4,10 +4,10 @@ test:
 	pytest tests/
 
 lint:
-	black --check . && flake8 . && isort --check .
+	ruff check . && ruff format --check .
 
 format:
-	black . && isort .
+	ruff format . && ruff check --fix .
 
 docs:
 	cd docs && make html

@@ -32,7 +32,7 @@ Training data helpers
                         return_format="tensor")
 
 ``get_data(data_dir, dataset_type, return_format)``
-    Convenience wrapper that calls ``get_X_y`` on ``train.csv``, ``val.csv``, 
+    Convenience wrapper that calls ``get_X_y`` on ``train.csv``, ``val.csv``,
     and ``test.csv`` in a single call::
 
         X_train, y_train, X_val, y_val, X_test, y_test = get_data("splits/")
@@ -62,9 +62,7 @@ Misc
 import os
 import pickle as pkl
 from itertools import product
-from typing import List
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
@@ -94,39 +92,6 @@ def load_model(model_path, model_class, architecture, mc_dropout=False, dropout_
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.load_state_dict(torch.load(model_path, map_location=device))
     return model.to(device)
-
-
-def get_all_filepaths(
-    path: str, filetype: str = None, contains: str = None, not_contains: str = None
-):
-    """
-    Retrieves all file paths in a directory, with optional filtering.
-
-    Args:
-        path (str): The directory path to search for files.
-        filetype (str, optional): Filter files by extension (e.g., 'csv', 'nc'). Defaults to None.
-        contains (str, optional): Only include files that contain this substring. Defaults to None.
-        not_contains (str, optional): Exclude files that contain this substring. Defaults to None.
-
-    Returns:
-        List[str]: A list of file paths that match the specified criteria.
-    """
-
-    all_files = list()
-    for dirpath, dirnames, filenames in os.walk(path):
-        all_files += [os.path.join(dirpath, file) for file in filenames]
-
-    if filetype:
-        if filetype.lower() != "all":
-            all_files = [file for file in all_files if file.endswith(filetype)]
-
-    if contains:
-        all_files = [file for file in all_files if contains in file]
-
-    if not_contains:
-        all_files = [file for file in all_files if not_contains not in file]
-
-    return all_files
 
 
 def add_variable_to_nc(source_file_path, target_file_path, variable_name):
@@ -333,7 +298,7 @@ def combine_testing_results(
             save_path = f"{save_directory}/results.csv"
 
         elif isinstance(save_directory, bool):
-            save_path = f"results.csv"
+            save_path = "results.csv"
 
         test.to_csv(save_path, index=False)
 
@@ -399,7 +364,7 @@ def group_by_run(
 
 
 def get_uncertainty_bands(
-    data: pd.DataFrame, confidence: str = "95", quantiles: List[float] = [0.05, 0.95]
+    data: pd.DataFrame, confidence: str = "95", quantiles: list[float] = [0.05, 0.95]
 ):
     """
     Computes uncertainty bands using confidence intervals and quantiles.
@@ -521,7 +486,7 @@ def unscale_column(dataset: pd.DataFrame, column: str = "year"):
 file_dir = os.path.dirname(os.path.realpath(__file__))
 
 
-def check_input(input: str, options: List[str], argname: str = None):
+def check_input(input: str, options: list[str], argname: str = None):
     """
     Validates whether a given input string is within an expected list of options.
 
@@ -704,7 +669,6 @@ def get_X_y(
     )
     regions = True if dataset_type.lower() == "regions" else False
     if dataset_type.lower() == "sectors" or regions:
-
         if regions:
             sector_to_region = {}
             if ice_sheet == "AIS":
@@ -721,7 +685,9 @@ def get_X_y(
 
             data["region"] = data.sector.map(sector_to_region)
             data["id"] = data["id"].apply(lambda x: "_".join(x.split("_")[:-1]))
-            data = data.groupby(["region", "id", "year", "Scenario"]).agg(
+            data = data.groupby(
+                ["region", "id", "year", "Scenario"]
+            ).agg(
                 {
                     "sle": "mean",  # for GP, used mean instead of sum so that scales of errors are the same
                     **{

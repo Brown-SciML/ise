@@ -3,14 +3,13 @@ import os
 
 import pytest
 import torch
-import numpy as np
 
 from ise.models.lstm import LSTM
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def small_lstm():
@@ -35,6 +34,7 @@ def random_train_data():
 # ---------------------------------------------------------------------------
 # Constructor
 # ---------------------------------------------------------------------------
+
 
 class TestLSTMConstructor:
     def test_num_layers_stored(self, small_lstm):
@@ -67,6 +67,7 @@ class TestLSTMConstructor:
 # Forward pass
 # ---------------------------------------------------------------------------
 
+
 class TestLSTMForward:
     def test_output_shape(self, small_lstm, random_batch):
         out = small_lstm(random_batch)
@@ -86,6 +87,7 @@ class TestLSTMForward:
 # ---------------------------------------------------------------------------
 # Predict (no training required — checks shape only)
 # ---------------------------------------------------------------------------
+
 
 class TestLSTMPredict:
     def test_predict_output_shape(self, small_lstm, random_train_data):
@@ -108,6 +110,7 @@ class TestLSTMPredict:
 # ---------------------------------------------------------------------------
 # Save / Load round-trip (manually set trained=True to avoid running fit)
 # ---------------------------------------------------------------------------
+
 
 class TestLSTMSaveLoad:
     def test_save_raises_if_not_trained(self, small_lstm, tmp_path):

@@ -58,7 +58,6 @@ import json
 import os
 import warnings
 
-import numpy as np
 import pandas as pd
 import torch
 import torch.nn.functional as F
@@ -132,7 +131,7 @@ class LSTM(nn.Module):
             dropout (float, optional): Dropout probability applied inside LSTM layers.
                 Defaults to 0.0 (no dropout).
         """
-        super(LSTM, self).__init__()
+        super().__init__()
 
         # Initialize attributes
         self.lstm_num_layers = int(lstm_num_layers)
@@ -493,7 +492,9 @@ class LSTM(nn.Module):
         }
 
         # Save metadata JSON
-        metadata_path = model_path.replace(".pth", "_metadata.json").replace(".pt", "_metadata.json")
+        metadata_path = model_path.replace(".pth", "_metadata.json").replace(
+            ".pt", "_metadata.json"
+        )
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=4)
         print(f"Model metadata saved to {metadata_path}")
@@ -536,7 +537,7 @@ class LSTM(nn.Module):
         if not os.path.isfile(model_path):
             raise FileNotFoundError(f"Model weights file not found: {model_path}")
 
-        with open(metadata_path, "r") as f:
+        with open(metadata_path) as f:
             metadata = json.load(f)
 
         if metadata.get("model_type") != cls.__name__:

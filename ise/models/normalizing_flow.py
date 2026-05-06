@@ -113,7 +113,7 @@ class NormalizingFlow(nn.Module):
             flow_hidden_features (int, optional): Width of the context encoder and autoregressive
                 hidden layers. Defaults to 16.
         """
-        super(NormalizingFlow, self).__init__()
+        super().__init__()
         self.num_flow_transforms = num_flow_transforms
         self.num_input_features = input_size
         self.num_predicted_sle = output_size
@@ -295,7 +295,6 @@ class NormalizingFlow(nn.Module):
                 if save_checkpoints:
                     checkpointer(average_epoch_loss, epoch)
                     if hasattr(checkpointer, "early_stop") and checkpointer.early_stop:
-
                         if verbose:
                             print("Early stopping")
                         break
@@ -448,7 +447,7 @@ class NormalizingFlow(nn.Module):
             NormalizingFlow: A restored instance of the NormalizingFlow model.
         """
         metadata_path = path + "_metadata.json"
-        with open(metadata_path, "r") as f:
+        with open(metadata_path) as f:
             metadata = json.load(f)
 
         model = NormalizingFlow(

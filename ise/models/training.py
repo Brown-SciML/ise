@@ -38,8 +38,6 @@ EarlyStoppingCheckpointer (extends CheckpointSaver):
         stopper.load_checkpoint()
 """
 
-import warnings
-
 import torch
 
 

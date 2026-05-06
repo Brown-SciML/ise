@@ -9,7 +9,6 @@ from tqdm import tqdm
 
 from ise.models.timeseries.TimeSeriesEmulator import TimeSeriesEmulator
 from ise.models.training.dataclasses import TSDataset
-from ise.models.training.Trainer import Trainer
 from ise.utils.data import load_ml_data
 
 print("Loading data...")
@@ -75,7 +74,6 @@ for epoch in tqdm(range(1, individual_epochs + 1)):
 
     # for each batch in train_loader
     for X_train_batch, y_train_batch in train_loader:
-
         # send to gpu if available
         X_train_batch = X_train_batch.to(device)
         y_train_batch = y_train_batch.to(device)

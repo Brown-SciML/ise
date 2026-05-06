@@ -25,9 +25,9 @@ def load_rcp_samples(path):
     # Normalize scenario column name if needed
     if "Scenario" in df.columns and "scenarios" not in df.columns:
         df["scenarios"] = df["Scenario"]
-    
-    if 'sle' in df.columns:
-        df['true'] = df['sle']
+
+    if "sle" in df.columns:
+        df["true"] = df["sle"]
 
     if "scenarios" not in df.columns:
         raise ValueError(f"'scenarios' column not found in {path}")
@@ -157,7 +157,9 @@ def bootstrap_ks_difference(path_a, label_a, path_b, label_b, n_bootstrap=10000,
     )
 
     if ci_lower > 0 or ci_upper < 0:
-        print("  -> Difference excludes 0: statistically distinguishable under bootstrap resampling.")
+        print(
+            "  -> Difference excludes 0: statistically distinguishable under bootstrap resampling."
+        )
     else:
         print("  -> Difference includes 0: not clearly distinguishable under bootstrap resampling.")
 

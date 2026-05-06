@@ -113,7 +113,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 year_results = []
 for year in tqdm(train_features.year.unique()):
-
     train_features_year = train_features[train_features.year == year]
     train_labels_year = np.array(train_labels[train_labels.index.isin(train_features_year.index)])
     test_features_year = test_features[test_features.year == year]
@@ -158,7 +157,6 @@ for year in tqdm(train_features.year.unique()):
 
         # for each batch in train_loader
         for X_train_batch, y_train_batch in train_loader:
-
             # send to gpu if available
             X_train_batch = X_train_batch.to(device)
             y_train_batch = y_train_batch.to(device)

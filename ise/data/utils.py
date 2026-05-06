@@ -39,7 +39,6 @@ from datetime import datetime
 
 import cftime
 import numpy as np
-import xarray as xr
 
 
 def convert_and_subset_times(dataset):

@@ -1,15 +1,13 @@
-import warnings
 import pytest
 import torch
-import numpy as np
 
-from ise.models.lstm import LSTM
 from ise.models.deep_ensemble import DeepEnsemble
-
+from ise.models.lstm import LSTM
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_lstm(input_size=8):
     return LSTM(lstm_num_layers=1, lstm_hidden_size=16, input_size=input_size, output_size=1)
@@ -34,6 +32,7 @@ def small_input():
 # Constructor — auto-generated members
 # ---------------------------------------------------------------------------
 
+
 class TestDeepEnsembleAutoConstructor:
     def test_creates_correct_number_of_members(self):
         de = DeepEnsemble(input_size=8, num_ensemble_members=3, latent_dim=0)
@@ -55,6 +54,7 @@ class TestDeepEnsembleAutoConstructor:
 # ---------------------------------------------------------------------------
 # Constructor — explicit members
 # ---------------------------------------------------------------------------
+
 
 class TestDeepEnsembleExplicitConstructor:
     def test_accepts_list_of_lstms(self):
@@ -80,6 +80,7 @@ class TestDeepEnsembleExplicitConstructor:
 # ---------------------------------------------------------------------------
 # Forward pass
 # ---------------------------------------------------------------------------
+
 
 class TestDeepEnsembleForward:
     @pytest.fixture
@@ -121,6 +122,7 @@ class TestDeepEnsembleForward:
 # ---------------------------------------------------------------------------
 # predict is an alias for forward in eval mode
 # ---------------------------------------------------------------------------
+
 
 class TestDeepEnsemblePredict:
     def test_predict_returns_same_shapes_as_forward(self):

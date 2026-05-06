@@ -1,15 +1,14 @@
-import os
-import pytest
 import numpy as np
 import pandas as pd
+import pytest
 import torch
 
-from ise.utils.functions import to_tensor, get_all_filepaths, check_input
-
+from ise.utils.functions import check_input, get_all_filepaths, to_tensor
 
 # ---------------------------------------------------------------------------
 # to_tensor
 # ---------------------------------------------------------------------------
+
 
 class TestToTensor:
     def test_from_dataframe(self):
@@ -61,6 +60,7 @@ class TestToTensor:
 # get_all_filepaths
 # ---------------------------------------------------------------------------
 
+
 class TestGetAllFilepaths:
     @pytest.fixture
     def file_tree(self, tmp_path):
@@ -106,6 +106,7 @@ class TestGetAllFilepaths:
 # ---------------------------------------------------------------------------
 # check_input
 # ---------------------------------------------------------------------------
+
 
 class TestCheckInput:
     def test_valid_input_passes(self):

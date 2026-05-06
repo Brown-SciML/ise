@@ -19,7 +19,7 @@ test_labels = torch.from_numpy(np.array(test_labels))
 
 class GPyTorchModel(gpytorch.models.ExactGP):
     def __init__(self, train_x, train_y, likelihood):
-        super(GPyTorchModel, self).__init__(train_x, train_y, likelihood)
+        super().__init__(train_x, train_y, likelihood)
         self.mean_module = gpytorch.means.ConstantMean()
         self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
 

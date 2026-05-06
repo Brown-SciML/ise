@@ -1,19 +1,21 @@
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
-from ise.models.lstm import LSTM
-from ise.models.normalizing_flow import NormalizingFlow
 from ise.models.deep_ensemble import DeepEnsemble
 from ise.models.iseflow import ISEFlow, smooth_projections
-
+from ise.models.lstm import LSTM
+from ise.models.normalizing_flow import NormalizingFlow
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_nf(input_size=8):
-    nf = NormalizingFlow(input_size=input_size, output_size=1, num_flow_transforms=2, flow_hidden_features=8)
+    nf = NormalizingFlow(
+        input_size=input_size, output_size=1, num_flow_transforms=2, flow_hidden_features=8
+    )
     nf.model_dir = None
     return nf
 
@@ -59,6 +61,7 @@ def small_features():
 # Constructor validation
 # ---------------------------------------------------------------------------
 
+
 class TestISEFlowConstructor:
     def test_accepts_correct_types(self):
         nf = _make_trained_nf(8)
@@ -103,6 +106,7 @@ class TestISEFlowConstructor:
 # forward — uncertainty dict structure
 # ---------------------------------------------------------------------------
 
+
 class TestISEFlowForward:
     def test_returns_tuple(self, trained_iseflow, small_features):
         result = trained_iseflow.forward(small_features)
@@ -132,6 +136,7 @@ class TestISEFlowForward:
 # ---------------------------------------------------------------------------
 # smooth_projections
 # ---------------------------------------------------------------------------
+
 
 class TestSmoothProjections:
     def test_no_op_when_window_zero(self):

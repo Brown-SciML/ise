@@ -41,14 +41,14 @@ pytest tests/ --cov=ise --cov-report=term-missing
 
 ## Code style
 
-This project uses **black**, **isort**, and **flake8** with a line length of 100.
+This project uses **ruff** for linting and formatting, with a line length of 100.
 
 Format code automatically:
 
 ```bash
 make format
 # or manually:
-black . && isort .
+ruff format . && ruff check --fix .
 ```
 
 Check without modifying:
@@ -56,7 +56,7 @@ Check without modifying:
 ```bash
 make lint
 # or manually:
-black --check . && isort --check . && flake8 .
+ruff check . && ruff format --check .
 ```
 
 Pre-commit hooks run these checks automatically before each commit once installed.
@@ -71,8 +71,7 @@ After installing dev dependencies, enable the hooks with:
 pre-commit install
 ```
 
-The hooks run **black**, **isort**, and **flake8** on every commit. To run all hooks
-manually at any time:
+The hooks run **ruff** on every commit. To run all hooks manually at any time:
 
 ```bash
 pre-commit run --all-files
