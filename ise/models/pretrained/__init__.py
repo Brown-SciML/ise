@@ -1,6 +1,6 @@
 """Pretrained ISEFlow weight management.
 
-Weights are hosted on HuggingFace Hub at ``Brown-SciML/ISEFlow`` and are
+Weights are hosted on HuggingFace Hub at ``pvankatwyk/ISEFlow`` and are
 downloaded automatically on first use via ``huggingface_hub``.  The downloaded
 files are cached in the default HuggingFace cache directory
 (``~/.cache/huggingface/hub`` or ``$HF_HOME``).

@@ -67,7 +67,7 @@ from torch import nn, optim
 
 from ise.data.dataclasses import EmulatorDataset
 from ise.models.training import CheckpointSaver, EarlyStoppingCheckpointer
-from ise.utils.functions import to_tensor
+from ise.utils.functions import get_device, to_tensor
 
 
 class NormalizingFlow(nn.Module):
@@ -120,7 +120,7 @@ class NormalizingFlow(nn.Module):
         # self.flow_hidden_features = output_size * 2
         self.flow_hidden_features = flow_hidden_features
         self.output_sequence_length = output_sequence_length
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = get_device()
         self.to(self.device)
 
         # Define base distribution
@@ -458,7 +458,7 @@ class NormalizingFlow(nn.Module):
         )
 
         checkpoint = torch.load(
-            path, map_location="cpu" if not torch.cuda.is_available() else None, weights_only=True
+            path, map_location="cpu" if get_device() == "cpu" else None, weights_only=True
         )
 
         if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint.keys():

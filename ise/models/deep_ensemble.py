@@ -67,6 +67,7 @@ import torch
 from torch import nn
 
 from ise.models.lstm import LSTM
+from ise.utils.functions import get_device
 
 
 class DeepEnsemble(nn.Module):
@@ -295,7 +296,7 @@ class DeepEnsemble(nn.Module):
         metadata = {
             "model_type": self.__class__.__name__,
             "version": "1.0",
-            "device": "cuda" if torch.cuda.is_available() else "cpu",
+            "device": get_device(),
             "ensemble_members": [
                 {
                     "lstm_num_layers": member.lstm_num_layers,
@@ -395,7 +396,7 @@ class DeepEnsemble(nn.Module):
             )
             state_dict = torch.load(
                 member_path,
-                map_location="cpu" if not torch.cuda.is_available() else None,
+                map_location="cpu" if get_device() == "cpu" else None,
                 weights_only=True,
             )
             member.load_state_dict(state_dict)
@@ -407,7 +408,7 @@ class DeepEnsemble(nn.Module):
         model = cls(ensemble_members=ensemble_members)
         ensemble_state_dict = torch.load(
             model_path,
-            map_location="cpu" if not torch.cuda.is_available() else None,
+            map_location="cpu" if get_device() == "cpu" else None,
             weights_only=True,
         )
         model.load_state_dict(ensemble_state_dict, strict=False)

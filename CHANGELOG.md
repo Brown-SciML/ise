@@ -49,7 +49,7 @@ This project uses **two independent version numbers**:
 - **Breaking:** `from_raw_values()` renamed to `from_absolute_forcings()` on both
   `ISEFlowAISInputs` and `ISEFlowGrISInputs`; old name kept as a deprecated alias
   (emits `DeprecationWarning`) until v3.0.0.
-- Pretrained weights moved to HuggingFace Hub (`Brown-SciML/ISEFlow`); downloaded
+- Pretrained weights moved to HuggingFace Hub (`pvankatwyk/ISEFlow`); downloaded
   automatically on first use via `huggingface_hub`. Falls back to bundled local weights
   when HuggingFace is unavailable.
 - Build system switched to Hatchling; runtime dependencies cleaned up (removed

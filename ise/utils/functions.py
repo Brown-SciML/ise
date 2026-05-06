@@ -61,6 +61,7 @@ Misc
 
 import os
 import pickle as pkl
+import warnings
 from itertools import product
 
 import numpy as np
@@ -71,6 +72,13 @@ from scipy.stats import gaussian_kde
 from sklearn.preprocessing import MinMaxScaler
 
 from ise.evaluation.metrics import js_divergence, kl_divergence
+
+
+def get_device() -> str:
+    """Return 'cuda' or 'cpu', suppressing the PyTorch CUDA init warning on broken drivers."""
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="CUDA initialization", category=UserWarning)
+        return "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def load_model(model_path, model_class, architecture, mc_dropout=False, dropout_prob=0.1):
@@ -89,7 +97,7 @@ def load_model(model_path, model_class, architecture, mc_dropout=False, dropout_
     """
 
     model = model_class(architecture, mc_dropout=mc_dropout, dropout_prob=dropout_prob)
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device(get_device())
     model.load_state_dict(torch.load(model_path, map_location=device))
     return model.to(device)
 

@@ -91,7 +91,7 @@ from ise.models.pretrained import (
     ISEFlow_GrIS_v1_1_0_variables,
     get_model_dir,
 )
-from ise.utils.functions import to_tensor
+from ise.utils.functions import get_device, to_tensor
 
 
 class ISEFlow(torch.nn.Module):
@@ -124,7 +124,7 @@ class ISEFlow(torch.nn.Module):
 
         super().__init__()
 
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = get_device()
         self.to(self.device)
 
         if not isinstance(deep_ensemble, DeepEnsemble):

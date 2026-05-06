@@ -87,7 +87,7 @@ Homepage = "https://github.com/Brown-SciML/ise"
 Documentation = "https://ise.readthedocs.io"
 Repository = "https://github.com/Brown-SciML/ise"
 "Bug Tracker" = "https://github.com/Brown-SciML/ise/issues"
-"HuggingFace Hub" = "https://huggingface.co/Brown-SciML/ISEFlow"
+"HuggingFace Hub" = "https://huggingface.co/pvankatwyk/ISEFlow"
 
 [tool.hatch.build.targets.wheel]
 packages = ["ise"]
@@ -137,4 +137,5 @@ dev = [
     "build>=1.5.0",
     "ruff>=0.15.12",
     "twine>=6.2.0",
+    "wandb>=0.21.1",
 ]
