@@ -18,13 +18,13 @@ Both dataclasses perform the following on construction:
 Alternative constructor — raw absolute forcings
 -----------------------------------------------
 If you have raw (non-anomaly) atmospheric forcing values, use
-``from_raw_values()``.  It calls ``AnomalyConverter`` internally to subtract
+``from_absolute_forcings()``.  It calls ``AnomalyConverter`` internally to subtract
 the ISMIP6 climatological baseline before building the dataclass::
 
     from ise.data.inputs import ISEFlowAISInputs
     import numpy as np
 
-    inputs = ISEFlowAISInputs.from_raw_values(
+    inputs = ISEFlowAISInputs.from_absolute_forcings(
         year=np.arange(2015, 2101),
         sector=10,
         pr=pr_array,           # kg m⁻² s⁻¹, raw absolute values
@@ -84,14 +84,14 @@ class ISEFlowAISInputs:
     ``smb_anomaly``, ``ts_anomaly``).  If you have raw absolute forcing values
     instead, use the alternative constructor::
 
-        inputs = ISEFlowAISInputs.from_raw_values(
+        inputs = ISEFlowAISInputs.from_absolute_forcings(
             year=..., sector=..., pr=..., evspsbl=..., smb=..., ts=...,
             ocean_thermal_forcing=..., ocean_salinity=..., ocean_temperature=...,
             aogcm="noresm1-m_rcp85",   # or custom_climatology={...}
             **ism_config_kwargs,
         )
 
-    ``from_raw_values()`` subtracts the ISMIP6 1995-2014 climatological
+    ``from_absolute_forcings()`` subtracts the ISMIP6 1995-2014 climatological
     baseline automatically.  Pass ``aogcm`` for a bundled ISMIP6 model or
     ``custom_climatology`` (dict with keys ``'pr'``, ``'evspsbl'``, ``'smb'``,
     ``'ts'``) for a CMIP model not in the bundled climatology.
@@ -130,7 +130,7 @@ class ISEFlowAISInputs:
     # ISMIP6 model to emulate
     model_configs: Optional[str] = None
 
-    # ISEFlow version
+    # ISEFlow *model weights* version (distinct from the ise-py package version)
     version: str = "v1.1.0"
 
     override_params: dict = None
@@ -140,7 +140,7 @@ class ISEFlowAISInputs:
     # ------------------------------------------------------------------
 
     @classmethod
-    def from_raw_values(
+    def from_absolute_forcings(
         cls,
         year: np.ndarray,
         sector: int,
@@ -211,7 +211,7 @@ class ISEFlowAISInputs:
         --------
         Using a bundled ISMIP6 climatology::
 
-            inputs = ISEFlowAISInputs.from_raw_values(
+            inputs = ISEFlowAISInputs.from_absolute_forcings(
                 year=np.arange(2015, 2101),
                 sector=10,
                 pr=pr_array,
@@ -238,7 +238,7 @@ class ISEFlowAISInputs:
 
         Using a custom climatology for a new CMIP model::
 
-            inputs = ISEFlowAISInputs.from_raw_values(
+            inputs = ISEFlowAISInputs.from_absolute_forcings(
                 year=np.arange(2015, 2101),
                 sector=10,
                 pr=pr_array, evspsbl=evspsbl_array,
@@ -280,6 +280,16 @@ class ISEFlowAISInputs:
             mrro_anomaly=anomalies.get("mrro_anomaly"),
             **kwargs,
         )
+
+    @classmethod
+    def from_raw_values(cls, *args, **kwargs):
+        """Deprecated — use ``from_absolute_forcings`` instead."""
+        warnings.warn(
+            "from_raw_values() is deprecated; use from_absolute_forcings() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return cls.from_absolute_forcings(*args, **kwargs)
 
     # Validation logic runs after the object is created
     def __post_init__(self):
@@ -677,14 +687,14 @@ class ISEFlowGrISInputs:
     Expects pre-computed anomaly arrays (``aSMB``, ``aST``).  If you have raw
     absolute forcing values instead, use the alternative constructor::
 
-        inputs = ISEFlowGrISInputs.from_raw_values(
+        inputs = ISEFlowGrISInputs.from_absolute_forcings(
             year=..., sector=..., smb=..., st=...,
             ocean_thermal_forcing=..., basin_runoff=...,
             aogcm="hadgem2-es_rcp85",  # or custom_climatology={...}
             **ism_config_kwargs,
         )
 
-    ``from_raw_values()`` subtracts the ISMIP6 1960-1989 MAR climatological
+    ``from_absolute_forcings()`` subtracts the ISMIP6 1960-1989 MAR climatological
     baseline automatically.  Pass ``aogcm`` for a bundled ISMIP6 model or
     ``custom_climatology`` (dict with keys ``'smb'``, ``'st'``) for a CMIP
     model not in the bundled climatology.
@@ -720,7 +730,7 @@ class ISEFlowGrISInputs:
     # ISMIP6 model to emulate
     model_configs: Optional[str] = None
 
-    # ISEFlow version
+    # ISEFlow *model weights* version (distinct from the ise-py package version)
     version: str = "v1.1.0"
 
     # ------------------------------------------------------------------
@@ -728,7 +738,7 @@ class ISEFlowGrISInputs:
     # ------------------------------------------------------------------
 
     @classmethod
-    def from_raw_values(
+    def from_absolute_forcings(
         cls,
         year: np.ndarray,
         sector: int,
@@ -786,7 +796,7 @@ class ISEFlowGrISInputs:
         --------
         Using a bundled ISMIP6 climatology::
 
-            inputs = ISEFlowGrISInputs.from_raw_values(
+            inputs = ISEFlowGrISInputs.from_absolute_forcings(
                 year=np.arange(2015, 2101),
                 sector=1,
                 smb=smb_array,
@@ -812,7 +822,7 @@ class ISEFlowGrISInputs:
 
         Using a custom climatology for a new CMIP model::
 
-            inputs = ISEFlowGrISInputs.from_raw_values(
+            inputs = ISEFlowGrISInputs.from_absolute_forcings(
                 year=np.arange(2015, 2101),
                 sector=1,
                 smb=smb_array,
@@ -843,6 +853,16 @@ class ISEFlowGrISInputs:
             basin_runoff=basin_runoff,
             **kwargs,
         )
+
+    @classmethod
+    def from_raw_values(cls, *args, **kwargs):
+        """Deprecated — use ``from_absolute_forcings`` instead."""
+        warnings.warn(
+            "from_raw_values() is deprecated; use from_absolute_forcings() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return cls.from_absolute_forcings(*args, **kwargs)
 
     # Validation logic runs after the object is created
     def __post_init__(self):

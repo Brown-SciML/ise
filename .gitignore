@@ -1,3 +1,9 @@
+# Pretrained model weights (hosted on HuggingFace Hub; downloaded on first use)
+ise/models/pretrained/ISEFlow/
+
+# Legacy unused model file
+ise/models/pretrained/variational_lstm_emulator.pt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

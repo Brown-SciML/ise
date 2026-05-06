@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "ISE: Ice Sheet Emulator"
+authors:
+  - family-names: Van Katwyk
+    given-names: Peter
+    email: pvankatwyk@gmail.com
+    affiliation: Brown University
+version: 1.0.0
+date-released: "2026-05-06"
+url: "https://github.com/Brown-SciML/ise"
+repository-code: "https://github.com/Brown-SciML/ise"
+license: MIT
+keywords:
+  - ice sheet emulator
+  - sea level projections
+  - uncertainty quantification
+  - normalizing flow
+  - deep learning
+  - ISMIP6
+references:
+  - type: article
+    title: "ISEFlow: A Flow-Based Neural Network Emulator for Improved Sea Level Projections and Uncertainty Quantification"
+    authors:
+      - family-names: Van Katwyk
+        given-names: Peter
+        affiliation: Brown University

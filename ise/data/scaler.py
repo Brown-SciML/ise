@@ -175,7 +175,7 @@ class StandardScaler(nn.Module):
             Scaler: A Scaler instance with the loaded mean and standard deviation.
 
         """
-        checkpoint = torch.load(path)
+        checkpoint = torch.load(path, weights_only=True)
         scaler = StandardScaler()
         scaler.mean_ = checkpoint["mean_"]
         scaler.scale_ = checkpoint["scale_"]
@@ -272,7 +272,7 @@ class RobustScaler(nn.Module):
 
     @staticmethod
     def load(path):
-        checkpoint = torch.load(path)
+        checkpoint = torch.load(path, weights_only=True)
         scaler = RobustScaler()
         scaler.median_ = checkpoint["median_"]
         scaler.iqr_ = checkpoint["iqr_"]
@@ -363,7 +363,7 @@ class LogScaler(nn.Module):
 
     @staticmethod
     def load(path):
-        checkpoint = torch.load(path)
+        checkpoint = torch.load(path, weights_only=True)
         scaler = LogScaler()
         scaler.epsilon = checkpoint["epsilon"]
         scaler.min_value = checkpoint["min_value"]

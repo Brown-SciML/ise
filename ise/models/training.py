@@ -100,10 +100,10 @@ class CheckpointSaver:
         is_better = self._determine_if_better(loss) if save_best_only else True
 
         if is_better or not save_best_only:  # Save if loss improves or save_best_only is False
-            self.save_checkpoint(epoch, loss, self.checkpoint_path)
             if self.verbose:
                 self.log = f"Loss decreased ({self.best_loss:.6f} --> {loss:.6f}). Saving checkpoint to {self.checkpoint_path}."
             self._update_best_loss(loss)
+            self.save_checkpoint(epoch, loss, self.checkpoint_path)
             return True
         else:
             self.log = ""
@@ -166,7 +166,7 @@ class CheckpointSaver:
         """
 
         checkpoint_path = path or self.checkpoint_path
-        checkpoint = torch.load(checkpoint_path)
+        checkpoint = torch.load(checkpoint_path, weights_only=True)
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         self.best_loss = checkpoint.get("best_loss", float("inf"))

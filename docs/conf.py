@@ -13,7 +13,12 @@ sys.path.insert(0, os.path.abspath('..'))  # Adjust if needed
 project = 'ise'
 copyright = '2026, Peter Van Katwyk'
 author = 'Peter Van Katwyk'
-release = '1.1.0'
+try:
+    from importlib.metadata import version as _version
+    release = _version("ise-py")
+except Exception:
+    release = "unknown"
+version = release
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

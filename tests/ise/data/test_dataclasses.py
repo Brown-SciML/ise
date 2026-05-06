@@ -130,3 +130,50 @@ def test_scenario_getitem(sample_scenario_data):
     x_sample, y_sample = dataset[7]
     assert x_sample.shape == (6,)
     assert y_sample.shape == (1,)
+
+
+### ---------------------- EmulatorDataset Additional Edge Cases ---------------------- ###
+def test_emulator_accepts_dataframe():
+    """EmulatorDataset should accept a pd.DataFrame as input for X."""
+    import pandas as pd
+    X = pd.DataFrame(np.random.rand(86, 5))
+    y = np.random.rand(86, 1)
+    dataset = EmulatorDataset(X, y)
+    assert isinstance(dataset.X, torch.Tensor)
+    assert dataset.X.shape == (86, 5)
+
+
+def test_emulator_first_item_is_padded():
+    """At index 0, the sequence must be padded with the first row repeated."""
+    X = np.arange(86 * 3).reshape(86, 3).astype(float)
+    y = np.zeros((86, 1))
+    seq_len = 5
+    dataset = EmulatorDataset(X, y, sequence_length=seq_len)
+    x_seq, _ = dataset[0]
+    # The first seq_len-1 rows are padding (copies of X[0])
+    for i in range(seq_len - 1):
+        assert torch.allclose(x_seq[i], x_seq[0])
+
+
+def test_emulator_no_cross_projection_bleed():
+    """Items at the start of the second projection (index 86) must not
+    include any timesteps from the first projection (indices 0-85)."""
+    X = np.random.rand(86 * 2, 4)
+    y = np.zeros((86 * 2, 1))
+    seq_len = 5
+    dataset = EmulatorDataset(X, y, sequence_length=seq_len, projection_length=86)
+    # Index 86 is the first timestep of projection 2
+    x_seq, _ = dataset[86]
+    # The first seq_len-1 rows are zero-padding (no data from projection 1)
+    zero_row = torch.zeros(4)
+    for i in range(seq_len - 1):
+        assert torch.allclose(x_seq[i], zero_row)
+
+
+def test_emulator_y_none_returns_only_x():
+    """With y=None, __getitem__ returns only the feature sequence tensor."""
+    X = np.random.rand(86, 6)
+    dataset = EmulatorDataset(X, y=None, sequence_length=5)
+    item = dataset[10]
+    assert isinstance(item, torch.Tensor)
+    assert item.shape == (5, 6)

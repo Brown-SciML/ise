@@ -1,23 +1,97 @@
-"""Paths and variable lists for pretrained ISEFlow models.
+"""Pretrained ISEFlow weight management.
 
-This module defines directory paths and expected feature names for
-ISEFlow-AIS and ISEFlow-GrIS v1.0.0 and v1.1.0 pretrained checkpoints.
+Weights are hosted on HuggingFace Hub at ``Brown-SciML/ISEFlow`` and are
+downloaded automatically on first use via ``huggingface_hub``.  The downloaded
+files are cached in the default HuggingFace cache directory
+(``~/.cache/huggingface/hub`` or ``$HF_HOME``).
+
+During local development, if the HuggingFace download fails (e.g. no internet
+access) and local weights exist under ``ise/models/pretrained/ISEFlow/``, the
+loader falls back to those local paths transparently.
 """
 
 import os
 
-ISEFlow_AIS_v1_0_0_path = os.path.join(
-    os.path.dirname(__file__), "ISEFlow/v1.0.0/ISEFlow_AIS_v1-0-0"
-)
-ISEFlow_GrIS_v1_0_0_path = os.path.join(
-    os.path.dirname(__file__), "ISEFlow/v1.0.0/ISEFlow_GrIS_v1-0-0"
-)
-ISEFlow_AIS_v1_1_0_path = os.path.join(
-    os.path.dirname(__file__), "ISEFlow/v1.1.0/ISEFlow_AIS_v1-1-0"
-)
-ISEFlow_GrIS_v1_1_0_path = os.path.join(
-    os.path.dirname(__file__), "ISEFlow/v1.1.0/ISEFlow_GrIS_v1-1-0"
-)
+from huggingface_hub import snapshot_download
+
+HF_REPO_ID = "Brown-SciML/ISEFlow"
+
+ISEFLOW_LATEST_MODEL_VERSION = "v1.1.0"
+"""The most recent ISEFlow pretrained model version. Distinct from the ise-py package version."""
+
+_LOCAL_PRETRAINED_DIR = os.path.dirname(__file__)
+
+
+def get_model_dir(version: str, ice_sheet: str) -> str:
+    """Return the local directory containing weights for a given model version.
+
+    Downloads the weights from HuggingFace Hub if not already cached.  Falls
+    back to the bundled local path when HF is unavailable and local weights
+    exist (development / air-gapped environments).
+
+    Parameters
+    ----------
+    version : str
+        Model version string, e.g. ``'v1.0.0'`` or ``'v1.1.0'``.
+    ice_sheet : str
+        Ice sheet identifier — ``'AIS'`` or ``'GrIS'``.
+
+    Returns
+    -------
+    str
+        Absolute path to the directory containing ``deep_ensemble.pth``,
+        ``normalizing_flow.pth``, ``scaler_X.pkl``, and ``scaler_y.pkl``.
+    """
+    subfolder = _subfolder(version, ice_sheet)
+    local_fallback = os.path.join(_LOCAL_PRETRAINED_DIR, "ISEFlow", subfolder)
+
+    try:
+        local_dir = snapshot_download(
+            repo_id=HF_REPO_ID,
+            allow_patterns=[f"{subfolder}/*"],
+        )
+        return os.path.join(local_dir, subfolder)
+    except Exception:
+        # Fall back to bundled weights (local dev or air-gapped HPC).
+        if os.path.isdir(local_fallback):
+            return local_fallback
+        raise RuntimeError(
+            f"Could not download weights from HuggingFace Hub ({HF_REPO_ID}) "
+            f"and no local fallback found at {local_fallback}. "
+            "Install huggingface_hub and ensure internet access, or place "
+            "the weights at the local path."
+        )
+
+
+def _subfolder(version: str, ice_sheet: str) -> str:
+    """Return the HuggingFace subfolder path for a given version and ice sheet."""
+    tag = version.replace(".", "-")   # e.g. v1.1.0 -> v1-1-0
+    return f"{version}/ISEFlow_{ice_sheet}_{tag}"
+
+
+# ---------------------------------------------------------------------------
+# Backward-compat path constants (kept as shims; now resolved via get_model_dir)
+# ---------------------------------------------------------------------------
+
+def _lazy_path(version: str, ice_sheet: str) -> str:
+    """Resolve a model path, preferring local if it exists (avoids HF call at import)."""
+    subfolder = _subfolder(version, ice_sheet)
+    local = os.path.join(_LOCAL_PRETRAINED_DIR, "ISEFlow", subfolder)
+    if os.path.isdir(local):
+        return local
+    # Return the expected local path; actual download happens in get_model_dir()
+    return local
+
+
+ISEFlow_AIS_v1_0_0_path = _lazy_path("v1.0.0", "AIS")
+ISEFlow_GrIS_v1_0_0_path = _lazy_path("v1.0.0", "GrIS")
+ISEFlow_AIS_v1_1_0_path = _lazy_path("v1.1.0", "AIS")
+ISEFlow_GrIS_v1_1_0_path = _lazy_path("v1.1.0", "GrIS")
+
+
+# ---------------------------------------------------------------------------
+# Variable lists (unchanged — these define model feature order)
+# ---------------------------------------------------------------------------
 
 ISEFlow_AIS_v1_1_0_variables = [
     "year",
@@ -114,7 +188,7 @@ ISEFlow_AIS_v1_1_0_variables = [
     "temperature.lag5",
 ]
 
-ISEFlow_AIS_v1_0_0_variables = columns = [
+ISEFlow_AIS_v1_0_0_variables = [
     "year",
     "sector",
     "pr_anomaly",

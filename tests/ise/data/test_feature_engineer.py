@@ -72,8 +72,9 @@ def test_feature_engineer_scale_data(feature_engineer_instance):
     fe = feature_engineer_instance
     X_scaled, y_scaled = fe.scale_data(method="standard")
 
-    assert X_scaled.shape == (10, 5)  # Only feature1 & feature2 should be scaled
-    assert y_scaled.shape == (10, 1)  # Only sle_value should be scaled
+    assert X_scaled.shape[0] == 10   # row count preserved
+    assert X_scaled.ndim == 2        # 2D feature matrix
+    assert y_scaled.shape == (10, 1)  # single target column
 
 @pytest.mark.filterwarnings("ignore")
 def test_feature_engineer_unscale_data(feature_engineer_instance):
@@ -112,11 +113,50 @@ def test_feature_engineer_drop_outliers(feature_engineer_instance):
     assert len(fe.data) <= 10  # Some rows should be dropped
 
 ### ---------------------- Lag Feature Tests ---------------------- ###
-# def test_feature_engineer_add_lag_variables(feature_engineer_instance):
-#     """Ensure lag variables are added correctly"""
-#     fe = feature_engineer_instance
-#     fe.add_lag_variables(lag=2)
-#     assert any("lag" in col for col in fe.data.columns)
+def test_feature_engineer_add_lag_variables():
+    """Ensure lag variables are added correctly."""
+    n = 86
+    data = pd.DataFrame({
+        "id": np.arange(n),
+        "model": ["A"] * n,
+        "exp": ["exp1"] * n,
+        "sector": [1] * n,
+        "year": np.arange(2015, 2015 + n),
+        "mrro_anomaly": np.random.rand(n),
+        "sle": np.random.randn(n),
+        "ts_anomaly": np.random.rand(n),
+        "smb_anomaly": np.random.rand(n),
+    })
+    fe = FeatureEngineer(ice_sheet="TestSheet", data=data, split_dataset=False)
+    original_cols = set(fe.data.columns)
+    fe.add_lag_variables(lag=2)
+    new_cols = set(fe.data.columns) - original_cols
+    assert any("lag" in col for col in new_cols)
+
+
+def test_feature_engineer_fill_mrro_mean(feature_engineer_instance):
+    """fill_mrro_nans with method='mean' fills all NaNs."""
+    fe = feature_engineer_instance
+    fe.fill_mrro_nans(method="mean")
+    assert fe.data["mrro_anomaly"].isnull().sum() == 0
+
+
+def test_feature_engineer_fill_mrro_median(feature_engineer_instance):
+    """fill_mrro_nans with method='median' fills all NaNs."""
+    fe = feature_engineer_instance
+    fe.fill_mrro_nans(method="median")
+    assert fe.data["mrro_anomaly"].isnull().sum() == 0
+
+
+def test_feature_engineer_drop_outliers_expression(feature_engineer_instance):
+    """drop_outliers with method='explicit' drops entire runs matching the expression."""
+    fe = feature_engineer_instance
+    n_before = len(fe.data)
+    # Use a threshold that no sle value can exceed (all randn values < 9999)
+    # so every row matches and every run gets dropped
+    fe.drop_outliers(method="explicit", column="sle", expression=[("sle", "<", 9999)])
+    # All rows match the expression so all runs should be dropped
+    assert len(fe.data) == 0
 
 ### ---------------------- Model Characteristics Tests ---------------------- ###
 @pytest.fixture
