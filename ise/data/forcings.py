@@ -76,16 +76,18 @@ class ForcingFile:
         varname (str or None): Data variable name.
     """
 
-    def __init__(self, ice_sheet: str, realm: str, filepath: str, varname: str = None) -> None:
+    def __init__(
+        self, ice_sheet: str, realm: str, filepath: str, varname: str | None = None
+    ) -> None:
         self.ice_sheet = ice_sheet
         self.realm = realm
         self.filepath = filepath
-        self.data = None
-        self.sector_averages = None
-        self.sectors = None
+        self.data: xr.Dataset | None = None
+        self.sector_averages: xr.Dataset | None = None
+        self.sectors: np.ndarray | xr.DataArray | None = None
         self.varname = varname
 
-    def load(self, filepath: str = None, validate=True, **kwargs) -> xr.Dataset:
+    def load(self, filepath: str | None = None, validate=True, **kwargs) -> xr.Dataset:
         """
         Load the forcing dataset from the NetCDF file.
 
@@ -120,11 +122,13 @@ class ForcingFile:
         Returns:
             xarray.Dataset: The dataset (modified in place).
         """
+        assert self.data is not None, "No data loaded. Call load() first."
         for var in vars:
             if var in self.data.dims:
                 self.data = self.data.drop_dims(var)
             elif var in self.data.variables:
                 self.data = self.data.drop_vars(var)
+        return self.data
 
     def format_timestamps(
         self,
@@ -135,6 +139,7 @@ class ForcingFile:
         Returns:
             xarray.Dataset: The dataset with formatted time.
         """
+        assert self.data is not None, "No data loaded. Call load() first."
         self.data = convert_and_subset_times(self.data)
         return self.data
 
@@ -142,6 +147,7 @@ class ForcingFile:
         self,
     ) -> xr.Dataset:
         """Return the loaded dataset."""
+        assert self.data is not None, "No data loaded. Call load() first."
         return self.data
 
     def aggregate_depth(self, method="mean"):
@@ -186,16 +192,15 @@ class ForcingFile:
         """
         if self.data is None:
             raise ValueError("No data loaded. Call load() before assigning sectors.")
-        if isinstance(sectors, GridFile):
-            sectors = sectors.get_sectors()
-        self.sectors = sectors
+        sector_ids = sectors.get_sectors() if isinstance(sectors, GridFile) else sectors
+        self.sectors = sector_ids
 
-        self.data["sector"] = sectors
+        self.data["sector"] = sector_ids
 
         self._standardize_dims()
         return self.data
 
-    def average_over_sector(self, sector_number: int = None) -> xr.Dataset:
+    def average_over_sector(self, sector_number: int | None = None) -> xr.Dataset:
         """
         Average data over grid cells within a sector (or all sectors).
 

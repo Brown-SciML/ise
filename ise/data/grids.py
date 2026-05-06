@@ -61,10 +61,10 @@ class GridFile:
     def __init__(self, ice_sheet: str, filepath: str) -> None:
         self.ice_sheet = ice_sheet
         self.filepath = filepath
-        self.data = None
+        self.data: xr.Dataset | None = None
         self.sector_variable_name = "sectors" if ice_sheet == "AIS" else "ID"
 
-    def load(self, filepath: str = None, **kwargs) -> xr.Dataset:
+    def load(self, filepath: str | None = None, **kwargs) -> xr.Dataset:
         """
         Load the grid dataset from the NetCDF file.
 
@@ -80,7 +80,7 @@ class GridFile:
         self.data = xr.open_dataset(filepath, **kwargs)
         return self.data
 
-    def expand_dims(self, dim: str = "time", size: int = None) -> xr.Dataset:
+    def expand_dims(self, dim: str = "time", size: int | None = None) -> xr.Dataset:
         """
         Expand dimensions (e.g. add time dimension of given size).
 
@@ -91,10 +91,11 @@ class GridFile:
         Returns:
             xarray.Dataset: The dataset with expanded dimension.
         """
+        assert self.data is not None, "No data loaded. Call load() first."
         self.data = self.data.expand_dims({dim: size})
         return self.data
 
-    def align_dims(self, dims: list = None) -> xr.Dataset:
+    def align_dims(self, dims: list | None = None) -> xr.Dataset:
         """
         Transpose dimensions to a standard order.
 
@@ -104,6 +105,7 @@ class GridFile:
         Returns:
             xarray.Dataset: The dataset with reordered dimensions.
         """
+        assert self.data is not None, "No data loaded. Call load() first."
         if dims is not None:
             self.data = self.data.transpose(*dims)
         else:
@@ -114,6 +116,7 @@ class GridFile:
         self,
     ) -> xr.DataArray:
         """Return the sector ID array from the grid dataset."""
+        assert self.data is not None, "No data loaded. Call load() first."
         return self.data[self.sector_variable_name]
 
     def format_grids(
@@ -129,4 +132,5 @@ class GridFile:
             self.load()
         self.expand_dims(size=86)
         self.align_dims()
+        assert self.data is not None
         return self.data

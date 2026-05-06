@@ -111,7 +111,7 @@ class FeatureEngineer:
         train_size: float = 0.7,
         val_size: float = 0.15,
         test_size: float = 0.15,
-        output_directory: str = None,
+        output_directory: str | None = None,
     ):
         self.data = data
         try:
@@ -603,7 +603,7 @@ def add_model_characteristics(
 def backfill_outliers(data, percentile=99.999):
     """
     Replaces extreme values in y-values (above the specified percentile and below the 1-percentile across all y-values)
-    with the value from the previous row.
+    with the value from the next row (bfill). Trailing outliers at the end of the series will remain as NaN.
 
     Args:
         data (pd.DataFrame): The dataset containing y-values.
@@ -851,7 +851,7 @@ def drop_outliers(
     data: pd.DataFrame,
     column: str,
     method: str,
-    expression: list[tuple] = None,
+    expression: list[tuple] | None = None,
     quantiles: list[float] = [0.01, 0.99],
 ):
     """

@@ -291,7 +291,7 @@ ISEFlow_AIS_v1_0_0_variables = [
 ]
 
 
-ISEFlow_GrIS_v1_0_0_variables = []
+ISEFlow_GrIS_v1_0_0_variables: list[str] = []
 ISEFlow_GrIS_v1_1_0_variables = [
     "year",
     "sector",

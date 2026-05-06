@@ -189,8 +189,8 @@ class ProjectionProcessor:
             raise ValueError("densities argument must be a string or a pandas DataFrame.")
 
         # open scaling model
-        scalefac_model = xr.open_dataset(scalefac_path)
-        scalefac_model = np.transpose(scalefac_model.af2.values, (1, 0))
+        scalefac_ds = xr.open_dataset(scalefac_path)
+        scalefac_model = np.transpose(scalefac_ds.af2.values, (1, 0))
 
         # adjust scaling model based on desired resolution
         if self.ice_sheet == "AIS":
@@ -609,7 +609,7 @@ class ProjectionProcessor:
         return 1
 
 
-def get_model_densities(zenodo_directory: str, output_path: str = None):
+def get_model_densities(zenodo_directory: str, output_path: str | None = None):
     """
     Extracts density values (rhoi and rhow) from NetCDF files in the specified directory and returns them in a pandas DataFrame.
 
@@ -621,7 +621,7 @@ def get_model_densities(zenodo_directory: str, output_path: str = None):
         pandas.DataFrame: A DataFrame containing the group, model, rhoi, and rhow values for each model run.
     """
 
-    results = []
+    results: list[dict] = []
     for root, _, files in os.walk(zenodo_directory):
         for file in files:
             if file.endswith(".nc"):  # Check if the file is a NetCDF file
@@ -646,31 +646,33 @@ def get_model_densities(zenodo_directory: str, output_path: str = None):
                     print(f"Error processing {file}: {e}")
 
     densities = []
-    for file in results:
-        if "ctrl_proj" in file["filename"] or "hist" in file["filename"]:
+    last_filename = ""
+    for result in results:
+        if "ctrl_proj" in result["filename"] or "hist" in result["filename"]:
             continue
 
-        elif "ILTS" in file["filename"]:
-            fp = file["filename"].split("_")
+        elif "ILTS" in result["filename"]:
+            fp = result["filename"].split("_")
             group = "ILTS_PIK"
             model = fp[-2]
 
-        elif "ULB_fETISh" in file["filename"]:
-            fp = file["filename"].split("_")
+        elif "ULB_fETISh" in result["filename"]:
+            fp = result["filename"].split("_")
             group = "ULB"
-            model = "fETISh_32km" if "32km" in file["filename"] else "fETISh_16km"
+            model = "fETISh_32km" if "32km" in result["filename"] else "fETISh_16km"
 
         else:
-            fp = file["filename"].split("_")
+            fp = result["filename"].split("_")
             group = fp[-3]
             model = fp[-2]
-        densities.append([group, model, file["rhoi"], file["rhow"]])
+        densities.append([group, model, result["rhoi"], result["rhow"]])
+        last_filename = result["filename"]
 
     df = pd.DataFrame(densities, columns=["group", "model", "rhoi", "rhow"])
     df["rhoi"], df["rhow"] = df.rhoi.astype("float"), df.rhow.astype("float")
     df = df.drop_duplicates()
 
-    ice_sheet = "AIS" if "AIS" in file["filename"] else "GIS"
+    ice_sheet = "AIS" if "AIS" in last_filename else "GIS"
 
     if output_path is not None:
         if output_path.endswith("/"):

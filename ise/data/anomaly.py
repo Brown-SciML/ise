@@ -377,7 +377,7 @@ class AnomalyConverter:
                 )
             return {k: float(v) for k, v in custom.items()}
 
-        row = self.get_climatology(aogcm, sector)
+        row = self.get_climatology(aogcm, sector)  # type: ignore[arg-type]
         clim = {
             "pr": row["pr_clim"],
             "evspsbl": row["evspsbl_clim"],
@@ -405,7 +405,7 @@ class AnomalyConverter:
                 )
             return {k: float(v) for k, v in custom.items()}
 
-        row = self.get_climatology(aogcm, sector)
+        row = self.get_climatology(aogcm, sector)  # type: ignore[arg-type]
         return {"smb": row["smb_clim"], "st": row["st_clim"]}
 
     @staticmethod

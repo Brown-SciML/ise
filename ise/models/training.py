@@ -131,7 +131,7 @@ class CheckpointSaver:
 
         self.best_loss = loss
 
-    def save_checkpoint(self, epoch, loss, path: str = None):
+    def save_checkpoint(self, epoch, loss, path: str | None = None):
         """
         Saves the model checkpoint, including model state, optimizer state, and epoch.
 
@@ -152,7 +152,7 @@ class CheckpointSaver:
         # if self.verbose:
         #     print(f"Checkpoint saved to {checkpoint_path}")
 
-    def load_checkpoint(self, path: str = None):
+    def load_checkpoint(self, path: str | None = None):
         """
         Loads a checkpoint and restores the model and optimizer states.
 

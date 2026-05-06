@@ -237,10 +237,10 @@ def undummify(df: pd.DataFrame, prefix_sep: str = "-"):
 def combine_testing_results(
     data_directory: str,
     preds: np.ndarray,
-    sd: dict = None,
-    gp_data: dict = None,
+    sd: np.ndarray | pd.DataFrame | None = None,
+    gp_data: dict | None = None,
     time_series: bool = True,
-    save_directory: str = None,
+    save_directory: str | None = None,
 ):
     """
     Combines test results into a DataFrame with predictions, uncertainties, and true values.
@@ -307,8 +307,8 @@ def combine_testing_results(
 
 def group_by_run(
     dataset: pd.DataFrame,
-    column: str = None,
-    condition: str = None,
+    column: str | None = None,
+    condition: str | None = None,
 ):
     """
     Groups dataset simulations into structured matrices for true and predicted values.
@@ -390,9 +390,9 @@ def get_uncertainty_bands(
     sd = np.sqrt(data.var(axis=0))
     upper_ci = mean + (z[confidence] * (sd / np.sqrt(data.shape[0])))
     lower_ci = mean - (z[confidence] * (sd / np.sqrt(data.shape[0])))
-    quantiles = np.quantile(data, quantiles, axis=0)
-    upper_q = quantiles[1, :]
-    lower_q = quantiles[0, :]
+    quantile_arr = np.quantile(data, quantiles, axis=0)
+    upper_q = quantile_arr[1, :]
+    lower_q = quantile_arr[0, :]
     return mean, sd, upper_ci, lower_ci, upper_q, lower_q
 
 
@@ -419,7 +419,7 @@ def create_distribution(dataset: np.ndarray, min_range=-30, max_range=20, step=0
 
 
 def calculate_distribution_metrics(
-    dataset: pd.DataFrame, column: str = None, condition: str = None
+    dataset: pd.DataFrame, column: str | None = None, condition: str | None = None
 ):
     """
     Computes distribution divergence metrics between true and predicted values.
@@ -440,8 +440,8 @@ def calculate_distribution_metrics(
     """
 
     trues, preds, _ = group_by_run(dataset, column=column, condition=condition)
-    true_distribution, _ = create_distribution(year=2100, dataset=trues)
-    pred_distribution, _ = create_distribution(year=2100, dataset=preds)
+    true_distribution, _ = create_distribution(trues)
+    pred_distribution, _ = create_distribution(preds)
     distribution_metrics = {
         "kl": kl_divergence(pred_distribution, true_distribution),
         "js": js_divergence(pred_distribution, true_distribution),
@@ -449,7 +449,7 @@ def calculate_distribution_metrics(
     return distribution_metrics
 
 
-def unscale_column(dataset: pd.DataFrame, column: str = "year"):
+def unscale_column(dataset: pd.DataFrame, column: str | list[str] = "year"):
     """
     Unscales specified columns back to their original range using known value distributions.
 
@@ -486,7 +486,7 @@ def unscale_column(dataset: pd.DataFrame, column: str = "year"):
 file_dir = os.path.dirname(os.path.realpath(__file__))
 
 
-def check_input(input: str, options: list[str], argname: str = None):
+def check_input(input: str, options: list[str], argname: str | None = None):
     """
     Validates whether a given input string is within an expected list of options.
 
@@ -509,7 +509,10 @@ def check_input(input: str, options: list[str], argname: str = None):
 
 
 def get_all_filepaths(
-    path: str, filetype: str = None, contains: str = None, not_contains: str = None
+    path: str,
+    filetype: str | None = None,
+    contains: str | list[str] | None = None,
+    not_contains: str | list[str] | None = None,
 ):
     """Retrieves all filepaths for files within a directory. Supports subsetting based on filetype
     and substring search.

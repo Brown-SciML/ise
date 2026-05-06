@@ -667,7 +667,7 @@ class ISEFlow_AIS(ISEFlow):
 
         return data
 
-    def predict(
+    def predict(  # type: ignore[override]
         self,
         inputs: ISEFlowAISInputs,
         smoothing_window: int = 0,
@@ -835,7 +835,7 @@ class ISEFlow_GrIS(ISEFlow):
         # print(data.head())
         return data
 
-    def predict(
+    def predict(  # type: ignore[override]
         self,
         inputs: ISEFlowGrISInputs,
         smoothing_window: int = 0,

@@ -1,4 +1,4 @@
-.PHONY: test lint format docs clean
+.PHONY: test lint format type docs clean
 
 test:
 	pytest tests/
@@ -8,6 +8,9 @@ lint:
 
 format:
 	ruff format . && ruff check --fix .
+
+type:
+	mypy sle/
 
 docs:
 	cd docs && make html
