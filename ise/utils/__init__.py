@@ -8,6 +8,13 @@ import os
 
 from .functions import get_data, get_X_y, unscale_output
 
+__all__ = [
+    "get_data",
+    "get_X_y",
+    "unscale_output",
+    "ismip6_model_configs_path",
+]
+
 ismip6_model_configs_path = os.path.join(
     os.path.dirname(__file__), "..", "data", "data_files", "ismip6_model_configs.json"
 )
