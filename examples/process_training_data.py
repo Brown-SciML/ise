@@ -5,28 +5,17 @@ from ise.data.process import process_sectors
 
 ICE_SHEET = "AIS"
 
+ISMIP6_FORCINGS = (
+    r"/path/to/ismip6_forcings/GHub-ISMIP6-Forcing/AIS"
+)
+ISMIP6_GRIDS = (
+    r"/path/to/ismip6_gridfiles/Grid_Files/AIS_sectors_8km.nc"
+)
+ISMIP6_OUTPUTS = (
+    r"/path/to/ismip6_outputs/Zenodo_Outputs/ComputedScalarsPaper"
+)
 
-if ICE_SHEET == "GrIS":
-    ISMIP6_FORCINGS = (
-        r"/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/GrIS"
-    )
-    ISMIP6_GRIDS = r"/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/Grid_Files/GrIS_Basins_Rignot_sectors_5km.nc"
-    ISMIP6_OUTPUTS = (
-        r"/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/Zenodo_Outputs/v7_CMIP5_pub"
-    )
-else:
-    ISMIP6_FORCINGS = (
-        r"/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/GHub-ISMIP6-Forcing/AIS"
-    )
-    ISMIP6_GRIDS = (
-        r"/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/Grid_Files/AIS_sectors_8km.nc"
-    )
-    ISMIP6_OUTPUTS = (
-        r"/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/Zenodo_Outputs/ComputedScalarsPaper"
-    )
-
-
-EXPORT_DIR = f"/oscar/home/pvankatw/research/ise/supplemental/dataset/tests/{ICE_SHEET}"
+EXPORT_DIR = f"path/to/export_dir/{ICE_SHEET}"
 
 dataset = process_sectors(
     ice_sheet=ICE_SHEET,

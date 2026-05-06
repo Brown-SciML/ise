@@ -941,6 +941,7 @@ dev = [
     { name = "build" },
     { name = "ruff" },
     { name = "twine" },
+    { name = "wandb" },
 ]
 
 [package.metadata]
@@ -992,6 +993,7 @@ dev = [
     { name = "build", specifier = ">=1.5.0" },
     { name = "ruff", specifier = ">=0.15.12" },
     { name = "twine", specifier = ">=6.2.0" },
+    { name = "wandb", specifier = ">=0.21.1" },
 ]
 
 [[package]]

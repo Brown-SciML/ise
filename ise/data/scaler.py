@@ -50,7 +50,7 @@ LogScaler:
 import torch
 from torch import nn
 
-from ise.utils.functions import to_tensor
+from ise.utils.functions import get_device, to_tensor
 
 
 class StandardScaler(nn.Module):
@@ -80,7 +80,7 @@ class StandardScaler(nn.Module):
         super().__init__()
         self.mean_ = None
         self.scale_ = None
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(get_device())
         self.to(self.device)
 
     def fit(self, X):
@@ -204,7 +204,7 @@ class RobustScaler(nn.Module):
         super().__init__()
         self.median_ = None
         self.iqr_ = None
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(get_device())
         self.to(self.device)
 
     def fit(self, X):
@@ -300,7 +300,7 @@ class LogScaler(nn.Module):
     def __init__(self, epsilon=1e-8):
         super().__init__()
         self.epsilon = epsilon
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(get_device())
         self.to(self.device)
         self.min_value = None
 

@@ -54,6 +54,8 @@ MSEDeviationLoss:
 
 import torch
 
+from ise.utils.functions import get_device
+
 
 class WeightedGridLoss(torch.nn.Module):
     """
@@ -69,7 +71,7 @@ class WeightedGridLoss(torch.nn.Module):
 
     def __init__(self):
         super().__init__()
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = get_device()
         self.to(self.device)
 
     def total_variation_regularization(self, grid):
@@ -161,7 +163,7 @@ class WeightedMSELoss(torch.nn.Module):
 
     def __init__(self, data_mean, data_std, weight_factor=1.0):
         super().__init__()
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = get_device()
         self.data_mean = torch.tensor(data_mean, dtype=torch.float32, device=self.device)
         self.data_std = torch.tensor(data_std, dtype=torch.float32, device=self.device)
         self.weight_factor = torch.tensor(weight_factor, dtype=torch.float32, device=self.device)
@@ -223,7 +225,7 @@ class WeightedMSEPCALoss(torch.nn.Module):
 
         super().__init__()
 
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = get_device()
         self.to(self.device)
 
         self.data_mean = torch.tensor(data_mean, dtype=torch.float32, device=self.device)
@@ -303,7 +305,7 @@ class WeightedMSELossWithSignPenalty(torch.nn.Module):
     def __init__(self, data_mean, data_std, weight_factor=1.0, sign_penalty_factor=1.0):
 
         super().__init__()
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = get_device()
         self.data_mean = torch.tensor(data_mean, dtype=torch.float32, device=self.device)
         self.data_std = torch.tensor(data_std, dtype=torch.float32, device=self.device)
         self.weight_factor = torch.tensor(weight_factor, dtype=torch.float32, device=self.device)
@@ -431,7 +433,7 @@ class WeightedPCALoss(torch.nn.Module):
 
     def __init__(self, component_weights, reduction="mean"):
         super().__init__()
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = get_device()
         self.component_weights = torch.tensor(
             component_weights, dtype=torch.float32, device=self.device
         )

@@ -66,7 +66,7 @@ from torch import nn, optim
 
 from ise.data.dataclasses import EmulatorDataset
 from ise.models.training import CheckpointSaver, EarlyStoppingCheckpointer
-from ise.utils.functions import to_tensor
+from ise.utils.functions import get_device, to_tensor
 
 
 class LSTM(nn.Module):
@@ -139,7 +139,7 @@ class LSTM(nn.Module):
         self.input_size = input_size
         self.output_size = output_size
         self.output_sequence_length = output_sequence_length
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = get_device()
         self.to(self.device)
 
         # Initialize model layers
@@ -465,7 +465,7 @@ class LSTM(nn.Module):
         metadata = {
             "model_type": self.__class__.__name__,
             "version": "1.0",
-            "device": "cuda" if torch.cuda.is_available() else "cpu",
+            "device": get_device(),
             "architecture": {
                 "lstm_num_layers": int(self.lstm_num_layers),
                 "lstm_num_hidden": int(self.lstm_num_hidden),
@@ -591,7 +591,7 @@ class LSTM(nn.Module):
         # Load weights (CPU-safe)
         state_dict = torch.load(
             model_path,
-            map_location="cpu" if not torch.cuda.is_available() else None,
+            map_location="cpu" if get_device() == "cpu" else None,
             weights_only=True,
         )
         model.load_state_dict(state_dict)

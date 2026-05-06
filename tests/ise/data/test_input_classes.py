@@ -303,9 +303,14 @@ def gris_proj_indices(test_df):
 # ── AIS tests ──────────────────────────────────────────────────────────────────
 
 
-@pytest.mark.parametrize(
-    "proj_idx", pick_proj_indices(len(pd.read_csv(f"{AIS_DATA_DIR}/test.csv")), N_PROJ)
+_ais_proj_indices = (
+    pick_proj_indices(len(pd.read_csv(f"{AIS_DATA_DIR}/test.csv")), N_PROJ)
+    if _datasets_available
+    else []
 )
+
+
+@pytest.mark.parametrize("proj_idx", _ais_proj_indices)
 def test_ais_inputs_tensor_matches_reference(proj_idx, ais_model, ais_test_df):
     """Feature tensor from ISEFlowAISInputs must match the reference test CSV tensor."""
     start = proj_idx * PROJ_LEN
@@ -343,9 +348,14 @@ def test_ais_inputs_tensor_matches_reference(proj_idx, ais_model, ais_test_df):
 # ── GrIS tests ─────────────────────────────────────────────────────────────────
 
 
-@pytest.mark.parametrize(
-    "proj_idx", pick_proj_indices(len(pd.read_csv(f"{GRIS_DATA_DIR}/test.csv")), N_PROJ)
+_gris_proj_indices = (
+    pick_proj_indices(len(pd.read_csv(f"{GRIS_DATA_DIR}/test.csv")), N_PROJ)
+    if _datasets_available
+    else []
 )
+
+
+@pytest.mark.parametrize("proj_idx", _gris_proj_indices)
 def test_gris_inputs_tensor_matches_reference(proj_idx, gris_model, gris_test_df):
     """Feature tensor from ISEFlowGrISInputs must match the reference test CSV tensor."""
     start = proj_idx * PROJ_LEN
