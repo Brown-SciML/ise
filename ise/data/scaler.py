@@ -47,10 +47,7 @@ LogScaler:
     values remain positive before taking the log.
 """
 
-import numpy as np
-import pandas as pd
 import torch
-from scipy.stats import yeojohnson, yeojohnson_normmax
 from torch import nn
 
 from ise.utils.functions import to_tensor
@@ -80,7 +77,7 @@ class StandardScaler(nn.Module):
     def __init__(
         self,
     ):
-        super(StandardScaler, self).__init__()
+        super().__init__()
         self.mean_ = None
         self.scale_ = None
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -204,7 +201,7 @@ class RobustScaler(nn.Module):
     """
 
     def __init__(self):
-        super(RobustScaler, self).__init__()
+        super().__init__()
         self.median_ = None
         self.iqr_ = None
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -301,7 +298,7 @@ class LogScaler(nn.Module):
     """
 
     def __init__(self, epsilon=1e-8):
-        super(LogScaler, self).__init__()
+        super().__init__()
         self.epsilon = epsilon
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.to(self.device)

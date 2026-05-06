@@ -14,7 +14,7 @@ import os
 
 from huggingface_hub import snapshot_download
 
-HF_REPO_ID = "Brown-SciML/ISEFlow"
+HF_REPO_ID = "pvankatwyk/ISEFlow"
 
 ISEFLOW_LATEST_MODEL_VERSION = "v1.1.0"
 """The most recent ISEFlow pretrained model version. Distinct from the ise-py package version."""
@@ -65,13 +65,14 @@ def get_model_dir(version: str, ice_sheet: str) -> str:
 
 def _subfolder(version: str, ice_sheet: str) -> str:
     """Return the HuggingFace subfolder path for a given version and ice sheet."""
-    tag = version.replace(".", "-")   # e.g. v1.1.0 -> v1-1-0
+    tag = version.replace(".", "-")  # e.g. v1.1.0 -> v1-1-0
     return f"{version}/ISEFlow_{ice_sheet}_{tag}"
 
 
 # ---------------------------------------------------------------------------
 # Backward-compat path constants (kept as shims; now resolved via get_model_dir)
 # ---------------------------------------------------------------------------
+
 
 def _lazy_path(version: str, ice_sheet: str) -> str:
     """Resolve a model path, preferring local if it exists (avoids HF call at import)."""

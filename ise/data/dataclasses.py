@@ -163,8 +163,8 @@ class EmulatorDataset(Dataset):
             sequence[-length_of_data:] = self.X[projection_index, start_point:end_point]
         elif self.xdim == 2:
             sequence[-length_of_data:] = self.X[
-                projection_index * self.num_timesteps
-                + start_point : projection_index * self.num_timesteps
+                projection_index * self.num_timesteps + start_point : projection_index
+                * self.num_timesteps
                 + end_point
             ]
 

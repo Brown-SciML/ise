@@ -1,7 +1,8 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 # -------------------------------------------------------------------
 # File paths
@@ -22,19 +23,23 @@ panel_order = [
     ("GrIS", "GP emulator"),
 ]
 
+
 # -------------------------------------------------------------------
 # Helper metrics
 # -------------------------------------------------------------------
 def rmse(y_true, y_pred):
     return np.sqrt(np.mean((y_true - y_pred) ** 2))
 
+
 def mae(y_true, y_pred):
     return np.mean(np.abs(y_true - y_pred))
+
 
 def r2(y_true, y_pred):
     ss_res = np.sum((y_true - y_pred) ** 2)
     ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
     return 1 - ss_res / ss_tot if ss_tot != 0 else np.nan
+
 
 # -------------------------------------------------------------------
 # Load data
@@ -128,7 +133,8 @@ for ax, key in zip(axes, panel_order):
     sd = np.std(errs, ddof=1)
 
     ax.text(
-        0.04, 0.96,
+        0.04,
+        0.96,
         f"Bias = {bias:.3f}\nSD = {sd:.3f}",
         transform=ax.transAxes,
         va="top",

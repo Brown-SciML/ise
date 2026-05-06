@@ -1,22 +1,24 @@
+import json
 import os
-import torch
-import pandas as pd
-import shap
+import time
+
 import matplotlib.pyplot as plt
 import numpy as np
-import time
-import json
+import pandas as pd
+import shap
+import torch
 
 try:
     from ise.data.feature_engineer import FeatureEngineer
-    from ise.models.iseflow import ISEFlow, LSTM
+    from ise.models.iseflow import LSTM, ISEFlow
     from ise.utils.functions import get_X_y, unscale_output
 except ModuleNotFoundError:
     import sys
-    sys.path.append('/users/pvankatw/research/ise/')
-    from ise.data.feature_engineer import FeatureEngineer
-    from ise.models.iseflow import ISEFlow, LSTM
-    from ise.utils.functions import get_X_y, unscale_output
+
+    sys.path.append("/users/pvankatw/research/ise/")
+    from ise.models.iseflow import LSTM
+    from ise.utils.functions import get_X_y
+
 
 def add_lagged_shaps(shap_df):
     """
@@ -24,24 +26,29 @@ def add_lagged_shaps(shap_df):
 
     Args:
         shap_df (pd.DataFrame): SHAP values dataframe with lagged variables.
-    
+
     Returns:
         pd.DataFrame: Aggregated SHAP values by base variable.
     """
-    base_variables = set(name.split('.')[0] for name in list(shap_df.columns) if 'lag' in name)
+    base_variables = set(name.split(".")[0] for name in list(shap_df.columns) if "lag" in name)
     aggregated_shap_values = pd.DataFrame(index=shap_df.index)
 
     # Copy non-lagged columns as-is
     for name in list(shap_df.columns):
-        if name.split('.')[0] not in base_variables and not 'lag' in name:
+        if name.split(".")[0] not in base_variables and "lag" not in name:
             aggregated_shap_values[name] = shap_df[name]
 
     # Aggregate lagged SHAP values
     for base_var in base_variables:
-        related_columns = [col for col in list(shap_df.columns) if col.startswith(base_var) and ('lag' in col or col.endswith(tuple('.12345')))]
+        related_columns = [
+            col
+            for col in list(shap_df.columns)
+            if col.startswith(base_var) and ("lag" in col or col.endswith(tuple(".12345")))
+        ]
         aggregated_shap_values[base_var] = shap_df[related_columns].sum(axis=1)
 
     return aggregated_shap_values
+
 
 def aggregate_lagged_columns(dataframe):
     """
@@ -53,21 +60,30 @@ def aggregate_lagged_columns(dataframe):
     Returns:
         pd.DataFrame: DataFrame with aggregated base variables.
     """
-    base_variables = set(name.split('.')[0] for name in dataframe.columns if 'lag' in name)
+    base_variables = set(name.split(".")[0] for name in dataframe.columns if "lag" in name)
     aggregated_data = pd.DataFrame()
 
     # Copy non-lagged columns as-is
     for name in dataframe.columns:
-        if name.split('.')[0] not in base_variables and not 'lag' in name and not name.endswith(tuple('.12345')):
+        if (
+            name.split(".")[0] not in base_variables
+            and "lag" not in name
+            and not name.endswith(tuple(".12345"))
+        ):
             aggregated_data[name] = dataframe[name]
 
     # Aggregate lagged columns
     for base_var in base_variables:
-        related_columns = [col for col in dataframe.columns if col.startswith(base_var) and ('lag' in col or col.endswith(tuple('.12345')))]
+        related_columns = [
+            col
+            for col in dataframe.columns
+            if col.startswith(base_var) and ("lag" in col or col.endswith(tuple(".12345")))
+        ]
         if related_columns:
             aggregated_data[base_var] = dataframe[related_columns].sum(axis=1)
 
     return aggregated_data
+
 
 def aggregate_categorical_columns(dataframe):
     """
@@ -80,16 +96,33 @@ def aggregate_categorical_columns(dataframe):
         pd.DataFrame: Aggregated DataFrame by base variables.
     """
     base_variables = [
-        'numerics', 'initial-year', 'stress-balance', 'resolution', 'init-method',
-        'melt', 'ice-front', 'open-melt-param', 'standard-melt-param', 'Ocean forcing',
-        'Ocean sensitivity', 'Ice shelf fracture', 'initialization', 'res-max', 'res-min',
-        'bed', 'ghf', 'velocity', 'surface-thickness', 'ice-flow', 'initial_smb'
+        "numerics",
+        "initial-year",
+        "stress-balance",
+        "resolution",
+        "init-method",
+        "melt",
+        "ice-front",
+        "open-melt-param",
+        "standard-melt-param",
+        "Ocean forcing",
+        "Ocean sensitivity",
+        "Ice shelf fracture",
+        "initialization",
+        "res-max",
+        "res-min",
+        "bed",
+        "ghf",
+        "velocity",
+        "surface-thickness",
+        "ice-flow",
+        "initial_smb",
     ]
     aggregated_data = pd.DataFrame()
 
     # Copy non-lagged columns as-is
     for name in dataframe.columns:
-        if name.split('.')[0] not in base_variables:
+        if name.split(".")[0] not in base_variables:
             aggregated_data[name] = dataframe[name]
 
     # Aggregate categorical columns
@@ -99,6 +132,7 @@ def aggregate_categorical_columns(dataframe):
             aggregated_data[base_var] = dataframe[related_columns].sum(axis=1)
 
     return aggregated_data
+
 
 def run_shap(model, sample_rows, X_val_cols, out_dir):
     """
@@ -110,6 +144,7 @@ def run_shap(model, sample_rows, X_val_cols, out_dir):
         X_val_cols (list of str): Feature names for validation data.
         out_dir (str): Output directory for saving results.
     """
+
     # Define prediction function for SHAP explainer
     def f(x):
         return model.predict(x)
@@ -125,14 +160,16 @@ def run_shap(model, sample_rows, X_val_cols, out_dir):
 
     # Save sample rows and SHAP values to CSV
     curr = time.time()
-    pd.DataFrame(sample_rows, columns=X_val_cols).to_csv(f"{out_dir}/sample_rows_{n_projections}_{curr}.csv", index=False)
-    df['run_time'] = curr
+    pd.DataFrame(sample_rows, columns=X_val_cols).to_csv(
+        f"{out_dir}/sample_rows_{n_projections}_{curr}.csv", index=False
+    )
+    df["run_time"] = curr
     df.to_csv(f"{out_dir}/shap_values_{n_projections}_{curr}.csv", index=False)
 
     # Generate SHAP summary plot
     shap.summary_plot(shap_values, sample_rows, feature_names=X_val_cols)
-    plt.savefig(f'{out_dir}/shap_values_plot_{n_projections}_{curr}.png')
-    plt.close('all')
+    plt.savefig(f"{out_dir}/shap_values_plot_{n_projections}_{curr}.png")
+    plt.close("all")
 
     # Aggregate lagged columns and plot the summarized SHAP values
     sample_rows_df = pd.DataFrame(sample_rows, columns=X_val_cols)
@@ -140,48 +177,67 @@ def run_shap(model, sample_rows, X_val_cols, out_dir):
     shap_values_df = pd.DataFrame(shap_values, columns=X_val_cols)
     shap_values_df = aggregate_lagged_columns(shap_values_df)
     plt.figure()
-    shap.summary_plot(shap_values_df.values, sample_rows_df.values, feature_names=sample_rows_df.columns)
-    plt.savefig(f'{out_dir}/shap_values_plot_{n_projections}_{curr}_summed.png')
+    shap.summary_plot(
+        shap_values_df.values, sample_rows_df.values, feature_names=sample_rows_df.columns
+    )
+    plt.savefig(f"{out_dir}/shap_values_plot_{n_projections}_{curr}_summed.png")
 
     # Drop lagged columns and generate a new SHAP plot
-    df = df.drop(columns=[x for x in df.columns if 'lag' in x])
-    sample_rows_df = sample_rows_df.drop(columns=[x for x in sample_rows_df.columns if 'lag' in x])
+    df = df.drop(columns=[x for x in df.columns if "lag" in x])
+    sample_rows_df = sample_rows_df.drop(columns=[x for x in sample_rows_df.columns if "lag" in x])
     plt.figure()
     shap.summary_plot(df.values, sample_rows_df.values, feature_names=sample_rows_df.columns)
-    plt.savefig(f'{out_dir}/shap_values_plot_{n_projections}_{curr}_dropped.png')
+    plt.savefig(f"{out_dir}/shap_values_plot_{n_projections}_{curr}_dropped.png")
 
     return df
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     ITERATIONS = 100
     n_projections = 50
-    ICE_SHEET = 'AIS'
-    print('Ice Sheet:', ICE_SHEET)
+    ICE_SHEET = "AIS"
+    print("Ice Sheet:", ICE_SHEET)
 
     # Define directories and model path
     dir_ = f"/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/ISEFlow/data/ml/{ICE_SHEET}/"
-    best_models = json.load(open(f'/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/ISEFlow/models/bests_model_paths.json'))
-    model_dir = best_models['WeakPredictor'][ICE_SHEET]
-    modelname = model_dir.split('/')[-2]
+    best_models = json.load(
+        open(
+            "/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/ISEFlow/models/bests_model_paths.json"
+        )
+    )
+    model_dir = best_models["WeakPredictor"][ICE_SHEET]
+    modelname = model_dir.split("/")[-2]
 
     # Load validation data
-    val = pd.read_csv(f'{dir_}/val.csv')
-    X_val, y_val = get_X_y(val, 'sectors', return_format='numpy')
-    X_val_df, y_val_df = get_X_y(val, 'sectors', return_format='pandas')
+    val = pd.read_csv(f"{dir_}/val.csv")
+    X_val, y_val = get_X_y(val, "sectors", return_format="numpy")
+    X_val_df, y_val_df = get_X_y(val, "sectors", return_format="pandas")
 
     # Initialize model
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    if ICE_SHEET == 'AIS':
-        model = LSTM(lstm_num_layers=1, lstm_hidden_size=512, input_size=X_val.shape[1], ice_sheet='AIS', criterion=torch.nn.MSELoss())
+    if ICE_SHEET == "AIS":
+        model = LSTM(
+            lstm_num_layers=1,
+            lstm_hidden_size=512,
+            input_size=X_val.shape[1],
+            ice_sheet="AIS",
+            criterion=torch.nn.MSELoss(),
+        )
     else:
-        model = LSTM(lstm_num_layers=1, lstm_hidden_size=512, input_size=X_val.shape[1], ice_sheet='GrIS', criterion=torch.nn.MSELoss())
+        model = LSTM(
+            lstm_num_layers=1,
+            lstm_hidden_size=512,
+            input_size=X_val.shape[1],
+            ice_sheet="GrIS",
+            criterion=torch.nn.MSELoss(),
+        )
 
     model.load_state_dict(torch.load(f"{model_dir}/wp_model.pth", map_location=device))
     model.to(device)
     model.train()
 
     # Create output directory
-    out_dir = f'/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/ISEFlow/explainability/SHAP/SLE_target/{ICE_SHEET}/nprojs{n_projections}_{modelname}'
+    out_dir = f"/oscar/home/pvankatw/data/pvankatw/pvankatw-bfoxkemp/ISEFlow/explainability/SHAP/SLE_target/{ICE_SHEET}/nprojs{n_projections}_{modelname}"
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
@@ -192,11 +248,13 @@ if __name__ == '__main__':
             n_projections = len(X_val) // 86
 
         # Randomly sample projections for SHAP analysis
-        sample_proj_starts = np.random.choice(np.arange(0, len(X_val) // 86) * 86, n_projections, replace=False)
-        print('n_projections', n_projections)
-        print('sample_proj_starts', sample_proj_starts)
+        sample_proj_starts = np.random.choice(
+            np.arange(0, len(X_val) // 86) * 86, n_projections, replace=False
+        )
+        print("n_projections", n_projections)
+        print("sample_proj_starts", sample_proj_starts)
 
-        sample_rows = np.vstack([X_val[start:start + 86, :] for start in sample_proj_starts])
+        sample_rows = np.vstack([X_val[start : start + 86, :] for start in sample_proj_starts])
 
         # Run SHAP analysis and collect results
         df = run_shap(model, sample_rows, X_val_df.columns, out_dir)

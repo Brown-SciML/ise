@@ -34,7 +34,7 @@ class PCA(nn.Module):
     """
 
     def __init__(self, n_components):
-        super(PCA, self).__init__()
+        super().__init__()
         self.n_components = n_components
         self.mean = None
         self.components = None
@@ -246,7 +246,7 @@ class DimensionProcessor(nn.Module):
         scaler_model,
         scaler_method="standard",
     ):
-        super(DimensionProcessor, self).__init__()
+        super().__init__()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         # LOAD PCA

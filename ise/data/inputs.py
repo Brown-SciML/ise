@@ -67,8 +67,7 @@ See also: ``ise.data.anomaly.AnomalyConverter``
 
 import json
 import warnings
-from dataclasses import dataclass, field
-from typing import List, Optional
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
@@ -113,22 +112,22 @@ class ISEFlowAISInputs:
     ocean_sensitivity: str
 
     # Version 1.0.0 only
-    mrro_anomaly: Optional[np.ndarray] = None
+    mrro_anomaly: np.ndarray | None = None
 
     # Model configuration
-    initial_year: Optional[int] = None
-    numerics: Optional[str] = None
-    stress_balance: Optional[str] = None
-    resolution: Optional[str] = None
-    init_method: Optional[str] = None
-    melt_in_floating_cells: Optional[str] = None
-    icefront_migration: Optional[str] = None
-    ocean_forcing_type: Optional[str] = None
-    open_melt_type: Optional[str] = None
-    standard_melt_type: Optional[str] = None
+    initial_year: int | None = None
+    numerics: str | None = None
+    stress_balance: str | None = None
+    resolution: str | None = None
+    init_method: str | None = None
+    melt_in_floating_cells: str | None = None
+    icefront_migration: str | None = None
+    ocean_forcing_type: str | None = None
+    open_melt_type: str | None = None
+    standard_melt_type: str | None = None
 
     # ISMIP6 model to emulate
-    model_configs: Optional[str] = None
+    model_configs: str | None = None
 
     # ISEFlow *model weights* version (distinct from the ise-py package version)
     version: str = "v1.1.0"
@@ -151,9 +150,9 @@ class ISEFlowAISInputs:
         ocean_thermal_forcing: np.ndarray,
         ocean_salinity: np.ndarray,
         ocean_temperature: np.ndarray,
-        aogcm: Optional[str] = None,
-        custom_climatology: Optional[dict] = None,
-        mrro: Optional[np.ndarray] = None,
+        aogcm: str | None = None,
+        custom_climatology: dict | None = None,
+        mrro: np.ndarray | None = None,
         **kwargs,
     ) -> "ISEFlowAISInputs":
         """Construct ISEFlowAISInputs from raw (non-anomaly) atmospheric forcings.
@@ -640,7 +639,7 @@ class ISEFlowAISInputs:
         if not self.model_configs:
             raise ValueError("model_configs must be provided to get ISM characteristics.")
 
-        with open(ismip6_model_configs_path, "r") as file:
+        with open(ismip6_model_configs_path) as file:
             self.all_ism_configs = json.load(file)
 
         return self.all_ism_configs
@@ -715,20 +714,20 @@ class ISEFlowGrISInputs:
     # ['numerics', 'ice_flow', 'initialization', 'initial_smb', 'velocity', 'bed', 'surface_thickness', 'ghf', 'res_min', 'res_max', 'Ocean forcing', 'Ocean sensitivity', 'Ice shelf fracture'], dtype=bool)
 
     # Model configuration
-    initial_year: Optional[int] = None
-    numerics: Optional[str] = None
-    ice_flow_model: Optional[str] = None
-    initialization: Optional[str] = None
-    initial_smb: Optional[str] = None
-    velocity: Optional[str] = None
-    bedrock_topography: Optional[str] = None
-    surface_thickness: Optional[str] = None
-    geothermal_heat_flux: Optional[str] = None
-    res_min: Optional[str] = None
-    res_max: Optional[str] = None
+    initial_year: int | None = None
+    numerics: str | None = None
+    ice_flow_model: str | None = None
+    initialization: str | None = None
+    initial_smb: str | None = None
+    velocity: str | None = None
+    bedrock_topography: str | None = None
+    surface_thickness: str | None = None
+    geothermal_heat_flux: str | None = None
+    res_min: str | None = None
+    res_max: str | None = None
 
     # ISMIP6 model to emulate
-    model_configs: Optional[str] = None
+    model_configs: str | None = None
 
     # ISEFlow *model weights* version (distinct from the ise-py package version)
     version: str = "v1.1.0"
@@ -746,8 +745,8 @@ class ISEFlowGrISInputs:
         st: np.ndarray,
         ocean_thermal_forcing: np.ndarray,
         basin_runoff: np.ndarray,
-        aogcm: Optional[str] = None,
-        custom_climatology: Optional[dict] = None,
+        aogcm: str | None = None,
+        custom_climatology: dict | None = None,
         **kwargs,
     ) -> "ISEFlowGrISInputs":
         """Construct ISEFlowGrISInputs from raw (non-anomaly) atmospheric forcings.
@@ -1193,7 +1192,7 @@ class ISEFlowGrISInputs:
         return self.__str__()
 
     def _assign_model_configs(self, model_name, characteristics_json=ismip6_model_configs_path):
-        with open(characteristics_json, "r") as file:
+        with open(characteristics_json) as file:
             characteristics = json.load(file)
 
         if model_name in characteristics:

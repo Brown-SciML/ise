@@ -78,44 +78,44 @@ _GRIS_ATMOS_CLIM_PATH = os.path.join(_DATA_DIR, "GrIS_atmos_climatologies.csv")
 # ---------------------------------------------------------------------------
 _AIS_ALIASES: dict[str, str] = {
     # common alternate spellings/capitalisations
-    "noresm1-m_rcp8.5":      "noresm1-m_rcp85",
-    "noresm1-m_rcp2.6":      "noresm1-m_rcp26",
+    "noresm1-m_rcp8.5": "noresm1-m_rcp85",
+    "noresm1-m_rcp2.6": "noresm1-m_rcp26",
     "miroc-esm-chem_rcp8.5": "miroc-esm-chem_rcp85",
     "miroc-esm-chem_rcp2.6": "miroc-esm-chem_rcp26",
-    "ccsm4_rcp8.5":          "ccsm4_rcp85",
-    "ccsm4_rcp2.6":          "ccsm4_rcp26",
-    "hadgem2-es_rcp8.5":     "hadgem2-es_rcp85",
-    "csiro-mk3-6-0_rcp8.5":  "csiro-mk3.6_rcp85",
-    "csiro-mk3.6_rcp8.5":    "csiro-mk3.6_rcp85",
-    "ipsl-cm5a-mr_rcp8.5":   "ipsl-cm5-mr_rcp85",
-    "ipsl-cm5a-mr_rcp2.6":   "ipsl-cm5-mr_rcp26",
-    "ipsl-cm5-mr_rcp8.5":    "ipsl-cm5-mr_rcp85",
-    "ipsl-cm5-mr_rcp2.6":    "ipsl-cm5-mr_rcp26",
-    "cnrm-cm6-1_ssp585":     "cnrm-cm6_ssp585",
-    "cnrm-cm6-1_ssp126":     "cnrm-cm6_ssp126",
-    "cnrm-esm2-1_ssp585":    "cnrm-esm2_ssp585",
-    "ukesm1-0-ll_ssp585":    "ukesm1-0-ll_ssp585",
-    "cesm2_ssp585":          "cesm2_ssp585",
+    "ccsm4_rcp8.5": "ccsm4_rcp85",
+    "ccsm4_rcp2.6": "ccsm4_rcp26",
+    "hadgem2-es_rcp8.5": "hadgem2-es_rcp85",
+    "csiro-mk3-6-0_rcp8.5": "csiro-mk3.6_rcp85",
+    "csiro-mk3.6_rcp8.5": "csiro-mk3.6_rcp85",
+    "ipsl-cm5a-mr_rcp8.5": "ipsl-cm5-mr_rcp85",
+    "ipsl-cm5a-mr_rcp2.6": "ipsl-cm5-mr_rcp26",
+    "ipsl-cm5-mr_rcp8.5": "ipsl-cm5-mr_rcp85",
+    "ipsl-cm5-mr_rcp2.6": "ipsl-cm5-mr_rcp26",
+    "cnrm-cm6-1_ssp585": "cnrm-cm6_ssp585",
+    "cnrm-cm6-1_ssp126": "cnrm-cm6_ssp126",
+    "cnrm-esm2-1_ssp585": "cnrm-esm2_ssp585",
+    "ukesm1-0-ll_ssp585": "ukesm1-0-ll_ssp585",
+    "cesm2_ssp585": "cesm2_ssp585",
 }
 
 _GRIS_ALIASES: dict[str, str] = {
-    "access1-3_rcp85":       "access1.3_rcp85",
-    "access1.3_rcp8.5":      "access1.3_rcp85",
-    "csiro-mk3-6-0_rcp85":   "csiro-mk3.6_rcp85",
-    "csiro-mk3.6_rcp8.5":    "csiro-mk3.6_rcp85",
-    "hadgem2-es_rcp8.5":     "hadgem2-es_rcp85",
-    "ipsl-cm5-mr_rcp8.5":    "ipsl-cm5-mr_rcp85",
-    "ipsl-cm5a-mr_rcp85":    "ipsl-cm5-mr_rcp85",
-    "miroc5_rcp8.5":         "miroc5_rcp85",
-    "miroc5_rcp2.6":         "miroc5_rcp26",
-    "noresm1_rcp85":         "noresm1-m_rcp85",
-    "noresm1-m_rcp8.5":      "noresm1-m_rcp85",
-    "cnrm-cm6-1_ssp585":     "cnrm-cm6_ssp585",
-    "cnrm-cm6-1_ssp126":     "cnrm-cm6_ssp126",
-    "cnrm-esm2-1_ssp585":    "cnrm-esm2_ssp585",
-    "ukesm1-cm6_ssp585":     "ukesm1-0-ll_ssp585",
-    "ukesm1-0-ll_ssp585":    "ukesm1-0-ll_ssp585",
-    "cesm2_ssp585":          "cesm2_ssp585",
+    "access1-3_rcp85": "access1.3_rcp85",
+    "access1.3_rcp8.5": "access1.3_rcp85",
+    "csiro-mk3-6-0_rcp85": "csiro-mk3.6_rcp85",
+    "csiro-mk3.6_rcp8.5": "csiro-mk3.6_rcp85",
+    "hadgem2-es_rcp8.5": "hadgem2-es_rcp85",
+    "ipsl-cm5-mr_rcp8.5": "ipsl-cm5-mr_rcp85",
+    "ipsl-cm5a-mr_rcp85": "ipsl-cm5-mr_rcp85",
+    "miroc5_rcp8.5": "miroc5_rcp85",
+    "miroc5_rcp2.6": "miroc5_rcp26",
+    "noresm1_rcp85": "noresm1-m_rcp85",
+    "noresm1-m_rcp8.5": "noresm1-m_rcp85",
+    "cnrm-cm6-1_ssp585": "cnrm-cm6_ssp585",
+    "cnrm-cm6-1_ssp126": "cnrm-cm6_ssp126",
+    "cnrm-esm2-1_ssp585": "cnrm-esm2_ssp585",
+    "ukesm1-cm6_ssp585": "ukesm1-0-ll_ssp585",
+    "ukesm1-0-ll_ssp585": "ukesm1-0-ll_ssp585",
+    "cesm2_ssp585": "cesm2_ssp585",
 }
 
 
@@ -128,6 +128,7 @@ def _normalise_aogcm(name: str, aliases: dict) -> str:
 # ---------------------------------------------------------------------------
 # AnomalyConverter
 # ---------------------------------------------------------------------------
+
 
 class AnomalyConverter:
     """Convert raw absolute forcing arrays to anomalies using ISMIP6 climatologies.
@@ -194,8 +195,7 @@ class AnomalyConverter:
             aogcm, _AIS_ALIASES if self.ice_sheet == "AIS" else _GRIS_ALIASES
         )
         row = self.climatology[
-            (self.climatology["aogcm"] == canonical)
-            & (self.climatology["sector"] == int(sector))
+            (self.climatology["aogcm"] == canonical) & (self.climatology["sector"] == int(sector))
         ]
         if row.empty:
             available = self.list_aogcms()
@@ -272,10 +272,10 @@ class AnomalyConverter:
         clim = self._resolve_clim_ais(aogcm, sector, custom_climatology)
 
         result = {
-            "pr_anomaly":      np.asarray(pr)      - clim["pr"],
+            "pr_anomaly": np.asarray(pr) - clim["pr"],
             "evspsbl_anomaly": np.asarray(evspsbl) - clim["evspsbl"],
-            "smb_anomaly":     np.asarray(smb)      - clim["smb"],
-            "ts_anomaly":      np.asarray(ts)       - clim["ts"],
+            "smb_anomaly": np.asarray(smb) - clim["smb"],
+            "ts_anomaly": np.asarray(ts) - clim["ts"],
         }
 
         if mrro is not None:
@@ -340,7 +340,7 @@ class AnomalyConverter:
 
         return {
             "aSMB": np.asarray(smb) - clim["smb"],
-            "aST":  np.asarray(st)  - clim["st"],
+            "aST": np.asarray(st) - clim["st"],
         }
 
     # ------------------------------------------------------------------
@@ -379,10 +379,10 @@ class AnomalyConverter:
 
         row = self.get_climatology(aogcm, sector)
         clim = {
-            "pr":      row["pr_clim"],
+            "pr": row["pr_clim"],
             "evspsbl": row["evspsbl_clim"],
-            "smb":     row["smb_clim"],
-            "ts":      row["ts_clim"],
+            "smb": row["smb_clim"],
+            "ts": row["ts_clim"],
         }
         if "mrro_clim" in row and not pd.isna(row["mrro_clim"]):
             clim["mrro"] = row["mrro_clim"]
@@ -416,9 +416,7 @@ class AnomalyConverter:
                 "or 'custom_climatology' (a dict of baseline means for a new CMIP model)."
             )
         if aogcm is not None and custom_climatology is not None:
-            raise ValueError(
-                "Provide only one of 'aogcm' or 'custom_climatology', not both."
-            )
+            raise ValueError("Provide only one of 'aogcm' or 'custom_climatology', not both.")
 
     @staticmethod
     def _validate_gris_args(aogcm, custom_climatology):
@@ -428,9 +426,7 @@ class AnomalyConverter:
                 "or 'custom_climatology' (a dict of baseline means for a new CMIP model)."
             )
         if aogcm is not None and custom_climatology is not None:
-            raise ValueError(
-                "Provide only one of 'aogcm' or 'custom_climatology', not both."
-            )
+            raise ValueError("Provide only one of 'aogcm' or 'custom_climatology', not both.")
 
     @staticmethod
     def _check_lengths(arrays: dict):

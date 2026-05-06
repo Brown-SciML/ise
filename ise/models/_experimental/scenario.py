@@ -12,7 +12,6 @@ from ise.utils import functions as f
 
 
 class ScenarioPredictor(nn.Module):
-
     def __init__(self, input_size, hidden_layers=[128, 64], output_size=1, dropout_rate=0.1):
         """
         Initializes the ScenarioPredictor model.
@@ -35,7 +34,7 @@ class ScenarioPredictor(nn.Module):
             optimizer (torch.optim.Adam): Adam optimizer for training.
         """
 
-        super(ScenarioPredictor, self).__init__()
+        super().__init__()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         # Initialize network layers
@@ -123,7 +122,7 @@ class ScenarioPredictor(nn.Module):
                 total_loss += loss.item()
 
             if epoch % print_every == 0 or epoch == epochs - 1:
-                print(f"Epoch {epoch+1}/{epochs}, Loss: {total_loss/len(train_loader)}")
+                print(f"Epoch {epoch + 1}/{epochs}, Loss: {total_loss / len(train_loader)}")
 
                 if val_loader is not None:
                     # Evaluate the model on the validation set

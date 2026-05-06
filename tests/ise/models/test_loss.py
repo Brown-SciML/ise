@@ -2,17 +2,17 @@ import pytest
 import torch
 
 from ise.models.loss import (
+    MSEDeviationLoss,
     WeightedMSELoss,
     WeightedMSELossWithSignPenalty,
     WeightedMSEPCALoss,
-    MSEDeviationLoss,
     WeightedPCALoss,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _t(*values):
     return torch.tensor(values, dtype=torch.float32)
@@ -21,6 +21,7 @@ def _t(*values):
 # ---------------------------------------------------------------------------
 # WeightedMSELoss
 # ---------------------------------------------------------------------------
+
 
 class TestWeightedMSELoss:
     @pytest.fixture
@@ -44,7 +45,7 @@ class TestWeightedMSELoss:
         criterion = WeightedMSELoss(data_mean=0.0, data_std=1.0, weight_factor=5.0)
 
         pred = _t(0.0)
-        target = _t(10.0)   # 10 std devs from mean → high weight
+        target = _t(10.0)  # 10 std devs from mean → high weight
         weighted_loss = criterion(pred, target).item()
         standard_loss = plain_mse(pred, target).item()
         assert weighted_loss > standard_loss
@@ -53,13 +54,16 @@ class TestWeightedMSELoss:
         criterion = WeightedMSELoss(data_mean=0.0, data_std=1.0, weight_factor=1.0)
         plain_mse = torch.nn.MSELoss()
         pred = _t(0.0)
-        target = _t(0.0)   # exactly at mean → weight = 1
-        assert criterion(pred, target).item() == pytest.approx(plain_mse(pred, target).item(), abs=1e-6)
+        target = _t(0.0)  # exactly at mean → weight = 1
+        assert criterion(pred, target).item() == pytest.approx(
+            plain_mse(pred, target).item(), abs=1e-6
+        )
 
 
 # ---------------------------------------------------------------------------
 # WeightedMSELossWithSignPenalty
 # ---------------------------------------------------------------------------
+
 
 class TestWeightedMSELossWithSignPenalty:
     @pytest.fixture
@@ -70,10 +74,10 @@ class TestWeightedMSELossWithSignPenalty:
 
     def test_wrong_sign_prediction_penalised_more(self, criterion):
         target = _t(1.0)
-        correct_sign_pred = _t(0.5)    # same sign
-        wrong_sign_pred   = _t(-0.5)   # opposite sign, same magnitude error
+        correct_sign_pred = _t(0.5)  # same sign
+        wrong_sign_pred = _t(-0.5)  # opposite sign, same magnitude error
         loss_correct = criterion(correct_sign_pred, target)
-        loss_wrong   = criterion(wrong_sign_pred,   target)
+        loss_wrong = criterion(wrong_sign_pred, target)
         assert loss_wrong.item() > loss_correct.item()
 
     def test_zero_loss_on_perfect_predictions(self, criterion):
@@ -81,7 +85,7 @@ class TestWeightedMSELossWithSignPenalty:
         assert criterion(x, x).item() == pytest.approx(0.0, abs=1e-6)
 
     def test_correct_sign_gives_nonnegative_loss(self, criterion):
-        pred   = _t(0.3, -0.4)
+        pred = _t(0.3, -0.4)
         target = _t(1.0, -1.0)
         assert criterion(pred, target).item() >= 0.0
 
@@ -90,21 +94,22 @@ class TestWeightedMSELossWithSignPenalty:
 # MSEDeviationLoss
 # ---------------------------------------------------------------------------
 
+
 class TestMSEDeviationLoss:
     @pytest.fixture
     def criterion(self):
         return MSEDeviationLoss(threshold=1.0, penalty_multiplier=3.0)
 
     def test_small_errors_approx_mse(self, criterion):
-        pred   = _t(0.0, 0.0)
-        target = _t(0.5, 0.5)   # error = 0.5 < threshold=1.0
+        pred = _t(0.0, 0.0)
+        target = _t(0.5, 0.5)  # error = 0.5 < threshold=1.0
         plain_mse = torch.nn.MSELoss()(pred, target).item()
         loss = criterion(pred, target).item()
         assert loss == pytest.approx(plain_mse, rel=1e-5)
 
     def test_large_errors_exceed_plain_mse(self, criterion):
-        pred   = _t(0.0)
-        target = _t(5.0)   # error = 5.0 > threshold=1.0
+        pred = _t(0.0)
+        target = _t(5.0)  # error = 5.0 > threshold=1.0
         plain_mse = torch.nn.MSELoss()(pred, target).item()
         loss = criterion(pred, target).item()
         assert loss > plain_mse
@@ -114,9 +119,9 @@ class TestMSEDeviationLoss:
         assert criterion(x, x).item() == pytest.approx(0.0, abs=1e-6)
 
     def test_penalty_multiplier_scales_extra_loss(self):
-        low_penalty  = MSEDeviationLoss(threshold=0.1, penalty_multiplier=1.0)
+        low_penalty = MSEDeviationLoss(threshold=0.1, penalty_multiplier=1.0)
         high_penalty = MSEDeviationLoss(threshold=0.1, penalty_multiplier=10.0)
-        pred   = _t(0.0)
+        pred = _t(0.0)
         target = _t(5.0)
         assert high_penalty(pred, target).item() > low_penalty(pred, target).item()
 
@@ -125,12 +130,13 @@ class TestMSEDeviationLoss:
 # WeightedPCALoss
 # ---------------------------------------------------------------------------
 
+
 class TestWeightedPCALoss:
     def test_higher_component_weight_gives_higher_loss(self):
-        low_weight  = WeightedPCALoss(component_weights=[1.0, 1.0])
+        low_weight = WeightedPCALoss(component_weights=[1.0, 1.0])
         high_weight = WeightedPCALoss(component_weights=[10.0, 1.0])
 
-        pred   = torch.zeros(4, 2)
+        pred = torch.zeros(4, 2)
         target = torch.ones(4, 2)
 
         assert high_weight(pred, target).item() > low_weight(pred, target).item()
@@ -149,6 +155,7 @@ class TestWeightedPCALoss:
 # ---------------------------------------------------------------------------
 # WeightedMSEPCALoss
 # ---------------------------------------------------------------------------
+
 
 class TestWeightedMSEPCALoss:
     def test_zero_loss_on_perfect_predictions(self):

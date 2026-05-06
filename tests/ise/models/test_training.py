@@ -4,10 +4,10 @@ from torch import nn, optim
 
 from ise.models.training import CheckpointSaver, EarlyStoppingCheckpointer
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def tiny_model():
@@ -34,6 +34,7 @@ def stopper(tiny_model, tiny_optimizer, tmp_path):
 # ---------------------------------------------------------------------------
 # CheckpointSaver
 # ---------------------------------------------------------------------------
+
 
 class TestCheckpointSaver:
     def test_saves_on_first_call(self, saver, tmp_path):
@@ -70,23 +71,26 @@ class TestCheckpointSaver:
     def test_checkpoint_dict_keys(self, saver, tmp_path):
         saver(loss=0.3, epoch=5)
         ckpt = torch.load(str(tmp_path / "ckpt.pt"), weights_only=False)
-        assert {"epoch", "model_state_dict", "optimizer_state_dict", "best_loss"}.issubset(ckpt.keys())
+        assert {"epoch", "model_state_dict", "optimizer_state_dict", "best_loss"}.issubset(
+            ckpt.keys()
+        )
 
 
 # ---------------------------------------------------------------------------
 # EarlyStoppingCheckpointer
 # ---------------------------------------------------------------------------
 
+
 class TestEarlyStoppingCheckpointer:
     def test_counter_increments_on_no_improvement(self, stopper):
-        stopper(0.5, epoch=1)   # sets best
-        stopper(0.9, epoch=2)   # no improvement → counter = 1
+        stopper(0.5, epoch=1)  # sets best
+        stopper(0.9, epoch=2)  # no improvement → counter = 1
         assert stopper.counter == 1
 
     def test_counter_resets_on_improvement(self, stopper):
         stopper(0.5, epoch=1)
-        stopper(0.9, epoch=2)   # counter = 1
-        stopper(0.3, epoch=3)   # improvement → counter resets to 0
+        stopper(0.9, epoch=2)  # counter = 1
+        stopper(0.3, epoch=3)  # improvement → counter resets to 0
         assert stopper.counter == 0
 
     def test_early_stop_false_before_patience_reached(self, stopper):

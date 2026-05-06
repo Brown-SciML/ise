@@ -16,30 +16,32 @@ Path B: unscale continuous columns → decode ISM config → build inputs datacl
 
 import os
 import pickle
+
 import numpy as np
 import pandas as pd
 import pytest
 
-AIS_DATA_DIR_CHECK  = "/oscar/home/pvankatw/research/ise/supplemental/dataset/AIS_slc"
+AIS_DATA_DIR_CHECK = "/oscar/home/pvankatw/research/ise/supplemental/dataset/AIS_slc"
 GRIS_DATA_DIR_CHECK = "/oscar/home/pvankatw/research/ise/supplemental/dataset/GrIS_slc"
-_datasets_available = (
-    os.path.isfile(f"{AIS_DATA_DIR_CHECK}/test.csv")
-    and os.path.isfile(f"{GRIS_DATA_DIR_CHECK}/test.csv")
+_datasets_available = os.path.isfile(f"{AIS_DATA_DIR_CHECK}/test.csv") and os.path.isfile(
+    f"{GRIS_DATA_DIR_CHECK}/test.csv"
 )
 pytestmark = pytest.mark.skipif(
     not _datasets_available,
     reason="External dataset files not present on this machine",
 )
 
+from ise.data.inputs import ISEFlowAISInputs, ISEFlowGrISInputs
 from ise.models.iseflow import ISEFlow_AIS, ISEFlow_GrIS
 from ise.models.pretrained import (
-    ISEFlow_AIS_v1_1_0_path, ISEFlow_GrIS_v1_1_0_path,
-    ISEFlow_AIS_v1_1_0_variables, ISEFlow_GrIS_v1_1_0_variables,
+    ISEFlow_AIS_v1_1_0_path,
+    ISEFlow_AIS_v1_1_0_variables,
+    ISEFlow_GrIS_v1_1_0_path,
+    ISEFlow_GrIS_v1_1_0_variables,
 )
-from ise.data.inputs import ISEFlowAISInputs, ISEFlowGrISInputs
 from ise.utils.functions import get_X_y
 
-AIS_DATA_DIR  = "/oscar/home/pvankatw/research/ise/supplemental/dataset/AIS_slc"
+AIS_DATA_DIR = "/oscar/home/pvankatw/research/ise/supplemental/dataset/AIS_slc"
 GRIS_DATA_DIR = "/oscar/home/pvankatw/research/ise/supplemental/dataset/GrIS_slc"
 PROJ_LEN = 86
 N_PROJ = 5
@@ -47,6 +49,7 @@ TOLERANCE = 1e-6
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
 
 def unscale_continuous(proj_df, scaler_path):
     scaler = pickle.load(open(scaler_path, "rb"))
@@ -63,7 +66,7 @@ def decode_one_hot(proj_df, prefix):
         return None
     if len(true_cols) > 1:
         raise ValueError(f"Multiple True columns for prefix '{prefix}': {true_cols}")
-    return true_cols[0][len(prefix) + 1:]
+    return true_cols[0][len(prefix) + 1 :]
 
 
 def pick_proj_indices(n_rows, n_samples=N_PROJ, seed=1):
@@ -77,36 +80,54 @@ def pick_proj_indices(n_rows, n_samples=N_PROJ, seed=1):
 # ── AIS helpers ────────────────────────────────────────────────────────────────
 
 AIS_INVERSE_ARG_MAP = {
-    "numerics":            {"FD": "fd",   "FE": "fe",   "FE/FV": "fe/fv"},
-    "stress_balance":      {"HO": "ho",   "Hybrid": "hybrid", "L1L2": "l1l2",
-                            "SIA_SSA": "sia+ssa", "SSA": "ssa", "Stokes": "stokes"},
-    "init_method":         {"DA": "da",   "DA_geom": "da*",  "DA_relax": "da+",
-                            "Eq": "eq",   "SP": "sp",   "SP_icethickness": "sp+"},
-    "melt":                {"Floating_condition": "floating condition",
-                            "Sub-grid": "sub-grid", "No": "No"},
-    "ice_front":           {"StR": "str", "Fix": "fix", "MH": "mh",
-                            "RO": "ro",   "Div": "div"},
-    "Ocean_forcing":       {"Open": "open",   "Standard": "standard"},
-    "Ocean_sensitivity":   {"High": "high",   "Low": "low",
-                            "Medium": "medium", "PIGL": "pigl"},
-    "open_melt_param":     {"Lin": "lin", "Quad": "quad",
-                            "Nonlocal_Slope": "nonlocal+slope",
-                            "PICO": "pico", "PICOP": "picop", "Plume": "plume"},
-    "standard_melt_param": {"Local": "local", "Nonlocal": "nonlocal",
-                            "Local_anom": "local anom", "Nonlocal_anom": "nonlocal anom"},
+    "numerics": {"FD": "fd", "FE": "fe", "FE/FV": "fe/fv"},
+    "stress_balance": {
+        "HO": "ho",
+        "Hybrid": "hybrid",
+        "L1L2": "l1l2",
+        "SIA_SSA": "sia+ssa",
+        "SSA": "ssa",
+        "Stokes": "stokes",
+    },
+    "init_method": {
+        "DA": "da",
+        "DA_geom": "da*",
+        "DA_relax": "da+",
+        "Eq": "eq",
+        "SP": "sp",
+        "SP_icethickness": "sp+",
+    },
+    "melt": {"Floating_condition": "floating condition", "Sub-grid": "sub-grid", "No": "No"},
+    "ice_front": {"StR": "str", "Fix": "fix", "MH": "mh", "RO": "ro", "Div": "div"},
+    "Ocean_forcing": {"Open": "open", "Standard": "standard"},
+    "Ocean_sensitivity": {"High": "high", "Low": "low", "Medium": "medium", "PIGL": "pigl"},
+    "open_melt_param": {
+        "Lin": "lin",
+        "Quad": "quad",
+        "Nonlocal_Slope": "nonlocal+slope",
+        "PICO": "pico",
+        "PICOP": "picop",
+        "Plume": "plume",
+    },
+    "standard_melt_param": {
+        "Local": "local",
+        "Nonlocal": "nonlocal",
+        "Local_anom": "local anom",
+        "Nonlocal_anom": "nonlocal anom",
+    },
 }
 
 
 def decode_ais_config(proj_df):
     cfg = {}
     for field, prefix in [
-        ("numerics",             "numerics"),
-        ("stress_balance",       "stress_balance"),
-        ("init_method",          "init_method"),
-        ("melt",                 "melt"),
-        ("ice_front",            "ice_front"),
-        ("open_melt_param",      "open_melt_param"),
-        ("standard_melt_param",  "standard_melt_param"),
+        ("numerics", "numerics"),
+        ("stress_balance", "stress_balance"),
+        ("init_method", "init_method"),
+        ("melt", "melt"),
+        ("ice_front", "ice_front"),
+        ("open_melt_param", "open_melt_param"),
+        ("standard_melt_param", "standard_melt_param"),
     ]:
         suffix = decode_one_hot(proj_df, prefix)
         cfg[field] = AIS_INVERSE_ARG_MAP[field].get(suffix, suffix) if suffix else "None"
@@ -118,7 +139,7 @@ def decode_ais_config(proj_df):
         decode_one_hot(proj_df, "Ocean sensitivity")
     )
     isf_suffix = decode_one_hot(proj_df, "Ice shelf fracture")
-    cfg["ice_shelf_fracture"] = (isf_suffix == "True")
+    cfg["ice_shelf_fracture"] = isf_suffix == "True"
     return cfg
 
 
@@ -155,19 +176,33 @@ def build_ais_inputs(proj_df):
 # ── GrIS helpers ───────────────────────────────────────────────────────────────
 
 GRIS_INVERSE_ARG_MAP = {
-    "numerics":        {"FD": "fd", "FD_FV5": "fd/fv", "FE": "fe", "FV": "fv"},
-    "ice_flow":        {"HO": "ho", "HYB": "hybrid", "SIA": "sia", "SSA": "ssa"},
-    "initialization":  {"CYC_DAI": "cyc/dai", "CYC_NDM": "cyc/ndm", "CYC_NDS": "cyc/nds",
-                        "DAV": "dav",
-                        "SP_DAI": "sp/dai", "SP_DAS": "sp/das", "SP_DAV": "sp/dav",
-                        "SP_NDM": "sp/ndm", "SP_NDS": "sp/nds"},
-    "initial_smb":     {"BOX_MAR": "box/mar", "BOX_RA3": "box/ra3", "HIR": "hir",
-                        "ISMB": "ismb", "MAR": "mar", "RA1": "ra1", "RA3": "ra3"},
-    "velocity":        {"J": "joughin", "RM": "rignot"},
-    "bed":             {"B": "bamber", "M": "morlighem"},
+    "numerics": {"FD": "fd", "FD_FV5": "fd/fv", "FE": "fe", "FV": "fv"},
+    "ice_flow": {"HO": "ho", "HYB": "hybrid", "SIA": "sia", "SSA": "ssa"},
+    "initialization": {
+        "CYC_DAI": "cyc/dai",
+        "CYC_NDM": "cyc/ndm",
+        "CYC_NDS": "cyc/nds",
+        "DAV": "dav",
+        "SP_DAI": "sp/dai",
+        "SP_DAS": "sp/das",
+        "SP_DAV": "sp/dav",
+        "SP_NDM": "sp/ndm",
+        "SP_NDS": "sp/nds",
+    },
+    "initial_smb": {
+        "BOX_MAR": "box/mar",
+        "BOX_RA3": "box/ra3",
+        "HIR": "hir",
+        "ISMB": "ismb",
+        "MAR": "mar",
+        "RA1": "ra1",
+        "RA3": "ra3",
+    },
+    "velocity": {"J": "joughin", "RM": "rignot"},
+    "bed": {"B": "bamber", "M": "morlighem"},
     "surface_thickness": {"M": "morlighem"},
-    "ghf":             {"G": "g", "MIX": "mix", "SR": "sr"},
-    "Ocean_forcing":   {"Standard": True, "Open": False},
+    "ghf": {"G": "g", "MIX": "mix", "SR": "sr"},
+    "Ocean_forcing": {"Standard": True, "Open": False},
     "Ocean_sensitivity": {"High": "high", "Low": "low", "Medium": "medium"},
 }
 
@@ -175,21 +210,20 @@ GRIS_INVERSE_ARG_MAP = {
 def decode_gris_config(proj_df):
     cfg = {}
     for field, prefix in [
-        ("numerics",        "numerics"),
-        ("ice_flow",        "ice_flow"),
-        ("initialization",  "initialization"),
-        ("initial_smb",     "initial_smb"),
-        ("velocity",        "velocity"),
-        ("bed",             "bed"),
-        ("ghf",             "ghf"),
+        ("numerics", "numerics"),
+        ("ice_flow", "ice_flow"),
+        ("initialization", "initialization"),
+        ("initial_smb", "initial_smb"),
+        ("velocity", "velocity"),
+        ("bed", "bed"),
+        ("ghf", "ghf"),
     ]:
         suffix = decode_one_hot(proj_df, prefix)
         cfg[field] = GRIS_INVERSE_ARG_MAP[field].get(suffix, suffix) if suffix else None
 
     st_suffix = decode_one_hot(proj_df, "surface_thickness")
     cfg["surface_thickness"] = (
-        GRIS_INVERSE_ARG_MAP["surface_thickness"].get(st_suffix, st_suffix)
-        if st_suffix else "None"
+        GRIS_INVERSE_ARG_MAP["surface_thickness"].get(st_suffix, st_suffix) if st_suffix else "None"
     )
 
     cfg["res_min"] = float(decode_one_hot(proj_df, "res_min") or 1.0)
@@ -200,7 +234,7 @@ def decode_gris_config(proj_df):
     os_suffix = decode_one_hot(proj_df, "Ocean sensitivity")
     cfg["ocean_sensitivity"] = GRIS_INVERSE_ARG_MAP["Ocean_sensitivity"].get(os_suffix, os_suffix)
     isf_suffix = decode_one_hot(proj_df, "Ice shelf fracture")
-    cfg["ice_shelf_fracture"] = (isf_suffix == "True")
+    cfg["ice_shelf_fracture"] = isf_suffix == "True"
     return cfg
 
 
@@ -234,6 +268,7 @@ def build_gris_inputs(proj_df):
 
 # ── Fixtures ───────────────────────────────────────────────────────────────────
 
+
 @pytest.fixture(scope="module")
 def ais_model():
     return ISEFlow_AIS(version="v1.1.0")
@@ -264,13 +299,14 @@ def gris_proj_indices(test_df):
 
 # ── AIS tests ──────────────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("proj_idx", pick_proj_indices(
-    len(pd.read_csv(f"{AIS_DATA_DIR}/test.csv")), N_PROJ
-))
+
+@pytest.mark.parametrize(
+    "proj_idx", pick_proj_indices(len(pd.read_csv(f"{AIS_DATA_DIR}/test.csv")), N_PROJ)
+)
 def test_ais_inputs_tensor_matches_reference(proj_idx, ais_model, ais_test_df):
     """Feature tensor from ISEFlowAISInputs must match the reference test CSV tensor."""
     start = proj_idx * PROJ_LEN
-    proj_df = ais_test_df.iloc[start:start + PROJ_LEN].copy()
+    proj_df = ais_test_df.iloc[start : start + PROJ_LEN].copy()
 
     X_a, _ = get_X_y(proj_df, dataset_type="sectors", return_format="numpy")
     inputs = build_ais_inputs(proj_df)
@@ -295,19 +331,22 @@ def test_ais_inputs_tensor_matches_reference(proj_idx, ais_model, ais_test_df):
     assert not diffs, (
         f"proj {proj_idx} ({proj_df.model.iloc[0]}): "
         f"feature tensor differs in {len(diffs)} column(s):\n"
-        + "\n".join(f"  {col}: max_diff={d:.8f}" for col, d in sorted(diffs.items(), key=lambda x: -x[1]))
+        + "\n".join(
+            f"  {col}: max_diff={d:.8f}" for col, d in sorted(diffs.items(), key=lambda x: -x[1])
+        )
     )
 
 
 # ── GrIS tests ─────────────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("proj_idx", pick_proj_indices(
-    len(pd.read_csv(f"{GRIS_DATA_DIR}/test.csv")), N_PROJ
-))
+
+@pytest.mark.parametrize(
+    "proj_idx", pick_proj_indices(len(pd.read_csv(f"{GRIS_DATA_DIR}/test.csv")), N_PROJ)
+)
 def test_gris_inputs_tensor_matches_reference(proj_idx, gris_model, gris_test_df):
     """Feature tensor from ISEFlowGrISInputs must match the reference test CSV tensor."""
     start = proj_idx * PROJ_LEN
-    proj_df = gris_test_df.iloc[start:start + PROJ_LEN].copy()
+    proj_df = gris_test_df.iloc[start : start + PROJ_LEN].copy()
 
     X_a, _ = get_X_y(proj_df, dataset_type="sectors", return_format="numpy")
     inputs = build_gris_inputs(proj_df)
@@ -332,5 +371,7 @@ def test_gris_inputs_tensor_matches_reference(proj_idx, gris_model, gris_test_df
     assert not diffs, (
         f"proj {proj_idx} ({proj_df.model.iloc[0]}): "
         f"feature tensor differs in {len(diffs)} column(s):\n"
-        + "\n".join(f"  {col}: max_diff={d:.8f}" for col, d in sorted(diffs.items(), key=lambda x: -x[1]))
+        + "\n".join(
+            f"  {col}: max_diff={d:.8f}" for col, d in sorted(diffs.items(), key=lambda x: -x[1])
+        )
     )

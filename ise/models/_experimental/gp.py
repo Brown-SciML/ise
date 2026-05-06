@@ -164,7 +164,7 @@ class GP(GaussianProcessRegressor):
         preds, std_prediction = self.predict(test_features, return_std=True)
         test_labels = np.array(test_labels.squeeze())
         mse = sum((preds - test_labels) ** 2) / len(preds)
-        mae = sum(abs((preds - test_labels))) / len(preds)
+        mae = sum(abs(preds - test_labels)) / len(preds)
         rmse = np.sqrt(mse)
         r2 = r2_score(test_labels, preds)
 
@@ -290,7 +290,7 @@ class EmulandiceGP(GaussianProcessRegressor):
 
         test_labels = np.array(test_labels.squeeze())
         mse = sum((preds - test_labels) ** 2) / len(preds)
-        mae = sum(abs((preds - test_labels))) / len(preds)
+        mae = sum(abs(preds - test_labels)) / len(preds)
         rmse = np.sqrt(mse)
         r2 = r2_score(test_labels, preds)
 

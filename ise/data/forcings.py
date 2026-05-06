@@ -46,8 +46,6 @@ These steps are orchestrated automatically by ``process_AIS_atmospheric_sectors(
 ``ise.data.process``.
 """
 
-from typing import List
-
 import numpy as np
 import xarray as xr
 
@@ -111,7 +109,7 @@ class ForcingFile:
 
     def drop_vars(
         self,
-        vars: List[str],
+        vars: list[str],
     ) -> xr.Dataset:
         """
         Drop dimensions or variables from the loaded dataset.

@@ -125,7 +125,7 @@ class DeepEnsemble(nn.Module):
             ValueError: If ``ensemble_members`` is provided but is not a list of
                 ``LSTM`` instances.
         """
-        super(DeepEnsemble, self).__init__()
+        super().__init__()
         self.input_size = input_size + latent_dim
         self.output_size = output_size
         self.output_sequence_length = output_sequence_length
@@ -244,7 +244,7 @@ class DeepEnsemble(nn.Module):
             warnings.warn("Model already trained. Proceeding to train again.")
         for i, member in enumerate(self.ensemble_members):
             if verbose:
-                print(f"Training Ensemble Member {i+1} of {len(self.ensemble_members)}:")
+                print(f"Training Ensemble Member {i + 1} of {len(self.ensemble_members)}:")
             member.fit(
                 X,
                 y,
@@ -254,7 +254,7 @@ class DeepEnsemble(nn.Module):
                 batch_size=batch_size,
                 sequence_length=sequence_length,
                 save_checkpoints=save_checkpoints,
-                checkpoint_path=f"{checkpoint_path}_member{i+1}.pth",
+                checkpoint_path=f"{checkpoint_path}_member{i + 1}.pth",
                 early_stopping=early_stopping,
                 patience=patience,
                 verbose=verbose,
@@ -304,7 +304,7 @@ class DeepEnsemble(nn.Module):
                     "input_size": member.input_size,
                     "output_size": member.output_size,
                     "trained": member.trained,
-                    "path": os.path.join("ensemble_members", f"member_{i+1}.pth"),
+                    "path": os.path.join("ensemble_members", f"member_{i + 1}.pth"),
                     "best_loss": float(member.best_loss),
                     "epochs_trained": int(member.epochs_trained),
                     "sequence_length": int(member.sequence_length),
@@ -325,9 +325,9 @@ class DeepEnsemble(nn.Module):
 
         # Save each ensemble member’s state dict in the ensemble directory
         for i, member in enumerate(self.ensemble_members):
-            member_path = os.path.join(ensemble_dir, f"member_{i+1}.pth")
+            member_path = os.path.join(ensemble_dir, f"member_{i + 1}.pth")
             torch.save(member.state_dict(), member_path)
-            print(f"Ensemble Member {i+1} saved to {member_path}")
+            print(f"Ensemble Member {i + 1} saved to {member_path}")
 
         print("Removing checkpoints after saving to model directory...")
         [
@@ -364,7 +364,7 @@ class DeepEnsemble(nn.Module):
         metadata_path = model_path.replace(".pth", "_metadata.json")
         model_dir = os.path.dirname(model_path)
 
-        with open(metadata_path, "r") as file:
+        with open(metadata_path) as file:
             metadata = json.load(file)
 
         if cls.__name__ != metadata["model_type"]:

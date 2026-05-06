@@ -475,7 +475,6 @@ class ProjectionProcessor:
 
         # a few datasets do not have the time index formatted correctly
         if len(bed.time.attrs) == 0:
-
             if len(bed.time) == 86:
                 bed["time"] = thickness[
                     "time"
@@ -540,7 +539,6 @@ class ProjectionProcessor:
         # for each time step, calculate ivaf
         ivaf = np.zeros(bed_data.shape)
         for i in range(length_time):
-
             # get data slices for current time
             thickness_i = thickness_data[:, :, i].copy()
             bed_i = bed_data[:, :, i].copy()
@@ -742,7 +740,6 @@ def get_xarray_data(dataset_fp, var_name=None, ice_sheet="AIS", convert_and_subs
         pass
 
     else:
-
         # handle extra dimensions and variables
         try:
             dataset = dataset.drop_dims("nv4")
@@ -1020,7 +1017,7 @@ def combine_gris_forcings(forcing_dir):
     for cmip_dir in tqdm(
         cmip_directories, total=len(cmip_directories), desc="Processing CMIP directories"
     ):
-        for var in [f"aSMB", f"aST"]:
+        for var in ["aSMB", "aST"]:
             files = os.listdir(f"{atmosphere_dir}/{cmip_dir}/{var}")
             files = np.array([x for x in files if x.endswith(".nc")])
             years = np.array([int(x.replace(".nc", "").split("-")[-1]) for x in files])
@@ -1080,7 +1077,7 @@ def process_GrIS_atmospheric_sectors(forcing_directory, grid_file):
             ``aSMB``, ``aST``, ``aogcm``, ``year``, and ``sector``.
     """
     start_time = time.time()
-    path_to_forcings = f"Atmosphere_Forcing/aSMB_observed/v1/"
+    path_to_forcings = "Atmosphere_Forcing/aSMB_observed/v1/"
     af_directory = (
         f"{forcing_directory}/{path_to_forcings}"
         if not forcing_directory.endswith(path_to_forcings)
@@ -1103,9 +1100,9 @@ def process_GrIS_atmospheric_sectors(forcing_directory, grid_file):
     all_data = []
     for i, fp in enumerate(aogcm_directories):
         print("")
-        print(f"Directory {i+1} / {len(aogcm_directories)}")
-        print(f'Directory: {fp.split("/")[-1]}')
-        print(f"Time since start: {(time.time()-start_time) // 60} minutes")
+        print(f"Directory {i + 1} / {len(aogcm_directories)}")
+        print(f"Directory: {fp.split('/')[-1]}")
+        print(f"Time since start: {(time.time() - start_time) // 60} minutes")
 
         files = get_all_filepaths(path=f"{af_directory}/{fp}", contains="combined", filetype="nc")
         if len(files) != 2:
@@ -1205,9 +1202,9 @@ def process_AIS_atmospheric_sectors(forcing_directory, grid_file):
     all_data = []
     for i, fp in enumerate(filepaths):
         print("")
-        print(f"File {i+1} / {len(filepaths)}")
-        print(f'File: {fp.split("/")[-1]}')
-        print(f"Time since start: {(time.time()-start_time) // 60} minutes")
+        print(f"File {i + 1} / {len(filepaths)}")
+        print(f"File: {fp.split('/')[-1]}")
+        print(f"Time since start: {(time.time() - start_time) // 60} minutes")
 
         forcingfile = ForcingFile(ice_sheet, realm="atmos", filepath=fp)
         forcingfile.load(decode_times=False)
@@ -1282,9 +1279,9 @@ def process_AIS_oceanic_sectors(forcing_directory, grid_file):
     all_data = []
     for i, directory in enumerate(filepaths):
         print("")
-        print(f"File {i+1} / {len(filepaths)}")
-        print(f'File: {directory.split("/")[-1]}')
-        print(f"Time since start: {(time.time()-start_time) // 60} minutes")
+        print(f"File {i + 1} / {len(filepaths)}")
+        print(f"File: {directory.split('/')[-1]}")
+        print(f"Time since start: {(time.time() - start_time) // 60} minutes")
 
         files = os.listdir(f"{directory}/1995-2100/")
         if len(files) != 3:
@@ -1324,7 +1321,6 @@ def process_AIS_oceanic_sectors(forcing_directory, grid_file):
         aogcm_data = {"thermal_forcing": [], "salinity": [], "temperature": []}
 
         for datafile in [tffile, salfile, tempfile]:
-
             datafile.drop_vars(
                 [
                     "nv4",
@@ -1400,9 +1396,9 @@ def process_GrIS_oceanic_sectors(forcing_directory, grid_file):
     all_data = []
     for i, directory in enumerate(aogcm_directories):
         print("")
-        print(f"Directory {i+1} / {len(aogcm_directories)}")
-        print(f'Directory: {directory.split("/")[-1]}')
-        print(f"Time since start: {(time.time()-start_time) // 60} minutes")
+        print(f"Directory {i + 1} / {len(aogcm_directories)}")
+        print(f"Directory: {directory.split('/')[-1]}")
+        print(f"Time since start: {(time.time() - start_time) // 60} minutes")
 
         files = os.listdir(f"{forcing_directory}/{directory}")
         if len(files) != 2:
@@ -1727,7 +1723,9 @@ def process_GrIS_outputs(zenodo_directory):
     return outputs
 
 
-_DEFAULT_EXPERIMENTS_FILE = os.path.join(os.path.dirname(__file__), "data_files", "ismip6_experiments_updated.csv")
+_DEFAULT_EXPERIMENTS_FILE = os.path.join(
+    os.path.dirname(__file__), "data_files", "ismip6_experiments_updated.csv"
+)
 
 
 def process_sectors(
@@ -1785,7 +1783,6 @@ def process_sectors(
 
     forcing_exists = os.path.exists(f"{export_directory}/forcings.csv")
     if not forcing_exists or (forcing_exists and overwrite):
-
         atmospheric_df = (
             process_AIS_atmospheric_sectors(forcing_directory, grid_file)
             if ice_sheet == "AIS"

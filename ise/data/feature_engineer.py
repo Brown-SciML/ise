@@ -53,15 +53,12 @@ import json
 import os
 import pickle
 import warnings
-from typing import List
 
 import numpy as np
 import pandas as pd
 import torch
 from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
 from tqdm import tqdm
-
-from ise.utils import functions as f
 
 
 class FeatureEngineer:
@@ -240,7 +237,7 @@ class FeatureEngineer:
                     "model",
                     "ivaf",
                     "year",
-                ] + list(self.data.columns[self.data.dtypes == bool])
+                ] + list(self.data.columns[self.data.dtypes == bool])  # noqa: E721
             else:
                 dropped_columns = [
                     "id",
@@ -854,8 +851,8 @@ def drop_outliers(
     data: pd.DataFrame,
     column: str,
     method: str,
-    expression: List[tuple] = None,
-    quantiles: List[float] = [0.01, 0.99],
+    expression: list[tuple] = None,
+    quantiles: list[float] = [0.01, 0.99],
 ):
     """
     Removes outliers from the dataset based on a specified method.
@@ -949,6 +946,6 @@ def drop_outliers(
         else:
             data.loc[(data.model == modelname) & (data.exp == exp_id), "outlier"] = True
 
-    data = data[data["outlier"] == False]
+    data = data[~data["outlier"]]
 
     return data

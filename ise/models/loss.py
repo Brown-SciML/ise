@@ -68,7 +68,7 @@ class WeightedGridLoss(torch.nn.Module):
     """
 
     def __init__(self):
-        super(WeightedGridLoss, self).__init__()
+        super().__init__()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.to(self.device)
 
@@ -160,7 +160,7 @@ class WeightedMSELoss(torch.nn.Module):
     """
 
     def __init__(self, data_mean, data_std, weight_factor=1.0):
-        super(WeightedMSELoss, self).__init__()
+        super().__init__()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.data_mean = torch.tensor(data_mean, dtype=torch.float32, device=self.device)
         self.data_std = torch.tensor(data_std, dtype=torch.float32, device=self.device)
@@ -221,7 +221,7 @@ class WeightedMSEPCALoss(torch.nn.Module):
 
     def __init__(self, data_mean, data_std, weight_factor=1.0, custom_weights=None):
 
-        super(WeightedMSEPCALoss, self).__init__()
+        super().__init__()
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.to(self.device)
@@ -302,7 +302,7 @@ class WeightedMSELossWithSignPenalty(torch.nn.Module):
 
     def __init__(self, data_mean, data_std, weight_factor=1.0, sign_penalty_factor=1.0):
 
-        super(WeightedMSELossWithSignPenalty, self).__init__()
+        super().__init__()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.data_mean = torch.tensor(data_mean, dtype=torch.float32, device=self.device)
         self.data_std = torch.tensor(data_std, dtype=torch.float32, device=self.device)
@@ -364,7 +364,7 @@ class GridCriterion(torch.nn.Module):
     def __init__(
         self,
     ):
-        super(GridCriterion, self).__init__()
+        super().__init__()
 
     def total_variation_regularization(self, grid):
         """
@@ -430,7 +430,7 @@ class WeightedPCALoss(torch.nn.Module):
     """
 
     def __init__(self, component_weights, reduction="mean"):
-        super(WeightedPCALoss, self).__init__()
+        super().__init__()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.component_weights = torch.tensor(
             component_weights, dtype=torch.float32, device=self.device
@@ -489,7 +489,7 @@ class MSEDeviationLoss(torch.nn.Module):
     """
 
     def __init__(self, threshold=1.0, penalty_multiplier=2.0):
-        super(MSEDeviationLoss, self).__init__()
+        super().__init__()
         self.threshold = threshold
         self.penalty_multiplier = penalty_multiplier
 

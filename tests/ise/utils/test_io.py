@@ -1,4 +1,5 @@
 import pytest
+
 from ise.utils.io import check_type
 
 
@@ -30,4 +31,5 @@ class TestCheckType:
     def test_subclass_passes(self):
         class MyList(list):
             pass
+
         assert check_type(MyList(), list) == 1

@@ -18,6 +18,7 @@ YEAR = np.arange(2015, 2101)  # 86 calendar years
 # AIS helpers
 # ---------------------------------------------------------------------------
 
+
 def _ais_kwargs(**overrides):
     """Minimal valid kwargs for ISEFlowAISInputs."""
     rng = np.random.default_rng(0)
@@ -51,6 +52,7 @@ def _ais_kwargs(**overrides):
 # ---------------------------------------------------------------------------
 # ISEFlowAISInputs — construction and to_df
 # ---------------------------------------------------------------------------
+
 
 class TestISEFlowAISInputs:
     def test_construction_succeeds(self):
@@ -151,9 +153,7 @@ class TestISEFlowAISInputs:
             open_melt_type="quad",
             standard_melt_type="nonlocal",
         )
-        np.testing.assert_allclose(
-            inputs.pr_anomaly, pr_raw - custom_clim["pr"], rtol=1e-9
-        )
+        np.testing.assert_allclose(inputs.pr_anomaly, pr_raw - custom_clim["pr"], rtol=1e-9)
 
     def test_from_raw_values_deprecated(self):
         """from_raw_values should emit DeprecationWarning and still work."""
@@ -191,6 +191,7 @@ class TestISEFlowAISInputs:
 # GrIS helpers
 # ---------------------------------------------------------------------------
 
+
 def _gris_kwargs(**overrides):
     """Minimal valid kwargs for ISEFlowGrISInputs."""
     rng = np.random.default_rng(10)
@@ -223,6 +224,7 @@ def _gris_kwargs(**overrides):
 # ---------------------------------------------------------------------------
 # ISEFlowGrISInputs — construction and to_df
 # ---------------------------------------------------------------------------
+
 
 class TestISEFlowGrISInputs:
     def test_construction_succeeds(self):

@@ -76,12 +76,9 @@ import warnings
 import numpy as np
 import pandas as pd
 import torch
-import xarray as xr
-from nflows import distributions, flows, transforms
-from torch import nn, optim
+from torch import nn
 
 from ise.data import feature_engineer as fe
-from ise.data.dataclasses import EmulatorDataset
 from ise.data.inputs import ISEFlowAISInputs, ISEFlowGrISInputs
 from ise.models.deep_ensemble import DeepEnsemble
 from ise.models.lstm import LSTM
@@ -94,7 +91,6 @@ from ise.models.pretrained import (
     ISEFlow_GrIS_v1_1_0_variables,
     get_model_dir,
 )
-from ise.models.training import CheckpointSaver, EarlyStoppingCheckpointer
 from ise.utils.functions import to_tensor
 
 
@@ -126,7 +122,7 @@ class ISEFlow(torch.nn.Module):
             ValueError: If `normalizing_flow` is not an instance of NormalizingFlow.
         """
 
-        super(ISEFlow, self).__init__()
+        super().__init__()
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.to(self.device)
@@ -500,7 +496,7 @@ class ISEFlow_AIS(ISEFlow):
         model_dir = get_model_dir(version, "AIS")
         deep_ensemble = DeepEnsemble.load(os.path.join(model_dir, "deep_ensemble.pth"))
         normalizing_flow = NormalizingFlow.load(os.path.join(model_dir, "normalizing_flow.pth"))
-        super(ISEFlow_AIS, self).__init__(deep_ensemble, normalizing_flow)
+        super().__init__(deep_ensemble, normalizing_flow)
 
         self.model_dir = model_dir
         self.trained = True
@@ -729,7 +725,7 @@ class ISEFlow_AIS(ISEFlow):
                     - 'aleatoric' (numpy.ndarray): Aleatoric uncertainty.
         """
 
-        return super().predict(X_test, output_scaler=f"{ISEFlow_AIS_v1_0_0_path}/scaler_y.pkl")
+        return super().predict(X_test, output_scaler=f"{self.model_dir}/scaler_y.pkl")
 
 
 class ISEFlow_GrIS(ISEFlow):
@@ -773,7 +769,7 @@ class ISEFlow_GrIS(ISEFlow):
         model_dir = get_model_dir(version, "GrIS")
         deep_ensemble = DeepEnsemble.load(os.path.join(model_dir, "deep_ensemble.pth"))
         normalizing_flow = NormalizingFlow.load(os.path.join(model_dir, "normalizing_flow.pth"))
-        super(ISEFlow_GrIS, self).__init__(deep_ensemble, normalizing_flow)
+        super().__init__(deep_ensemble, normalizing_flow)
 
         self.model_dir = model_dir
         self.trained = True
@@ -895,7 +891,7 @@ class ISEFlow_GrIS(ISEFlow):
                     - 'aleatoric' (numpy.ndarray): Aleatoric uncertainty.
         """
 
-        return super().predict(X_test, output_scaler=f"{ISEFlow_GrIS_v1_0_0_path}/scaler_y.pkl")
+        return super().predict(X_test, output_scaler=f"{self.model_dir}/scaler_y.pkl")
 
 
 class ISEFlow_AIS_DE_v1_0_0(DeepEnsemble):

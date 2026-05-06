@@ -5,7 +5,6 @@ NetCDF files on disk.  File-I/O-heavy methods (process(), merge_dataset())
 are intentionally excluded — they depend on the ISMIP6 directory tree.
 """
 
-import pytest
 from ise.data.process import ProjectionProcessor
 
 

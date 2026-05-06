@@ -1,19 +1,22 @@
 import os
+
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
 from ise.models.normalizing_flow import NormalizingFlow
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def small_nf():
     """Tiny NF (2 transforms, 8 hidden) for fast CPU tests."""
-    return NormalizingFlow(input_size=8, output_size=1, num_flow_transforms=2, flow_hidden_features=8)
+    return NormalizingFlow(
+        input_size=8, output_size=1, num_flow_transforms=2, flow_hidden_features=8
+    )
 
 
 @pytest.fixture
@@ -25,6 +28,7 @@ def small_features():
 # ---------------------------------------------------------------------------
 # Constructor
 # ---------------------------------------------------------------------------
+
 
 class TestNormalizingFlowConstructor:
     def test_num_transforms_stored(self, small_nf):
@@ -41,12 +45,14 @@ class TestNormalizingFlowConstructor:
 
     def test_flow_attribute_exists(self, small_nf):
         from nflows.flows.base import Flow
+
         assert isinstance(small_nf.flow, Flow)
 
 
 # ---------------------------------------------------------------------------
 # get_latent — does not require training
 # ---------------------------------------------------------------------------
+
 
 class TestNormalizingFlowGetLatent:
     def test_output_shape(self, small_nf, small_features):
@@ -68,6 +74,7 @@ class TestNormalizingFlowGetLatent:
 # sample — does not require training
 # ---------------------------------------------------------------------------
 
+
 class TestNormalizingFlowSample:
     def test_numpy_return_shape(self, small_nf, small_features):
         samples = small_nf.sample(small_features, num_samples=20)
@@ -85,6 +92,7 @@ class TestNormalizingFlowSample:
 # ---------------------------------------------------------------------------
 # aleatoric — does not require training
 # ---------------------------------------------------------------------------
+
 
 class TestNormalizingFlowAleatoric:
     def test_output_shape(self, small_nf, small_features):
@@ -108,6 +116,7 @@ class TestNormalizingFlowAleatoric:
 # ---------------------------------------------------------------------------
 # Save — requires trained=True flag + metadata attrs set manually
 # ---------------------------------------------------------------------------
+
 
 class TestNormalizingFlowSave:
     def test_save_raises_if_not_trained(self, small_nf, tmp_path):
