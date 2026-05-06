@@ -9,7 +9,7 @@ Quickstart
 ----------
 Install the package::
 
-    pip install -e .
+    pip install ise-py
 
 Load the pretrained AIS emulator and make a prediction::
 
@@ -29,3 +29,16 @@ Package layout
 
 For questions contact Peter Van Katwyk at pvankatwyk@gmail.com.
 """
+
+__all__ = [
+    "ISEFlow",
+    "ISEFlow_AIS",
+    "ISEFlow_GrIS",
+    "__version__",
+]
+
+try:
+    from importlib.metadata import version as _version
+    __version__ = _version("ise-py")
+except Exception:
+    __version__ = "unknown"
