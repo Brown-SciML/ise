@@ -115,10 +115,20 @@ def test_scale_data_invalid_method(feature_engineer_instance):
 
 ### ---------------------- Outlier Handling Tests ---------------------- ###
 def test_feature_engineer_backfill_outliers(feature_engineer_instance):
-    """Ensure backfill outliers replaces extreme values"""
+    """Ensure backfill outliers replaces extreme values with the next valid value.
+    bfill() cannot fill trailing NaNs (outliers at the end of the series), so
+    we assert that only a trailing block of NaNs remains — no interior NaNs.
+    """
     fe = feature_engineer_instance
     fe.backfill_outliers(percentile=95)
-    assert fe.data["sle"].isnull().sum() <= 1  # No NaNs should be left after backfilling
+    sle = fe.data["sle"]
+    # All NaNs must be at the tail (bfill fills interior/leading outliers, not trailing ones)
+    null_mask = sle.isnull()
+    if null_mask.any():
+        first_null = null_mask.idxmax()
+        assert null_mask[first_null:].all(), (
+            "Interior NaNs remain after backfill — outliers were not replaced"
+        )
 
 
 def test_feature_engineer_drop_outliers(feature_engineer_instance):

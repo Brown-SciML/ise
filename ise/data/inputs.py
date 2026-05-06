@@ -98,7 +98,7 @@ class ISEFlowAISInputs:
 
     # Forcing data
     year: np.ndarray
-    sector: np.ndarray
+    sector: np.ndarray | int
     pr_anomaly: np.ndarray
     evspsbl_anomaly: np.ndarray
     smb_anomaly: np.ndarray
@@ -132,7 +132,7 @@ class ISEFlowAISInputs:
     # ISEFlow *model weights* version (distinct from the ise-py package version)
     version: str = "v1.1.0"
 
-    override_params: dict = None
+    override_params: dict | None = None
 
     # ------------------------------------------------------------------
     # Alternative constructor: raw (non-anomaly) forcing values
@@ -701,7 +701,7 @@ class ISEFlowGrISInputs:
 
     # Forcing data
     year: np.ndarray
-    sector: np.ndarray
+    sector: np.ndarray | int
     aST: np.ndarray
     aSMB: np.ndarray
     ocean_thermal_forcing: np.ndarray

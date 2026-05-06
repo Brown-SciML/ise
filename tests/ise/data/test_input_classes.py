@@ -26,10 +26,13 @@ GRIS_DATA_DIR_CHECK = "/oscar/home/pvankatw/research/ise/supplemental/dataset/Gr
 _datasets_available = os.path.isfile(f"{AIS_DATA_DIR_CHECK}/test.csv") and os.path.isfile(
     f"{GRIS_DATA_DIR_CHECK}/test.csv"
 )
-pytestmark = pytest.mark.skipif(
-    not _datasets_available,
-    reason="External dataset files not present on this machine",
-)
+pytestmark = [
+    pytest.mark.slow,
+    pytest.mark.skipif(
+        not _datasets_available,
+        reason="External dataset files not present on this machine",
+    ),
+]
 
 from ise.data.inputs import ISEFlowAISInputs, ISEFlowGrISInputs
 from ise.models.iseflow import ISEFlow_AIS, ISEFlow_GrIS

@@ -13,6 +13,29 @@ This project uses **two independent version numbers**:
 
 ## [Unreleased]
 
+### Changed
+- mypy fixes: replaced `= None` defaults with `| None` unions across `forcings.py`,
+  `grids.py`, `inputs.py`, `process.py`, `feature_engineer.py`, `training.py`,
+  `functions.py`, and `anomaly.py`.
+- `ForcingFile` and `GridFile` instance attributes given explicit type annotations; methods
+  assert data is loaded before use.
+- `ISEFlow_AIS.predict` / `ISEFlow_GrIS.predict` marked `# type: ignore[override]`.
+- Variable shadowing fixed in `ProjectionProcessor` and `get_model_densities`.
+- `calculate_distribution_metrics`: removed stale `year=2100` kwarg passed to
+  `create_distribution`.
+- Removed heavy optional deps from core requirements: `seaborn`, `cartopy`, `geopandas`,
+  `pyproj`, `xesmf`, `clisops`, `owslib`, `statsmodels`.
+- `backfill_outliers` docstring corrected (bfill, not ffill).
+- `__all__` exports defined in all subpackage `__init__.py` files.
+- Replaced `flake8` + `isort` + `black` with `ruff`; updated `pyproject.toml` and
+  pre-commit config.
+
+### Added
+- mypy CI job in GitHub Actions.
+- Slow and GPU pytest markers; `skip_if_no_gpu` helper in `conftest.py`.
+- GitHub Actions issue templates and release workflow.
+- `Makefile` `type` target for running mypy.
+
 ---
 
 ## [1.0.0] — 2026-05-06 (package) | Model: v1.1.0
