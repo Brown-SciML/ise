@@ -129,14 +129,17 @@ print(f"[AIS] Mean aleatoric uncertainty: {al_ais.mean():.3f} mm")
 
 # ── 4. Raw absolute atmospheric forcing arrays ────────────────────────────────
 #
-# from_absolute_forcings() subtracts the 1960-1989 MAR baseline for smb and st.
+# Illustrative values representative of HadGEM2-ES RCP8.5, sector 1.
+# from_absolute_forcings() subtracts the 1960-1989 MAR baseline for smb and st,
+# then converts the SMB anomaly from mm w.e. yr⁻¹ to kg m⁻² s⁻¹ (model units).
 
-smb_raw_gris = np.full(86, -200.0)  # raw SMB  (mm w.e. yr⁻¹)
-st_raw = np.full(86, -20.0)  # raw surface temperature (°C)
+smb_raw_gris = np.linspace(-200.0, -350.0, 86)  # raw SMB  (mm w.e. yr⁻¹)
+st_raw = np.linspace(-20.0, -17.0, 86)  # raw surface temperature (°C)
 
 # Ocean variables passed through unchanged.
-otf_gris = np.linspace(2.2, 3.5, 86)  # ocean thermal forcing (°C)
-runoff = np.linspace(0.01, 0.10, 86)  # basin runoff
+# Training data thermal forcing mean ~4.7 °C; sector 1 values typically 2–6 °C.
+otf_gris = np.linspace(3.5, 5.5, 86)   # ocean thermal forcing (°C)
+runoff = np.linspace(0.05, 0.20, 86)    # basin runoff (m yr⁻¹)
 
 
 # ── 5A. GrIS using a existing ISMIP6 climatology ───────────────────────────────
@@ -180,8 +183,8 @@ inputs_gris_custom = ISEFlowGrISInputs.from_absolute_forcings(
     st=st_raw,
     ocean_thermal_forcing=otf_gris,
     basin_runoff=runoff,
-    custom_climatology={  # 1960-1989 MAR baseline means for your AOGCM
-        "smb": -241.2,
+    custom_climatology={  # 1960-1989 MAR baseline means (mm w.e. yr⁻¹ / °C)
+        "smb": -241.2,  # matches HadGEM2-ES sector 1 baseline
         "st": -22.8,
     },
     initial_year=1990,
@@ -212,7 +215,6 @@ pred_gris, uq_gris = model_gris.predict(inputs_gris_existing, smoothing_window=0
 pred_gris = np.asarray(pred_gris).squeeze()
 ep_gris = np.asarray(uq_gris["epistemic"]).squeeze()
 al_gris = np.asarray(uq_gris["aleatoric"]).squeeze()
-print(al_gris)
 total_gris = ep_gris + al_gris
 
 print(f"\n[GrIS] Prediction range: {pred_gris.min():.2f} – {pred_gris.max():.2f} mm SLE")
