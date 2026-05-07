@@ -47,6 +47,7 @@ dependencies = [
   "shap>=0.44",
   "tqdm>=4.60",
   "huggingface_hub>=0.20",
+  "wandb>=0.17",
 ]
 
 [project.optional-dependencies]
@@ -55,7 +56,6 @@ dev = [
   "pytest-cov>=5.0",
   "ruff>=0.4",
   "mypy>=1.8",
-  "wandb>=0.17",
   "optuna>=3.6",
   "tensorboard>=2.16",
   "ipykernel>=6.29",
@@ -123,6 +123,9 @@ warn_return_any = false
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--tb=short"
+filterwarnings = [
+  "ignore:numpy.ndarray size changed:RuntimeWarning",
+]
 markers = [
   "slow: marks tests as slow (deselect with '-m \"not slow\"')",
   "gpu: marks tests that require a CUDA GPU (deselect with '-m \"not gpu\"')",
@@ -135,7 +138,11 @@ omit = ["ise/models/_experimental/*", "ise/models/pretrained/*"]
 [dependency-groups]
 dev = [
     "build>=1.5.0",
+    "mypy>=1.20.1",
+    "pytest>=8.3.4",
     "ruff>=0.15.12",
+    "sphinx>=8.2.1",
+    "sphinx-rtd-theme>=3.0.2",
     "twine>=6.2.0",
     "wandb>=0.21.1",
 ]

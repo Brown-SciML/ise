@@ -10,7 +10,7 @@ format:
 	ruff format . && ruff check --fix .
 
 type:
-	mypy sle/
+	mypy ise/
 
 docs:
 	cd docs && make html

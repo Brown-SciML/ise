@@ -11,33 +11,43 @@ Supported ice sheets
 --------------------
 AIS:
     Atmospheric variables ``pr``, ``evspsbl``, ``smb``, ``ts``  →  anomalies.
-    The baseline is the 1995-2014 spatial mean over each AIS sector from the
-    ISMIP6 atmospheric forcing files (``AIS_atmos_climatologies.csv``).
+    All inputs are in **kg m⁻² s⁻¹** (pr / evspsbl / smb / mrro) or **K** (ts),
+    matching the ISMIP6 atmospheric forcing file convention.  The baseline is
+    the 1995-2014 spatial mean over each AIS sector
+    (``AIS_atmos_climatologies.csv``).  Anomaly outputs retain the same units
+    as the inputs.
 
 GrIS:
     Atmospheric variables ``smb``, ``st``  →  anomalies.
-    The baseline is the 1960-1989 MAR long-term mean over each GrIS drainage
-    sector from the ISMIP6 Reference files (``GrIS_atmos_climatologies.csv``).
+    Raw inputs are expected in **mm w.e. yr⁻¹** (smb) and **°C** (st),
+    matching the MAR 3.9 Reference file convention (1960-1989 long-term mean,
+    ``GrIS_atmos_climatologies.csv``).  The output ``aSMB`` anomaly is
+    automatically converted to **kg m⁻² s⁻¹** — the units used in the ISMIP6
+    aSMB forcing files and in the ISEFlow training data.  ``aST`` is returned
+    in **°C**.
 
 Variables that are **not** anomalies (passed through unchanged):
-    AIS:  ``ocean_thermal_forcing``, ``ocean_salinity``, ``ocean_temperature``
-    GrIS: ``ocean_thermal_forcing``, ``basin_runoff``
+    AIS:  ``ocean_thermal_forcing`` (°C), ``ocean_salinity`` (PSU),
+          ``ocean_temperature`` (°C)
+    GrIS: ``ocean_thermal_forcing`` (°C), ``basin_runoff`` (m yr⁻¹)
 
-Usage
------
+Usage — AIS
+-----------
 With a bundled ISMIP6 climatology::
 
     converter = AnomalyConverter("AIS")
     anomalies = converter.compute_ais(
         aogcm="noresm1-m_rcp85",
         sector=10,
-        pr=pr_array,
-        evspsbl=evspsbl_array,
-        smb=smb_array,
-        ts=ts_array,
+        pr=pr_array,           # kg m⁻² s⁻¹
+        evspsbl=evspsbl_array, # kg m⁻² s⁻¹
+        smb=smb_array,         # kg m⁻² s⁻¹
+        ts=ts_array,           # K
     )
-    # anomalies = {"pr_anomaly": ..., "evspsbl_anomaly": ...,
-    #              "smb_anomaly": ..., "ts_anomaly": ...}
+    # anomalies = {"pr_anomaly":      ...,   # kg m⁻² s⁻¹
+    #              "evspsbl_anomaly":  ...,   # kg m⁻² s⁻¹
+    #              "smb_anomaly":      ...,   # kg m⁻² s⁻¹
+    #              "ts_anomaly":       ...}   # K
 
 With a user-supplied climatology (e.g. a new CMIP model not in ISMIP6)::
 
@@ -48,11 +58,38 @@ With a user-supplied climatology (e.g. a new CMIP model not in ISMIP6)::
         evspsbl=evspsbl_array,
         smb=smb_array,
         ts=ts_array,
-        custom_climatology={
-            "pr": 1.3e-5,
-            "evspsbl": 4e-6,
-            "smb": 9e-6,
-            "ts": 253.7,
+        custom_climatology={       # 1995-2014 absolute means, same units as inputs
+            "pr":      1.3e-5,     # kg m⁻² s⁻¹
+            "evspsbl": 4e-6,       # kg m⁻² s⁻¹
+            "smb":     9e-6,       # kg m⁻² s⁻¹
+            "ts":      253.7,      # K
+        },
+    )
+
+Usage — GrIS
+------------
+With a bundled ISMIP6 climatology::
+
+    converter = AnomalyConverter("GrIS")
+    anomalies = converter.compute_gris(
+        aogcm="hadgem2-es_rcp85",
+        sector=1,
+        smb=smb_array,  # absolute SMB in mm w.e. yr⁻¹  (MAR Reference units)
+        st=st_array,    # absolute surface temperature in °C  (MAR Reference units)
+    )
+    # anomalies = {"aSMB": ...,   # SMB anomaly in kg m⁻² s⁻¹  (model training units)
+    #              "aST":  ...}   # surface temperature anomaly in °C
+
+With a user-supplied climatology::
+
+    converter = AnomalyConverter("GrIS")
+    anomalies = converter.compute_gris(
+        sector=1,
+        smb=smb_array,
+        st=st_array,
+        custom_climatology={   # 1960-1989 MAR absolute baseline means
+            "smb": -241.2,     # mm w.e. yr⁻¹
+            "st":  -22.8,      # °C
         },
     )
 """
@@ -184,7 +221,9 @@ class AnomalyConverter:
         Returns
         -------
         dict
-            Variable name → scalar mean value for the baseline period.
+            Variable name → scalar climatological mean for the baseline period.
+            AIS units: kg m⁻² s⁻¹ (pr / evspsbl / smb / mrro), K (ts).
+            GrIS units: mm w.e. yr⁻¹ (smb), °C (st).
 
         Raises
         ------
@@ -222,6 +261,10 @@ class AnomalyConverter:
     ) -> dict:
         """Compute AIS atmospheric anomalies from raw annual time-series arrays.
 
+        Subtracts the 1995-2014 ISMIP6 climatological baseline for the given
+        AOGCM and sector from each raw input array.  All anomaly outputs retain
+        the same units as the corresponding inputs.
+
         Exactly one of ``aogcm`` (use bundled ISMIP6 climatology) or
         ``custom_climatology`` (user-supplied baseline scalars) must be provided.
 
@@ -230,32 +273,35 @@ class AnomalyConverter:
         sector : int
             AIS drainage sector number (1-18).
         pr : np.ndarray
-            Raw precipitation time series (86 values, kg m⁻² s⁻¹).
+            Raw precipitation time series (86 values, **kg m⁻² s⁻¹**).
         evspsbl : np.ndarray
-            Raw evaporation/sublimation time series (86 values, kg m⁻² s⁻¹).
+            Raw evaporation/sublimation time series (86 values, **kg m⁻² s⁻¹**).
         smb : np.ndarray
-            Raw surface mass balance time series (86 values, kg m⁻² s⁻¹).
+            Raw surface mass balance time series (86 values, **kg m⁻² s⁻¹**).
         ts : np.ndarray
-            Raw surface temperature time series (86 values, K).
+            Raw surface temperature time series (86 values, **K**).
         aogcm : str, optional
             AOGCM name to look up in the bundled climatology.  Common alternate
             spellings are normalised automatically (e.g. ``'NorESM1-M_rcp8.5'``
             → ``'noresm1-m_rcp85'``).
         custom_climatology : dict, optional
-            User-supplied baseline means.  Must contain keys ``'pr'``,
-            ``'evspsbl'``, ``'smb'``, ``'ts'`` (and optionally ``'mrro'`` if
-            ``mrro`` is provided).  Use this for CMIP models not in ISMIP6.
+            User-supplied 1995-2014 absolute baseline means for a CMIP model
+            not in ISMIP6.  Must contain keys ``'pr'`` (kg m⁻² s⁻¹),
+            ``'evspsbl'`` (kg m⁻² s⁻¹), ``'smb'`` (kg m⁻² s⁻¹), ``'ts'``
+            (K), and optionally ``'mrro'`` (kg m⁻² s⁻¹) if ``mrro`` is
+            provided.
         mrro : np.ndarray, optional
-            Raw runoff time series (86 values).  Required only for v1.0.0.
-            Ignored if ``custom_climatology`` is given and does not contain
-            ``'mrro'``.
+            Raw runoff time series (86 values, **kg m⁻² s⁻¹**).
+            Required only for ISEFlow v1.0.0; not used by v1.1.0.
 
         Returns
         -------
         dict
-            ``{'pr_anomaly', 'evspsbl_anomaly', 'smb_anomaly', 'ts_anomaly'}``
-            as 86-element numpy arrays.  ``'mrro_anomaly'`` is included when
-            ``mrro`` is provided and a baseline is available.
+            Keys ``'pr_anomaly'``, ``'evspsbl_anomaly'``, ``'smb_anomaly'``,
+            ``'ts_anomaly'`` as 86-element numpy arrays.  Units match the
+            inputs: **kg m⁻² s⁻¹** for pr / evspsbl / smb, **K** for ts.
+            ``'mrro_anomaly'`` (**kg m⁻² s⁻¹**) is included when ``mrro`` is
+            provided and a baseline is available for the requested AOGCM.
 
         Raises
         ------
@@ -303,32 +349,43 @@ class AnomalyConverter:
     ) -> dict:
         """Compute GrIS atmospheric anomalies from raw annual time-series arrays.
 
-        The GrIS baseline period is 1960-1989 (MAR long-term mean), matching
-        the ISMIP6 Reference files.
+        Subtracts the 1960-1989 MAR long-term mean for the given AOGCM and
+        sector from each raw input array, then converts the SMB anomaly from
+        mm w.e. yr⁻¹ to kg m⁻² s⁻¹ to match the units used in the ISMIP6
+        aSMB forcing files and in the ISEFlow training data.
+
+        Exactly one of ``aogcm`` (use bundled ISMIP6 climatology) or
+        ``custom_climatology`` (user-supplied baseline scalars) must be provided.
 
         Parameters
         ----------
         sector : int
             GrIS drainage basin number (1-6).
         smb : np.ndarray
-            Raw surface mass balance time series (86 values, **mm w.e. yr⁻¹**,
-            matching the MAR Reference file units stored in the bundled
-            climatology CSV).  The returned ``aSMB`` anomaly is automatically
-            converted to **kg m⁻² s⁻¹** to match the training-data units.
+            Raw (absolute) surface mass balance time series (86 values,
+            **mm w.e. yr⁻¹**, matching the MAR 3.9 Reference file convention).
+            Typical range: −2000 to +200 mm w.e. yr⁻¹ depending on sector.
+            The output ``aSMB`` is automatically converted to **kg m⁻² s⁻¹**.
         st : np.ndarray
-            Raw surface temperature time series (86 values, °C or K, consistent
-            with the MAR reference — ``st_clim`` in the CSV is in °C).
+            Raw (absolute) surface temperature time series (86 values, **°C**,
+            matching the MAR 3.9 Reference file convention).
         aogcm : str, optional
-            AOGCM name to look up in the bundled climatology.
+            AOGCM name to look up in the bundled climatology.  Common alternate
+            spellings are normalised automatically.
         custom_climatology : dict, optional
-            Must contain keys ``'smb'`` (in mm w.e. yr⁻¹) and ``'st'`` (°C).
+            User-supplied 1960-1989 MAR absolute baseline means for a CMIP
+            model not in ISMIP6.  Must contain keys ``'smb'``
+            (**mm w.e. yr⁻¹**) and ``'st'`` (**°C**).
 
         Returns
         -------
         dict
             ``{'aSMB': ..., 'aST': ...}`` as 86-element numpy arrays.
-            ``aSMB`` is in **kg m⁻² s⁻¹**; ``aST`` is in °C (or K, whichever
-            units ``st`` was supplied in).
+
+            - ``aSMB``: SMB anomaly in **kg m⁻² s⁻¹**, matching the units of
+              the ISMIP6 aSMB forcing files and the ISEFlow training data.
+            - ``aST``: surface temperature anomaly in **°C**.
+
             Variable names match ``ISEFlowGrISInputs`` field names.
 
         Raises
@@ -342,9 +399,9 @@ class AnomalyConverter:
 
         clim = self._resolve_clim_gris(aogcm, sector, custom_climatology)
 
-        # aSMB anomaly computed in mm w.e. yr⁻¹ (same units as climatology CSV
-        # and the raw MAR Reference files), then converted to kg m⁻² s⁻¹ to
-        # match the units of the training data.
+        # Anomaly in mm w.e. yr⁻¹ (climatology CSV and MAR Reference files share
+        # these units), then converted to kg m⁻² s⁻¹ to match the ISMIP6 aSMB
+        # forcing files (units=kg m-2 s-1) used to build the training data.
         _MM_WE_YR_TO_KG_M2_S = 1e-3 * 1000.0 / (365.25 * 86400.0)
         asmb_anomaly_mm_yr = np.asarray(smb) - clim["smb"]
 
@@ -404,7 +461,7 @@ class AnomalyConverter:
         sector: int,
         custom: dict | None,
     ) -> dict:
-        """Return a dict with keys 'smb' and 'st'."""
+        """Return a dict with keys 'smb' (mm w.e. yr⁻¹) and 'st' (°C)."""
         if custom is not None:
             required = {"smb", "st"}
             missing = required - set(custom.keys())
