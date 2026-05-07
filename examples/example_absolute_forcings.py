@@ -138,8 +138,8 @@ st_raw = np.linspace(-20.0, -17.0, 86)  # raw surface temperature (°C)
 
 # Ocean variables passed through unchanged.
 # Training data thermal forcing mean ~4.7 °C; sector 1 values typically 2–6 °C.
-otf_gris = np.linspace(3.5, 5.5, 86)   # ocean thermal forcing (°C)
-runoff = np.linspace(0.05, 0.20, 86)    # basin runoff (m yr⁻¹)
+otf_gris = np.linspace(3.5, 5.5, 86)  # ocean thermal forcing (°C)
+runoff = np.linspace(0.05, 0.20, 86)  # basin runoff (m yr⁻¹)
 
 
 # ── 5A. GrIS using a existing ISMIP6 climatology ───────────────────────────────
