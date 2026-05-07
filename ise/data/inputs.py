@@ -765,8 +765,9 @@ class ISEFlowGrISInputs:
         sector : int
             GrIS drainage basin number (1-6).
         smb : np.ndarray
-            Raw surface mass balance (86 values, in MAR units — mm w.e. yr⁻¹
-            or equivalent, consistent with the reference file).
+            Raw surface mass balance (86 values, **mm w.e. yr⁻¹**, matching
+            the MAR Reference file units used in the bundled climatology CSV).
+            The anomaly conversion automatically converts to kg m⁻² s⁻¹.
         st : np.ndarray
             Raw surface temperature (86 values, K or °C, consistent with
             the MAR reference).

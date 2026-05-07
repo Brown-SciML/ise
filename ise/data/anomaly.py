@@ -311,20 +311,24 @@ class AnomalyConverter:
         sector : int
             GrIS drainage basin number (1-6).
         smb : np.ndarray
-            Raw surface mass balance time series (86 values, mm w.e. yr⁻¹ or
-            equivalent units matching the MAR reference).
+            Raw surface mass balance time series (86 values, **mm w.e. yr⁻¹**,
+            matching the MAR Reference file units stored in the bundled
+            climatology CSV).  The returned ``aSMB`` anomaly is automatically
+            converted to **kg m⁻² s⁻¹** to match the training-data units.
         st : np.ndarray
-            Raw surface temperature time series (86 values, K or °C, consistent
-            with the MAR reference).
+            Raw surface temperature time series (86 values, °C or K, consistent
+            with the MAR reference — ``st_clim`` in the CSV is in °C).
         aogcm : str, optional
             AOGCM name to look up in the bundled climatology.
         custom_climatology : dict, optional
-            Must contain keys ``'smb'`` and ``'st'``.
+            Must contain keys ``'smb'`` (in mm w.e. yr⁻¹) and ``'st'`` (°C).
 
         Returns
         -------
         dict
             ``{'aSMB': ..., 'aST': ...}`` as 86-element numpy arrays.
+            ``aSMB`` is in **kg m⁻² s⁻¹**; ``aST`` is in °C (or K, whichever
+            units ``st`` was supplied in).
             Variable names match ``ISEFlowGrISInputs`` field names.
 
         Raises
@@ -338,8 +342,14 @@ class AnomalyConverter:
 
         clim = self._resolve_clim_gris(aogcm, sector, custom_climatology)
 
+        # aSMB anomaly computed in mm w.e. yr⁻¹ (same units as climatology CSV
+        # and the raw MAR Reference files), then converted to kg m⁻² s⁻¹ to
+        # match the units of the training data.
+        _MM_WE_YR_TO_KG_M2_S = 1e-3 * 1000.0 / (365.25 * 86400.0)
+        asmb_anomaly_mm_yr = np.asarray(smb) - clim["smb"]
+
         return {
-            "aSMB": np.asarray(smb) - clim["smb"],
+            "aSMB": asmb_anomaly_mm_yr * _MM_WE_YR_TO_KG_M2_S,
             "aST": np.asarray(st) - clim["st"],
         }
 
