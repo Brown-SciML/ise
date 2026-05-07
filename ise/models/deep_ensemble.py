@@ -401,7 +401,9 @@ class DeepEnsemble(nn.Module):
             )
             member.load_state_dict(state_dict)
             member.trained = True
-            member.sequence_length = member_metadata.get("sequence_length", None)
+            # Older (v1.0.0) metadata didn't store sequence_length. Fall back to the
+            # historical training default of 5 so loaded members can run inference.
+            member.sequence_length = member_metadata.get("sequence_length", 5)
             member.eval()
             ensemble_members.append(member)
 

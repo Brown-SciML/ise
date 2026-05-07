@@ -101,6 +101,7 @@ class NormalizingFlow(nn.Module):
         output_sequence_length=86,
         num_flow_transforms=5,
         flow_hidden_features=16,
+        legacy_v1_0_0=False,
     ):
         """Construct the normalizing flow architecture.
 
@@ -112,23 +113,35 @@ class NormalizingFlow(nn.Module):
                 transform pairs. Defaults to 5.
             flow_hidden_features (int, optional): Width of the context encoder and autoregressive
                 hidden layers. Defaults to 16.
+            legacy_v1_0_0 (bool, optional): Build the v1.0.0 architecture variant: a single
+                ``nn.Linear`` context encoder (no hidden layer) and ``flow_hidden_features =
+                output_size * 2``. Used only to load v1.0.0 ISEFlow weights — leave False
+                for any newly trained model. Defaults to False.
         """
         super().__init__()
         self.num_flow_transforms = num_flow_transforms
         self.num_input_features = input_size
         self.num_predicted_sle = output_size
-        # self.flow_hidden_features = output_size * 2
-        self.flow_hidden_features = flow_hidden_features
+        self.legacy_v1_0_0 = legacy_v1_0_0
+        if legacy_v1_0_0:
+            # v1.0.0 hardcoded flow_hidden_features = output_size * 2
+            self.flow_hidden_features = output_size * 2
+        else:
+            self.flow_hidden_features = flow_hidden_features
         self.output_sequence_length = output_sequence_length
         self.device = get_device()
         self.to(self.device)
 
-        # Define base distribution
-        context_encoder = nn.Sequential(
-            nn.Linear(self.num_input_features, self.flow_hidden_features),
-            nn.ReLU(),
-            nn.Linear(self.flow_hidden_features, output_size * 2),
-        )
+        # Define base distribution. v1.0.0 used a single Linear; current models use
+        # a 2-layer MLP context encoder.
+        if legacy_v1_0_0:
+            context_encoder = nn.Linear(self.num_input_features, output_size * 2)
+        else:
+            context_encoder = nn.Sequential(
+                nn.Linear(self.num_input_features, self.flow_hidden_features),
+                nn.ReLU(),
+                nn.Linear(self.flow_hidden_features, output_size * 2),
+            )
         self.base_distribution = distributions.normal.ConditionalDiagonalNormal(
             shape=[self.num_predicted_sle],
             context_encoder=context_encoder,
@@ -451,12 +464,27 @@ class NormalizingFlow(nn.Module):
         with open(metadata_path) as f:
             metadata = json.load(f)
 
-        model = NormalizingFlow(
-            input_size=metadata["input_size"],
-            output_size=metadata["output_size"],
-            flow_hidden_features=metadata["flow_hidden_size"],
-            num_flow_transforms=metadata["num_flows"],
+        # v1.0.0 metadata only stored input_size/output_size; the architecture used
+        # a single-Linear context encoder and num_flow_transforms=5. Detect by absence
+        # of the post-v1.0.0 keys.
+        is_legacy_v1_0_0 = (
+            "flow_hidden_size" not in metadata or "num_flows" not in metadata
         )
+
+        if is_legacy_v1_0_0:
+            model = NormalizingFlow(
+                input_size=metadata["input_size"],
+                output_size=metadata["output_size"],
+                num_flow_transforms=5,
+                legacy_v1_0_0=True,
+            )
+        else:
+            model = NormalizingFlow(
+                input_size=metadata["input_size"],
+                output_size=metadata["output_size"],
+                flow_hidden_features=metadata["flow_hidden_size"],
+                num_flow_transforms=metadata["num_flows"],
+            )
 
         checkpoint = torch.load(
             path, map_location="cpu" if get_device() == "cpu" else None, weights_only=True

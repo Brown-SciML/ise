@@ -13,6 +13,15 @@ This project uses **two independent version numbers**:
 
 ## [Unreleased]
 
+- Restored backward compatibility for ISEFlow v1.0.0 weights. `ISEFlow_AIS(version="v1.0.0")` and `ISEFlow_GrIS(version="v1.0.0")` now load and predict end-to-end with the v1.0.0 pretrained weights. v1.1.0 behaviour is unchanged.
+  - `NormalizingFlow.load()` detects v1.0.0 metadata (missing `flow_hidden_size`/`num_flows` keys) and reconstructs the original architecture: a single-`nn.Linear` context encoder with `flow_hidden_features = output_size * 2` and `num_flow_transforms=5`.
+  - `ISEFlow_AIS.process()` and `ISEFlow_GrIS.process()` gained a v1.0.0 path matching the historical preprocessing order (lag → one-hot → reindex → append `outlier=False` → positional StandardScaler.transform → drop `outlier`). v1.1.0 path is untouched.
+  - Populated `ISEFlow_GrIS_v1_0_0_variables` (90 features) — was previously an empty stub.
+  - `DeepEnsemble.load()` now defaults `member.sequence_length=5` when the saved metadata omits it (older v1.0.0 metadata).
+- Updated install instructions in README and docs to use `pip install ise-py` and `pip install -e ".[dev]"`; removed uv/requirements.txt references.
+- Fixed HuggingFace Hub URL casing in README.
+- Added warning suppression for properscoring and scikit-learn dependencies around Syntax and versionning.
+
 ---
 
 ## [1.0.0] — 2026-05-07 (package) | Model: v1.1.0

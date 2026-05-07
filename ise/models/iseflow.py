@@ -74,6 +74,7 @@ import shutil
 import warnings
 
 import numpy as np
+from sklearn.exceptions import InconsistentVersionWarning
 import pandas as pd
 import torch
 from torch import nn
@@ -310,7 +311,9 @@ class ISEFlow(torch.nn.Module):
         if output_scaler is True:
             output_scaler = os.path.join(self.model_dir, "scaler_y.pkl")
             with open(output_scaler, "rb") as f:
-                output_scaler = pickle.load(f)
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
+                    output_scaler = pickle.load(f)
         elif output_scaler is False and self.scaler_path is None:
             warnings.warn("No scaler path provided, uncertainties are not in units of SLE.")
             predictions, uncertainties = self.forward(x)
@@ -325,7 +328,9 @@ class ISEFlow(torch.nn.Module):
         elif isinstance(output_scaler, str):
             self.scaler_path = output_scaler
             with open(self.scaler_path, "rb") as f:
-                output_scaler = pickle.load(f)
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
+                    output_scaler = pickle.load(f)
 
         # Get raw predictions and uncertainties (no smoothing yet)
         predictions, uncertainties = self.forward(x)
@@ -617,8 +622,26 @@ class ISEFlow_AIS(ISEFlow):
         )
 
         data = inputs.to_df()
+        dummy_columns = [
+            "numerics",
+            "stress_balance",
+            "resolution",
+            "init_method",
+            "melt",
+            "ice_front",
+            "Ocean forcing",
+            "Ocean sensitivity",
+            "open_melt_param",
+            "standard_melt_param",
+            "Ice shelf fracture",
+        ]
 
         if self.version == "v1.0.0":
+            # v1.0.0 ordering: fill missing mrro -> add lags -> get_dummies -> reindex
+            # to ISEFlow_AIS_v1_0_0_variables -> append `outlier=False` -> positional
+            # scale (the v1.0.0 scaler was fit on 99 cols including `outlier`) -> drop
+            # `outlier`. The v1.0.0 scaler has no feature_names_in_, so master's
+            # name-based scale_data() can't be used here.
             year_mean_map = {year: mean for year, mean in enumerate(mrro_means)}
             data["mrro_anomaly"] = data.apply(
                 lambda row: (
@@ -628,31 +651,33 @@ class ISEFlow_AIS(ISEFlow):
                 ),
                 axis=1,
             )
+            data = fe.add_lag_variables(data, lag=5, verbose=False)
+            data = pd.get_dummies(data, columns=dummy_columns, dtype=bool)
+
+            columns = ISEFlow_AIS_v1_0_0_variables
+            for col in columns:
+                if col not in data.columns:
+                    data[col] = False
+            data = data[columns]
+            data = data.loc[:, ~data.columns.duplicated()]
+
+            data["outlier"] = False
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", InconsistentVersionWarning)
+                with open(f"{self.model_dir}/scaler_X.pkl", "rb") as f:
+                    scaler = pickle.load(f)
+            scaled = scaler.transform(data.values.astype(float))
+            data = pd.DataFrame(scaled, columns=list(data.columns), index=data.index)
+            data = data.drop(columns=["outlier"])
+            return data
+
+        # v1.1.0 path (unchanged): scale -> lag -> dummies -> reindex
         data = fe.scale_data(data, scaler_path=f"{self.model_dir}/scaler_X.pkl")
         data = fe.add_lag_variables(data, lag=5, verbose=False)
-        data = pd.get_dummies(
-            data,
-            columns=[
-                "numerics",
-                "stress_balance",
-                "resolution",
-                "init_method",
-                "melt",
-                "ice_front",
-                "Ocean forcing",
-                "Ocean sensitivity",
-                "open_melt_param",
-                "standard_melt_param",
-                "Ice shelf fracture",
-            ],
-            dtype=bool,
-        )
+        data = pd.get_dummies(data, columns=dummy_columns, dtype=bool)
 
-        # need to add other columns as zeros from get_dummies (all true)
         if self.version == "v1.1.0":
             columns = ISEFlow_AIS_v1_1_0_variables
-        elif self.version == "v1.0.0":
-            columns = ISEFlow_AIS_v1_0_0_variables
         else:
             raise NotImplementedError(
                 f"Version {self.version} not implemented. Use v1.0.0 or v1.1.0"
@@ -793,34 +818,54 @@ class ISEFlow_GrIS(ISEFlow):
         """
 
         data = inputs.to_df()
+        dummy_columns = [
+            "numerics",
+            "ice_flow",
+            "initialization",
+            "initial_smb",
+            "velocity",
+            "bed",
+            "surface_thickness",
+            "ghf",
+            "res_min",
+            "res_max",
+            "Ocean forcing",
+            "Ocean sensitivity",
+            "Ice shelf fracture",
+        ]
 
+        if self.version == "v1.0.0":
+            # v1.0.0 ordering: add lags -> get_dummies -> reindex to
+            # ISEFlow_GrIS_v1_0_0_variables -> append `outlier=False` -> positional
+            # scale (the v1.0.0 scaler has 91 cols incl. `outlier` and no
+            # feature_names_in_) -> drop `outlier`.
+            data = fe.add_lag_variables(data, lag=5, verbose=False)
+            data = pd.get_dummies(data, columns=dummy_columns, dtype=bool)
+
+            columns = ISEFlow_GrIS_v1_0_0_variables
+            for col in columns:
+                if col not in data.columns:
+                    data[col] = False
+            data = data[columns]
+            data = data.loc[:, ~data.columns.duplicated()]
+
+            data["outlier"] = False
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", InconsistentVersionWarning)
+                with open(f"{self.model_dir}/scaler_X.pkl", "rb") as f:
+                    scaler = pickle.load(f)
+            scaled = scaler.transform(data.values.astype(float))
+            data = pd.DataFrame(scaled, columns=list(data.columns), index=data.index)
+            data = data.drop(columns=["outlier"])
+            return data
+
+        # v1.1.0 path (unchanged): scale -> lag -> dummies -> reindex
         data = fe.scale_data(data, scaler_path=f"{self.model_dir}/scaler_X.pkl")
         data = fe.add_lag_variables(data, lag=5, verbose=False)
-        data = pd.get_dummies(
-            data,
-            columns=[
-                "numerics",
-                "ice_flow",
-                "initialization",
-                "initial_smb",
-                "velocity",
-                "bed",
-                "surface_thickness",
-                "ghf",
-                "res_min",
-                "res_max",
-                "Ocean forcing",
-                "Ocean sensitivity",
-                "Ice shelf fracture",
-            ],
-            dtype=bool,
-        )
+        data = pd.get_dummies(data, columns=dummy_columns, dtype=bool)
 
-        # need to add other columns as zeros from get_dummies (all true)
         if self.version == "v1.1.0":
             columns = ISEFlow_GrIS_v1_1_0_variables
-        elif self.version == "v1.0.0":
-            columns = ISEFlow_GrIS_v1_0_0_variables
         else:
             raise NotImplementedError(
                 f"Version {self.version} not implemented. Use v1.0.0 or v1.1.0"

@@ -125,6 +125,8 @@ testpaths = ["tests"]
 addopts = "--tb=short"
 filterwarnings = [
   "ignore:numpy.ndarray size changed:RuntimeWarning",
+  "ignore::SyntaxWarning:properscoring",
+  "ignore::sklearn.exceptions.InconsistentVersionWarning",
 ]
 markers = [
   "slow: marks tests as slow (deselect with '-m \"not slow\"')",

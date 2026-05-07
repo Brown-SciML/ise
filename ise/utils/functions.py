@@ -69,6 +69,7 @@ import pandas as pd
 import torch
 from netCDF4 import Dataset
 from scipy.stats import gaussian_kde
+from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.preprocessing import MinMaxScaler
 
 from ise.evaluation.metrics import js_divergence, kl_divergence
@@ -848,7 +849,9 @@ def unscale_output(y, scaler_path):
         np.ndarray: The unscaled data.
     """
 
-    scaler = pkl.load(open(scaler_path, "rb"))
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
+        scaler = pkl.load(open(scaler_path, "rb"))
     y = scaler.inverse_transform(y)
     return y
 
@@ -867,7 +870,9 @@ def unscale_input(X, scaler_path):
     if not isinstance(X, pd.DataFrame):
         raise NotImplementedError("Only pandas DataFrame input is currently supported.")
 
-    scaler = pkl.load(open(scaler_path, "rb"))
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
+        scaler = pkl.load(open(scaler_path, "rb"))
     column_order = X.columns
     cols_to_scale = scaler.get_feature_names_out()
     data_to_scale = X[cols_to_scale]
