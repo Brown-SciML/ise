@@ -13,6 +13,9 @@ This project uses **two independent version numbers**:
 
 ## [Unreleased]
 
+- Fixed `ISEFlow.fit()` so it can actually train. The internal call to `NormalizingFlow.fit()` was passing positional arguments that no longer matched the NF signature (`X_val`/`y_val` were inserted in front of `epochs`/`batch_size` at some point), causing every fresh training run to crash before the first epoch. Switched to keyword arguments.
+- Fixed `ISEFlow.__init__` so it accepts a freshly-constructed `NormalizingFlow`. It previously read `normalizing_flow.model_dir` directly, but that attribute is only set by `NormalizingFlow.load()`, so untrained NFs could not be wrapped in an ISEFlow. Now uses `getattr(..., None)`.
+- Substantially extended the test suite (244 → 302 tests). New coverage areas: end-to-end ISEFlow `fit`/`save`/`load` integration, real pretrained `ISEFlow_AIS`/`ISEFlow_GrIS.predict()` from synthetic inputs, `ise.models.pretrained` weight resolution and HF fallback, `add_lag_variables` cross-projection bleed, year encoding, validation edge cases, and miscellaneous utility round-trips.
 - Restored backward compatibility for ISEFlow v1.0.0 weights. `ISEFlow_AIS(version="v1.0.0")` and `ISEFlow_GrIS(version="v1.0.0")` now load and predict end-to-end with the v1.0.0 pretrained weights. v1.1.0 behaviour is unchanged.
   - `NormalizingFlow.load()` detects v1.0.0 metadata (missing `flow_hidden_size`/`num_flows` keys) and reconstructs the original architecture: a single-`nn.Linear` context encoder with `flow_hidden_features = output_size * 2` and `num_flow_transforms=5`.
   - `ISEFlow_AIS.process()` and `ISEFlow_GrIS.process()` gained a v1.0.0 path matching the historical preprocessing order (lag → one-hot → reindex → append `outlier=False` → positional StandardScaler.transform → drop `outlier`). v1.1.0 path is untouched.

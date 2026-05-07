@@ -137,7 +137,7 @@ class ISEFlow(torch.nn.Module):
         self.normalizing_flow = normalizing_flow.to(self.device)
         self.trained = self.deep_ensemble.trained and self.normalizing_flow.trained
         self.scaler_path = None
-        self.model_dir = normalizing_flow.model_dir
+        self.model_dir = getattr(normalizing_flow, "model_dir", None)
 
     def fit(
         self,
@@ -198,13 +198,13 @@ class ISEFlow(torch.nn.Module):
             self.normalizing_flow.fit(
                 X,
                 y,
-                nf_epochs,
-                batch_size,
-                save_checkpoints,
-                f"{checkpoint_path}_nf.pth",
-                early_stopping,
-                patience,
-                verbose,
+                epochs=nf_epochs,
+                batch_size=batch_size,
+                save_checkpoints=save_checkpoints,
+                checkpoint_path=f"{checkpoint_path}_nf.pth",
+                early_stopping=early_stopping,
+                patience=patience,
+                verbose=verbose,
             )
 
         # Latent representation
