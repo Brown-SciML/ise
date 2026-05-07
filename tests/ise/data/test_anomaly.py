@@ -7,21 +7,30 @@ from ise.data.anomaly import AnomalyConverter
 
 PROJ_LEN = 86
 
+# AIS climatological baseline values (noresm1-m_rcp85, sector 5, 1995-2014 mean).
+# Units: kg m⁻² s⁻¹ for pr / evspsbl / smb / mrro; K for ts.
 _AIS_AOGCM = "noresm1-m_rcp85"
 _AIS_SECTOR = 5
-_AIS_PR_CLIM = 9.090845196624286e-06
-_AIS_EVSPSBL_CLIM = 4.421370647378353e-07
-_AIS_SMB_CLIM = 8.355646968993824e-06
-_AIS_TS_CLIM = 245.5599822998047
-_AIS_MRRO_CLIM = 2.9306085025382345e-07
+_AIS_PR_CLIM = 9.090845196624286e-06  # kg m⁻² s⁻¹
+_AIS_EVSPSBL_CLIM = 4.421370647378353e-07  # kg m⁻² s⁻¹
+_AIS_SMB_CLIM = 8.355646968993824e-06  # kg m⁻² s⁻¹
+_AIS_TS_CLIM = 245.5599822998047  # K
+_AIS_MRRO_CLIM = 2.9306085025382345e-07  # kg m⁻² s⁻¹
 
 _AIS_NO_MRRO_AOGCM = "csiro-mk3.6_rcp85"
 _AIS_NO_MRRO_SECTOR = 3
 
+# GrIS climatological baseline values (noresm1-m_rcp85, sector 2, 1960-1989 MAR mean).
+# Units: mm w.e. yr⁻¹ for smb; °C for st.
+# These are absolute baseline means stored in GrIS_atmos_climatologies.csv.
+# compute_gris() converts the SMB anomaly to kg m⁻² s⁻¹ before returning.
 _GRIS_AOGCM = "noresm1-m_rcp85"
 _GRIS_SECTOR = 2
-_GRIS_SMB_CLIM = 17.879426956176758
-_GRIS_ST_CLIM = -21.672592163085938
+_GRIS_SMB_CLIM = 17.879426956176758  # mm w.e. yr⁻¹
+_GRIS_ST_CLIM = -21.672592163085938  # °C
+
+# Conversion from mm w.e. yr⁻¹ to kg m⁻² s⁻¹ (matches compute_gris implementation).
+_MM_WE_YR_TO_KG_M2_S = 1e-3 * 1000.0 / (365.25 * 86400.0)
 
 
 # ---------------------------------------------------------------------------
@@ -33,11 +42,11 @@ _GRIS_ST_CLIM = -21.672592163085938
 def ais_arrays():
     rng = np.random.default_rng(42)
     return {
-        "pr": rng.random(PROJ_LEN) * 1e-4,
-        "evspsbl": rng.random(PROJ_LEN) * 1e-4,
-        "smb": rng.random(PROJ_LEN) * 1e-4,
-        "ts": rng.random(PROJ_LEN) * 30 + 240,
-        "mrro": rng.random(PROJ_LEN) * 1e-6,
+        "pr": rng.random(PROJ_LEN) * 1e-4,  # kg m⁻² s⁻¹
+        "evspsbl": rng.random(PROJ_LEN) * 1e-4,  # kg m⁻² s⁻¹
+        "smb": rng.random(PROJ_LEN) * 1e-4,  # kg m⁻² s⁻¹
+        "ts": rng.random(PROJ_LEN) * 30 + 240,  # K
+        "mrro": rng.random(PROJ_LEN) * 1e-6,  # kg m⁻² s⁻¹
     }
 
 
@@ -45,8 +54,8 @@ def ais_arrays():
 def gris_arrays():
     rng = np.random.default_rng(21)
     return {
-        "smb": rng.random(PROJ_LEN) * 500 - 300,
-        "st": rng.random(PROJ_LEN) * 20 - 30,
+        "smb": rng.random(PROJ_LEN) * 500 - 300,  # absolute SMB in mm w.e. yr⁻¹
+        "st": rng.random(PROJ_LEN) * 20 - 30,  # absolute surface temperature in °C
     }
 
 
@@ -99,6 +108,7 @@ class TestComputeAIS:
         assert set(result.keys()) == {"pr_anomaly", "evspsbl_anomaly", "smb_anomaly", "ts_anomaly"}
 
     def test_anomaly_values(self, result, ais_arrays):
+        # All anomalies in same units as inputs (kg m⁻² s⁻¹ for pr/evspsbl/smb, K for ts).
         np.testing.assert_allclose(result["pr_anomaly"], ais_arrays["pr"] - _AIS_PR_CLIM, rtol=1e-9)
         np.testing.assert_allclose(
             result["evspsbl_anomaly"], ais_arrays["evspsbl"] - _AIS_EVSPSBL_CLIM, rtol=1e-9
@@ -175,6 +185,7 @@ class TestComputeAISMrro:
             mrro=ais_arrays["mrro"],
         )
         assert "mrro_anomaly" in result
+        # mrro_anomaly in kg m⁻² s⁻¹
         np.testing.assert_allclose(
             result["mrro_anomaly"], ais_arrays["mrro"] - _AIS_MRRO_CLIM, rtol=1e-9
         )
@@ -209,6 +220,7 @@ class TestComputeAISMrro:
 
 
 class TestComputeAISCustomClimatology:
+    # Custom baseline in kg m⁻² s⁻¹ (pr / evspsbl / smb) and K (ts)
     _custom = {"pr": 1.3e-5, "evspsbl": 4e-6, "smb": 9e-6, "ts": 253.7}
 
     def test_custom_subtraction_correct(self, ais_arrays):
@@ -258,13 +270,21 @@ class TestComputeGrIS:
         assert set(result.keys()) == {"aSMB", "aST"}
 
     def test_anomaly_values(self, result, gris_arrays):
-        np.testing.assert_allclose(result["aSMB"], gris_arrays["smb"] - _GRIS_SMB_CLIM, rtol=1e-9)
+        # aSMB: input in mm w.e. yr⁻¹, climatology in mm w.e. yr⁻¹,
+        # anomaly converted to kg m⁻² s⁻¹ to match ISMIP6 aSMB forcing file units.
+        expected_asmb = (gris_arrays["smb"] - _GRIS_SMB_CLIM) * _MM_WE_YR_TO_KG_M2_S
+        np.testing.assert_allclose(result["aSMB"], expected_asmb, rtol=1e-9)
+        # aST: input in °C, climatology in °C, anomaly in °C.
         np.testing.assert_allclose(result["aST"], gris_arrays["st"] - _GRIS_ST_CLIM, rtol=1e-9)
 
     def test_output_length_and_type(self, result):
         for arr in result.values():
             assert isinstance(arr, np.ndarray)
             assert len(arr) == PROJ_LEN
+
+    def test_asmb_in_kg_m2_s_not_mm_yr(self, result):
+        # aSMB must be in kg m⁻² s⁻¹ (~1e-5 scale), not mm w.e. yr⁻¹ (~tens to hundreds).
+        assert np.all(np.abs(result["aSMB"]) < 1.0)
 
     def test_wrong_length_raises(self, gris_arrays):
         with pytest.raises(ValueError, match="86"):
@@ -290,6 +310,7 @@ class TestComputeGrIS:
 
 
 class TestComputeGrISCustomClimatology:
+    # Custom baseline: smb in mm w.e. yr⁻¹, st in °C
     _custom = {"smb": -250.0, "st": -18.5}
 
     def test_custom_subtraction_correct(self, gris_arrays):
@@ -299,7 +320,10 @@ class TestComputeGrISCustomClimatology:
             smb=gris_arrays["smb"],
             st=gris_arrays["st"],
         )
-        np.testing.assert_allclose(result["aSMB"], gris_arrays["smb"] - (-250.0), rtol=1e-9)
+        # SMB anomaly: (mm w.e. yr⁻¹ - mm w.e. yr⁻¹) → converted to kg m⁻² s⁻¹
+        expected_asmb = (gris_arrays["smb"] - (-250.0)) * _MM_WE_YR_TO_KG_M2_S
+        np.testing.assert_allclose(result["aSMB"], expected_asmb, rtol=1e-9)
+        # ST anomaly: °C - °C → °C
         np.testing.assert_allclose(result["aST"], gris_arrays["st"] - (-18.5), rtol=1e-9)
 
     def test_custom_missing_key_raises(self, gris_arrays):

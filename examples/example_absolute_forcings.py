@@ -26,17 +26,19 @@ years = np.arange(2015, 2101)  # 86 years
 # ── 1. Raw absolute atmospheric forcing arrays ────────────────────────────────
 #
 # Illustrative values representative of NorESM1-M RCP8.5, sector 10.
-# from_absolute_forcings() subtracts the 1995-2014 ISMIP6 climatological baseline.
+# All atmospheric variables must be in the same units as the ISMIP6 forcing
+# files.  from_absolute_forcings() subtracts the 1995-2014 climatological
+# baseline and returns anomalies in the same units.
 
-pr_raw = np.full(86, 1.3e-5)  # precipitation        (kg m⁻² s⁻¹)
-evspsbl_raw = np.full(86, 4.0e-6)  # evaporation          (kg m⁻² s⁻¹)
-smb_raw_ais = np.full(86, 9.0e-6)  # surface mass balance (kg m⁻² s⁻¹)
-ts_raw = np.full(86, 255.0)  # surface temperature  (K)
+pr_raw = np.full(86, 1.3e-5)  # precipitation            (kg m⁻² s⁻¹)
+evspsbl_raw = np.full(86, 4.0e-6)  # evaporation/sublimation  (kg m⁻² s⁻¹)
+smb_raw_ais = np.full(86, 9.0e-6)  # surface mass balance     (kg m⁻² s⁻¹)
+ts_raw = np.full(86, 255.0)  # surface temperature      (K)
 
-# Ocean variables are absolute — passed through unchanged.
-otf_ais = np.linspace(2.0, 2.8, 86)  # ocean thermal forcing (°C)
-sal_ais = np.full(86, 34.35)  # ocean salinity       (PSU)
-temp_ais = np.linspace(-0.4, 0.1, 86)  # ocean temperature    (°C)
+# Ocean variables are absolute values and are passed through unchanged.
+otf_ais = np.linspace(2.0, 2.8, 86)  # ocean thermal forcing  (°C)
+sal_ais = np.full(86, 34.35)  # ocean salinity         (PSU)
+temp_ais = np.linspace(-0.4, 0.1, 86)  # ocean temperature      (°C)
 
 
 # ── 2A. AIS using a existing ISMIP6 climatology ────────────────────────────────
@@ -73,6 +75,9 @@ print(inputs_ais_existing)
 
 
 # ── 2B. AIS using a custom climatology ───────────────────────────────────────
+#
+# Provide the 1995-2014 absolute means for your AOGCM in the same units as the
+# raw inputs: kg m⁻² s⁻¹ for pr / evspsbl / smb, K for ts.
 
 inputs_ais_custom = ISEFlowAISInputs.from_absolute_forcings(
     year=years,
@@ -84,11 +89,11 @@ inputs_ais_custom = ISEFlowAISInputs.from_absolute_forcings(
     ocean_thermal_forcing=otf_ais,
     ocean_salinity=sal_ais,
     ocean_temperature=temp_ais,
-    custom_climatology={  # 1995-2014 baseline means for your AOGCM
-        "pr": 1.3e-5,
-        "evspsbl": 4.0e-6,
-        "smb": 9.0e-6,
-        "ts": 253.7,
+    custom_climatology={  # 1995-2014 absolute baseline means
+        "pr": 1.3e-5,  # kg m⁻² s⁻¹
+        "evspsbl": 4.0e-6,  # kg m⁻² s⁻¹
+        "smb": 9.0e-6,  # kg m⁻² s⁻¹
+        "ts": 253.7,  # K
     },
     numerics="fd",
     stress_balance="hybrid",
@@ -116,7 +121,6 @@ pred_ais, uq_ais = model_ais.predict(inputs_ais_existing, smoothing_window=0)
 pred_ais = np.asarray(pred_ais).squeeze()
 ep_ais = np.asarray(uq_ais["epistemic"]).squeeze()
 al_ais = np.asarray(uq_ais["aleatoric"]).squeeze()
-total_ais = ep_ais + al_ais
 
 print(f"\n[AIS] Prediction range: {pred_ais.min():.2f} – {pred_ais.max():.2f} mm SLE")
 print(f"[AIS] Mean epistemic uncertainty: {ep_ais.mean():.3f} mm")
@@ -130,16 +134,23 @@ print(f"[AIS] Mean aleatoric uncertainty: {al_ais.mean():.3f} mm")
 # ── 4. Raw absolute atmospheric forcing arrays ────────────────────────────────
 #
 # Illustrative values representative of HadGEM2-ES RCP8.5, sector 1.
-# from_absolute_forcings() subtracts the 1960-1989 MAR baseline for smb and st,
-# then converts the SMB anomaly from mm w.e. yr⁻¹ to kg m⁻² s⁻¹ (model units).
+#
+# SMB must be in mm w.e. yr⁻¹ and ST in °C — matching the MAR 3.9 Reference
+# file convention (the source of the bundled 1960-1989 climatological baseline).
+# from_absolute_forcings() subtracts the 1960-1989 MAR baseline and converts
+# the SMB anomaly from mm w.e. yr⁻¹ to kg m⁻² s⁻¹ (ISEFlow training units).
+#
+# NOTE: do NOT pass aSMB/aST values that are already anomalies (e.g. values
+# read directly from ISMIP6 aSMB NetCDF files, which are in kg m⁻² s⁻¹).
+# Use from_absolute_forcings() only when starting from absolute MAR output.
 
-smb_raw_gris = np.linspace(-200.0, -350.0, 86)  # raw SMB  (mm w.e. yr⁻¹)
-st_raw = np.linspace(-20.0, -17.0, 86)  # raw surface temperature (°C)
+smb_raw_gris = np.linspace(-200.0, -350.0, 86)  # absolute SMB  (mm w.e. yr⁻¹)
+st_raw = np.linspace(-20.0, -17.0, 86)  # absolute surface temperature (°C)
 
-# Ocean variables passed through unchanged.
+# Ocean variables are passed through unchanged.
 # Training data thermal forcing mean ~4.7 °C; sector 1 values typically 2–6 °C.
-otf_gris = np.linspace(3.5, 5.5, 86)  # ocean thermal forcing (°C)
-runoff = np.linspace(0.05, 0.20, 86)  # basin runoff (m yr⁻¹)
+otf_gris = np.linspace(3.5, 5.5, 86)  # ocean thermal forcing  (°C)
+runoff = np.linspace(0.05, 0.20, 86)  # basin runoff           (m yr⁻¹)
 
 
 # ── 5A. GrIS using a existing ISMIP6 climatology ───────────────────────────────
@@ -175,6 +186,10 @@ print(inputs_gris_existing)
 
 
 # ── 5B. GrIS using a custom climatology ──────────────────────────────────────
+#
+# Provide the 1960-1989 MAR absolute baseline means:
+#   smb in mm w.e. yr⁻¹  (same units as the raw smb input above)
+#   st  in °C             (same units as the raw st input above)
 
 inputs_gris_custom = ISEFlowGrISInputs.from_absolute_forcings(
     year=years,
@@ -183,9 +198,9 @@ inputs_gris_custom = ISEFlowGrISInputs.from_absolute_forcings(
     st=st_raw,
     ocean_thermal_forcing=otf_gris,
     basin_runoff=runoff,
-    custom_climatology={  # 1960-1989 MAR baseline means (mm w.e. yr⁻¹ / °C)
-        "smb": -241.2,  # matches HadGEM2-ES sector 1 baseline
-        "st": -22.8,
+    custom_climatology={  # 1960-1989 MAR absolute baseline means
+        "smb": -241.2,  # mm w.e. yr⁻¹  (matches HadGEM2-ES sector 1 baseline)
+        "st": -22.8,  # °C
     },
     initial_year=1990,
     numerics="fe",
@@ -215,7 +230,6 @@ pred_gris, uq_gris = model_gris.predict(inputs_gris_existing, smoothing_window=0
 pred_gris = np.asarray(pred_gris).squeeze()
 ep_gris = np.asarray(uq_gris["epistemic"]).squeeze()
 al_gris = np.asarray(uq_gris["aleatoric"]).squeeze()
-total_gris = ep_gris + al_gris
 
 print(f"\n[GrIS] Prediction range: {pred_gris.min():.2f} – {pred_gris.max():.2f} mm SLE")
 print(f"[GrIS] Mean epistemic uncertainty: {ep_gris.mean():.3f} mm")
