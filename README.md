@@ -29,7 +29,7 @@ Install from PyPI:
 pip install ise-py
 ```
 
-> **Pretrained weights** are hosted on [HuggingFace Hub](https://huggingface.co/pvankatwyk/ISEFlow)
+> **Pretrained weights** are hosted on [HuggingFace Hub](https://huggingface.co/pvankatwyk/iseflow)
 > and downloaded automatically on first use. No manual download required.
 
 For development (editable install):

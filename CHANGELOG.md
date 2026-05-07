@@ -26,7 +26,7 @@ This project uses **two independent version numbers**:
 - **Breaking:** Package renamed from `ise` to `ise-py` on PyPI; import name stays `ise`.
 - **Breaking:** `from_raw_values()` renamed to `from_absolute_forcings()` on both
   `ISEFlowAISInputs` and `ISEFlowGrISInputs`; old name kept as a deprecated alias
-  (emits `DeprecationWarning`) until v3.0.0.
+  (emits `DeprecationWarning`) until further versions.
 - **Breaking:** Model classes restructured — `ise.models.ISEFlow.ISEFlow`,
   `ise.models.predictors.deep_ensemble`, and `ise.models.density_estimators.normalizing_flow`
   replaced by top-level `ISEFlow`, `DeepEnsemble`, `NormalizingFlow`, and `LSTM` in
