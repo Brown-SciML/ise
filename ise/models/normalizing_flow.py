@@ -393,7 +393,8 @@ class NormalizingFlow(nn.Module):
             batch_features = features[start_idx:end_idx]
             samples = self.flow.sample(num_samples, context=batch_features)
             samples = samples.detach().cpu().numpy()
-            std = np.std(samples, axis=1).squeeze()
+            samples = np.where(np.isfinite(samples), samples, np.nan)
+            std = np.nanstd(samples, axis=1).squeeze()
             aleatoric_uncertainty.append(std)
 
         return np.concatenate(aleatoric_uncertainty)
