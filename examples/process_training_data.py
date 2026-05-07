@@ -5,15 +5,9 @@ from ise.data.process import process_sectors
 
 ICE_SHEET = "AIS"
 
-ISMIP6_FORCINGS = (
-    r"/path/to/ismip6_forcings/GHub-ISMIP6-Forcing/AIS"
-)
-ISMIP6_GRIDS = (
-    r"/path/to/ismip6_gridfiles/Grid_Files/AIS_sectors_8km.nc"
-)
-ISMIP6_OUTPUTS = (
-    r"/path/to/ismip6_outputs/Zenodo_Outputs/ComputedScalarsPaper"
-)
+ISMIP6_FORCINGS = r"/path/to/ismip6_forcings/GHub-ISMIP6-Forcing/AIS"
+ISMIP6_GRIDS = r"/path/to/ismip6_gridfiles/Grid_Files/AIS_sectors_8km.nc"
+ISMIP6_OUTPUTS = r"/path/to/ismip6_outputs/Zenodo_Outputs/ComputedScalarsPaper"
 
 EXPORT_DIR = f"path/to/export_dir/{ICE_SHEET}"
 

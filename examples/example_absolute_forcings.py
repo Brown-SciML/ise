@@ -212,6 +212,7 @@ pred_gris, uq_gris = model_gris.predict(inputs_gris_existing, smoothing_window=0
 pred_gris = np.asarray(pred_gris).squeeze()
 ep_gris = np.asarray(uq_gris["epistemic"]).squeeze()
 al_gris = np.asarray(uq_gris["aleatoric"]).squeeze()
+print(al_gris)
 total_gris = ep_gris + al_gris
 
 print(f"\n[GrIS] Prediction range: {pred_gris.min():.2f} – {pred_gris.max():.2f} mm SLE")

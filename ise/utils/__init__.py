@@ -6,7 +6,7 @@ path helpers (e.g. ismip6_model_configs_path), and tensor/data transformations.
 
 import os
 
-from .functions import get_data, get_X_y, get_device, unscale_output
+from .functions import get_data, get_device, get_X_y, unscale_output
 
 __all__ = [
     "get_data",
