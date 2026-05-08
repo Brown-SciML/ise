@@ -84,7 +84,8 @@ def sum_by_sector(array, grid_file):
         grids = xr.open_dataset(grid_file)
         sector_name = "sectors" if "ais" in grid_file.lower() else "ID"
     elif isinstance(grid_file, xr.Dataset):
-        sector_name = "ID" if "Rignot" in grids.Description else "sectors"
+        grids = grid_file
+        sector_name = "ID" if "Rignot" in grids.attrs.get("Description", "") else "sectors"
     else:
         raise ValueError("grid_file must be a string or an xarray Dataset.")
 
