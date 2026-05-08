@@ -98,9 +98,11 @@ class EmulatorDataset(Dataset):
         if self.xdim == 3:  # Batched by projection
             self.num_projections, self.num_timesteps, self.num_features = X.shape
         elif self.xdim == 2:  # Unbatched (rows of projections*timestamps)
-            self.projections_and_timesteps, self.features = X.shape
+            self.projections_and_timesteps, _ = X.shape
             self.num_timesteps = projection_length
             self.num_projections = self.projections_and_timesteps // self.num_timesteps
+            self.num_features = X.shape[1]
+        self.features = self.num_features
 
     def _to_tensor(self, x):
         """
@@ -151,7 +153,7 @@ class EmulatorDataset(Dataset):
         time_step_index = i % self.num_timesteps
 
         # Initialize a sequence with zeros for padding
-        sequence = torch.zeros((self.sequence_length, self.features))
+        sequence = torch.zeros((self.sequence_length, self.num_features))
 
         # Calculate start and end points for copying data
         start_point = max(0, time_step_index - self.sequence_length + 1)
