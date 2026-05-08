@@ -95,6 +95,32 @@ class TestGetModelDirFallback:
         with pytest.raises(RuntimeError, match="Could not download"):
             get_model_dir("v1.1.0", "AIS")
 
+    def test_snapshot_download_uses_recursive_glob(self, monkeypatch, tmp_path):
+        """snapshot_download must use '**' glob so nested weight files are included."""
+        from ise.models import pretrained as pretrained_mod
+
+        captured_kwargs = {}
+
+        def _capture(*args, **kwargs):
+            captured_kwargs.update(kwargs)
+            # Return tmp_path so get_model_dir doesn't crash on os.path.join
+            return str(tmp_path)
+
+        monkeypatch.setattr(pretrained_mod, "snapshot_download", _capture)
+        # The joined subfolder path won't exist, but we only care about the kwargs
+        monkeypatch.setattr(pretrained_mod, "_LOCAL_PRETRAINED_DIR", str(tmp_path))
+
+        try:
+            get_model_dir("v1.1.0", "AIS")
+        except Exception:
+            pass  # path may not exist; we only need captured_kwargs
+
+        assert "allow_patterns" in captured_kwargs, "snapshot_download was not called with allow_patterns"
+        patterns = captured_kwargs["allow_patterns"]
+        assert any("**" in p for p in patterns), (
+            f"allow_patterns must use recursive glob '**' for nested files; got {patterns}"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Variable list integrity — guards the column-order source of truth

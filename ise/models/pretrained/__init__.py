@@ -50,7 +50,7 @@ def get_model_dir(version: str, ice_sheet: str) -> str:
         disable_progress_bars()
         local_dir = snapshot_download(
             repo_id=HF_REPO_ID,
-            allow_patterns=[f"{subfolder}/*"],
+            allow_patterns=[f"{subfolder}/**"],
         )
         return os.path.join(local_dir, subfolder)
     except Exception:
