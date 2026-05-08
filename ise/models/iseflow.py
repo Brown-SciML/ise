@@ -183,8 +183,6 @@ class ISEFlow(torch.nn.Module):
         if early_stopping is None:
             early_stopping = X_val is not None and y_val is not None
 
-        torch.manual_seed(np.random.randint(0, 100000))
-
         X, y = to_tensor(X).to(self.device), to_tensor(y).to(self.device)
 
         if self.trained:

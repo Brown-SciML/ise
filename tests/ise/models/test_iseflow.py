@@ -203,6 +203,14 @@ class TestSmoothProjections:
 # ---------------------------------------------------------------------------
 
 
+def test_fit_does_not_reseed_torch_rng():
+    """ISEFlow.fit must not contain the torch.manual_seed(np.random.randint(...)) call."""
+    import inspect
+    from ise.models.iseflow import ISEFlow
+    source = inspect.getsource(ISEFlow.fit)
+    assert "torch.manual_seed(np.random.randint" not in source
+
+
 def test_iseflow_gris_de_v1_0_0_emits_deprecation_warning():
     """ISEFlow_GrIS_DE_v1_0_0 must emit a DeprecationWarning on instantiation."""
     with pytest.warns(DeprecationWarning, match="ISEFlow_GrIS_DE_v1_0_0"):

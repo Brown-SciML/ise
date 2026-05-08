@@ -13,6 +13,7 @@ This project uses **two independent version numbers**:
 
 ## [Unreleased]
 
+- Removed `torch.manual_seed(np.random.randint(0, 100000))` from `ISEFlow.fit()`. This call silently overrode any seed the caller had set with a random one, defeating reproducibility.
 - Fixed four LSTM issues: `save()` now defaults `sequence_length` to 5 when unset instead of `TypeError`-ing on `int(None)`; `forward()` drops the manual zero h0/c0 construction (nn.LSTM does this internally) and the unnecessary `requires_grad_()`; the dropout module that was being constructed but never applied is now wired in between `linear1/relu` and `linear_out`; `predict()` no longer toggles the model back to train mode after inference.
 - Fixed loss tensor handling: `WeightedGridLoss.forward` wrapped inputs in `torch.tensor(...)`, detaching autograd-tracked tensors; replaced with `.to(device).float()` for tensors and `torch.as_tensor` for others. `WeightedMSEPCALoss.forward` also mutated `self.custom_weights` in-place via `unsqueeze`; now uses a local copy.
 - Fixed `unscale_column` year/sector ranges: year scaler was fitting over `np.arange(2016, 2101)` (one year short); fixed to `2015-2100`. Sector scaler was hard-coded to AIS (1–18); now accepts an `ice_sheet` kwarg (default `"AIS"`) so GrIS users get the correct 1–6 range. `unscale_input` docstring corrected to reflect that only `pd.DataFrame` input is supported.
