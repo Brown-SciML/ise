@@ -172,6 +172,7 @@ class TestWeightedMSEPCALoss:
     def test_does_not_mutate_custom_weights(self):
         """forward() must not mutate self.custom_weights between calls."""
         import numpy as np
+
         # 1-D custom_weights triggers the unsqueeze path — the original bug mutated self.custom_weights here
         cw = np.ones(4)
         criterion = WeightedMSEPCALoss(data_mean=0.0, data_std=1.0, custom_weights=cw)

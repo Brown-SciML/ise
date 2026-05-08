@@ -41,7 +41,7 @@ from ise.models.iseflow import ISEFlow_AIS
 
 # ── 1. Define your forcing time series (86 values: 2015-2100) ─────────────────
 #
-# Source: AWI_PISM1, sector 10, ISMIP6 AIS test dataset
+# Source: AWI_PISM1_exp01_sector10, noresm1-m_rcp8.5, ISMIP6 AIS dataset
 
 # Note: ISE has the capability to calculate the anomaly from absolute forcing values using an
 # existing climatology already in ISMIP6 or using a custom climatology for each forcing variable.
@@ -176,6 +176,27 @@ ocean_temperature = np.array([
      0.0745884,   0.0940826,   0.10260472,  0.09164981,  0.07840611,  0.0910715,
      0.10567508,  0.11746211,
 ])
+
+# True ISMIP6 SLE projection for this exact run (mm SLE, cumulative from 2015).
+# Source: AWI_PISM1_exp01_sector10 — extracted from 
+# huggingface pvankatwyk/iseflow-datasets/iseflow-datasets/v1.1.0/AIS/dataset.csv
+ismip6_sle = np.array([
+     0.15183808,  0.21376772,  0.22462059,  0.18208406,  0.21668304,  0.29348902,
+     0.32597397,  0.35087814,  0.35602298,  0.53082679,  0.33716172,  0.35497889,
+     0.18516399,  0.18199924,  0.21214403,  0.32049064,  0.25804651,  0.12157017,
+     0.08708522,  0.02419375,  0.04145925,  0.04025877,  0.02300179, -0.06762314,
+    -0.13587961, -0.07103451, -0.01502736, -0.01152271,  0.05994780,  0.06326001,
+     0.03953360,  0.09358541,  0.16072815,  0.15274985, -0.00927599, -0.10985088,
+    -0.12723862, -0.26614140, -0.24090953, -0.22531218, -0.14081683, -0.04323134,
+    -0.17133697, -0.27046986, -0.20855613, -0.26501376, -0.41830701, -0.54108589,
+    -0.68908004, -0.73509215, -0.64843553, -0.63957133, -0.69703342, -0.86159563,
+    -0.66754472, -0.71700061, -0.76451611, -0.99115277, -1.27772013, -1.15962531,
+    -1.27182425, -1.29472987, -1.32543506, -1.41473376, -1.46537670, -1.50045983,
+    -1.59560814, -1.81120559, -1.88564400, -1.95177467, -1.99935944, -2.02415210,
+    -2.03128544, -2.04902996, -2.09426239, -2.27746251, -2.25996440, -2.36101147,
+    -2.56651716, -2.60739931, -2.52386266, -2.47552855, -2.32421248, -2.42406418,
+    -2.61520779, -2.80525118,
+])
 # fmt: on
 
 
@@ -267,6 +288,8 @@ ax.fill_between(
     label=r"Epistemic uncertainty (2$\sigma$)",
 )
 ax.plot(years, pred, color="#1f77b4", linewidth=2.0, label="ISEFlow prediction")
+ax.plot(years, ismip6_sle, color="#2ca02c", linewidth=1.5, linestyle="--",
+        label="ISMIP6 (AWI_PISM1)")
 
 ax.set_xlabel("Year", fontsize=12)
 ax.set_ylabel("Sea Level Equivalent (mm SLE)", fontsize=12)

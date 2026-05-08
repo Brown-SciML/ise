@@ -156,12 +156,16 @@ class TestNormalizingFlowSave:
         z = loaded.get_latent(small_features)
         assert z.shape == (10, 1)
 
-    @pytest.mark.filterwarnings("ignore:Full projections of 86 timesteps are not present:UserWarning")
+    @pytest.mark.filterwarnings(
+        "ignore:Full projections of 86 timesteps are not present:UserWarning"
+    )
     def test_save_after_no_checkpoint_train(self, tmp_path):
         """save() must not crash when fit() ran with save_checkpoints=False."""
         import json
 
-        nf = NormalizingFlow(input_size=5, output_size=1, num_flow_transforms=2, flow_hidden_features=8)
+        nf = NormalizingFlow(
+            input_size=5, output_size=1, num_flow_transforms=2, flow_hidden_features=8
+        )
         nf.fit(
             torch.randn(10, 5),
             torch.randn(10, 1),

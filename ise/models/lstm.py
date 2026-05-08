@@ -468,7 +468,9 @@ class LSTM(nn.Module):
                 "input_size": int(self.input_size),
                 "output_size": int(self.output_size),
                 "output_sequence_length": int(self.output_sequence_length),
-                "sequence_length": int(self.sequence_length) if self.sequence_length is not None else 5,
+                "sequence_length": int(self.sequence_length)
+                if self.sequence_length is not None
+                else 5,
                 # Useful to have if you ever change these later:
                 "fc_hidden": int(self.linear1.out_features),
                 "dropout_p": float(getattr(self.dropout, "p", 0.0)),

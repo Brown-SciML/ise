@@ -191,7 +191,9 @@ def test_lstm_save_with_unset_sequence_length_does_not_crash(tmp_path):
     assert os.path.isfile(meta_path)
 
 
-@pytest.mark.filterwarnings("ignore:dropout option adds dropout after all but last recurrent layer:UserWarning")
+@pytest.mark.filterwarnings(
+    "ignore:dropout option adds dropout after all but last recurrent layer:UserWarning"
+)
 def test_lstm_dropout_is_applied_in_forward():
     """Dropout with p=0.5 must produce different outputs on two train-mode forward passes."""
     torch.manual_seed(0)

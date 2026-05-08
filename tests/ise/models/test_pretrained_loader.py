@@ -115,7 +115,9 @@ class TestGetModelDirFallback:
         except Exception:
             pass  # path may not exist; we only need captured_kwargs
 
-        assert "allow_patterns" in captured_kwargs, "snapshot_download was not called with allow_patterns"
+        assert "allow_patterns" in captured_kwargs, (
+            "snapshot_download was not called with allow_patterns"
+        )
         patterns = captured_kwargs["allow_patterns"]
         assert any("**" in p for p in patterns), (
             f"allow_patterns must use recursive glob '**' for nested files; got {patterns}"

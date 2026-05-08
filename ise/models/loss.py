@@ -127,8 +127,16 @@ class WeightedGridLoss(torch.nn.Module):
             Tensor: The total computed loss.
         """
 
-        true = true.to(self.device).float() if isinstance(true, torch.Tensor) else torch.as_tensor(true, dtype=torch.float32, device=self.device)
-        predicted = predicted.to(self.device).float() if isinstance(predicted, torch.Tensor) else torch.as_tensor(predicted, dtype=torch.float32, device=self.device)
+        true = (
+            true.to(self.device).float()
+            if isinstance(true, torch.Tensor)
+            else torch.as_tensor(true, dtype=torch.float32, device=self.device)
+        )
+        predicted = (
+            predicted.to(self.device).float()
+            if isinstance(predicted, torch.Tensor)
+            else torch.as_tensor(predicted, dtype=torch.float32, device=self.device)
+        )
 
         # Determine weights based on extreme values
         if extreme_value_threshold is not None:
