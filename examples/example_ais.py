@@ -178,7 +178,7 @@ ocean_temperature = np.array([
 ])
 
 # True ISMIP6 SLE projection for this exact run (mm SLE, cumulative from 2015).
-# Source: AWI_PISM1_exp01_sector10 — extracted from 
+# Source: AWI_PISM1_exp01_sector10 — extracted from
 # huggingface pvankatwyk/iseflow-datasets/iseflow-datasets/v1.1.0/AIS/dataset.csv
 ismip6_sle = np.array([
      0.15183808,  0.21376772,  0.22462059,  0.18208406,  0.21668304,  0.29348902,
@@ -288,8 +288,9 @@ ax.fill_between(
     label=r"Epistemic uncertainty (2$\sigma$)",
 )
 ax.plot(years, pred, color="#1f77b4", linewidth=2.0, label="ISEFlow prediction")
-ax.plot(years, ismip6_sle, color="#2ca02c", linewidth=1.5, linestyle="--",
-        label="ISMIP6 (AWI_PISM1)")
+ax.plot(
+    years, ismip6_sle, color="#2ca02c", linewidth=1.5, linestyle="--", label="ISMIP6 (AWI_PISM1)"
+)
 
 ax.set_xlabel("Year", fontsize=12)
 ax.set_ylabel("Sea Level Equivalent (mm SLE)", fontsize=12)

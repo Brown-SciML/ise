@@ -124,7 +124,7 @@ basin_runoff = np.array([
 ])
 
 # True ISMIP6 SLE projection for this exact run (mm SLE, cumulative from 2015).
-# Source: AWI_ISSM1_exp05_sector1 (miroc5_rcp85) — extracted from 
+# Source: AWI_ISSM1_exp05_sector1 (miroc5_rcp85) — extracted from
 # huggingface pvankatwyk/iseflow-datasets/iseflow-datasets/v1.1.0/GrIS/dataset.csv
 ismip6_sle = np.array([
      0.        , -0.03578781, -0.04325147, -0.03904908, -0.09448338, -0.14777899,
@@ -236,8 +236,9 @@ ax.fill_between(
     label=r"Epistemic uncertainty (2$\sigma$)",
 )
 ax.plot(years, pred, color="#d62728", linewidth=2.0, label="ISEFlow prediction")
-ax.plot(years, ismip6_sle, color="#2ca02c", linewidth=1.5, linestyle="--",
-        label="ISMIP6 (AWI_ISSM1)")
+ax.plot(
+    years, ismip6_sle, color="#2ca02c", linewidth=1.5, linestyle="--", label="ISMIP6 (AWI_ISSM1)"
+)
 
 ax.set_xlabel("Year", fontsize=12)
 ax.set_ylabel("Sea Level Equivalent (mm SLE)", fontsize=12)
