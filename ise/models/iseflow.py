@@ -422,8 +422,12 @@ class ISEFlow(torch.nn.Module):
             try:
                 scaler_x_path = self.scaler_path.replace("scaler_y", "scaler_X")
                 shutil.copy(scaler_x_path, os.path.join(save_dir, "scaler_X.pkl"))
-            except:
-                pass
+            except (FileNotFoundError, OSError):
+                warnings.warn(
+                    f"Could not copy input scaler (scaler_X) to {save_dir}. "
+                    "Inferred path did not exist. Pass a separate scaler_X path if needed.",
+                    UserWarning,
+                )
 
     @staticmethod
     def load(
