@@ -86,7 +86,7 @@ class EmulatorDataset(Dataset):
                 raise ValueError(
                     "Projection length must be a single integer or a tuple of two integers."
                 )
-        if X.shape[0] < projection_length:
+        if X.shape[0] < projection_length and projection_length == 86:
             warnings.warn(
                 f"Full projections of {projection_length} timesteps are not present in the dataset. This may lead to unexpected behavior."
             )

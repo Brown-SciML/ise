@@ -13,6 +13,7 @@ This project uses **two independent version numbers**:
 
 ## [Unreleased]
 
+- Polish pass for the upcoming release: `ISEFlow.predict` documents the monotone-scaler assumption; `EmulatorDataset` small-fixture warning now only fires for the default 86-step projection length; `ISEFlow_AIS.test`/`ISEFlow_GrIS.test` docstrings removed the unused `y_test` arg; `DeepEnsemble.fit` default `early_stopping` flipped to `True` to match `ISEFlow.fit`; removed commented-out code in `feature_engineer.py`, `normalizing_flow.py`, `loss.py`, and `metrics.py`; narrowed bare `except: pass` blocks in `process.py` to `(ValueError, KeyError)`; added regression test for v1.0.0 inputs with `standard_melt_type=None`.
 - `ISEFlow.save()` now emits a `UserWarning` (instead of silently swallowing the error) when the inferred `scaler_X` path does not exist alongside `scaler_y`. The bare `except: pass` was replaced with `except (FileNotFoundError, OSError)`.
 - Removed `torch.manual_seed(np.random.randint(0, 100000))` from `ISEFlow.fit()`. This call silently overrode any seed the caller had set with a random one, defeating reproducibility.
 - Fixed four LSTM issues: `save()` now defaults `sequence_length` to 5 when unset instead of `TypeError`-ing on `int(None)`; `forward()` drops the manual zero h0/c0 construction (nn.LSTM does this internally) and the unnecessary `requires_grad_()`; the dropout module that was being constructed but never applied is now wired in between `linear1/relu` and `linear_out`; `predict()` no longer toggles the model back to train mode after inference.

@@ -210,7 +210,7 @@ class DeepEnsemble(nn.Module):
         y_val=None,
         save_checkpoints=True,
         checkpoint_path="checkpoint_ensemble",
-        early_stopping=False,
+        early_stopping=True,
         epochs=100,
         batch_size=128,
         sequence_length=5,
@@ -230,7 +230,7 @@ class DeepEnsemble(nn.Module):
             y_val (Tensor, optional): Validation target data for early stopping.
             save_checkpoints (bool, optional): Whether to save checkpoints during training. Defaults to True.
             checkpoint_path (str, optional): Path prefix for saving model checkpoints.
-            early_stopping (bool, optional): Whether to use early stopping. Defaults to False.
+            early_stopping (bool, optional): Whether to use early stopping. Defaults to True.
             epochs (int, optional): Number of training epochs. Defaults to 100.
             batch_size (int, optional): Batch size for training. Defaults to 128.
             sequence_length (int, optional): Length of input sequences. Defaults to 5.

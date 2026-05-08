@@ -258,3 +258,18 @@ class TestVersionContract:
         # The mrro_anomaly column has been filled (no NaNs) — the lookup
         # filled in real climatological values.
         assert not df["mrro_anomaly"].isna().any()
+
+    def test_v1_0_0_inputs_accept_none_standard_melt_type(self):
+        """ISEFlowAISInputs must not raise when standard_melt_type=None and
+        ocean_forcing_type='open' — guards against None-valued optional config
+        fields being rejected during validation.
+        """
+        inputs = _ais_inputs(
+            version="v1.0.0",
+            ocean_forcing_type="open",
+            standard_melt_type=None,
+            mrro_anomaly=np.zeros(PROJ_LEN),
+        )
+        # Validation passed — to_df() must work without error too
+        df = inputs.to_df()
+        assert df.shape[0] == PROJ_LEN

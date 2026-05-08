@@ -377,9 +377,6 @@ class NormalizingFlow(nn.Module):
         """
 
         x = to_tensor(x).to(self.device)
-        # latent_constant_tensor = torch.ones((x.shape[0], 1)).to(self.device) * latent_constant
-        # z, _ = self.t(latent_constant_tensor.float(), context=x)
-
         z = self.base_distribution.sample(latent_dim, context=x).squeeze(
             2
         )  # collapse third 1-d dimension

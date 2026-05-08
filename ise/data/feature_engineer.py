@@ -299,19 +299,8 @@ class FeatureEngineer:
         # Store scalers in the class instance for potential future use
         self.scaler_X, self.scaler_y = scaler_X, scaler_y
 
-        # # Fit and transform X
-        # if isinstance(self.X, pd.DataFrame):
-        #     X_data = self.X.values
-        # elif isinstance(self.X, np.ndarray):
-        #     X_data = self.X
-        # else:
-        #     raise TypeError("X must be either a pandas DataFrame or a NumPy array.")
-
         scaler_X.fit(self.X)
         X_scaled = scaler_X.transform(self.X)
-
-        # categorical_cols = [x for x in self.X.columns if len(set(self.X[x])) <= 2]
-        # self.X[categorical_cols] = self.X[categorical_cols].astype('category')
 
         # Fit and transform y
         if isinstance(self.y, pd.DataFrame):
@@ -829,10 +818,6 @@ def split_training_data(
         int(len(total_ids) * train_size) : int(len(total_ids) * (train_size + val_size))
     ]
     test_ids = total_ids[int(len(total_ids) * (train_size + val_size)) :]
-
-    # train_ids = list(pd.read_csv(r'/oscar/scratch/pvankatw/datasets/sectors/GrIS/train.csv').id.unique())
-    # val_ids = list(pd.read_csv(r'/oscar/scratch/pvankatw/datasets/sectors/GrIS/val.csv').id.unique())
-    # test_ids = list(pd.read_csv(r'/oscar/scratch/pvankatw/datasets/sectors/GrIS/test.csv').id.unique())
 
     split_data = {
         "train_ids": list(train_ids),

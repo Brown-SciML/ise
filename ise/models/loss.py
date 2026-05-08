@@ -189,7 +189,6 @@ class WeightedMSELoss(torch.nn.Module):
         deviation = torch.abs(target - self.data_mean)
 
         # Scale deviations by the standard deviation to normalize them
-        # normalized_deviation = torch.tensor(deviation / self.data_std, dtype=torch.float32, device=self.device)
         normalized_deviation = deviation / self.data_std
 
         # Compute weights: increase penalty for extreme values
@@ -387,7 +386,6 @@ class GridCriterion(torch.nn.Module):
         )
         return torch.mean(total_variation)
 
-    # def spatial_loss(self, true, predicted, smoothness_weight=0.001):
     def forward(self, true, predicted, smoothness_weight=0.001):
         """
         Computes the final loss by combining pixel-wise MSE and TVR.
@@ -408,13 +406,6 @@ class GridCriterion(torch.nn.Module):
             predicted,
         )
         return pixelwise_mse + smoothness_weight * tvr
-
-    # def forward(self, true, predicted, x, y, flow, predictor_weight=0.5, nf_weight=0.5,):
-    #     if predictor_weight + nf_weight != 1:
-    #         raise ValueError("The sum of predictor_weight and nf_weight must be 1")
-    #     predictor_loss = self.spatial_loss(true, predicted, smoothness_weight=0.2)
-    #     nf_loss = -flow.log_prob(inputs=y, context=x)
-    #     return predictor_weight*predictor_loss + nf_weight*nf_loss
 
 
 class WeightedPCALoss(torch.nn.Module):

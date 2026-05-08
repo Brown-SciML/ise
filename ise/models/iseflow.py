@@ -334,6 +334,8 @@ class ISEFlow(torch.nn.Module):
         predictions, uncertainties = self.forward(x)
 
         # Inverse transform predictions first
+        # The upper/lower-then-average pattern below is correct only for monotone scalers
+        # (StandardScaler, MinMaxScaler, RobustScaler — all linear), where f(a±b) = f(a)±f'*b.
         unscaled_predictions = output_scaler.inverse_transform(predictions.reshape(-1, 1))
 
         # Calculate uncertainty bounds in scaled space
@@ -744,7 +746,6 @@ class ISEFlow_AIS(ISEFlow):
 
         Args:
             X_test (array-like): Test feature matrix.
-            y_test (array-like): Test target values.
 
         Returns:
             tuple: A tuple containing:
@@ -930,7 +931,6 @@ class ISEFlow_GrIS(ISEFlow):
 
         Args:
             X_test (array-like): Test feature matrix.
-            y_test (array-like): Test target values.
 
         Returns:
             tuple: A tuple containing:

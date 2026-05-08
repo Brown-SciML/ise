@@ -95,8 +95,6 @@ def sum_by_sector(array, grid_file):
         num_timesteps = 1
         array = array.reshape((1, array.shape[0], array.shape[1]))
 
-    # if len(array.shape) == 3:
-    #     grids = grids.expand_dims(dim={'time': num_timesteps})
     sectors = grids[sector_name].values
 
     ice_sheet = "AIS" if 761 in array.shape else "GIS"
