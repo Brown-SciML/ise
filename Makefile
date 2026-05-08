@@ -12,7 +12,7 @@ format:
 	ruff format . && ruff check --fix .
 
 type:
-	mypy ise/
+	dmypy run -- ise/
 
 docs:
 	cd docs && make html
