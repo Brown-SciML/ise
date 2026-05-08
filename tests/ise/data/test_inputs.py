@@ -331,3 +331,56 @@ class TestGrISFromAbsoluteForcings:
         assert np.all(np.abs(inputs.aSMB) < 1.0)
         # aST passes through as °C — should be on the order of single digits
         np.testing.assert_allclose(inputs.aST, st_raw - custom_clim["st"], rtol=1e-9)
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for inputs.py validation fixes
+# ---------------------------------------------------------------------------
+
+
+def test_ais_inputs_accepts_python_list_year():
+    """Passing year as a Python list must not raise TypeError."""
+    ISEFlowAISInputs(**_ais_kwargs(year=list(range(2015, 2101))))
+
+
+def test_ais_inputs_rejects_false_melt_value():
+    """'False' was never a valid melt_in_floating_cells encoding; must raise ValueError."""
+    with pytest.raises(ValueError, match="melt_in_floating_cells"):
+        ISEFlowAISInputs(**_ais_kwargs(melt_in_floating_cells="False"))
+
+
+def test_gris_surface_thickness_error_message():
+    """The surface_thickness validator error must mention 'surface_thickness', not 'bed'."""
+    rng = np.random.default_rng(0)
+    base = dict(
+        year=YEAR.copy(),
+        sector=2,
+        aST=rng.random(PROJ_LEN),
+        aSMB=rng.random(PROJ_LEN) * 1e-5,
+        ocean_thermal_forcing=rng.random(PROJ_LEN),
+        basin_runoff=rng.random(PROJ_LEN) * 500,
+        ice_shelf_fracture=False,
+        ocean_sensitivity="medium",
+        standard_ocean_forcing=True,
+        initial_year=2005,
+        numerics="fd",
+        ice_flow_model="ho",
+        initialization="cyc/dai",
+        initial_smb="mar",
+        velocity="joughin",
+        bedrock_topography="bamber",
+        surface_thickness="invalid_value",
+        geothermal_heat_flux="g",
+        res_min=1.0,
+        res_max=5.0,
+    )
+    with pytest.raises(ValueError) as exc_info:
+        ISEFlowGrISInputs(**base)
+    assert "surface_thickness" in str(exc_info.value)
+    assert "bed" not in str(exc_info.value)
+
+
+def test_ais_post_init_is_idempotent():
+    """Calling __post_init__ a second time on a valid AIS input must not raise."""
+    inputs = ISEFlowAISInputs(**_ais_kwargs())
+    inputs.__post_init__()  # second call — must not KeyError or crash
