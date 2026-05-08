@@ -6,12 +6,15 @@ import pytest
 import torch
 from sklearn.preprocessing import StandardScaler as SkStandardScaler
 
+from sklearn.preprocessing import MinMaxScaler
+
 from ise.utils.functions import (
     check_input,
     get_all_filepaths,
     get_X_y,
     to_tensor,
     undummify,
+    unscale_column,
     unscale_output,
 )
 
@@ -208,3 +211,28 @@ class TestGetXy:
         assert "feature2" in X.columns
         # y is the sle column
         np.testing.assert_array_equal(y["sle"].values, df["sle"].values)
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for unscale_column fixes
+# ---------------------------------------------------------------------------
+
+
+def test_unscale_column_year_round_trip():
+    """unscale_column should recover 2015-2100 after MinMaxScaler round-trip."""
+    years = np.arange(2015, 2101)
+    scaler = MinMaxScaler().fit(years.reshape(-1, 1))
+    scaled_years = scaler.transform(years.reshape(-1, 1)).flatten()
+    df = pd.DataFrame({"year": scaled_years})
+    result = unscale_column(df, column="year")
+    np.testing.assert_array_equal(result["year"].values, years)
+
+
+def test_unscale_column_gris_sectors():
+    """unscale_column with ice_sheet='GrIS' should recover 1-6 sector range."""
+    sectors = np.arange(1, 7)
+    scaler = MinMaxScaler().fit(sectors.reshape(-1, 1))
+    scaled = scaler.transform(sectors.reshape(-1, 1)).flatten()
+    df = pd.DataFrame({"sectors": scaled})
+    result = unscale_column(df, column="sectors", ice_sheet="GrIS")
+    np.testing.assert_array_equal(result["sectors"].values, sectors)

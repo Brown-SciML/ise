@@ -13,6 +13,7 @@ This project uses **two independent version numbers**:
 
 ## [Unreleased]
 
+- Fixed `unscale_column` year/sector ranges: year scaler was fitting over `np.arange(2016, 2101)` (one year short); fixed to `2015-2100`. Sector scaler was hard-coded to AIS (1–18); now accepts an `ice_sheet` kwarg (default `"AIS"`) so GrIS users get the correct 1–6 range. `unscale_input` docstring corrected to reflect that only `pd.DataFrame` input is supported.
 - Fixed five `feature_engineer.py` issues: `__init__` no longer wipes `split_dataset=True` results to `None` three lines after creating them; `split_training_data` now uses `np.random.default_rng(random_state)` honouring the documented reproducibility guarantee; `scale_data(X=..., y=...)` initialises `dropped_data` so the explicit-X branch no longer `NameError`s at the post-scale concat; `add_lag_variables` warns when the input length is not divisible by `projection_length` (was silently dropping trailing rows); corrected a misleading comment in the standalone `scale_data` helper.
 - Fixed `sum_by_sector` `UnboundLocalError` when `grid_file` is an `xr.Dataset`. The `xr.Dataset` branch read `grids.Description` but `grids` was only assigned in the `str` branch. Now binds `grids = grid_file` and reads `Description` via `attrs.get()` for safety.
 - `ISEFlow_GrIS_DE_v1_0_0` and `ISEFlow_GrIS_NF_v1_0_0` now emit `DeprecationWarning` on instantiation, matching the behaviour of their AIS counterparts.

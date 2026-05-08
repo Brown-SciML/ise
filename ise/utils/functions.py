@@ -458,7 +458,11 @@ def calculate_distribution_metrics(
     return distribution_metrics
 
 
-def unscale_column(dataset: pd.DataFrame, column: str | list[str] = "year"):
+def unscale_column(
+    dataset: pd.DataFrame,
+    column: str | list[str] = "year",
+    ice_sheet: str = "AIS",
+):
     """
     Unscales specified columns back to their original range using known value distributions.
 
@@ -469,6 +473,8 @@ def unscale_column(dataset: pd.DataFrame, column: str | list[str] = "year"):
         dataset (pd.DataFrame): Dataset containing the scaled columns.
         column (str or list, optional): Column(s) to be unscaled.
             Can be 'year', 'sectors', or a list containing both. Defaults to "year".
+        ice_sheet (str, optional): 'AIS' (18 sectors) or 'GrIS' (6 basins).
+            Only relevant when 'sectors' is in `column`. Defaults to "AIS".
 
     Returns:
         pd.DataFrame: Dataset with the specified column(s) unscaled.
@@ -478,14 +484,15 @@ def unscale_column(dataset: pd.DataFrame, column: str | list[str] = "year"):
         column = [column]
 
     if "sectors" in column:
-        sectors_scaler = MinMaxScaler().fit(np.arange(1, 19).reshape(-1, 1))
+        n_sectors = 18 if ice_sheet.upper() == "AIS" else 6
+        sectors_scaler = MinMaxScaler().fit(np.arange(1, n_sectors + 1).reshape(-1, 1))
         dataset["sectors"] = sectors_scaler.inverse_transform(
             np.array(dataset.sectors).reshape(-1, 1)
         )
         dataset["sectors"] = round(dataset.sectors).astype(int)
 
     if "year" in column:
-        year_scaler = MinMaxScaler().fit(np.arange(2016, 2101).reshape(-1, 1))
+        year_scaler = MinMaxScaler().fit(np.arange(2015, 2101).reshape(-1, 1))
         dataset["year"] = year_scaler.inverse_transform(np.array(dataset.year).reshape(-1, 1))
         dataset["year"] = round(dataset.year).astype(int)
 
@@ -861,11 +868,11 @@ def unscale_input(X, scaler_path):
     Unscales input features using a previously saved MinMaxScaler.
 
     Args:
-        X (np.ndarray or pd.DataFrame): The scaled input features.
+        X (pd.DataFrame): The scaled input features.
         scaler_path (str): Path to the saved MinMaxScaler object.
 
     Returns:
-        np.ndarray or pd.DataFrame: The unscaled input features.
+        pd.DataFrame: The unscaled input features.
     """
     if not isinstance(X, pd.DataFrame):
         raise NotImplementedError("Only pandas DataFrame input is currently supported.")
