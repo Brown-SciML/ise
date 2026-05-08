@@ -205,7 +205,6 @@ def test_lstm_dropout_is_applied_in_forward():
 def test_lstm_predict_leaves_model_in_eval_mode(small_lstm, random_batch):
     """predict() must leave the model in eval mode, not flip back to train."""
     small_lstm.eval()
-    import numpy as np
     X = random_batch.numpy().reshape(-1, 8)
     small_lstm.predict(X, sequence_length=5)
     assert not small_lstm.training

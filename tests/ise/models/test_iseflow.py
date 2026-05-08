@@ -1,4 +1,3 @@
-import warnings
 
 import numpy as np
 import pytest
@@ -206,6 +205,7 @@ class TestSmoothProjections:
 def test_fit_does_not_reseed_torch_rng():
     """ISEFlow.fit must not contain the torch.manual_seed(np.random.randint(...)) call."""
     import inspect
+
     from ise.models.iseflow import ISEFlow
     source = inspect.getsource(ISEFlow.fit)
     assert "torch.manual_seed(np.random.randint" not in source

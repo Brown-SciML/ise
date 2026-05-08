@@ -4,9 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
-from sklearn.preprocessing import StandardScaler as SkStandardScaler
-
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler as SkStandardScaler
 
 from ise.utils.functions import (
     check_input,
