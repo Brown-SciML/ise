@@ -127,8 +127,8 @@ class WeightedGridLoss(torch.nn.Module):
             Tensor: The total computed loss.
         """
 
-        true = torch.tensor(true, dtype=torch.float32, device=self.device)
-        predicted = torch.tensor(predicted, dtype=torch.float32, device=self.device)
+        true = true.to(self.device).float() if isinstance(true, torch.Tensor) else torch.as_tensor(true, dtype=torch.float32, device=self.device)
+        predicted = predicted.to(self.device).float() if isinstance(predicted, torch.Tensor) else torch.as_tensor(predicted, dtype=torch.float32, device=self.device)
 
         # Determine weights based on extreme values
         if extreme_value_threshold is not None:
@@ -267,12 +267,12 @@ class WeightedMSEPCALoss(torch.nn.Module):
 
         # If custom weights are provided, multiply them by the calculated weights
         if self.custom_weights is not None:
-            # Expand custom weights to match batch size if necessary
-            if self.custom_weights.dim() == 1:
-                self.custom_weights = self.custom_weights.unsqueeze(0)  # Make it a 2D tensor
-            if self.custom_weights.shape != weights.shape:
+            cw = self.custom_weights
+            if cw.dim() == 1:
+                cw = cw.unsqueeze(0)
+            if cw.shape != weights.shape:
                 raise ValueError("Custom weights shape must match input/target shape.")
-            weights *= self.custom_weights
+            weights = weights * cw
 
         # Compute the squared error for each element in the batch without reducing
         squared_error = (input - target) ** 2
