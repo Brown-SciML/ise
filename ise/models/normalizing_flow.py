@@ -432,8 +432,8 @@ class NormalizingFlow(nn.Module):
             "input_size": self.num_input_features,
             "output_size": self.num_predicted_sle,
             "device": self.device,
-            "best_loss": self.best_loss,
-            "epochs_trained": self.epochs_trained,
+            "best_loss": float(getattr(self, "best_loss", float("inf"))),
+            "epochs_trained": int(getattr(self, "epochs_trained", 0)),
             "flow_hidden_size": self.flow_hidden_features,
             "num_flows": self.num_flow_transforms,
         }

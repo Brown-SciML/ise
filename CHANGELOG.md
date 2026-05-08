@@ -13,6 +13,7 @@ This project uses **two independent version numbers**:
 
 ## [Unreleased]
 
+- Fixed `NormalizingFlow.save()` crash when called after `fit(save_checkpoints=False)`. `save()` read `self.best_loss` and `self.epochs_trained` directly, but those attributes are only set when a checkpoint is written. Now uses `getattr` defaults to match `DeepEnsemble.save()`.
 - Fixed `EmulatorDataset.__getitem__` crash on 3-D `(N_proj, T, F)` input. `__init__` set `num_features` for the 3-D branch but `features` for the 2-D branch; `__getitem__` only used the latter, raising `AttributeError` on first index lookup. Standardised on `num_features` in both branches (`self.features` retained as an alias).
 
 - Fixed `ISEFlow.fit()` so it can actually train. The internal call to `NormalizingFlow.fit()` was passing positional arguments that no longer matched the NF signature (`X_val`/`y_val` were inserted in front of `epochs`/`batch_size` at some point), causing every fresh training run to crash before the first epoch. Switched to keyword arguments.

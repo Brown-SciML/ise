@@ -155,3 +155,26 @@ class TestNormalizingFlowSave:
         loaded = NormalizingFlow.load(path)
         z = loaded.get_latent(small_features)
         assert z.shape == (10, 1)
+
+    def test_save_after_no_checkpoint_train(self, tmp_path):
+        """save() must not crash when fit() ran with save_checkpoints=False."""
+        import json
+
+        nf = NormalizingFlow(input_size=5, output_size=1, num_flow_transforms=2, flow_hidden_features=8)
+        nf.fit(
+            torch.randn(10, 5),
+            torch.randn(10, 1),
+            epochs=1,
+            batch_size=8,
+            save_checkpoints=False,
+            verbose=False,
+        )
+        path = str(tmp_path / "nf_no_ckpt.pth")
+        nf.save(path)
+        assert os.path.isfile(path)
+        meta_path = path + "_metadata.json"
+        assert os.path.isfile(meta_path)
+        with open(meta_path) as f:
+            meta = json.load(f)
+        assert "best_loss" in meta
+        assert "epochs_trained" in meta
