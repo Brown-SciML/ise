@@ -364,3 +364,48 @@ class TestScaleDataModuleLevel:
         # Scaler columns invert exactly
         recovered = scaler.inverse_transform(scaled[["pr_anomaly", "smb_anomaly"]].values)
         np.testing.assert_allclose(recovered, df[["pr_anomaly", "smb_anomaly"]].values, rtol=1e-9)
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for feature_engineer.py fixes
+# ---------------------------------------------------------------------------
+
+
+def _make_projection_df(n_ids=10, proj_len=86):
+    """Build a minimal DataFrame with `id` and `sle` columns suitable for split tests."""
+    rows = []
+    for id_ in range(1, n_ids + 1):
+        for t in range(proj_len):
+            rows.append({"id": id_, "year": 2015 + t, "feature1": float(t), "sle": float(t) * 0.01})
+    return pd.DataFrame(rows)
+
+
+def test_feature_engineer_split_dataset_returns_non_none_splits():
+    """split_dataset=True must produce non-None, non-empty train/val/test."""
+    df = _make_projection_df(n_ids=10)
+    fe = FeatureEngineer(ice_sheet="AIS", data=df, split_dataset=True)
+    assert fe.train is not None
+    assert fe.val is not None
+    assert fe.test is not None
+    assert len(fe.train) > 0
+
+
+def test_split_training_data_random_state_is_reproducible():
+    """split_training_data with the same random_state must return the same ids."""
+    df = _make_projection_df(n_ids=20)
+    np.random.seed(0)
+    train1, val1, test1 = split_training_data(df, 0.7, 0.15, 0.15, random_state=42)
+    np.random.seed(99)
+    train2, val2, test2 = split_training_data(df, 0.7, 0.15, 0.15, random_state=42)
+    assert set(train1["id"].unique()) == set(train2["id"].unique())
+
+
+def test_scale_data_with_explicit_X_y_does_not_raise():
+    """scale_data(X=..., y=...) must not NameError on the dropped_data concat."""
+    df = _make_projection_df(n_ids=5)
+    fe = FeatureEngineer(ice_sheet="AIS", data=df, split_dataset=False)
+    X_df = df[["feature1"]].copy()
+    y_df = df[["sle"]].copy()
+    X_scaled, y_scaled = fe.scale_data(X=X_df, y=y_df)
+    assert X_scaled is not None
+    assert y_scaled is not None
