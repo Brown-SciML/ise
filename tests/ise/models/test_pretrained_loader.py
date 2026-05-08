@@ -136,8 +136,7 @@ class TestVariableLists:
         # Duplicates here would cause `data.loc[:, ~data.columns.duplicated()]` in
         # process() to silently drop the second occurrence, shifting downstream features.
         assert len(set(variables)) == len(variables), (
-            f"{name} contains duplicate columns: "
-            f"{[v for v in variables if variables.count(v) > 1]}"
+            f"{name} contains duplicate columns: {[v for v in variables if variables.count(v) > 1]}"
         )
 
     def test_AIS_v1_0_0_includes_mrro(self):

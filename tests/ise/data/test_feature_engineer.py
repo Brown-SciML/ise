@@ -363,6 +363,4 @@ class TestScaleDataModuleLevel:
         np.testing.assert_array_equal(scaled["non_scaled"].values, df["non_scaled"].values)
         # Scaler columns invert exactly
         recovered = scaler.inverse_transform(scaled[["pr_anomaly", "smb_anomaly"]].values)
-        np.testing.assert_allclose(
-            recovered, df[["pr_anomaly", "smb_anomaly"]].values, rtol=1e-9
-        )
+        np.testing.assert_allclose(recovered, df[["pr_anomaly", "smb_anomaly"]].values, rtol=1e-9)

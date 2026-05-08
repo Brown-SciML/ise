@@ -358,6 +358,10 @@ class LSTM(nn.Module):
                         )
                 else:
                     average_batch_loss = sum(batch_losses) / len(batch_losses)
+                    # Without validation, checkpoint on training loss so the
+                    # post-training "load best model" step has a file to read.
+                    if save_checkpoints:
+                        checkpointer(average_batch_loss, epoch)
                     if verbose:
                         print(
                             f"[epoch/total]: [{epoch}/{epochs}], train loss: {average_batch_loss}"
@@ -368,8 +372,10 @@ class LSTM(nn.Module):
 
         self.trained = True
 
-        # loads best model
-        if save_checkpoints:
+        # Load best model — only if a checkpoint was actually written. Very
+        # short training runs (e.g. epochs=0 or all epochs already complete via
+        # checkpoint resume) can finish with no checkpoint file on disk.
+        if save_checkpoints and os.path.exists(checkpoint_path):
             if self.wandb_run:
                 model_name = checkpoint_path.split("/")[-1]
                 artifact = wandb.Artifact(model_name, type="model")

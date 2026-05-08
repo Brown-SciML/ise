@@ -520,7 +520,13 @@ class ISEFlowAISInputs:
                 setattr(self, key, arg_map[key][value])
 
     def _convert_arrays(self):
-        """Coerce all forcing arrays to ``numpy.ndarray``."""
+        """Coerce all forcing arrays to ``numpy.ndarray``.
+
+        Optional forcings (currently ``mrro_anomaly``) are left as ``None`` if
+        not provided so downstream callers can detect their absence with a
+        plain ``is None`` check. Coercing ``None`` via ``np.array(None)`` would
+        produce a 0-d object array that breaks the documented contract.
+        """
 
         forcings = (
             "year",
@@ -536,6 +542,10 @@ class ISEFlowAISInputs:
 
         for arr_name in forcings:
             forcing_array = getattr(self, arr_name)
+
+            # Preserve None for optional fields; only coerce real values.
+            if forcing_array is None:
+                continue
 
             try:
                 setattr(self, arr_name, np.array(forcing_array))

@@ -47,11 +47,11 @@ def get_model_dir(version: str, ice_sheet: str) -> str:
     local_fallback = os.path.join(_LOCAL_PRETRAINED_DIR, "ISEFlow", subfolder)
 
     try:
-        with disable_progress_bars():
-            local_dir = snapshot_download(
-                repo_id=HF_REPO_ID,
-                allow_patterns=[f"{subfolder}/*"],
-            )
+        disable_progress_bars()
+        local_dir = snapshot_download(
+            repo_id=HF_REPO_ID,
+            allow_patterns=[f"{subfolder}/*"],
+        )
         return os.path.join(local_dir, subfolder)
     except Exception:
         # Fall back to bundled weights (local dev or air-gapped HPC).

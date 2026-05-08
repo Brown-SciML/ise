@@ -74,9 +74,9 @@ import shutil
 import warnings
 
 import numpy as np
-from sklearn.exceptions import InconsistentVersionWarning
 import pandas as pd
 import torch
+from sklearn.exceptions import InconsistentVersionWarning
 from torch import nn
 
 from ise.data import feature_engineer as fe
@@ -642,7 +642,10 @@ class ISEFlow_AIS(ISEFlow):
             # scale (the v1.0.0 scaler was fit on 99 cols including `outlier`) -> drop
             # `outlier`. The v1.0.0 scaler has no feature_names_in_, so master's
             # name-based scale_data() can't be used here.
-            year_mean_map = {year: mean for year, mean in enumerate(mrro_means)}
+            # Years in `data` are in model encoding (1..86) per
+            # ISEFlowAISInputs._check_inputs (calendar 2015..2100 → 1..86),
+            # so the lookup map must be keyed 1..86, not 0..85.
+            year_mean_map = {year: mean for year, mean in enumerate(mrro_means, start=1)}
             data["mrro_anomaly"] = data.apply(
                 lambda row: (
                     year_mean_map[row["year"]]

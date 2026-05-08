@@ -194,9 +194,7 @@ class TestPretrainedPredictAIS:
     def test_uncertainty_total_equals_epi_plus_ale(self, ais_predict_result):
         """The contract documented in iseflow.py: total = epistemic + aleatoric."""
         _, unc = ais_predict_result
-        np.testing.assert_allclose(
-            unc["total"], unc["epistemic"] + unc["aleatoric"], rtol=1e-5
-        )
+        np.testing.assert_allclose(unc["total"], unc["epistemic"] + unc["aleatoric"], rtol=1e-5)
 
     def test_uncertainty_non_negative(self, ais_predict_result):
         _, unc = ais_predict_result
@@ -216,9 +214,7 @@ class TestPretrainedPredictGrIS:
 
     def test_uncertainty_total_equals_epi_plus_ale(self, gris_predict_result):
         _, unc = gris_predict_result
-        np.testing.assert_allclose(
-            unc["total"], unc["epistemic"] + unc["aleatoric"], rtol=1e-5
-        )
+        np.testing.assert_allclose(unc["total"], unc["epistemic"] + unc["aleatoric"], rtol=1e-5)
 
 
 # ---------------------------------------------------------------------------
@@ -228,25 +224,37 @@ class TestPretrainedPredictGrIS:
 
 @skip_no_weights
 class TestVersionContract:
-    def test_v1_0_0_process_fails_without_mrro_anomaly(self):
-        """ISEFlow_AIS v1.0.0's process() must reject inputs without mrro_anomaly.
+    def test_v1_0_0_process_raises_when_mrro_anomaly_missing(self):
+        """ISEFlow_AIS v1.0.0's process() must reject inputs without mrro_anomaly
+        with the documented ValueError.
 
         Guards the v1.0.0 vs v1.1.0 codepath split in iseflow.py — the defining
         behavioural difference between the two versions.
-
-        Note: the docstring promises ValueError, but ``ISEFlowAISInputs.__post_init__``
-        coerces ``None`` to ``np.array(None, dtype=object)``, which means
-        ``inputs.mrro_anomaly is None`` returns False at the line 530 guard. The
-        actual failure happens deeper, with KeyError, when the v1.0.0 path tries
-        to fill NaNs from the year-mean lookup. Either way it raises and the
-        canonical contract holds: v1.0.0 cannot run without mrro_anomaly.
         """
         model = ISEFlow_AIS(version="v1.0.0")
-        # mrro_anomaly omitted (defaults to None)
         inputs = _ais_inputs(version="v1.0.0", mrro_anomaly=None)
-        with pytest.raises((ValueError, KeyError)):
+        with pytest.raises(ValueError, match="mrro_anomaly"):
             model.process(inputs)
 
     def test_invalid_version_raises(self):
         with pytest.raises(NotImplementedError, match="not implemented"):
             ISEFlow_AIS(version="v9.9.9")
+
+    def test_v1_0_0_process_handles_nan_mrro_via_year_mean_fallback(self):
+        """v1.0.0 path must fill NaN values in mrro_anomaly via the per-year
+        climatological mean lookup, including the last year (model encoding 86).
+
+        Regression test for the year_mean_map off-by-one: previously the map was
+        keyed 0..85 while ``data['year']`` is 1..86 (model encoding), so any NaN
+        in the last year crashed with ``KeyError: 86``.
+        """
+        model = ISEFlow_AIS(version="v1.0.0")
+        # Provide mrro_anomaly with NaN at every year — exercises every key in
+        # year_mean_map including the previously-broken last-year entry.
+        mrro_with_nans = np.full(PROJ_LEN, np.nan)
+        inputs = _ais_inputs(version="v1.0.0", mrro_anomaly=mrro_with_nans)
+        df = model.process(inputs)  # must not raise
+        assert df.shape[0] == PROJ_LEN
+        # The mrro_anomaly column has been filled (no NaNs) — the lookup
+        # filled in real climatological values.
+        assert not df["mrro_anomaly"].isna().any()

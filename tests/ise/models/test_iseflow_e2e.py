@@ -8,6 +8,7 @@ shape-only mocked tests in ``test_iseflow.py`` cannot:
 - The ``trained`` flag composition across submodules
 - Save/load round-trip preserving NF + DE weights and DE forward output
 - ISEFlow construction without a previously-loaded NormalizingFlow
+- ``DeepEnsemble.save()`` is repeatable on the same trained model
 
 Note that ``NormalizingFlow.get_latent()`` and ``NormalizingFlow.aleatoric()``
 are stochastic by design (they sample from a learned distribution), so
@@ -18,19 +19,8 @@ instead.
 Test sizing
 -----------
 Tiny architecture (NF: 2 transforms, 8 hidden; DE: 2 LSTMs with 8 hidden), 2
-projections × 86 timesteps, 2 epochs each. Fixtures are **module-scoped** so
-the real fit + save runs once and is reused across tests.
-
-Notes on quirks of the training/save pipeline
----------------------------------------------
-- NF.fit's loop guard is ``start_epoch < epochs``; with start_epoch=1, epochs=1
-  is skipped. We use 2 epochs.
-- LSTM.fit only calls its checkpointer inside ``if validate:``; without
-  ``X_val/y_val`` the checkpoint never gets written, then the post-training
-  load at line 379 crashes. We pass a small validation split.
-- ``DeepEnsemble.save()`` removes member checkpoint files as a side effect —
-  so save() can only be invoked once on a given trained model. We do one
-  save in a session-shared fixture and reuse the resulting save_dir.
+projections × 86 timesteps, 1 epoch each. The ``fitted_iseflow`` fixture is
+**module-scoped** so the real fit runs once and is reused across tests.
 """
 
 import json
@@ -91,18 +81,12 @@ def fitted_iseflow(synthetic_data, tmp_path_factory):
     X, y = synthetic_data
     model = _build_untrained_iseflow()
     ckpt_dir = tmp_path_factory.mktemp("ckpt")
-    # Validation split required so each LSTM's checkpointer actually fires
-    # (see module docstring). 2 epochs required because of NF.fit's loop guard.
-    X_val = X[:PROJ_LEN]
-    y_val = y[:PROJ_LEN]
     model.fit(
         X,
         y,
-        nf_epochs=2,
-        de_epochs=2,
+        nf_epochs=1,
+        de_epochs=1,
         batch_size=32,
-        X_val=X_val,
-        y_val=y_val,
         save_checkpoints=True,
         checkpoint_path=str(ckpt_dir / "ckpt"),
         early_stopping=False,
@@ -113,12 +97,7 @@ def fitted_iseflow(synthetic_data, tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def saved_iseflow_dir(fitted_iseflow, tmp_path_factory):
-    """Single shared save directory.
-
-    ``DeepEnsemble.save()`` deletes the source LSTM checkpoint files as a
-    side effect, so the ISEFlow can only be saved once. All save-inspection
-    and load tests reuse this same directory.
-    """
+    """Single shared save directory used by save-inspection and load tests."""
     save_dir = str(tmp_path_factory.mktemp("saved_iseflow"))
     feat_names = [f"f{i}" for i in range(N_FEATURES)]
     fitted_iseflow.save(save_dir, input_features=feat_names)
@@ -223,7 +202,9 @@ class TestISEFlowSaveLoad:
 
         # Per-member weight equality
         for i, (orig_m, load_m) in enumerate(
-            zip(fitted_iseflow.deep_ensemble.ensemble_members, loaded.deep_ensemble.ensemble_members)
+            zip(
+                fitted_iseflow.deep_ensemble.ensemble_members, loaded.deep_ensemble.ensemble_members
+            )
         ):
             for name, p_orig in orig_m.state_dict().items():
                 p_load = load_m.state_dict()[name]
@@ -238,6 +219,20 @@ class TestISEFlowSaveLoad:
         with torch.no_grad():
             mean_orig, _ = fitted_iseflow.deep_ensemble(torch.cat((x_in, z_fixed), dim=1))
             mean_load, _ = loaded.deep_ensemble(torch.cat((x_in, z_fixed), dim=1))
-        np.testing.assert_allclose(
-            mean_orig.cpu().numpy(), mean_load.cpu().numpy(), atol=1e-5
-        )
+        np.testing.assert_allclose(mean_orig.cpu().numpy(), mean_load.cpu().numpy(), atol=1e-5)
+
+    def test_save_is_repeatable(self, fitted_iseflow, tmp_path):
+        """Saving a trained model twice (e.g. to two locations) must succeed.
+
+        Regression test: ``DeepEnsemble.save()`` previously deleted member
+        checkpoint files as a side effect, so the second save() crashed with
+        FileNotFoundError. Now save() does best-effort cleanup that tolerates
+        already-deleted (or never-created) files.
+        """
+        first = str(tmp_path / "save1")
+        second = str(tmp_path / "save2")
+        fitted_iseflow.save(first)
+        fitted_iseflow.save(second)  # must not raise
+        for d in (first, second):
+            assert os.path.isfile(os.path.join(d, "deep_ensemble.pth"))
+            assert os.path.isfile(os.path.join(d, "normalizing_flow.pth"))

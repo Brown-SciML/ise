@@ -292,7 +292,10 @@ class DeepEnsemble(nn.Module):
         ensemble_dir = os.path.join(model_dir, "ensemble_members")
         os.makedirs(ensemble_dir, exist_ok=True)
 
-        # Prepare metadata for each ensemble member with paths relative to the model directory
+        # Prepare metadata for each ensemble member with paths relative to the model directory.
+        # Use getattr defaults so save() works whether or not the member was trained
+        # with `save_checkpoints=True` (which is what populates best_loss /
+        # epochs_trained on the LSTM).
         metadata = {
             "model_type": self.__class__.__name__,
             "version": "1.0",
@@ -306,9 +309,9 @@ class DeepEnsemble(nn.Module):
                     "output_size": member.output_size,
                     "trained": member.trained,
                     "path": os.path.join("ensemble_members", f"member_{i + 1}.pth"),
-                    "best_loss": float(member.best_loss),
-                    "epochs_trained": int(member.epochs_trained),
-                    "sequence_length": int(member.sequence_length),
+                    "best_loss": float(getattr(member, "best_loss", float("inf"))),
+                    "epochs_trained": int(getattr(member, "epochs_trained", 0)),
+                    "sequence_length": int(getattr(member, "sequence_length", 5) or 5),
                 }
                 for i, member in enumerate(self.ensemble_members)
             ],
@@ -330,12 +333,16 @@ class DeepEnsemble(nn.Module):
             torch.save(member.state_dict(), member_path)
             print(f"Ensemble Member {i + 1} saved to {member_path}")
 
-        print("Removing checkpoints after saving to model directory...")
-        [
-            os.remove(member.checkpoint_path)
-            for member in self.ensemble_members
-            if hasattr(member, "checkpoint_path")
-        ]
+        # Best-effort cleanup of leftover training checkpoint files. Tolerate
+        # already-deleted files so save() can be called more than once on the
+        # same trained model (e.g. saving to multiple locations).
+        for member in self.ensemble_members:
+            ckpt = getattr(member, "checkpoint_path", None)
+            if ckpt and os.path.isfile(ckpt):
+                try:
+                    os.remove(ckpt)
+                except OSError:
+                    pass
 
     @classmethod
     def load(cls, model_path):

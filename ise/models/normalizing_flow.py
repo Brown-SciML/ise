@@ -265,7 +265,7 @@ class NormalizingFlow(nn.Module):
                 checkpointer = CheckpointSaver(self, self.optimizer, checkpoint_path, verbose)
             checkpointer.best_loss = best_loss
 
-        if start_epoch < epochs:
+        if start_epoch <= epochs:
             for epoch in range(start_epoch, epochs + 1):
                 epoch_loss = []
                 for i, (x, y) in enumerate(data_loader):
@@ -323,7 +323,10 @@ class NormalizingFlow(nn.Module):
         self.trained = True
         self.model_dir = None
 
-        if save_checkpoints:
+        # Load best checkpoint back into the model — but only if it actually
+        # exists. The checkpointer only writes when loss improves, so very
+        # short training runs can finish without a checkpoint file.
+        if save_checkpoints and os.path.exists(checkpoint_path):
             if self.wandb_run:
                 model_name = checkpoint_path.split("/")[-1].replace(".pt", "")
                 artifact = wandb.Artifact(model_name, type="model")
@@ -467,9 +470,7 @@ class NormalizingFlow(nn.Module):
         # v1.0.0 metadata only stored input_size/output_size; the architecture used
         # a single-Linear context encoder and num_flow_transforms=5. Detect by absence
         # of the post-v1.0.0 keys.
-        is_legacy_v1_0_0 = (
-            "flow_hidden_size" not in metadata or "num_flows" not in metadata
-        )
+        is_legacy_v1_0_0 = "flow_hidden_size" not in metadata or "num_flows" not in metadata
 
         if is_legacy_v1_0_0:
             model = NormalizingFlow(
