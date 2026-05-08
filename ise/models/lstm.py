@@ -176,23 +176,14 @@ class LSTM(nn.Module):
             the model’s predictions.
         """
 
-        batch_size = x.shape[0]
-        h0 = (
-            torch.zeros(self.lstm_num_layers, batch_size, self.lstm_num_hidden)
-            .requires_grad_()
-            .to(self.device)
-        )
-        c0 = (
-            torch.zeros(self.lstm_num_layers, batch_size, self.lstm_num_hidden)
-            .requires_grad_()
-            .to(self.device)
-        )
-        _, (hn, _) = self.lstm(x, (h0, c0))
+        _, (hn, _) = self.lstm(x)
         x = hn[-1, :, :]
 
         # Perform linear layer operations
         x = self.linear1(x)
         x = self.relu(x)
+        if self.dropout is not None:
+            x = self.dropout(x)
         x = self.linear_out(x)
 
         return x
@@ -439,7 +430,6 @@ class LSTM(nn.Module):
             X_test_batch = X_test_batch.to(self.device)
             y_pred = self.forward(X_test_batch)
             preds = torch.cat((preds, y_pred), 0)
-        self.train()
 
         return preds
 
@@ -478,7 +468,7 @@ class LSTM(nn.Module):
                 "input_size": int(self.input_size),
                 "output_size": int(self.output_size),
                 "output_sequence_length": int(self.output_sequence_length),
-                "sequence_length": int(self.sequence_length),
+                "sequence_length": int(self.sequence_length) if self.sequence_length is not None else 5,
                 # Useful to have if you ever change these later:
                 "fc_hidden": int(self.linear1.out_features),
                 "dropout_p": float(getattr(self.dropout, "p", 0.0)),
