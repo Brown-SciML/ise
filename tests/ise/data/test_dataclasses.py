@@ -197,6 +197,7 @@ def test_emulator_y_none_returns_only_x():
     assert item.shape == (5, 6)
 
 
+@pytest.mark.filterwarnings("ignore:Full projections of 86 timesteps are not present:UserWarning")
 def test_emulator_dataset_accepts_3d_input():
     """EmulatorDataset with 3-D (N_proj, T, F) input must not crash on index lookup."""
     X = np.random.randn(2, 86, 5)

@@ -226,6 +226,7 @@ def test_feature_engineer_unscale_without_scalers(feature_engineer_instance):
         fe.unscale_data(X=np.random.rand(10, 2), y=np.random.rand(10, 1))
 
 
+@pytest.mark.filterwarnings("ignore:Data length.*is not divisible by projection_length:UserWarning")
 def test_feature_engineer_invalid_lag_value(feature_engineer_instance):
     """Ensure invalid lag values raise an error"""
     fe = feature_engineer_instance

@@ -191,6 +191,7 @@ def test_lstm_save_with_unset_sequence_length_does_not_crash(tmp_path):
     assert os.path.isfile(meta_path)
 
 
+@pytest.mark.filterwarnings("ignore:dropout option adds dropout after all but last recurrent layer:UserWarning")
 def test_lstm_dropout_is_applied_in_forward():
     """Dropout with p=0.5 must produce different outputs on two train-mode forward passes."""
     torch.manual_seed(0)
@@ -202,6 +203,7 @@ def test_lstm_dropout_is_applied_in_forward():
     assert not torch.allclose(out1, out2), "dropout should make outputs differ in train mode"
 
 
+@pytest.mark.filterwarnings("ignore:Full projections of 86 timesteps are not present:UserWarning")
 def test_lstm_predict_leaves_model_in_eval_mode(small_lstm, random_batch):
     """predict() must leave the model in eval mode, not flip back to train."""
     small_lstm.eval()
