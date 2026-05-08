@@ -176,23 +176,14 @@ class LSTM(nn.Module):
             the model’s predictions.
         """
 
-        batch_size = x.shape[0]
-        h0 = (
-            torch.zeros(self.lstm_num_layers, batch_size, self.lstm_num_hidden)
-            .requires_grad_()
-            .to(self.device)
-        )
-        c0 = (
-            torch.zeros(self.lstm_num_layers, batch_size, self.lstm_num_hidden)
-            .requires_grad_()
-            .to(self.device)
-        )
-        _, (hn, _) = self.lstm(x, (h0, c0))
+        _, (hn, _) = self.lstm(x)
         x = hn[-1, :, :]
 
         # Perform linear layer operations
         x = self.linear1(x)
         x = self.relu(x)
+        if self.dropout is not None:
+            x = self.dropout(x)
         x = self.linear_out(x)
 
         return x
@@ -358,6 +349,10 @@ class LSTM(nn.Module):
                         )
                 else:
                     average_batch_loss = sum(batch_losses) / len(batch_losses)
+                    # Without validation, checkpoint on training loss so the
+                    # post-training "load best model" step has a file to read.
+                    if save_checkpoints:
+                        checkpointer(average_batch_loss, epoch)
                     if verbose:
                         print(
                             f"[epoch/total]: [{epoch}/{epochs}], train loss: {average_batch_loss}"
@@ -368,8 +363,10 @@ class LSTM(nn.Module):
 
         self.trained = True
 
-        # loads best model
-        if save_checkpoints:
+        # Load best model — only if a checkpoint was actually written. Very
+        # short training runs (e.g. epochs=0 or all epochs already complete via
+        # checkpoint resume) can finish with no checkpoint file on disk.
+        if save_checkpoints and os.path.exists(checkpoint_path):
             if self.wandb_run:
                 model_name = checkpoint_path.split("/")[-1]
                 artifact = wandb.Artifact(model_name, type="model")
@@ -433,7 +430,6 @@ class LSTM(nn.Module):
             X_test_batch = X_test_batch.to(self.device)
             y_pred = self.forward(X_test_batch)
             preds = torch.cat((preds, y_pred), 0)
-        self.train()
 
         return preds
 
@@ -472,7 +468,9 @@ class LSTM(nn.Module):
                 "input_size": int(self.input_size),
                 "output_size": int(self.output_size),
                 "output_sequence_length": int(self.output_sequence_length),
-                "sequence_length": int(self.sequence_length),
+                "sequence_length": int(self.sequence_length)
+                if self.sequence_length is not None
+                else 5,
                 # Useful to have if you ever change these later:
                 "fc_hidden": int(self.linear1.out_features),
                 "dropout_p": float(getattr(self.dropout, "p", 0.0)),

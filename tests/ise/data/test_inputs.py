@@ -262,3 +262,125 @@ class TestISEFlowGrISInputs:
         inputs = ISEFlowGrISInputs(**_gris_kwargs())
         df = inputs.to_df()
         assert "year" in df.columns
+
+
+# ---------------------------------------------------------------------------
+# Validation edge cases — guard against silent regressions in _check_inputs
+# ---------------------------------------------------------------------------
+
+
+class TestAISValidationEdges:
+    """Each branch of ISEFlowAISInputs._check_inputs that can raise ValueError."""
+
+    def test_invalid_ocean_sensitivity_raises(self):
+        kwargs = _ais_kwargs()
+        kwargs["ocean_sensitivity"] = "extreme"
+        with pytest.raises(ValueError, match="ocean_sensitivity"):
+            ISEFlowAISInputs(**kwargs)
+
+    def test_open_forcing_requires_open_melt_type(self):
+        kwargs = _ais_kwargs()
+        kwargs["ocean_forcing_type"] = "open"
+        kwargs["open_melt_type"] = None
+        with pytest.raises(ValueError, match="open_melt_type"):
+            ISEFlowAISInputs(**kwargs)
+
+    def test_year_2015_normalized_to_1(self):
+        """Calendar 2015 → model encoding 1 (load-bearing — wrong year => OOD predictions)."""
+        inputs = ISEFlowAISInputs(**_ais_kwargs(year=np.arange(2015, 2101)))
+        assert inputs.year[0] == 1
+        assert inputs.year[-1] == PROJ_LEN  # 86
+
+
+class TestGrISFromAbsoluteForcings:
+    def test_custom_climatology_aSMB_in_kg_m2_s_units(self):
+        """from_absolute_forcings must convert SMB anomaly from mm w.e. yr⁻¹ to kg m⁻² s⁻¹.
+
+        Same conversion path as AnomalyConverter.compute_gris — guards against the
+        unit-conversion drop-out that would produce predictions ~10⁵× too large.
+        """
+        rng = np.random.default_rng(11)
+        smb_raw = rng.random(PROJ_LEN) * 500 - 300  # mm w.e. yr⁻¹
+        st_raw = rng.random(PROJ_LEN) * 20 - 30  # °C
+        custom_clim = {"smb": -200.0, "st": -22.0}
+
+        inputs = ISEFlowGrISInputs.from_absolute_forcings(
+            year=YEAR.copy(),
+            sector=2,
+            smb=smb_raw,
+            st=st_raw,
+            ocean_thermal_forcing=rng.random(PROJ_LEN),
+            basin_runoff=rng.random(PROJ_LEN) * 500,
+            custom_climatology=custom_clim,
+            ice_shelf_fracture=False,
+            ocean_sensitivity="medium",
+            standard_ocean_forcing=True,
+            initial_year=2005,
+            numerics="fd",
+            ice_flow_model="ho",
+            initialization="cyc/dai",
+            initial_smb="mar",
+            velocity="joughin",
+            bedrock_topography="bamber",
+            surface_thickness="morlighem",
+            geothermal_heat_flux="g",
+            res_min=1.0,
+            res_max=5.0,
+        )
+        # aSMB on the order of 1e-5 (kg m⁻² s⁻¹), not on the order of 100s (mm w.e. yr⁻¹)
+        assert np.all(np.abs(inputs.aSMB) < 1.0)
+        # aST passes through as °C — should be on the order of single digits
+        np.testing.assert_allclose(inputs.aST, st_raw - custom_clim["st"], rtol=1e-9)
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for inputs.py validation fixes
+# ---------------------------------------------------------------------------
+
+
+def test_ais_inputs_accepts_python_list_year():
+    """Passing year as a Python list must not raise TypeError."""
+    ISEFlowAISInputs(**_ais_kwargs(year=list(range(2015, 2101))))
+
+
+def test_ais_inputs_rejects_false_melt_value():
+    """'False' was never a valid melt_in_floating_cells encoding; must raise ValueError."""
+    with pytest.raises(ValueError, match="melt_in_floating_cells"):
+        ISEFlowAISInputs(**_ais_kwargs(melt_in_floating_cells="False"))
+
+
+def test_gris_surface_thickness_error_message():
+    """The surface_thickness validator error must mention 'surface_thickness', not 'bed'."""
+    rng = np.random.default_rng(0)
+    base = dict(
+        year=YEAR.copy(),
+        sector=2,
+        aST=rng.random(PROJ_LEN),
+        aSMB=rng.random(PROJ_LEN) * 1e-5,
+        ocean_thermal_forcing=rng.random(PROJ_LEN),
+        basin_runoff=rng.random(PROJ_LEN) * 500,
+        ice_shelf_fracture=False,
+        ocean_sensitivity="medium",
+        standard_ocean_forcing=True,
+        initial_year=2005,
+        numerics="fd",
+        ice_flow_model="ho",
+        initialization="cyc/dai",
+        initial_smb="mar",
+        velocity="joughin",
+        bedrock_topography="bamber",
+        surface_thickness="invalid_value",
+        geothermal_heat_flux="g",
+        res_min=1.0,
+        res_max=5.0,
+    )
+    with pytest.raises(ValueError) as exc_info:
+        ISEFlowGrISInputs(**base)
+    assert "surface_thickness" in str(exc_info.value)
+    assert "bed" not in str(exc_info.value)
+
+
+def test_ais_post_init_is_idempotent():
+    """Calling __post_init__ a second time on a valid AIS input must not raise."""
+    inputs = ISEFlowAISInputs(**_ais_kwargs())
+    inputs.__post_init__()  # second call — must not KeyError or crash

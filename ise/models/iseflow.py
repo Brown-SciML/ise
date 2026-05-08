@@ -76,6 +76,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import torch
+from sklearn.exceptions import InconsistentVersionWarning
 from torch import nn
 
 from ise.data import feature_engineer as fe
@@ -136,7 +137,7 @@ class ISEFlow(torch.nn.Module):
         self.normalizing_flow = normalizing_flow.to(self.device)
         self.trained = self.deep_ensemble.trained and self.normalizing_flow.trained
         self.scaler_path = None
-        self.model_dir = normalizing_flow.model_dir
+        self.model_dir = getattr(normalizing_flow, "model_dir", None)
 
     def fit(
         self,
@@ -182,8 +183,6 @@ class ISEFlow(torch.nn.Module):
         if early_stopping is None:
             early_stopping = X_val is not None and y_val is not None
 
-        torch.manual_seed(np.random.randint(0, 100000))
-
         X, y = to_tensor(X).to(self.device), to_tensor(y).to(self.device)
 
         if self.trained:
@@ -197,13 +196,13 @@ class ISEFlow(torch.nn.Module):
             self.normalizing_flow.fit(
                 X,
                 y,
-                nf_epochs,
-                batch_size,
-                save_checkpoints,
-                f"{checkpoint_path}_nf.pth",
-                early_stopping,
-                patience,
-                verbose,
+                epochs=nf_epochs,
+                batch_size=batch_size,
+                save_checkpoints=save_checkpoints,
+                checkpoint_path=f"{checkpoint_path}_nf.pth",
+                early_stopping=early_stopping,
+                patience=patience,
+                verbose=verbose,
             )
 
         # Latent representation
@@ -310,7 +309,9 @@ class ISEFlow(torch.nn.Module):
         if output_scaler is True:
             output_scaler = os.path.join(self.model_dir, "scaler_y.pkl")
             with open(output_scaler, "rb") as f:
-                output_scaler = pickle.load(f)
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
+                    output_scaler = pickle.load(f)
         elif output_scaler is False and self.scaler_path is None:
             warnings.warn("No scaler path provided, uncertainties are not in units of SLE.")
             predictions, uncertainties = self.forward(x)
@@ -325,12 +326,16 @@ class ISEFlow(torch.nn.Module):
         elif isinstance(output_scaler, str):
             self.scaler_path = output_scaler
             with open(self.scaler_path, "rb") as f:
-                output_scaler = pickle.load(f)
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
+                    output_scaler = pickle.load(f)
 
         # Get raw predictions and uncertainties (no smoothing yet)
         predictions, uncertainties = self.forward(x)
 
         # Inverse transform predictions first
+        # The upper/lower-then-average pattern below is correct only for monotone scalers
+        # (StandardScaler, MinMaxScaler, RobustScaler — all linear), where f(a±b) = f(a)±f'*b.
         unscaled_predictions = output_scaler.inverse_transform(predictions.reshape(-1, 1))
 
         # Calculate uncertainty bounds in scaled space
@@ -419,8 +424,12 @@ class ISEFlow(torch.nn.Module):
             try:
                 scaler_x_path = self.scaler_path.replace("scaler_y", "scaler_X")
                 shutil.copy(scaler_x_path, os.path.join(save_dir, "scaler_X.pkl"))
-            except:
-                pass
+            except (FileNotFoundError, OSError):
+                warnings.warn(
+                    f"Could not copy input scaler (scaler_X) to {save_dir}. "
+                    "Inferred path did not exist. Pass a separate scaler_X path if needed.",
+                    UserWarning,
+                )
 
     @staticmethod
     def load(
@@ -617,9 +626,30 @@ class ISEFlow_AIS(ISEFlow):
         )
 
         data = inputs.to_df()
+        dummy_columns = [
+            "numerics",
+            "stress_balance",
+            "resolution",
+            "init_method",
+            "melt",
+            "ice_front",
+            "Ocean forcing",
+            "Ocean sensitivity",
+            "open_melt_param",
+            "standard_melt_param",
+            "Ice shelf fracture",
+        ]
 
         if self.version == "v1.0.0":
-            year_mean_map = {year: mean for year, mean in enumerate(mrro_means)}
+            # v1.0.0 ordering: fill missing mrro -> add lags -> get_dummies -> reindex
+            # to ISEFlow_AIS_v1_0_0_variables -> append `outlier=False` -> positional
+            # scale (the v1.0.0 scaler was fit on 99 cols including `outlier`) -> drop
+            # `outlier`. The v1.0.0 scaler has no feature_names_in_, so master's
+            # name-based scale_data() can't be used here.
+            # Years in `data` are in model encoding (1..86) per
+            # ISEFlowAISInputs._check_inputs (calendar 2015..2100 → 1..86),
+            # so the lookup map must be keyed 1..86, not 0..85.
+            year_mean_map = {year: mean for year, mean in enumerate(mrro_means, start=1)}
             data["mrro_anomaly"] = data.apply(
                 lambda row: (
                     year_mean_map[row["year"]]
@@ -628,31 +658,33 @@ class ISEFlow_AIS(ISEFlow):
                 ),
                 axis=1,
             )
+            data = fe.add_lag_variables(data, lag=5, verbose=False)
+            data = pd.get_dummies(data, columns=dummy_columns, dtype=bool)
+
+            columns = ISEFlow_AIS_v1_0_0_variables
+            for col in columns:
+                if col not in data.columns:
+                    data[col] = False
+            data = data[columns]
+            data = data.loc[:, ~data.columns.duplicated()]
+
+            data["outlier"] = False
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", InconsistentVersionWarning)
+                with open(f"{self.model_dir}/scaler_X.pkl", "rb") as f:
+                    scaler = pickle.load(f)
+            scaled = scaler.transform(data.values.astype(float))
+            data = pd.DataFrame(scaled, columns=list(data.columns), index=data.index)
+            data = data.drop(columns=["outlier"])
+            return data
+
+        # v1.1.0 path (unchanged): scale -> lag -> dummies -> reindex
         data = fe.scale_data(data, scaler_path=f"{self.model_dir}/scaler_X.pkl")
         data = fe.add_lag_variables(data, lag=5, verbose=False)
-        data = pd.get_dummies(
-            data,
-            columns=[
-                "numerics",
-                "stress_balance",
-                "resolution",
-                "init_method",
-                "melt",
-                "ice_front",
-                "Ocean forcing",
-                "Ocean sensitivity",
-                "open_melt_param",
-                "standard_melt_param",
-                "Ice shelf fracture",
-            ],
-            dtype=bool,
-        )
+        data = pd.get_dummies(data, columns=dummy_columns, dtype=bool)
 
-        # need to add other columns as zeros from get_dummies (all true)
         if self.version == "v1.1.0":
             columns = ISEFlow_AIS_v1_1_0_variables
-        elif self.version == "v1.0.0":
-            columns = ISEFlow_AIS_v1_0_0_variables
         else:
             raise NotImplementedError(
                 f"Version {self.version} not implemented. Use v1.0.0 or v1.1.0"
@@ -714,7 +746,6 @@ class ISEFlow_AIS(ISEFlow):
 
         Args:
             X_test (array-like): Test feature matrix.
-            y_test (array-like): Test target values.
 
         Returns:
             tuple: A tuple containing:
@@ -793,34 +824,54 @@ class ISEFlow_GrIS(ISEFlow):
         """
 
         data = inputs.to_df()
+        dummy_columns = [
+            "numerics",
+            "ice_flow",
+            "initialization",
+            "initial_smb",
+            "velocity",
+            "bed",
+            "surface_thickness",
+            "ghf",
+            "res_min",
+            "res_max",
+            "Ocean forcing",
+            "Ocean sensitivity",
+            "Ice shelf fracture",
+        ]
 
+        if self.version == "v1.0.0":
+            # v1.0.0 ordering: add lags -> get_dummies -> reindex to
+            # ISEFlow_GrIS_v1_0_0_variables -> append `outlier=False` -> positional
+            # scale (the v1.0.0 scaler has 91 cols incl. `outlier` and no
+            # feature_names_in_) -> drop `outlier`.
+            data = fe.add_lag_variables(data, lag=5, verbose=False)
+            data = pd.get_dummies(data, columns=dummy_columns, dtype=bool)
+
+            columns = ISEFlow_GrIS_v1_0_0_variables
+            for col in columns:
+                if col not in data.columns:
+                    data[col] = False
+            data = data[columns]
+            data = data.loc[:, ~data.columns.duplicated()]
+
+            data["outlier"] = False
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", InconsistentVersionWarning)
+                with open(f"{self.model_dir}/scaler_X.pkl", "rb") as f:
+                    scaler = pickle.load(f)
+            scaled = scaler.transform(data.values.astype(float))
+            data = pd.DataFrame(scaled, columns=list(data.columns), index=data.index)
+            data = data.drop(columns=["outlier"])
+            return data
+
+        # v1.1.0 path (unchanged): scale -> lag -> dummies -> reindex
         data = fe.scale_data(data, scaler_path=f"{self.model_dir}/scaler_X.pkl")
         data = fe.add_lag_variables(data, lag=5, verbose=False)
-        data = pd.get_dummies(
-            data,
-            columns=[
-                "numerics",
-                "ice_flow",
-                "initialization",
-                "initial_smb",
-                "velocity",
-                "bed",
-                "surface_thickness",
-                "ghf",
-                "res_min",
-                "res_max",
-                "Ocean forcing",
-                "Ocean sensitivity",
-                "Ice shelf fracture",
-            ],
-            dtype=bool,
-        )
+        data = pd.get_dummies(data, columns=dummy_columns, dtype=bool)
 
-        # need to add other columns as zeros from get_dummies (all true)
         if self.version == "v1.1.0":
             columns = ISEFlow_GrIS_v1_1_0_variables
-        elif self.version == "v1.0.0":
-            columns = ISEFlow_GrIS_v1_0_0_variables
         else:
             raise NotImplementedError(
                 f"Version {self.version} not implemented. Use v1.0.0 or v1.1.0"
@@ -880,7 +931,6 @@ class ISEFlow_GrIS(ISEFlow):
 
         Args:
             X_test (array-like): Test feature matrix.
-            y_test (array-like): Test target values.
 
         Returns:
             tuple: A tuple containing:
@@ -961,6 +1011,10 @@ class ISEFlow_GrIS_DE_v1_0_0(DeepEnsemble):
     def __init__(
         self,
     ):
+        warnings.warn(
+            "ISEFlow_GrIS_DE_v1_0_0 is deprecated and will be removed in future versions. Please use ISEFlow_GrIS instead.",
+            DeprecationWarning,
+        )
         self.input_size = 90
         self.output_size = 1
         iseflow_gris_ensemble = [
@@ -1030,6 +1084,10 @@ class ISEFlow_GrIS_NF_v1_0_0(NormalizingFlow):
         self,
     ):
         """Initialize with GrIS-specific defaults (input_size=90, 5 flow transforms)."""
+        warnings.warn(
+            "ISEFlow_GrIS_NF_v1_0_0 is deprecated and will be removed in future versions. Please use ISEFlow_GrIS instead.",
+            DeprecationWarning,
+        )
         self.input_size = 90
         self.output_size = 1
         self.num_flow_transforms = 5

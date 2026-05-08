@@ -30,6 +30,10 @@ Package layout
 For questions contact Peter Van Katwyk at pvankatwyk@gmail.com.
 """
 
+import warnings
+
+warnings.filterwarnings("ignore", category=SyntaxWarning, module="properscoring")
+
 __all__ = [
     "ISEFlow",
     "ISEFlow_AIS",

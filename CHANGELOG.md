@@ -15,6 +15,27 @@ This project uses **two independent version numbers**:
 
 ---
 
+## [1.1.0] — 2026-05-08 (package) | Model: v1.1.0
+
+### Added
+- Restored full backward compatibility for v1.0.0 pretrained weights. `ISEFlow_AIS(version="v1.0.0")` and `ISEFlow_GrIS(version="v1.0.0")` now load and predict end-to-end; `NormalizingFlow.load()` auto-detects the older architecture from saved metadata.
+- Extended test suite from 244 to 304 tests, adding end-to-end `fit`/`save`/`load` integration, pretrained `predict()` from synthetic inputs, and v1.0.0 compatibility coverage.
+
+### Fixed
+- `ISEFlow.fit()` was broken: `NormalizingFlow.fit()` was called with mismatched positional arguments, crashing before the first epoch. Switched to keyword arguments.
+- `NormalizingFlow.fit()` off-by-one loop guard caused single-epoch fits to skip training entirely.
+- `LSTM.fit()` did not write checkpoints on train-only runs, causing a crash on the post-training load.
+- `DeepEnsemble.save()` / `NormalizingFlow.save()` failed when trained with `save_checkpoints=False`; now uses `getattr` defaults for missing training attributes.
+- `ISEFlow.fit()` silently overrode the caller's random seed via `torch.manual_seed(random_int)`; removed to restore reproducibility.
+- `unscale_column` year range was off by one (2016–2100 instead of 2015–2100); sector scaler was hard-coded to AIS. Now accepts an `ice_sheet` kwarg for correct GrIS (1–6) ranges.
+- `feature_engineer.py`: split results were wiped to `None` immediately after creation; `scale_data` raised `NameError` in the explicit-X branch; `split_training_data` now honours `random_state` via `np.random.default_rng`.
+- `inputs.py`: `year=list(...)` raised `TypeError`; `_map_args` was not idempotent; invalid `melt_in_floating_cells` value `'False'` accepted.
+- `ISEFlow.save()` now emits a `UserWarning` instead of silently swallowing a missing scaler path.
+- Fixed HuggingFace Hub `snapshot_download` to use recursive glob so nested weight files are included.
+- `ISEFlow_GrIS_DE/NF_v1_0_0` now emit `DeprecationWarning` on instantiation, matching AIS counterparts.
+
+---
+
 ## [1.0.0] — 2026-05-07 (package) | Model: v1.1.0
 
 > First release of `ise-py` on PyPI. This version represents a full rewrite of the
@@ -26,7 +47,7 @@ This project uses **two independent version numbers**:
 - **Breaking:** Package renamed from `ise` to `ise-py` on PyPI; import name stays `ise`.
 - **Breaking:** `from_raw_values()` renamed to `from_absolute_forcings()` on both
   `ISEFlowAISInputs` and `ISEFlowGrISInputs`; old name kept as a deprecated alias
-  (emits `DeprecationWarning`) until v3.0.0.
+  (emits `DeprecationWarning`) until further versions.
 - **Breaking:** Model classes restructured — `ise.models.ISEFlow.ISEFlow`,
   `ise.models.predictors.deep_ensemble`, and `ise.models.density_estimators.normalizing_flow`
   replaced by top-level `ISEFlow`, `DeepEnsemble`, `NormalizingFlow`, and `LSTM` in

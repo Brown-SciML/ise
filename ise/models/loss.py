@@ -127,8 +127,16 @@ class WeightedGridLoss(torch.nn.Module):
             Tensor: The total computed loss.
         """
 
-        true = torch.tensor(true, dtype=torch.float32, device=self.device)
-        predicted = torch.tensor(predicted, dtype=torch.float32, device=self.device)
+        true = (
+            true.to(self.device).float()
+            if isinstance(true, torch.Tensor)
+            else torch.as_tensor(true, dtype=torch.float32, device=self.device)
+        )
+        predicted = (
+            predicted.to(self.device).float()
+            if isinstance(predicted, torch.Tensor)
+            else torch.as_tensor(predicted, dtype=torch.float32, device=self.device)
+        )
 
         # Determine weights based on extreme values
         if extreme_value_threshold is not None:
@@ -189,7 +197,6 @@ class WeightedMSELoss(torch.nn.Module):
         deviation = torch.abs(target - self.data_mean)
 
         # Scale deviations by the standard deviation to normalize them
-        # normalized_deviation = torch.tensor(deviation / self.data_std, dtype=torch.float32, device=self.device)
         normalized_deviation = deviation / self.data_std
 
         # Compute weights: increase penalty for extreme values
@@ -267,12 +274,12 @@ class WeightedMSEPCALoss(torch.nn.Module):
 
         # If custom weights are provided, multiply them by the calculated weights
         if self.custom_weights is not None:
-            # Expand custom weights to match batch size if necessary
-            if self.custom_weights.dim() == 1:
-                self.custom_weights = self.custom_weights.unsqueeze(0)  # Make it a 2D tensor
-            if self.custom_weights.shape != weights.shape:
+            cw = self.custom_weights
+            if cw.dim() == 1:
+                cw = cw.unsqueeze(0)
+            if cw.shape != weights.shape:
                 raise ValueError("Custom weights shape must match input/target shape.")
-            weights *= self.custom_weights
+            weights = weights * cw
 
         # Compute the squared error for each element in the batch without reducing
         squared_error = (input - target) ** 2
@@ -387,7 +394,6 @@ class GridCriterion(torch.nn.Module):
         )
         return torch.mean(total_variation)
 
-    # def spatial_loss(self, true, predicted, smoothness_weight=0.001):
     def forward(self, true, predicted, smoothness_weight=0.001):
         """
         Computes the final loss by combining pixel-wise MSE and TVR.
@@ -408,13 +414,6 @@ class GridCriterion(torch.nn.Module):
             predicted,
         )
         return pixelwise_mse + smoothness_weight * tvr
-
-    # def forward(self, true, predicted, x, y, flow, predictor_weight=0.5, nf_weight=0.5,):
-    #     if predictor_weight + nf_weight != 1:
-    #         raise ValueError("The sum of predictor_weight and nf_weight must be 1")
-    #     predictor_loss = self.spatial_loss(true, predicted, smoothness_weight=0.2)
-    #     nf_loss = -flow.log_prob(inputs=y, context=x)
-    #     return predictor_weight*predictor_loss + nf_weight*nf_loss
 
 
 class WeightedPCALoss(torch.nn.Module):

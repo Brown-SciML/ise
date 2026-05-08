@@ -86,7 +86,7 @@ class EmulatorDataset(Dataset):
                 raise ValueError(
                     "Projection length must be a single integer or a tuple of two integers."
                 )
-        if X.shape[0] < projection_length:
+        if X.shape[0] < projection_length and projection_length == 86:
             warnings.warn(
                 f"Full projections of {projection_length} timesteps are not present in the dataset. This may lead to unexpected behavior."
             )
@@ -98,9 +98,11 @@ class EmulatorDataset(Dataset):
         if self.xdim == 3:  # Batched by projection
             self.num_projections, self.num_timesteps, self.num_features = X.shape
         elif self.xdim == 2:  # Unbatched (rows of projections*timestamps)
-            self.projections_and_timesteps, self.features = X.shape
+            self.projections_and_timesteps, _ = X.shape
             self.num_timesteps = projection_length
             self.num_projections = self.projections_and_timesteps // self.num_timesteps
+            self.num_features = X.shape[1]
+        self.features = self.num_features
 
     def _to_tensor(self, x):
         """
@@ -151,7 +153,7 @@ class EmulatorDataset(Dataset):
         time_step_index = i % self.num_timesteps
 
         # Initialize a sequence with zeros for padding
-        sequence = torch.zeros((self.sequence_length, self.features))
+        sequence = torch.zeros((self.sequence_length, self.num_features))
 
         # Calculate start and end points for copying data
         start_point = max(0, time_step_index - self.sequence_length + 1)

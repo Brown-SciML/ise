@@ -173,3 +173,42 @@ class TestLSTMSaveLoad:
         assert meta["model_type"] == "LSTM"
         assert meta["architecture"]["lstm_num_layers"] == 1
         assert meta["architecture"]["input_size"] == 8
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for lstm.py fixes
+# ---------------------------------------------------------------------------
+
+
+def test_lstm_save_with_unset_sequence_length_does_not_crash(tmp_path):
+    """save() must not TypeError when sequence_length is None (never fitted)."""
+    lstm = LSTM(lstm_num_layers=1, lstm_hidden_size=16, input_size=8, output_size=1)
+    lstm.trained = True
+    path = str(tmp_path / "lstm_no_seq.pth")
+    lstm.save(path)
+    assert os.path.isfile(path)
+    meta_path = path.replace(".pth", "_metadata.json")
+    assert os.path.isfile(meta_path)
+
+
+@pytest.mark.filterwarnings(
+    "ignore:dropout option adds dropout after all but last recurrent layer:UserWarning"
+)
+def test_lstm_dropout_is_applied_in_forward():
+    """Dropout with p=0.5 must produce different outputs on two train-mode forward passes."""
+    torch.manual_seed(0)
+    lstm = LSTM(lstm_num_layers=1, lstm_hidden_size=32, input_size=8, output_size=1, dropout=0.5)
+    lstm.train()
+    x = torch.randn(4, 5, 8)
+    out1 = lstm(x)
+    out2 = lstm(x)
+    assert not torch.allclose(out1, out2), "dropout should make outputs differ in train mode"
+
+
+@pytest.mark.filterwarnings("ignore:Full projections of 86 timesteps are not present:UserWarning")
+def test_lstm_predict_leaves_model_in_eval_mode(small_lstm, random_batch):
+    """predict() must leave the model in eval mode, not flip back to train."""
+    small_lstm.eval()
+    X = random_batch.numpy().reshape(-1, 8)
+    small_lstm.predict(X, sequence_length=5)
+    assert not small_lstm.training

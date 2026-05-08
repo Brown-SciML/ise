@@ -1,9 +1,14 @@
+import pickle
+
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn.preprocessing import StandardScaler as SkStandardScaler
 
 from ise.data.feature_engineer import (
     FeatureEngineer,
+    add_lag_variables,
+    scale_data,
     split_training_data,
 )
 
@@ -221,6 +226,7 @@ def test_feature_engineer_unscale_without_scalers(feature_engineer_instance):
         fe.unscale_data(X=np.random.rand(10, 2), y=np.random.rand(10, 1))
 
 
+@pytest.mark.filterwarnings("ignore:Data length.*is not divisible by projection_length:UserWarning")
 def test_feature_engineer_invalid_lag_value(feature_engineer_instance):
     """Ensure invalid lag values raise an error"""
     fe = feature_engineer_instance
@@ -256,3 +262,151 @@ def test_feature_engineer_loads_scalers(feature_engineer_instance, tmp_path):
 
     X_scaled, y_scaled = fe_new.scale_data()
     assert X_scaled.shape == fe.X.shape
+
+
+### ---------------------- Module-level Function Tests ---------------------- ###
+# These test the standalone functions used by ISEFlow_AIS.process() and
+# ISEFlow_GrIS.process() — distinct from the FeatureEngineer class methods.
+
+
+PROJ_LEN = 86
+
+
+def _make_two_projection_df():
+    """Two 86-step projections with distinct, easily-identifiable values per projection."""
+    proj1 = pd.DataFrame(
+        {
+            "year": np.arange(2015, 2015 + PROJ_LEN),
+            "pr_anomaly": np.full(PROJ_LEN, -100.0),  # all -100 in projection 1
+            "smb_anomaly": np.full(PROJ_LEN, -50.0),
+            "temperature": np.full(PROJ_LEN, -10.0),
+        }
+    )
+    proj2 = pd.DataFrame(
+        {
+            "year": np.arange(2015, 2015 + PROJ_LEN),
+            "pr_anomaly": np.full(PROJ_LEN, 100.0),  # all 100 in projection 2
+            "smb_anomaly": np.full(PROJ_LEN, 50.0),
+            "temperature": np.full(PROJ_LEN, 10.0),
+        }
+    )
+    return pd.concat([proj1, proj2], ignore_index=True)
+
+
+class TestAddLagVariablesModuleLevel:
+    """Tests for the standalone add_lag_variables function used by ISEFlow.process()."""
+
+    def test_creates_lag1_through_lagN_for_each_forcing(self):
+        """All recognized forcing columns get lag1..lagN columns; non-forcing columns don't."""
+        df = pd.DataFrame(
+            {
+                "year": np.arange(2015, 2015 + PROJ_LEN),
+                "pr_anomaly": np.random.rand(PROJ_LEN),
+                "smb_anomaly": np.random.rand(PROJ_LEN),
+                "temperature": np.random.rand(PROJ_LEN),
+            }
+        )
+        result = add_lag_variables(df, lag=5, verbose=False)
+        for forcing in ("pr_anomaly", "smb_anomaly", "temperature"):
+            for k in range(1, 6):
+                assert f"{forcing}.lag{k}" in result.columns, (
+                    f"Missing lag column: {forcing}.lag{k}"
+                )
+        # year does not get lagged (it's the temporal indicator)
+        assert "year.lag1" not in result.columns
+
+    def test_no_cross_projection_bleed_in_lag_values(self):
+        """At the start of projection 2, lag values must come from projection 2's own
+        first row (via bfill), not from projection 1's tail.
+
+        This is the most insidious silent corruption: if the per-projection segmentation
+        in add_lag_variables breaks, the model trains on data that mixes runs together
+        but produces plausible-looking outputs.
+        """
+        df = _make_two_projection_df()
+        result = add_lag_variables(df, lag=5, verbose=False)
+        # At the start of projection 2 (row index 86), lag values must be from
+        # projection 2 (positive), NOT from projection 1's tail (negative).
+        proj2_start = result.iloc[PROJ_LEN]
+        for k in range(1, 6):
+            assert proj2_start[f"pr_anomaly.lag{k}"] == pytest.approx(100.0), (
+                f"Cross-projection bleed in pr_anomaly.lag{k} at projection 2 start"
+            )
+            assert proj2_start[f"smb_anomaly.lag{k}"] == pytest.approx(50.0)
+            assert proj2_start[f"temperature.lag{k}"] == pytest.approx(10.0)
+
+        # Sanity: end of projection 1 (row 85) should still have projection 1's values
+        proj1_end = result.iloc[PROJ_LEN - 1]
+        assert proj1_end["pr_anomaly"] == pytest.approx(-100.0)
+
+
+class TestScaleDataModuleLevel:
+    """Tests for the standalone scale_data function used by ISEFlow.process()."""
+
+    def test_round_trips_via_inverse_transform(self, tmp_path):
+        """scale_data(scaler_path) must be exactly inverted by the saved scaler."""
+        df = pd.DataFrame(
+            {
+                "pr_anomaly": np.random.rand(20) * 1e-5,
+                "smb_anomaly": np.random.rand(20) * 1e-5,
+                "non_scaled": np.arange(20.0),  # absent from scaler
+            }
+        )
+        scaler = SkStandardScaler().fit(df[["pr_anomaly", "smb_anomaly"]])
+        path = tmp_path / "scaler.pkl"
+        with open(path, "wb") as f:
+            pickle.dump(scaler, f)
+
+        scaled = scale_data(df, str(path))
+        # Column order is preserved (load-bearing for downstream get_dummies/reindex)
+        assert list(scaled.columns) == list(df.columns)
+        # Non-scaler columns pass through unchanged
+        np.testing.assert_array_equal(scaled["non_scaled"].values, df["non_scaled"].values)
+        # Scaler columns invert exactly
+        recovered = scaler.inverse_transform(scaled[["pr_anomaly", "smb_anomaly"]].values)
+        np.testing.assert_allclose(recovered, df[["pr_anomaly", "smb_anomaly"]].values, rtol=1e-9)
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for feature_engineer.py fixes
+# ---------------------------------------------------------------------------
+
+
+def _make_projection_df(n_ids=10, proj_len=86):
+    """Build a minimal DataFrame with `id` and `sle` columns suitable for split tests."""
+    rows = []
+    for id_ in range(1, n_ids + 1):
+        for t in range(proj_len):
+            rows.append({"id": id_, "year": 2015 + t, "feature1": float(t), "sle": float(t) * 0.01})
+    return pd.DataFrame(rows)
+
+
+def test_feature_engineer_split_dataset_returns_non_none_splits():
+    """split_dataset=True must produce non-None, non-empty train/val/test."""
+    df = _make_projection_df(n_ids=10)
+    fe = FeatureEngineer(ice_sheet="AIS", data=df, split_dataset=True)
+    assert fe.train is not None
+    assert fe.val is not None
+    assert fe.test is not None
+    assert len(fe.train) > 0
+
+
+def test_split_training_data_random_state_is_reproducible():
+    """split_training_data with the same random_state must return the same ids."""
+    df = _make_projection_df(n_ids=20)
+    np.random.seed(0)
+    train1, val1, test1 = split_training_data(df, 0.7, 0.15, 0.15, random_state=42)
+    np.random.seed(99)
+    train2, val2, test2 = split_training_data(df, 0.7, 0.15, 0.15, random_state=42)
+    assert set(train1["id"].unique()) == set(train2["id"].unique())
+
+
+def test_scale_data_with_explicit_X_y_does_not_raise():
+    """scale_data(X=..., y=...) must not NameError on the dropped_data concat."""
+    df = _make_projection_df(n_ids=5)
+    fe = FeatureEngineer(ice_sheet="AIS", data=df, split_dataset=False)
+    X_df = df[["feature1"]].copy()
+    y_df = df[["sle"]].copy()
+    X_scaled, y_scaled = fe.scale_data(X=X_df, y=y_df)
+    assert X_scaled is not None
+    assert y_scaled is not None

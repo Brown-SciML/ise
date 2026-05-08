@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ise-py"
-version = "1.0.0"
+version = "1.1.0"
 description = "ISE (Ice Sheet Emulator) — ISEFlow, a flow-based neural network emulator for sea level projections with uncertainty quantification."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -125,6 +125,8 @@ testpaths = ["tests"]
 addopts = "--tb=short"
 filterwarnings = [
   "ignore:numpy.ndarray size changed:RuntimeWarning",
+  "ignore::SyntaxWarning:properscoring",
+  "ignore::sklearn.exceptions.InconsistentVersionWarning",
 ]
 markers = [
   "slow: marks tests as slow (deselect with '-m \"not slow\"')",

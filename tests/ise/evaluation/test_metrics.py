@@ -43,6 +43,20 @@ def sample_array():
 #     assert np.array_equal(result, expected_result)
 
 
+def test_sum_by_sector_accepts_xr_dataset():
+    """sum_by_sector must not crash when grid_file is an xr.Dataset (was UnboundLocalError)."""
+    from ise.evaluation.metrics import sum_by_sector
+
+    H, W = 10, 10
+    sector_data = np.zeros((H, W), dtype=int)
+    for s in range(1, 7):
+        sector_data[(s - 1) * (H // 6) : s * (H // 6), :] = s
+    ds = xr.Dataset({"sectors": (("x", "y"), sector_data)})
+    arr = np.ones((2, H, W))
+    result = sum_by_sector(arr, ds)
+    assert result.shape == (2, 6)
+
+
 ### ---------------------- Error Metric Tests ---------------------- ###
 def test_r2_score():
     """Test R² score with fixed input values."""

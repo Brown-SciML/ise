@@ -3,7 +3,12 @@ import pytest
 import torch
 
 from ise.models.deep_ensemble import DeepEnsemble
-from ise.models.iseflow import ISEFlow, smooth_projections
+from ise.models.iseflow import (
+    ISEFlow,
+    ISEFlow_GrIS_DE_v1_0_0,
+    ISEFlow_GrIS_NF_v1_0_0,
+    smooth_projections,
+)
 from ise.models.lstm import LSTM
 from ise.models.normalizing_flow import NormalizingFlow
 
@@ -189,3 +194,30 @@ class TestSmoothProjections:
         data = rng.random(86)
         result = smooth_projections(data, window_size=7)
         assert not np.allclose(result, data)
+
+
+# ---------------------------------------------------------------------------
+# Deprecation warning tests for v1.0.0 legacy classes
+# ---------------------------------------------------------------------------
+
+
+def test_fit_does_not_reseed_torch_rng():
+    """ISEFlow.fit must not contain the torch.manual_seed(np.random.randint(...)) call."""
+    import inspect
+
+    from ise.models.iseflow import ISEFlow
+
+    source = inspect.getsource(ISEFlow.fit)
+    assert "torch.manual_seed(np.random.randint" not in source
+
+
+def test_iseflow_gris_de_v1_0_0_emits_deprecation_warning():
+    """ISEFlow_GrIS_DE_v1_0_0 must emit a DeprecationWarning on instantiation."""
+    with pytest.warns(DeprecationWarning, match="ISEFlow_GrIS_DE_v1_0_0"):
+        ISEFlow_GrIS_DE_v1_0_0()
+
+
+def test_iseflow_gris_nf_v1_0_0_emits_deprecation_warning():
+    """ISEFlow_GrIS_NF_v1_0_0 must emit a DeprecationWarning on instantiation."""
+    with pytest.warns(DeprecationWarning, match="ISEFlow_GrIS_NF_v1_0_0"):
+        ISEFlow_GrIS_NF_v1_0_0()

@@ -129,6 +129,10 @@ class FeatureEngineer:
         self.scaler_X = None
         self.scaler_y = None
 
+        self.train = None
+        self.val = None
+        self.test = None
+
         if fill_mrro_nans:
             self.data = self.fill_mrro_nans(method="zero")
 
@@ -137,10 +141,6 @@ class FeatureEngineer:
                 data, train_size, val_size, test_size, output_directory, random_state=42
             )
         self._including_model_characteristics = False
-
-        self.train = None
-        self.val = None
-        self.test = None
 
     def split_data(
         self,
@@ -218,6 +218,8 @@ class FeatureEngineer:
         Returns:
             tuple: Scaled X and y values.
         """
+
+        dropped_data = pd.DataFrame(index=self.data.index)
 
         if X is not None:
             self.X = X
@@ -297,19 +299,8 @@ class FeatureEngineer:
         # Store scalers in the class instance for potential future use
         self.scaler_X, self.scaler_y = scaler_X, scaler_y
 
-        # # Fit and transform X
-        # if isinstance(self.X, pd.DataFrame):
-        #     X_data = self.X.values
-        # elif isinstance(self.X, np.ndarray):
-        #     X_data = self.X
-        # else:
-        #     raise TypeError("X must be either a pandas DataFrame or a NumPy array.")
-
         scaler_X.fit(self.X)
         X_scaled = scaler_X.transform(self.X)
-
-        # categorical_cols = [x for x in self.X.columns if len(set(self.X[x])) <= 2]
-        # self.X[categorical_cols] = self.X[categorical_cols].astype('category')
 
         # Fit and transform y
         if isinstance(self.y, pd.DataFrame):
@@ -542,7 +533,7 @@ def scale_data(data, scaler_path):
     data = pd.concat([scaled, data_not_to_scale], axis=1)
     data = data[column_order]
 
-    # Convert bools back to int
+    # Drop duplicate columns from the concat
     data = data.loc[:, ~data.columns.duplicated()]
 
     return data
@@ -682,6 +673,12 @@ def add_lag_variables(data: pd.DataFrame, lag: int, verbose=True) -> pd.DataFram
     # Calculate the number of segments
     num_segments = len(data) // projection_length
 
+    if len(data) % projection_length != 0:
+        warnings.warn(
+            f"Data length {len(data)} is not divisible by projection_length "
+            f"{projection_length}; dropping {len(data) % projection_length} trailing rows."
+        )
+
     if verbose:
         iterator = tqdm(range(num_segments), total=num_segments, desc="Adding lag variables")
     else:
@@ -814,16 +811,13 @@ def split_training_data(
         raise ValueError("data must have a column named 'id'")
 
     total_ids = data["id"].unique()
-    np.random.shuffle(total_ids)
+    rng = np.random.default_rng(random_state)
+    rng.shuffle(total_ids)
     train_ids = total_ids[: int(len(total_ids) * train_size)]
     val_ids = total_ids[
         int(len(total_ids) * train_size) : int(len(total_ids) * (train_size + val_size))
     ]
     test_ids = total_ids[int(len(total_ids) * (train_size + val_size)) :]
-
-    # train_ids = list(pd.read_csv(r'/oscar/scratch/pvankatw/datasets/sectors/GrIS/train.csv').id.unique())
-    # val_ids = list(pd.read_csv(r'/oscar/scratch/pvankatw/datasets/sectors/GrIS/val.csv').id.unique())
-    # test_ids = list(pd.read_csv(r'/oscar/scratch/pvankatw/datasets/sectors/GrIS/test.csv').id.unique())
 
     split_data = {
         "train_ids": list(train_ids),

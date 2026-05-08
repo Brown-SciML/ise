@@ -310,11 +310,13 @@ class ISEFlowAISInputs:
 
             self._assign_model_configs(self.model_configs)
 
-        self._check_inputs()
+        if not getattr(self, "_post_init_ran", False):
+            self._check_inputs()
         self._map_args()
         self._convert_arrays()
         self.df = None
         self.all_ism_configs = None if not self.model_configs else self.all_ism_configs
+        self._post_init_ran = True
 
     def _check_inputs(
         self,
@@ -326,6 +328,8 @@ class ISEFlowAISInputs:
         ``ValueError`` for any out-of-range or mutually exclusive parameter
         combinations.
         """
+
+        self.year = np.asarray(self.year)
 
         if self.year[0] == 2015:
             self.year = self.year - 2015 + 1  # convert 2015-2100 → 1-86 (model encoding)
@@ -370,11 +374,10 @@ class ISEFlowAISInputs:
             "floating condition",
             "sub-grid",
             "None",
-            "False",
             "No",
         ):
             raise ValueError(
-                "melt_in_floating_cells must be one of 'floating condition', 'sub-grid', 'No', 'None', or 'False'"
+                "melt_in_floating_cells must be one of 'floating condition', 'sub-grid', 'No', or 'None'"
             )
 
         if str(self.icefront_migration) not in ("str", "fix", "mh", "ro", "div"):
@@ -497,6 +500,9 @@ class ISEFlowAISInputs:
             current_value = getattr(self, key)
 
             if key in arg_map:
+                # Skip if already mapped (idempotent post_init)
+                if current_value in arg_map[key].values():
+                    continue
                 # Normalise Python None to the string 'None' so the lookup succeeds
                 lookup_key = "None" if current_value is None else current_value
                 new_value = arg_map[key][lookup_key]
@@ -520,7 +526,13 @@ class ISEFlowAISInputs:
                 setattr(self, key, arg_map[key][value])
 
     def _convert_arrays(self):
-        """Coerce all forcing arrays to ``numpy.ndarray``."""
+        """Coerce all forcing arrays to ``numpy.ndarray``.
+
+        Optional forcings (currently ``mrro_anomaly``) are left as ``None`` if
+        not provided so downstream callers can detect their absence with a
+        plain ``is None`` check. Coercing ``None`` via ``np.array(None)`` would
+        produce a 0-d object array that breaks the documented contract.
+        """
 
         forcings = (
             "year",
@@ -536,6 +548,10 @@ class ISEFlowAISInputs:
 
         for arr_name in forcings:
             forcing_array = getattr(self, arr_name)
+
+            # Preserve None for optional fields; only coerce real values.
+            if forcing_array is None:
+                continue
 
             try:
                 setattr(self, arr_name, np.array(forcing_array))
@@ -867,10 +883,12 @@ class ISEFlowGrISInputs:
     # Validation logic runs after the object is created
     def __post_init__(self):
         self._assign_model_configs(self.model_configs) if self.model_configs else None
-        self._check_inputs()
+        if not getattr(self, "_post_init_ran", False):
+            self._check_inputs()
         self._map_args()
         self._convert_arrays()
         self.df = None
+        self._post_init_ran = True
 
     def _check_inputs(
         self,
@@ -882,6 +900,8 @@ class ISEFlowGrISInputs:
         ``ValueError`` for any out-of-range or mutually exclusive parameter
         combinations.
         """
+
+        self.year = np.asarray(self.year)
 
         if self.year[0] == 2015:
             self.year = self.year - 2015 + 1  # convert 2015-2100 → 1-86 (model encoding)
@@ -1094,6 +1114,9 @@ class ISEFlowGrISInputs:
                 setattr(self, key, new_value)
 
             elif key in arg_map:
+                # Skip if already mapped (idempotent post_init)
+                if current_value in arg_map[key].values():
+                    continue
                 # Normalise Python None to the string 'None' so the lookup succeeds
                 lookup_key = "None" if current_value is None else current_value
                 new_value = arg_map[key][lookup_key]

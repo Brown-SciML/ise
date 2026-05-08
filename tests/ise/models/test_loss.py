@@ -3,6 +3,7 @@ import torch
 
 from ise.models.loss import (
     MSEDeviationLoss,
+    WeightedGridLoss,
     WeightedMSELoss,
     WeightedMSELossWithSignPenalty,
     WeightedMSEPCALoss,
@@ -167,3 +168,35 @@ class TestWeightedMSEPCALoss:
         criterion = WeightedMSEPCALoss(data_mean=0.0, data_std=1.0)
         with pytest.raises(ValueError, match="shape"):
             criterion(torch.zeros(3), torch.zeros(4))
+
+    def test_does_not_mutate_custom_weights(self):
+        """forward() must not mutate self.custom_weights between calls."""
+        import numpy as np
+
+        # 1-D custom_weights triggers the unsqueeze path — the original bug mutated self.custom_weights here
+        cw = np.ones(4)
+        criterion = WeightedMSEPCALoss(data_mean=0.0, data_std=1.0, custom_weights=cw)
+        original_shape = criterion.custom_weights.shape
+        # Use (1, 4) input so weights shape is (1, 4) and the unsqueezed cw (1, 4) matches
+        x = torch.randn(1, 4)
+        criterion(x, x)
+        assert criterion.custom_weights.shape == original_shape
+        criterion(x, x)
+        assert criterion.custom_weights.shape == original_shape
+
+
+# ---------------------------------------------------------------------------
+# WeightedGridLoss gradient preservation
+# ---------------------------------------------------------------------------
+
+
+class TestWeightedGridLoss:
+    def test_preserves_gradients(self):
+        """forward() must not detach autograd-tracked tensors."""
+        criterion = WeightedGridLoss()
+        # WeightedGridLoss expects (batch, H, W) tensors
+        pred = torch.randn(2, 4, 4, requires_grad=True)
+        true = torch.randn(2, 4, 4)
+        loss = criterion(true, pred)
+        loss.backward()
+        assert pred.grad is not None

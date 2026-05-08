@@ -10,13 +10,15 @@ Installation
 
 .. code-block:: shell
 
-   pip install -e .
+   pip install ise-py
 
-or with ``uv``:
+For development (editable install):
 
 .. code-block:: shell
 
-   uv venv && uv pip install -r requirements.txt
+   git clone https://github.com/Brown-SciML/ise.git
+   cd ise
+   pip install -e ".[dev]"
 
 Running the pretrained AIS emulator
 ------------------------------------
@@ -51,7 +53,7 @@ Running the pretrained AIS emulator
        standard_melt_type="local",
    )
 
-   # Load pretrained v1.1.0 model (weights ship with the package)
+   # Load pretrained v1.1.0 model (weights downloaded from HuggingFace Hub on first use)
    model = ISEFlow_AIS(version="v1.1.0")
 
    # Run inference — returns unscaled SLE projections (mm) + uncertainty dict

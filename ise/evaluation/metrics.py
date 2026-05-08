@@ -84,7 +84,8 @@ def sum_by_sector(array, grid_file):
         grids = xr.open_dataset(grid_file)
         sector_name = "sectors" if "ais" in grid_file.lower() else "ID"
     elif isinstance(grid_file, xr.Dataset):
-        sector_name = "ID" if "Rignot" in grids.Description else "sectors"
+        grids = grid_file
+        sector_name = "ID" if "Rignot" in grids.attrs.get("Description", "") else "sectors"
     else:
         raise ValueError("grid_file must be a string or an xarray Dataset.")
 
@@ -94,8 +95,6 @@ def sum_by_sector(array, grid_file):
         num_timesteps = 1
         array = array.reshape((1, array.shape[0], array.shape[1]))
 
-    # if len(array.shape) == 3:
-    #     grids = grids.expand_dims(dim={'time': num_timesteps})
     sectors = grids[sector_name].values
 
     ice_sheet = "AIS" if 761 in array.shape else "GIS"

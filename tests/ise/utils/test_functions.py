@@ -1,9 +1,21 @@
+import pickle
+
 import numpy as np
 import pandas as pd
 import pytest
 import torch
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler as SkStandardScaler
 
-from ise.utils.functions import check_input, get_all_filepaths, to_tensor
+from ise.utils.functions import (
+    check_input,
+    get_all_filepaths,
+    get_X_y,
+    to_tensor,
+    undummify,
+    unscale_column,
+    unscale_output,
+)
 
 # ---------------------------------------------------------------------------
 # to_tensor
@@ -125,3 +137,101 @@ class TestCheckInput:
 
     def test_valid_option_at_boundary(self):
         check_input("pandas", ["numpy", "tensor", "pandas"])  # should not raise
+
+
+# ---------------------------------------------------------------------------
+# undummify — round-trip from get_dummies
+# ---------------------------------------------------------------------------
+
+
+class TestUndummify:
+    def test_round_trips_categorical_column(self):
+        """undummify(get_dummies(df)) recovers the original categorical column."""
+        df = pd.DataFrame({"numerics": ["fd", "fe", "fd", "fe"], "value": [1.0, 2.0, 3.0, 4.0]})
+        dummies = pd.get_dummies(df, columns=["numerics"], prefix_sep="-")
+        recovered = undummify(dummies, prefix_sep="-")
+        assert "numerics" in recovered.columns
+        assert list(recovered["numerics"]) == list(df["numerics"])
+        # Non-categorical column passes through unchanged
+        np.testing.assert_array_equal(recovered["value"].values, df["value"].values)
+
+
+# ---------------------------------------------------------------------------
+# unscale_output — round-trip via pickled sklearn scaler
+# ---------------------------------------------------------------------------
+
+
+class TestUnscaleOutput:
+    def test_round_trips_via_pickled_scaler(self, tmp_path):
+        """unscale_output must invert scaler.transform exactly (within numerical tolerance)."""
+        rng = np.random.default_rng(0)
+        y = rng.random((20, 1)) * 100 - 50
+        scaler = SkStandardScaler().fit(y)
+        scaled = scaler.transform(y)
+
+        scaler_path = tmp_path / "scaler.pkl"
+        with open(scaler_path, "wb") as f:
+            pickle.dump(scaler, f)
+
+        recovered = unscale_output(scaled, str(scaler_path))
+        np.testing.assert_allclose(recovered, y, rtol=1e-9)
+
+
+# ---------------------------------------------------------------------------
+# get_X_y — sectors path drops id/model and returns sle as target
+# ---------------------------------------------------------------------------
+
+
+class TestGetXy:
+    def test_sectors_drops_id_and_model_returns_sle_as_y(self):
+        """X must not contain id/model/exp; y must be the sle column.
+
+        These columns are how get_X_y separates metadata from features — if the
+        drop-list ever changes silently, training data leaks identity into the
+        model.
+        """
+        df = pd.DataFrame(
+            {
+                "id": ["a", "b", "c"],
+                "model": ["m1", "m1", "m2"],
+                "exp": ["e1", "e1", "e2"],
+                "sle": [0.1, 0.2, 0.3],
+                "feature1": [1.0, 2.0, 3.0],
+                "feature2": [4.0, 5.0, 6.0],
+            }
+        )
+        X, y = get_X_y(df, dataset_type="sectors", return_format="pandas")
+        assert "id" not in X.columns
+        assert "model" not in X.columns
+        assert "exp" not in X.columns
+        assert "sle" not in X.columns
+        # Features are preserved
+        assert "feature1" in X.columns
+        assert "feature2" in X.columns
+        # y is the sle column
+        np.testing.assert_array_equal(y["sle"].values, df["sle"].values)
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for unscale_column fixes
+# ---------------------------------------------------------------------------
+
+
+def test_unscale_column_year_round_trip():
+    """unscale_column should recover 2015-2100 after MinMaxScaler round-trip."""
+    years = np.arange(2015, 2101)
+    scaler = MinMaxScaler().fit(years.reshape(-1, 1))
+    scaled_years = scaler.transform(years.reshape(-1, 1)).flatten()
+    df = pd.DataFrame({"year": scaled_years})
+    result = unscale_column(df, column="year")
+    np.testing.assert_array_equal(result["year"].values, years)
+
+
+def test_unscale_column_gris_sectors():
+    """unscale_column with ice_sheet='GrIS' should recover 1-6 sector range."""
+    sectors = np.arange(1, 7)
+    scaler = MinMaxScaler().fit(sectors.reshape(-1, 1))
+    scaled = scaler.transform(sectors.reshape(-1, 1)).flatten()
+    df = pd.DataFrame({"sectors": scaled})
+    result = unscale_column(df, column="sectors", ice_sheet="GrIS")
+    np.testing.assert_array_equal(result["sectors"].values, sectors)

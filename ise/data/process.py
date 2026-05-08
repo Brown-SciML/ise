@@ -735,7 +735,7 @@ def get_xarray_data(dataset_fp, var_name=None, ice_sheet="AIS", convert_and_subs
     )
     try:
         dataset = dataset.transpose("time", "x", "y", ...)
-    except:
+    except (ValueError, KeyError):
         pass
 
     if "ivaf" in dataset.variables:
@@ -1032,7 +1032,7 @@ def combine_gris_forcings(forcing_dir):
                     for dim in ["nv", "nv4", "mapping"]:
                         try:
                             dataset = dataset.drop_dims(dim)
-                        except:
+                        except (ValueError, KeyError):
                             pass
                     dataset = dataset.drop("mapping")
                     dataset = dataset.sel(x=dataset.x.values[::5], y=dataset.y.values[::5])
@@ -1043,7 +1043,7 @@ def combine_gris_forcings(forcing_dir):
                 for dim in ["nv", "nv4"]:
                     try:
                         data = data.drop_dims(dim)
-                    except:
+                    except (ValueError, KeyError):
                         pass
                 data = data.drop("mapping")
                 data = data.sel(x=data.x.values[::5], y=data.y.values[::5])

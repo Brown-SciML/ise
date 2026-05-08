@@ -45,25 +45,19 @@ section.
 Installation
 ============
 
-ISE uses `uv <https://github.com/astral-sh/uv>`_ for dependency management.
-Set up the environment with:
+Install from PyPI:
 
 .. code-block:: shell
 
-   uv venv
-   uv pip install -r requirements.txt
-
-or using **pip** directly:
-
-.. code-block:: shell
-
-   pip install -r requirements.txt
+   pip install ise-py
 
 For development (editable install):
 
 .. code-block:: shell
 
-   pip install -e .
+   git clone https://github.com/Brown-SciML/ise.git
+   cd ise
+   pip install -e ".[dev]"
 
 Quickstart — pretrained ISEFlow-AIS
 =====================================
