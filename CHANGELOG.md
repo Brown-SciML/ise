@@ -13,6 +13,7 @@ This project uses **two independent version numbers**:
 
 ## [Unreleased]
 
+- `ISEFlow_GrIS_DE_v1_0_0` and `ISEFlow_GrIS_NF_v1_0_0` now emit `DeprecationWarning` on instantiation, matching the behaviour of their AIS counterparts.
 - Fixed four `inputs.py` validation issues: AIS/GrIS `_check_inputs` now coerces `year` to ndarray before arithmetic so passing `year=list(...)` no longer raises `TypeError`; `'False'` removed from `melt_in_floating_cells` accepted values (it was never a valid encoding and caused a delayed `KeyError` in `_map_args`); GrIS `surface_thickness` validator error message corrected (was copy-pasted from the `bed` validator); `_map_args` is now idempotent so calling `__post_init__` twice no longer `KeyError`s.
 - Fixed `NormalizingFlow.save()` crash when called after `fit(save_checkpoints=False)`. `save()` read `self.best_loss` and `self.epochs_trained` directly, but those attributes are only set when a checkpoint is written. Now uses `getattr` defaults to match `DeepEnsemble.save()`.
 - Fixed `EmulatorDataset.__getitem__` crash on 3-D `(N_proj, T, F)` input. `__init__` set `num_features` for the 3-D branch but `features` for the 2-D branch; `__getitem__` only used the latter, raising `AttributeError` on first index lookup. Standardised on `num_features` in both branches (`self.features` retained as an alias).

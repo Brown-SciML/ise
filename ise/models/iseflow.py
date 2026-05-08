@@ -1009,6 +1009,10 @@ class ISEFlow_GrIS_DE_v1_0_0(DeepEnsemble):
     def __init__(
         self,
     ):
+        warnings.warn(
+            "ISEFlow_GrIS_DE_v1_0_0 is deprecated and will be removed in future versions. Please use ISEFlow_GrIS instead.",
+            DeprecationWarning,
+        )
         self.input_size = 90
         self.output_size = 1
         iseflow_gris_ensemble = [
@@ -1078,6 +1082,10 @@ class ISEFlow_GrIS_NF_v1_0_0(NormalizingFlow):
         self,
     ):
         """Initialize with GrIS-specific defaults (input_size=90, 5 flow transforms)."""
+        warnings.warn(
+            "ISEFlow_GrIS_NF_v1_0_0 is deprecated and will be removed in future versions. Please use ISEFlow_GrIS instead.",
+            DeprecationWarning,
+        )
         self.input_size = 90
         self.output_size = 1
         self.num_flow_transforms = 5
