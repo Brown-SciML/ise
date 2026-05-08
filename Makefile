@@ -6,6 +6,8 @@ test:
 lint:
 	ruff check . && ruff format --check .
 
+check: format lint type
+
 format:
 	ruff format . && ruff check --fix .
 
