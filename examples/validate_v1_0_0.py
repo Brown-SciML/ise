@@ -77,4 +77,4 @@ for ice_sheet in ("AIS", "GrIS"):
 
         preds, _ = model.predict(X_test)
         mse = np.mean((y_test - preds) ** 2)
-        print(f"{ice_sheet} MSE: {mse:.4f}  (expected: AIS ~1.20, GrIS ~1.02)")
+        print(f"{ice_sheet} MSE: {mse:.4f}  (expected: V1.0.0 AIS ~1.20, GrIS ~1.02)")
