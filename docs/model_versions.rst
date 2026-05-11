@@ -31,14 +31,21 @@ v1.1.0 — AIS + GrIS (current)
 
 **What changed from v1.0.0**
 
-- **GrIS support added.** First release of ``ISEFlow_GrIS`` pretrained weights covering
-  all 6 Greenland drainage basins.
 - **``mrro_anomaly`` removed from AIS inputs.** The melt-runoff anomaly variable was
   dropped from the AIS feature set after ablation analysis showed it contributed noise
   rather than signal.  Code using v1.0.0-style inputs that passes ``mrro_anomaly`` must
   remove it before calling ``predict()`` with v1.1.0 weights.
 - Scalers saved alongside weights per ice sheet and version so that
   ``predict(..., output_scaler=True)`` works correctly for both AIS and GrIS.
+- **NormalizingFlow architecture upgraded.** The context encoder was changed from a
+  single ``nn.Linear(input_size, output_size * 2)`` layer to a 2-layer MLP
+  (``Linear → ReLU → Linear``), and ``flow_hidden_features`` is now a tunable
+  hyperparameter rather than being hard-coded to ``output_size * 2``.
+- **``get_latent`` changed from deterministic to stochastic.** v1.0.0 pushed a fixed
+  zero vector through the forward transform to produce latents; v1.1.0 draws samples
+  from the conditional base distribution instead.  Both approaches are preserved —
+  ``NormalizingFlow.load()`` auto-detects the version from saved metadata and sets
+  ``legacy_v1_0_0=True`` for old weights so inference reproduces the original latents.
 
 **AIS inputs (v1.1.0)**
 
