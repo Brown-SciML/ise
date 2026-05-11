@@ -1,4 +1,4 @@
-"""Validate ISEFlow v1.0.0 weights against paper-reported test-set MSE.
+"""Validate ISEFlow (v1.0.0 and v1.1.0) Manuscript Results.
 
 This script reproduces the held-out test-set evaluation reported for ISEFlow
 v1.0.0. It downloads the v1.0.0 test splits and scalers from HuggingFace Hub
