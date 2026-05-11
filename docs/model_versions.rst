@@ -67,12 +67,12 @@ v1.1.0 — AIS + GrIS (current)
 
 ---
 
-v1.0.0 — AIS only (legacy)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+v1.0.0 — AIS + GrIS (legacy)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :Released: 2026-05-07
-:Ice sheets: AIS (18 sectors) only
-:Classes: ``ISEFlow_AIS(version="v1.0.0")``
+:Ice sheets: AIS (18 sectors), GrIS (6 drainage basins)
+:Classes: ``ISEFlow_AIS(version="v1.0.0")``, ``ISEFlow_GrIS(version="v1.0.0")``
 
 The original pretrained release.  Maintained for reproducibility of results from the
 ISEFlow manuscript.
