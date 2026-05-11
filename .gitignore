@@ -197,3 +197,4 @@ cython_debug/
 main.ipynb
 CLAUDE.md
 .claude
+.plan.md
