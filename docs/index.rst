@@ -164,4 +164,5 @@ If you use ISE in research, please consider citing our work.  See
    :caption: Contents:
 
    quickstart
+   model_versions
    docs/source/ise

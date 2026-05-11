@@ -15,6 +15,18 @@ This project uses **two independent version numbers**:
 
 ---
 
+## [1.2.0] — 2026-05-11 (package) | Model: v1.1.0
+
+### Added
+- `NormalizingFlow.get_latent_representation()` now supports v1.0.0 weights via a `legacy_v1_0_0` path: pushes a zero vector through the forward transform (deterministic) rather than sampling from the conditional base distribution. `NormalizingFlow.load()` auto-detects the version from saved metadata and sets the flag automatically, so v1.0.0 and v1.1.0 inference are both correct without user intervention.
+- `docs/model_versions.rst` — new reference page documenting all ISEFlow weight versions, per-version input schemas, migration guides (v1.0.0 → v1.1.0), `from_absolute_forcings()` usage, and weight resolution order. Linked from `docs/index.rst`.
+- `examples/recreate_manuscript_results.py` — end-to-end script that downloads v1.0.0 test splits and scalers from HuggingFace Hub (`pvankatwyk/iseflow-datasets`), runs inference with v1.0.0 pretrained weights, and reports held-out MSE for both AIS and GrIS.
+
+### Changed
+- `NormalizingFlow.get_latent_representation()` docstring expanded to document both the legacy deterministic path (v1.0.0) and the stochastic sampling path (v1.1.0+), including the behavioural difference and its downstream effect on `DeepEnsemble` inputs.
+
+---
+
 ## [1.1.0] — 2026-05-08 (package) | Model: v1.1.0
 
 ### Added

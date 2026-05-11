@@ -368,19 +368,41 @@ class NormalizingFlow(nn.Module):
         """
         Computes the latent space representation of the given input.
 
+        Two approaches are used depending on the model version:
+
+        - **v1.0.0 (legacy)**: deterministically pushes a zero vector through the
+          forward transform conditioned on ``x``. Same ``x`` always yields the same
+          ``z``, so the flow acts as a learned deterministic feature extractor.
+        - **v1.1.0+ (default)**: draws ``latent_dim`` samples from the conditional
+          base distribution. ``z`` is a stochastic summary of ``x``, which is more
+          statistically grounded — the latent reflects the modeled conditional
+          distribution rather than a single fixed point.
+
+        These approaches behave differently and produce different downstream
+        DeepEnsemble inputs; the choice may be worth revisiting in future versions.
+        The legacy path is more pragmatic and reproducible at inference, while the
+        sampling path aligns more closely with the probabilistic interpretation of
+        the flow.
+
         Args:
             x (array-like or torch.Tensor): Input data of shape (num_samples, num_features).
-            latent_constant (float, optional): Constant value used for latent variable sampling. Defaults to 0.0.
+            latent_dim (int, optional): Number of latent samples to draw (post-v1.0.0). Defaults to 1.
 
         Returns:
             torch.Tensor: Latent space representation of the input data.
         """
 
         x = to_tensor(x).to(self.device)
-        z = self.base_distribution.sample(latent_dim, context=x).squeeze(
-            2
-        )  # collapse third 1-d dimension
-        return z
+
+        if self.legacy_v1_0_0:
+            # v1.0.0 deterministically pushed a zero vector through the forward
+            # transform conditioned on x. The DeepEnsemble was trained on these
+            # latents, so inference must reproduce the same operation.
+            latent_constant_tensor = torch.zeros((x.shape[0], 1), device=self.device)
+            z, _ = self.t(latent_constant_tensor.float(), context=x)
+            return z
+
+        return self.base_distribution.sample(latent_dim, context=x).squeeze(2)
 
     def aleatoric(self, features, num_samples, batch_size=128):
         """
