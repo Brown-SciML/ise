@@ -11,9 +11,10 @@ loader falls back to those local paths transparently.
 """
 
 import os
+import sys
 
-from huggingface_hub import snapshot_download
-from huggingface_hub.utils import disable_progress_bars
+from huggingface_hub import snapshot_download, try_to_load_from_cache
+from huggingface_hub.utils import disable_progress_bars, enable_progress_bars
 
 HF_REPO_ID = "pvankatwyk/ISEFlow"
 
@@ -45,13 +46,30 @@ def get_model_dir(version: str, ice_sheet: str) -> str:
     """
     subfolder = _subfolder(version, ice_sheet)
     local_fallback = os.path.join(_LOCAL_PRETRAINED_DIR, "ISEFlow", subfolder)
+    already_cached = _is_cached(subfolder)
 
     try:
-        disable_progress_bars()
+        if already_cached:
+            # Quiet path: weights already on disk, suppress HF's progress bars.
+            disable_progress_bars()
+        else:
+            enable_progress_bars()
+            print(
+                f"[ise] Downloading ISEFlow {ice_sheet} {version} weights from "
+                f"HuggingFace Hub ({HF_REPO_ID})... (first-time only; cached afterwards)",
+                file=sys.stderr,
+                flush=True,
+            )
         local_dir = snapshot_download(
             repo_id=HF_REPO_ID,
             allow_patterns=[f"{subfolder}/**"],
         )
+        if not already_cached:
+            print(
+                f"[ise] Finished downloading ISEFlow {ice_sheet} {version} weights.",
+                file=sys.stderr,
+                flush=True,
+            )
         return os.path.join(local_dir, subfolder)
     except Exception:
         # Fall back to bundled weights (local dev or air-gapped HPC).
@@ -63,6 +81,19 @@ def get_model_dir(version: str, ice_sheet: str) -> str:
             "Install huggingface_hub and ensure internet access, or place "
             "the weights at the local path."
         )
+
+
+def _is_cached(subfolder: str) -> bool:
+    """Return True if the canonical weight files for this subfolder are already cached."""
+    sentinel_files = (
+        f"{subfolder}/deep_ensemble.pth",
+        f"{subfolder}/normalizing_flow.pth",
+    )
+    for filename in sentinel_files:
+        cached = try_to_load_from_cache(repo_id=HF_REPO_ID, filename=filename)
+        if not isinstance(cached, str):
+            return False
+    return True
 
 
 def _subfolder(version: str, ice_sheet: str) -> str:

@@ -72,7 +72,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from ise.utils import ismip6_model_configs_path
+from ise.utils import gris_ismip6_model_configs_path, ismip6_model_configs_path
 
 
 @dataclass
@@ -1215,7 +1215,9 @@ class ISEFlowGrISInputs:
     def __repr__(self):
         return self.__str__()
 
-    def _assign_model_configs(self, model_name, characteristics_json=ismip6_model_configs_path):
+    def _assign_model_configs(
+        self, model_name, characteristics_json=gris_ismip6_model_configs_path
+    ):
         with open(characteristics_json) as file:
             characteristics = json.load(file)
 

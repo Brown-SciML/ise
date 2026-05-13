@@ -3,6 +3,23 @@ ISE Documentation
 
 .. image:: https://readthedocs.org/projects/ise/badge/?version=latest
    :target: https://ise.readthedocs.io/en/latest/
+   :alt: Documentation Status
+
+.. image:: https://badge.fury.io/py/ise-py.svg
+   :target: https://pypi.org/project/ise-py/
+   :alt: PyPI version
+
+.. image:: https://img.shields.io/badge/python-3.11+-blue.svg
+   :target: https://python.org
+   :alt: Python 3.11+
+
+.. image:: https://img.shields.io/badge/License-MIT-yellow.svg
+   :target: https://github.com/Brown-SciML/ise/blob/master/LICENSE.md
+   :alt: License: MIT
+
+.. image:: https://github.com/Brown-SciML/ise/actions/workflows/ci.yml/badge.svg
+   :target: https://github.com/Brown-SciML/ise/actions/workflows/ci.yml
+   :alt: CI
 
 **ISE** (Ice Sheet Emulator) is a Python package for training and running machine
 learning emulators of ice sheet models, with a focus on **ISEFlow** — a hybrid
@@ -38,9 +55,11 @@ This codebase has been used in peer-reviewed research, including:
   Sheet"*
 - *"ISEFlow: A Flow-Based Neural Network Emulator for Improved Sea Level
   Projections and Uncertainty Quantification"*
+- *"Emulator-expanded projections reveal structure in Antarctic sea level
+  uncertainty"* (in review)
 
-For replication details see the `Releases <https://github.com/Brown-SciML/ise/releases>`_
-section.
+Manuscript-specific code is archived on Zenodo — see
+`Manuscript code archives`_ below for DOIs.
 
 Installation
 ============
@@ -146,6 +165,32 @@ Run tests before submitting:
 .. code-block:: shell
 
    pytest tests/
+
+Manuscript code archives
+========================
+
+The current ``ise-py`` package on PyPI is the actively maintained, versioned
+successor to the manuscript-specific codebases. Frozen snapshots of the code
+used in each publication are archived on Zenodo at the DOIs below:
+
+- **"A Variational LSTM Emulator of Sea Level Contribution From the Antarctic
+  Ice Sheet"** — Peter Van Katwyk, Baylor Fox-Kemper, Helene Seroussi,
+  Sophie Nowicki, Karianne Bergen.
+  DOI: `10.5281/zenodo.10416633 <https://doi.org/10.5281/zenodo.10416633>`_
+
+- **"ISEFlow: A Flow-Based Neural Network Emulator for Improved Sea Level
+  Projections and Uncertainty Quantification"** — Peter Van Katwyk,
+  Baylor Fox-Kemper, Sophie Nowicki, Helene Seroussi, Karianne Bergen.
+  DOI: `10.5281/zenodo.14908114 <https://doi.org/10.5281/zenodo.14908114>`_
+
+- **"Emulator-expanded projections reveal structure in Antarctic sea level
+  uncertainty"** *(in review)* — Peter Van Katwyk, Baylor Fox-Kemper,
+  Sophie Nowicki, Helene Seroussi, Karianne Bergen.
+  Data & code DOI:
+  `10.5281/zenodo.19355381 <https://doi.org/10.5281/zenodo.19355381>`_
+
+For new work, install the maintained package (``pip install ise-py``); use the
+Zenodo archives when you need to reproduce results from a specific paper.
 
 Contact & Support
 =================

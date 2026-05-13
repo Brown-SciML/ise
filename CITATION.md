@@ -4,20 +4,20 @@ If you use this software in your research, please cite it as follows:
 
 ## Plain Text
 
-Van Katwyk, P. (2026). *ISE: Ice Sheet Emulator* (Version 1.1.0) [Software]. GitHub. https://github.com/Brown-SciML/ise
+Van Katwyk, P. (2026). *ise-py: Python package for ice sheet emulation and sea level projections* (Version 1.1.0) [Software]. GitHub. https://github.com/Brown-SciML/ise
 
 ## BibTeX
 
 ```bibtex
 @software{vankatwyk2026ise,
   author       = {Van Katwyk, Peter},
-  title        = {{ISE}: {Ice Sheet Emulator}},
+  title        = {{ise-py}: {Python package for ice sheet emulation and sea level projections}},
   year         = {2026},
-  version      = {1.1.0},
+  version      = {1.2.1},
   publisher    = {GitHub},
   url          = {https://github.com/Brown-SciML/ise},
-  note         = {Python package for training and analyzing ice sheet emulators,
-                  including ISEFlow, a hybrid flow-based neural network emulator
-                  for sea level projections and uncertainty quantification.}
+  note         = {Includes ISEFlow, a hybrid normalizing-flow + deep-ensemble neural network
+                  emulator for the Antarctic and Greenland ice sheets, producing probabilistic
+                  sea level projections with epistemic and aleatoric uncertainty quantification.}
 }
 ```

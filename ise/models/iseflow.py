@@ -76,6 +76,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import torch
+from scipy.ndimage import uniform_filter1d
 from sklearn.exceptions import InconsistentVersionWarning
 from torch import nn
 
@@ -242,23 +243,20 @@ class ISEFlow(torch.nn.Module):
         self,
         x,
     ):
-        """
-        Performs a forward pass through the hybrid emulator.
+        """Run a forward pass through the hybrid emulator.
 
         Args:
-            x (array-like): Input data.
-            smooth_projection (bool, optional): Whether to apply smoothing to projections. Defaults to False.
+            x (array-like): Input feature matrix with shape ``(N, num_features)``.
 
         Returns:
-            tuple: A tuple containing:
-                - prediction (numpy.ndarray): Model predictions.
-                - uncertainties (dict): Dictionary with keys:
-                    - 'total' (numpy.ndarray): Total uncertainty.
-                    - 'epistemic' (numpy.ndarray): Epistemic uncertainty.
-                    - 'aleatoric' (numpy.ndarray): Aleatoric uncertainty.
+            tuple: ``(prediction, uncertainties)`` where:
 
-        Raises:
-            Warning: If the model has not been trained.
+            - **prediction** (*numpy.ndarray*): Mean prediction across ensemble members.
+            - **uncertainties** (*dict*): Keys ``'total'``, ``'epistemic'``, ``'aleatoric'``
+              with numpy arrays giving per-row uncertainty in scaled (model) units.
+
+        Warns:
+            UserWarning: If the model has not been trained.
         """
 
         self.eval()
@@ -279,29 +277,31 @@ class ISEFlow(torch.nn.Module):
         return prediction, uncertainties
 
     def predict(self, x, output_scaler=True, smoothing_window=0):
-        """
-        Makes predictions using the trained hybrid emulator with optional smoothing.
+        """Predict SLE projections and uncertainties, applying inverse scaling and optional smoothing.
 
-        IMPORTANT: Smoothing is applied to the final unscaled predictions and uncertainties
-        to ensure smooth output curves.
+        Smoothing is applied to the final unscaled predictions and uncertainties so the
+        physical SLE curve is what gets smoothed (rather than scaled values).
 
         Args:
-            x (array-like): Input data.
-            output_scaler (bool or str, optional): Path to the output scaler or whether to apply scaling.
-                Defaults to True.
-            smoothing_window (int, optional): Size of the smoothing window. 0 means no smoothing.
-                Defaults to 0.
+            x (array-like): Input feature matrix with shape ``(N, num_features)``.
+            output_scaler (bool or str, optional): If ``True`` (default), loads the
+                scaler bundled with the pretrained model. If ``False``, returns
+                un-rescaled predictions. If a string, loads the sklearn scaler at
+                that path and uses it to inverse-transform the output.
+            smoothing_window (int, optional): Width of a centered moving-average
+                smoother applied to the unscaled predictions and uncertainties.
+                ``0`` (default) disables smoothing.
 
         Returns:
-            tuple: A tuple containing:
-                - unscaled_predictions (numpy.ndarray): Model predictions in the original scale.
-                - uncertainties (dict): Dictionary with keys:
-                    - 'total' (numpy.ndarray): Total uncertainty.
-                    - 'epistemic' (numpy.ndarray): Epistemic uncertainty.
-                    - 'aleatoric' (numpy.ndarray): Aleatoric uncertainty.
+            tuple: ``(unscaled_predictions, uncertainties)`` where:
 
-        Raises:
-            Warning: If no scaler path is provided.
+            - **unscaled_predictions** (*numpy.ndarray*): Predictions in mm SLE.
+            - **uncertainties** (*dict*): Keys ``'total'``, ``'epistemic'``, ``'aleatoric'``
+              with numpy arrays in mm SLE.
+
+        Warns:
+            UserWarning: If no scaler is available; predictions and uncertainties are
+                then returned in the model's scaled output space rather than mm SLE.
         """
         self.eval()
 
@@ -437,19 +437,19 @@ class ISEFlow(torch.nn.Module):
         deep_ensemble_path=None,
         normalizing_flow_path=None,
     ):
-        """
-        Loads a trained ISEFlow model from specified paths.
+        """Load a trained ISEFlow from saved deep ensemble and normalizing flow checkpoints.
+
+        Provide either ``model_dir`` (which expects ``deep_ensemble.pth`` and
+        ``normalizing_flow.pth`` files inside it) or both ``deep_ensemble_path``
+        and ``normalizing_flow_path`` explicitly.
 
         Args:
-            model_dir (str, optional): Directory containing the saved model. Defaults to None.
-            deep_ensemble_path (str, optional): Path to the saved deep ensemble model. Defaults to None.
-            normalizing_flow_path (str, optional): Path to the saved normalizing flow model. Defaults to None.
+            model_dir (str, optional): Directory containing the saved sub-model files.
+            deep_ensemble_path (str, optional): Explicit path to the saved deep ensemble.
+            normalizing_flow_path (str, optional): Explicit path to the saved normalizing flow.
 
         Returns:
-            ISEFlow: The loaded ISEFlow model.
-
-        Raises:
-            NotImplementedError: If an unsupported version is specified.
+            ISEFlow: The loaded model, with ``trained=True``.
         """
 
         if model_dir:
@@ -1096,9 +1096,6 @@ class ISEFlow_GrIS_NF_v1_0_0(NormalizingFlow):
             output_size=self.output_size,
             num_flow_transforms=self.num_flow_transforms,
         )
-
-
-from scipy.ndimage import uniform_filter1d
 
 
 def smooth_projections(data, window_size, projection_length=86):

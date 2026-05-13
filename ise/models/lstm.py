@@ -227,6 +227,8 @@ class LSTM(nn.Module):
             patience (int, optional): Number of epochs to wait before stopping. Defaults to 10.
             verbose (bool, optional): Whether to print training progress. Defaults to True.
             dataclass (type, optional): Dataset class for handling data. Defaults to EmulatorDataset.
+            wandb_run (wandb.run, optional): Weights & Biases run for per-epoch metric logging.
+                Defaults to None.
 
         Raises:
             ValueError: If no loss function is provided.

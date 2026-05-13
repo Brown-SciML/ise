@@ -192,23 +192,27 @@ class NormalizingFlow(nn.Module):
         lr=1e-4,
         wd=1e-6,
     ):
-        """
-        Trains the normalizing flow model using maximum likelihood estimation.
+        """Train the normalizing flow via maximum likelihood (negative log-probability).
+
+        If ``checkpoint_path`` already exists, training resumes from the saved
+        epoch. After training, the best checkpoint is loaded back into the model
+        and the temporary file is deleted.
 
         Args:
-            X (array-like): Input features of shape (num_samples, num_features).
-            y (array-like): Target values of shape (num_samples, output_size).
+            X (array-like): Input features of shape ``(num_samples, num_features)``.
+            y (array-like): Target values of shape ``(num_samples, output_size)``.
+            X_val (array-like, optional): Validation features for early stopping.
+            y_val (array-like, optional): Validation targets for early stopping.
             epochs (int, optional): Number of training epochs. Defaults to 100.
             batch_size (int, optional): Batch size for training. Defaults to 64.
             save_checkpoints (bool, optional): Whether to save model checkpoints. Defaults to True.
-            checkpoint_path (str, optional): Path to save model checkpoints. Defaults to 'checkpoint.pt'.
+            checkpoint_path (str, optional): Path to save model checkpoints. Defaults to ``'checkpoint.pt'``.
             early_stopping (bool, optional): Whether to use early stopping. Defaults to True.
             patience (int, optional): Number of epochs to wait before early stopping. Defaults to 10.
             verbose (bool, optional): Whether to print training progress. Defaults to True.
             wandb_run (wandb.run, optional): Weights & Biases run for logging. Defaults to None.
-
-        Raises:
-            ValueError: If checkpoint loading fails.
+            lr (float, optional): AdamW learning rate. Defaults to ``1e-4``.
+            wd (float, optional): AdamW weight decay. Defaults to ``1e-6``.
         """
 
         if self.trained:
@@ -405,17 +409,19 @@ class NormalizingFlow(nn.Module):
         return self.base_distribution.sample(latent_dim, context=x).squeeze(2)
 
     def aleatoric(self, features, num_samples, batch_size=128):
-        """
-        Estimates aleatoric uncertainty by computing the standard deviation of multiple
-        samples drawn from the normalizing flow model.
+        """Estimate aleatoric uncertainty as the std across flow samples per input row.
+
+        For each input row, draws ``num_samples`` samples from the conditional flow
+        and returns the standard deviation across those samples. NaN samples are
+        ignored when computing the std.
 
         Args:
-            features (array-like or torch.Tensor): Input features for sampling.
-            num_samples (int): Number of samples per input feature set.
-            batch_size (int, optional): Batch size for processing features. Defaults to 128.
+            features (array-like or torch.Tensor): Input features of shape ``(N, num_features)``.
+            num_samples (int): Number of flow samples drawn per input row.
+            batch_size (int, optional): Number of rows processed per forward pass. Defaults to 128.
 
         Returns:
-            np.ndarray: Aleatoric uncertainty estimates of shape (num_samples,).
+            numpy.ndarray: Per-row aleatoric uncertainty, shape ``(N,)``.
         """
 
         features = to_tensor(features)

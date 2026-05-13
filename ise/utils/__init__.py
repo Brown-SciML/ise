@@ -14,8 +14,13 @@ __all__ = [
     "get_device",
     "unscale_output",
     "ismip6_model_configs_path",
+    "gris_ismip6_model_configs_path",
 ]
 
 ismip6_model_configs_path = os.path.join(
     os.path.dirname(__file__), "..", "data", "data_files", "ismip6_model_configs.json"
+)
+
+gris_ismip6_model_configs_path = os.path.join(
+    os.path.dirname(__file__), "..", "data", "data_files", "GrIS_ismip6_model_configs.json"
 )

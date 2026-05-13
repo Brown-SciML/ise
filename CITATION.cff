@@ -1,13 +1,21 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 type: software
-title: "ISE: Ice Sheet Emulator"
+title: "ise-py: Python package for ice sheet emulation and sea level projections"
+abstract: >
+  ise-py provides tools for training and analyzing ice sheet emulators, with a focus
+  on probabilistic sea level projections. The flagship model, ISEFlow, is a hybrid
+  normalizing-flow + deep-ensemble neural network emulator supporting both the Antarctic
+  Ice Sheet (18 sectors, 8 km resolution) and the Greenland Ice Sheet (6 regions,
+  5 km resolution) over the 2015–2100 projection period. ISEFlow produces sea level
+  projections with decomposed epistemic and aleatoric uncertainty quantification,
+  using ISMIP6-compatible climate forcings.
 authors:
   - family-names: Van Katwyk
     given-names: Peter
     email: pvankatwyk@gmail.com
     affiliation: Brown University
-version: 1.0.0
+version: 1.2.1
 date-released: "2026-05-06"
 url: "https://github.com/Brown-SciML/ise"
 repository-code: "https://github.com/Brown-SciML/ise"
@@ -17,12 +25,9 @@ keywords:
   - sea level projections
   - uncertainty quantification
   - normalizing flow
+  - deep ensemble
   - deep learning
   - ISMIP6
-references:
-  - type: article
-    title: "ISEFlow: A Flow-Based Neural Network Emulator for Improved Sea Level Projections and Uncertainty Quantification"
-    authors:
-      - family-names: Van Katwyk
-        given-names: Peter
-        affiliation: Brown University
+  - Antarctic Ice Sheet
+  - Greenland Ice Sheet
+  - climate modeling

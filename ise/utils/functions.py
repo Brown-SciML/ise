@@ -41,7 +41,7 @@ Scaling / unscaling
 -------------------
 ``unscale_output(y, scaler_path)``   — inverse-transform y with a saved sklearn scaler.
 ``unscale_input(X, scaler_path)``    — inverse-transform X features (DataFrame only).
-``unscale_column(dataset, column)``  — revert MinMax scaling on ``year`` / ``sector`` columns back to their original ranges (2015-2100 and 1-18/1-6 respectively).
+``unscale_column(dataset, column)``  — revert MinMax scaling on ``year`` / ``sectors`` columns back to their original ranges (2015-2100 and 1-18 for AIS or 1-6 for GrIS).
 
 Post-processing
 ---------------
@@ -186,7 +186,7 @@ def load_ml_data(data_directory: str, time_series: bool = True):
                 test_scenarios = pd.read_csv(
                     f"{data_directory}/ts_test_scenarios.csv"
                 ).values.tolist()
-            except:
+            except FileNotFoundError:
                 raise FileNotFoundError(
                     f'Files not found at {data_directory}. Format must be in format "ts_train_features.csv"'
                 )
@@ -845,41 +845,48 @@ def to_tensor(x):
 
 
 def unscale_output(y, scaler_path):
-    """
-    Unscales a dataset using a previously saved MinMaxScaler.
+    """Inverse-transform a target array using a saved sklearn scaler (e.g. ``scaler_y.pkl``).
+
+    Works with any sklearn scaler that implements ``inverse_transform``
+    (``StandardScaler``, ``MinMaxScaler``, ``RobustScaler``, etc.).
 
     Args:
-        y (np.ndarray): The scaled data.
-        scaler_path (str): Path to the saved MinMaxScaler object.
+        y (np.ndarray): Scaled target values.
+        scaler_path (str): Path to a pickled sklearn scaler.
 
     Returns:
-        np.ndarray: The unscaled data.
+        np.ndarray: The inverse-transformed target values.
     """
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
-        scaler = pkl.load(open(scaler_path, "rb"))
+        with open(scaler_path, "rb") as f:
+            scaler = pkl.load(f)
     y = scaler.inverse_transform(y)
     return y
 
 
 def unscale_input(X, scaler_path):
-    """
-    Unscales input features using a previously saved MinMaxScaler.
+    """Inverse-transform input features using a saved sklearn scaler (e.g. ``scaler_X.pkl``).
+
+    Only the columns listed in the scaler's ``feature_names_in_`` are inverse-transformed;
+    other columns pass through unchanged. Works with any sklearn scaler that exposes
+    ``get_feature_names_out`` (i.e. fitted on a DataFrame).
 
     Args:
-        X (pd.DataFrame): The scaled input features.
-        scaler_path (str): Path to the saved MinMaxScaler object.
+        X (pd.DataFrame): Scaled input features.
+        scaler_path (str): Path to a pickled sklearn scaler.
 
     Returns:
-        pd.DataFrame: The unscaled input features.
+        pd.DataFrame: The inverse-transformed features in the original column order.
     """
     if not isinstance(X, pd.DataFrame):
         raise NotImplementedError("Only pandas DataFrame input is currently supported.")
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
-        scaler = pkl.load(open(scaler_path, "rb"))
+        with open(scaler_path, "rb") as f:
+            scaler = pkl.load(f)
     column_order = X.columns
     cols_to_scale = scaler.get_feature_names_out()
     data_to_scale = X[cols_to_scale]
