@@ -69,7 +69,7 @@ for ice_sheet in ("AIS", "GrIS"):
 
         # ── 3. Load test split ────────────────────────────────────────────────
 
-        print(f"[2/4] Loading test split and unscaling target...")
+        print("[2/4] Loading test split and unscaling target...")
         _, _, _, _, X_test, y_test = get_data(data_dir, return_format="numpy")
         y_test = unscale_output(y_test.reshape(-1, 1), os.path.join(data_dir, "scaler_y.pkl"))
 
@@ -84,7 +84,7 @@ for ice_sheet in ("AIS", "GrIS"):
 
         # ── 5. Predict and compute MSE ────────────────────────────────────────
 
-        print(f"[4/4] Predicting on test set and computing MSE...")
+        print("[4/4] Predicting on test set and computing MSE...")
         preds, _ = model.predict(X_test)
         mse = np.mean((y_test - preds) ** 2)
         print(f"\n  {ice_sheet} MSE: {mse:.4f}  (expected: v1.0.0 AIS ~1.20, GrIS ~1.02)")
