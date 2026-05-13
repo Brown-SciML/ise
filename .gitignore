@@ -1,5 +1,6 @@
 # Pretrained model weights (hosted on HuggingFace Hub; downloaded on first use)
-ise/models/pretrained/ISEFlow/
+ise/models/pretrained/ISEFlow/**
+!ise/models/pretrained/ISEFlow/README.md
 
 # Legacy unused model file
 ise/models/pretrained/variational_lstm_emulator.pt

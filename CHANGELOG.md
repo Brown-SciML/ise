@@ -13,7 +13,11 @@ This project uses **two independent version numbers**:
 
 ## [Unreleased]
 
+### Added
+- `ise/models/pretrained/ISEFlow/README.md` — notes that HuggingFace Hub (`pvankatwyk/ISEFlow`) is the canonical source for ISEFlow weights and the bundled copies are an offline-fallback convenience; HF wins on any divergence.
+
 ### Changed
+- `.gitignore`: un-ignore `ise/models/pretrained/ISEFlow/README.md` so the pointer file is tracked while the weight files stay ignored.
 - `.github/workflows/release.yml`: pass `skip-existing: true` to `pypa/gh-action-pypi-publish` so re-cutting an existing tag (e.g. when fixing changelog/docs after a release) no longer fails the workflow on the PyPI upload step.
 
 ---
