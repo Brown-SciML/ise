@@ -27,7 +27,7 @@ Key design choices
 ------------------
 - **Split granularity:** train/val/test is done by *simulation id*, not by
   individual rows, so no future data leaks into the validation set.  The
-  default split is 70/15/15 with ``random_state=42``.
+  default split is 70/15/15 with ``random_state=1``.
 - **Outlier threshold:** ``drop_outliers`` with ``expression=[("sle", "<", -26.3)]``
   removes physically implausible projections (sea level rise of more than
   26.3 mm is considered a physical bound for individual sectors).
@@ -138,7 +138,7 @@ class FeatureEngineer:
 
         if split_dataset:
             self.train, self.val, self.test = self.split_data(
-                data, train_size, val_size, test_size, output_directory, random_state=42
+                data, train_size, val_size, test_size, output_directory, random_state=1
             )
         self._including_model_characteristics = False
 
@@ -149,7 +149,7 @@ class FeatureEngineer:
         val_size=None,
         test_size=None,
         output_directory=None,
-        random_state=42,
+        random_state=1,
     ):
         """
         Splits the dataset into training, validation, and test sets.
@@ -779,7 +779,7 @@ def fill_mrro_nans(data: pd.DataFrame, method) -> pd.DataFrame:
 
 
 def split_training_data(
-    data, train_size, val_size, test_size=None, output_directory=None, random_state=42
+    data, train_size, val_size, test_size=None, output_directory=None, random_state=1
 ):
     """
     Splits the dataset into training, validation, and test sets.
@@ -790,7 +790,7 @@ def split_training_data(
         val_size (float): Proportion of data to use for validation.
         test_size (float, optional): Proportion of data to use for testing. Defaults to the remainder.
         output_directory (str, optional): Directory to save the split datasets as CSV files. Defaults to None.
-        random_state (int, optional): Seed for reproducibility. Defaults to 42.
+        random_state (int, optional): Seed for reproducibility. Defaults to 1.
 
     Returns:
         tuple: Training, validation, and test datasets as pandas DataFrames.

@@ -395,9 +395,9 @@ def test_split_training_data_random_state_is_reproducible():
     """split_training_data with the same random_state must return the same ids."""
     df = _make_projection_df(n_ids=20)
     np.random.seed(0)
-    train1, val1, test1 = split_training_data(df, 0.7, 0.15, 0.15, random_state=42)
+    train1, val1, test1 = split_training_data(df, 0.7, 0.15, 0.15, random_state=1)
     np.random.seed(99)
-    train2, val2, test2 = split_training_data(df, 0.7, 0.15, 0.15, random_state=42)
+    train2, val2, test2 = split_training_data(df, 0.7, 0.15, 0.15, random_state=1)
     assert set(train1["id"].unique()) == set(train2["id"].unique())
 
 
