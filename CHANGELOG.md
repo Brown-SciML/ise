@@ -13,6 +13,9 @@ This project uses **two independent version numbers**:
 
 ## [Unreleased]
 
+### Fixed
+- `tests/ise/data/test_input_classes.py` resolved the AIS/GrIS pretrained directories via the local-only `ISEFlow_AIS_v1_1_0_path` / `ISEFlow_GrIS_v1_1_0_path` constants, which point at the bundled fallback directory (not the HuggingFace cache). The AIS fallback dir does not ship `scaler_X.pkl`, so the 5 AIS comparison tests failed with `FileNotFoundError` whenever weights were served from the HF cache. Switched to `get_model_dir("v1.1.0", "AIS"/"GrIS")` so the test always reads the scaler from the same directory the model loads its weights from. (CI was unaffected because these tests are marked `slow` and skipped there.)
+
 ### Changed
 - Added stepwise progress printouts to all `examples/` scripts (`example_ais.py`, `example_gris.py`, `example_absolute_forcings.py`, `process_training_data.py`, `recreate_manuscript_results.py`) so users can follow what the script is doing as it runs.
 

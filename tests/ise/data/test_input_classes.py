@@ -37,12 +37,14 @@ pytestmark = [
 from ise.data.inputs import ISEFlowAISInputs, ISEFlowGrISInputs
 from ise.models.iseflow import ISEFlow_AIS, ISEFlow_GrIS
 from ise.models.pretrained import (
-    ISEFlow_AIS_v1_1_0_path,
     ISEFlow_AIS_v1_1_0_variables,
-    ISEFlow_GrIS_v1_1_0_path,
     ISEFlow_GrIS_v1_1_0_variables,
+    get_model_dir,
 )
 from ise.utils.functions import get_X_y
+
+ISEFlow_AIS_v1_1_0_path = get_model_dir("v1.1.0", "AIS")
+ISEFlow_GrIS_v1_1_0_path = get_model_dir("v1.1.0", "GrIS")
 
 AIS_DATA_DIR = "/oscar/home/pvankatw/research/ise/supplemental/dataset/AIS_slc"
 GRIS_DATA_DIR = "/oscar/home/pvankatw/research/ise/supplemental/dataset/GrIS_slc"
