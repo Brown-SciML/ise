@@ -13,6 +13,9 @@ This project uses **two independent version numbers**:
 
 ## [Unreleased]
 
+### Changed
+- Added stepwise progress printouts to all `examples/` scripts (`example_ais.py`, `example_gris.py`, `example_absolute_forcings.py`, `process_training_data.py`, `recreate_manuscript_results.py`) so users can follow what the script is doing as it runs.
+
 ---
 
 ## [1.2.1] — 2026-05-13 (package) | Model: v1.1.0

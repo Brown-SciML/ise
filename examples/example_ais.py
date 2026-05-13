@@ -225,6 +225,11 @@ standard_melt_type = "nonlocal"  # (unused here; ocean_forcing_type='open')
 
 # ── 3. Build the inputs object ────────────────────────────────────────────────
 
+print("=" * 70)
+print("ISEFlow-AIS Example: AWI_PISM1, Sector 10 (2015-2100)")
+print("=" * 70)
+
+print("\n[1/4] Building and validating inputs...")
 inputs = ISEFlowAISInputs(
     year=years,
     sector=sector,
@@ -254,7 +259,10 @@ print(inputs)
 
 # ── 4. Load the pretrained model and predict ──────────────────────────────────
 
+print("\n[2/4] Loading pretrained ISEFlow-AIS model (v1.1.0)...")
 model = ISEFlow_AIS(version="v1.1.0")
+
+print("\n[3/4] Running prediction with uncertainty quantification...")
 pred, uq = model.predict(inputs, smoothing_window=0)
 
 pred = np.asarray(pred).squeeze()
@@ -262,12 +270,15 @@ epistemic = np.asarray(uq["epistemic"]).squeeze()
 aleatoric = np.asarray(uq["aleatoric"]).squeeze()
 total = epistemic + aleatoric
 
-print(f"\nPrediction range: {pred.min():.2f} - {pred.max():.2f} mm SLE")
-print(f"Mean epistemic uncertainty: {epistemic.mean():.3f} mm")
-print(f"Mean aleatoric uncertainty: {aleatoric.mean():.3f} mm")
+print("\n── Prediction Summary ──────────────────────────────────────────────")
+print(f"  Prediction range:           {pred.min():>7.2f} to {pred.max():>7.2f} mm SLE")
+print(f"  Mean epistemic uncertainty: {epistemic.mean():>7.3f} mm")
+print(f"  Mean aleatoric uncertainty: {aleatoric.mean():>7.3f} mm")
 
 
 # ── 5. Plot ───────────────────────────────────────────────────────────────────
+
+print("\n[4/4] Generating plot...")
 
 fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -301,6 +312,7 @@ ax.set_xlim(years[0], years[-1])
 
 plt.tight_layout()
 plt.savefig("example_ais_projection.png", dpi=200, bbox_inches="tight")
-print("\nSaved example_ais_projection.png")
+print("  Saved figure: example_ais_projection.png")
+print("\nDone.")
 plt.show()
 plt.close("all")

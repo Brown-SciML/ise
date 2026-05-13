@@ -23,6 +23,11 @@ years = np.arange(2015, 2101)  # 86 years
 # AIS — Antarctic Ice Sheet
 # =============================================================================
 
+print("=" * 70)
+print("ISEFlow Example: Building Inputs from Absolute (non-anomaly) Forcings")
+print("=" * 70)
+print("\n──── AIS — Antarctic Ice Sheet ────────────────────────────────────")
+
 # ── 1. Raw absolute atmospheric forcing arrays ────────────────────────────────
 #
 # Illustrative values representative of NorESM1-M RCP8.5, sector 10.
@@ -43,7 +48,8 @@ temp_ais = np.linspace(-0.4, 0.1, 86)  # ocean temperature      (°C)
 
 # ── 2A. AIS using a existing ISMIP6 climatology ────────────────────────────────
 
-print("Available AIS AOGCMs:", AnomalyConverter("AIS").list_aogcms())
+print("\n[AIS 1/3] Converting absolute forcings via bundled ISMIP6 climatology...")
+print("  Available AIS AOGCMs:", AnomalyConverter("AIS").list_aogcms())
 
 inputs_ais_existing = ISEFlowAISInputs.from_absolute_forcings(
     year=years,
@@ -79,6 +85,7 @@ print(inputs_ais_existing)
 # Provide the 1995-2014 absolute means for your AOGCM in the same units as the
 # raw inputs: kg m⁻² s⁻¹ for pr / evspsbl / smb, K for ts.
 
+print("\n[AIS 2/3] Converting absolute forcings via user-supplied climatology...")
 inputs_ais_custom = ISEFlowAISInputs.from_absolute_forcings(
     year=years,
     sector=10,
@@ -115,6 +122,7 @@ print(inputs_ais_custom)
 
 # ── 3. AIS prediction ─────────────────────────────────────────────────────────
 
+print("\n[AIS 3/3] Loading ISEFlow-AIS and predicting...")
 model_ais = ISEFlow_AIS(version="v1.1.0")
 pred_ais, uq_ais = model_ais.predict(inputs_ais_existing, smoothing_window=0)
 
@@ -122,14 +130,17 @@ pred_ais = np.asarray(pred_ais).squeeze()
 ep_ais = np.asarray(uq_ais["epistemic"]).squeeze()
 al_ais = np.asarray(uq_ais["aleatoric"]).squeeze()
 
-print(f"\n[AIS] Prediction range: {pred_ais.min():.2f} – {pred_ais.max():.2f} mm SLE")
-print(f"[AIS] Mean epistemic uncertainty: {ep_ais.mean():.3f} mm")
-print(f"[AIS] Mean aleatoric uncertainty: {al_ais.mean():.3f} mm")
+print("\n── AIS Prediction Summary ─────────────────────────────────────────")
+print(f"  Prediction range:           {pred_ais.min():>7.2f} to {pred_ais.max():>7.2f} mm SLE")
+print(f"  Mean epistemic uncertainty: {ep_ais.mean():>7.3f} mm")
+print(f"  Mean aleatoric uncertainty: {al_ais.mean():>7.3f} mm")
 
 
 # =============================================================================
 # GrIS — Greenland Ice Sheet
 # =============================================================================
+
+print("\n──── GrIS — Greenland Ice Sheet ───────────────────────────────────")
 
 # ── 4. Raw absolute atmospheric forcing arrays ────────────────────────────────
 #
@@ -155,7 +166,8 @@ runoff = np.linspace(0.05, 0.20, 86)  # basin runoff           (m yr⁻¹)
 
 # ── 5A. GrIS using a existing ISMIP6 climatology ───────────────────────────────
 
-print("\nAvailable GrIS AOGCMs:", AnomalyConverter("GrIS").list_aogcms())
+print("\n[GrIS 1/3] Converting absolute forcings via bundled ISMIP6 climatology...")
+print("  Available GrIS AOGCMs:", AnomalyConverter("GrIS").list_aogcms())
 
 inputs_gris_existing = ISEFlowGrISInputs.from_absolute_forcings(
     year=years,
@@ -191,6 +203,7 @@ print(inputs_gris_existing)
 #   smb in mm w.e. yr⁻¹  (same units as the raw smb input above)
 #   st  in °C             (same units as the raw st input above)
 
+print("\n[GrIS 2/3] Converting absolute forcings via user-supplied climatology...")
 inputs_gris_custom = ISEFlowGrISInputs.from_absolute_forcings(
     year=years,
     sector=1,
@@ -224,6 +237,7 @@ print(inputs_gris_custom)
 
 # ── 6. GrIS prediction ────────────────────────────────────────────────────────
 
+print("\n[GrIS 3/3] Loading ISEFlow-GrIS and predicting...")
 model_gris = ISEFlow_GrIS(version="v1.1.0")
 pred_gris, uq_gris = model_gris.predict(inputs_gris_existing, smoothing_window=0)
 
@@ -231,6 +245,9 @@ pred_gris = np.asarray(pred_gris).squeeze()
 ep_gris = np.asarray(uq_gris["epistemic"]).squeeze()
 al_gris = np.asarray(uq_gris["aleatoric"]).squeeze()
 
-print(f"\n[GrIS] Prediction range: {pred_gris.min():.2f} – {pred_gris.max():.2f} mm SLE")
-print(f"[GrIS] Mean epistemic uncertainty: {ep_gris.mean():.3f} mm")
-print(f"[GrIS] Mean aleatoric uncertainty: {al_gris.mean():.3f} mm")
+print("\n── GrIS Prediction Summary ────────────────────────────────────────")
+print(f"  Prediction range:           {pred_gris.min():>7.2f} to {pred_gris.max():>7.2f} mm SLE")
+print(f"  Mean epistemic uncertainty: {ep_gris.mean():>7.3f} mm")
+print(f"  Mean aleatoric uncertainty: {al_gris.mean():>7.3f} mm")
+
+print("\nDone.")

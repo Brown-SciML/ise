@@ -40,12 +40,19 @@ DATASET_REPO = "pvankatwyk/iseflow-datasets"
 # HuggingFace, stage them in a temp directory that matches the layout expected
 # by get_data(), then run inference with the v1.0.0 weights and print MSE.
 
+print("=" * 70)
+print("Recreating ISEFlow v1.0.0 Manuscript Test-Set Results")
+print("=" * 70)
+
 for ice_sheet in ("AIS", "GrIS"):
     prefix = f"v1.0.0/{ice_sheet}"
+
+    print(f"\n──── {ice_sheet} ─────────────────────────────────────────────────────")
 
     # ── 2. Download test split and scaler from HuggingFace Hub ────────────────
 
     with tempfile.TemporaryDirectory() as data_dir:
+        print(f"[1/4] Downloading {ice_sheet} test splits + scalers from HuggingFace...")
         for filename, dest in [
             (f"{prefix}/test.csv", "test.csv"),
             (f"{prefix}/train.csv", "train.csv"),  # get_data needs all splits present
@@ -62,11 +69,13 @@ for ice_sheet in ("AIS", "GrIS"):
 
         # ── 3. Load test split ────────────────────────────────────────────────
 
+        print(f"[2/4] Loading test split and unscaling target...")
         _, _, _, _, X_test, y_test = get_data(data_dir, return_format="numpy")
         y_test = unscale_output(y_test.reshape(-1, 1), os.path.join(data_dir, "scaler_y.pkl"))
 
         # ── 4. Load pretrained v1.0.0 weights ─────────────────────────────────
 
+        print(f"[3/4] Loading pretrained v1.0.0 weights ({ice_sheet})...")
         model_dir = get_model_dir("v1.0.0", ice_sheet)
         de = DeepEnsemble.load(f"{model_dir}/deep_ensemble.pth")
         nf = NormalizingFlow.load(f"{model_dir}/normalizing_flow.pth")
@@ -75,6 +84,9 @@ for ice_sheet in ("AIS", "GrIS"):
 
         # ── 5. Predict and compute MSE ────────────────────────────────────────
 
+        print(f"[4/4] Predicting on test set and computing MSE...")
         preds, _ = model.predict(X_test)
         mse = np.mean((y_test - preds) ** 2)
-        print(f"{ice_sheet} MSE: {mse:.4f}  (expected: V1.0.0 AIS ~1.20, GrIS ~1.02)")
+        print(f"\n  {ice_sheet} MSE: {mse:.4f}  (expected: v1.0.0 AIS ~1.20, GrIS ~1.02)")
+
+print("\nDone.")
