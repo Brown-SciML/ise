@@ -259,6 +259,11 @@ class RobustScaler(nn.Module):
         return X * (self.iqr_ + 1e-8) + self.median_
 
     def save(self, path):
+        """Save the fitted median and IQR tensors to ``path`` via ``torch.save``.
+
+        Args:
+            path (str): Destination file path.
+        """
         torch.save(
             {
                 "median_": self.median_,
@@ -269,6 +274,14 @@ class RobustScaler(nn.Module):
 
     @staticmethod
     def load(path):
+        """Load a RobustScaler from disk.
+
+        Args:
+            path (str): Path to a checkpoint produced by ``RobustScaler.save()``.
+
+        Returns:
+            RobustScaler: A scaler with ``median_`` and ``iqr_`` restored.
+        """
         checkpoint = torch.load(path, weights_only=True)
         scaler = RobustScaler()
         scaler.median_ = checkpoint["median_"]
@@ -350,6 +363,11 @@ class LogScaler(nn.Module):
         return X_exp + self.min_value
 
     def save(self, path):
+        """Save the fitted ``epsilon`` and ``min_value`` to ``path`` via ``torch.save``.
+
+        Args:
+            path (str): Destination file path.
+        """
         torch.save(
             {
                 "epsilon": self.epsilon,
@@ -360,6 +378,14 @@ class LogScaler(nn.Module):
 
     @staticmethod
     def load(path):
+        """Load a LogScaler from disk.
+
+        Args:
+            path (str): Path to a checkpoint produced by ``LogScaler.save()``.
+
+        Returns:
+            LogScaler: A scaler with ``epsilon`` and ``min_value`` restored.
+        """
         checkpoint = torch.load(path, weights_only=True)
         scaler = LogScaler()
         scaler.epsilon = checkpoint["epsilon"]

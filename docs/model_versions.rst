@@ -61,8 +61,9 @@ v1.1.0 — AIS + GrIS (current)
 
 .. code-block:: text
 
-   year, region,
-   smb_anomaly, st_anomaly, ocean_thermal_forcing, basin_runoff,
+   year, sector,
+   aSMB, aST, ocean_thermal_forcing, basin_runoff,
+   ice_shelf_fracture, ocean_sensitivity, standard_ocean_forcing,
    [ISM model characteristics]
 
 ---
@@ -153,7 +154,7 @@ If you have raw absolute climate values rather than pre-computed anomalies, use 
        ocean_thermal_forcing=otf,
        ocean_salinity=sal,
        ocean_temperature=temp,
-       aogcm="MIROC6",          # or custom_climatology={...}
+       aogcm="noresm1-m_rcp85",   # or custom_climatology={...}
        model_configs="AWI_PISM1",
        ice_shelf_fracture=False,
        ocean_sensitivity="medium",

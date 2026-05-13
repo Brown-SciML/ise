@@ -20,6 +20,19 @@ This project uses **two independent version numbers**:
 ### Fixed
 - Silenced `sklearn.exceptions.InconsistentVersionWarning` package-wide. Bundled pretrained scalers were pickled with an older sklearn version but unpickle correctly; the warning was noise on every example run. Filter installed in `ise/__init__.py` next to the existing properscoring escape-sequence filter.
 - `feature_engineer.scale_data()` and `FeatureEngineer.scale_data()` leaked file handles by calling `pickle.load(open(...))` without a context manager — switched to `with open(...) as f` to close deterministically and clear `ResourceWarning` noise.
+- `from ise import ISEFlow, ISEFlow_AIS, ISEFlow_GrIS` now works. The top-level `__all__` listed these names but never imported them, so the imports failed with `ImportError`. Added the imports from `ise.models`.
+
+### Documentation
+- Full audit pass across `ise/` docstrings. Notable fixes:
+  - `ISEFlow.forward` removed a phantom `smooth_projection` argument that did not exist in the signature.
+  - `ISEFlow.predict` converted a misleading `Raises: Warning` clause into a proper Sphinx `Warns` block and expanded the description of how scaler resolution and smoothing interact.
+  - `ISEFlow.load` removed a stale `Raises: NotImplementedError` claim that no longer matched the implementation.
+  - `NormalizingFlow.fit` documented the previously undocumented `X_val`, `y_val`, `lr`, and `wd` arguments.
+  - `NormalizingFlow.aleatoric` corrected the return-shape claim (per-row std `(N,)`, not `(num_samples,)`).
+  - `LSTM.fit` added the previously undocumented `wandb_run` argument.
+  - `RobustScaler.save/load` and `LogScaler.save/load` gained docstrings (only `StandardScaler` had them).
+  - `unscale_output` / `unscale_input` corrected: they accept any sklearn scaler with `inverse_transform`, not only `MinMaxScaler`.
+- `docs/model_versions.rst`: corrected the GrIS v1.1.0 input list (`aSMB`, `aST`, `sector`, etc. — not the prior `smb_anomaly`, `st_anomaly`, `region` placeholder), and replaced an unverified `aogcm="MIROC6"` example with a real bundled name (`noresm1-m_rcp85`).
 
 ---
 

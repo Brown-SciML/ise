@@ -46,6 +46,8 @@ try:
 except ImportError:
     pass
 
+from ise.models import ISEFlow, ISEFlow_AIS, ISEFlow_GrIS
+
 __all__ = [
     "ISEFlow",
     "ISEFlow_AIS",
