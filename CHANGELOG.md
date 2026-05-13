@@ -13,12 +13,6 @@ This project uses **two independent version numbers**:
 
 ## [Unreleased]
 
-### Fixed
-- `tests/ise/data/test_input_classes.py` resolved the AIS/GrIS pretrained directories via the local-only `ISEFlow_AIS_v1_1_0_path` / `ISEFlow_GrIS_v1_1_0_path` constants, which point at the bundled fallback directory (not the HuggingFace cache). The AIS fallback dir does not ship `scaler_X.pkl`, so the 5 AIS comparison tests failed with `FileNotFoundError` whenever weights were served from the HF cache. Switched to `get_model_dir("v1.1.0", "AIS"/"GrIS")` so the test always reads the scaler from the same directory the model loads its weights from. (CI was unaffected because these tests are marked `slow` and skipped there.)
-
-### Changed
-- Added stepwise progress printouts to all `examples/` scripts (`example_ais.py`, `example_gris.py`, `example_absolute_forcings.py`, `process_training_data.py`, `recreate_manuscript_results.py`) so users can follow what the script is doing as it runs.
-
 ---
 
 ## [1.2.1] — 2026-05-13 (package) | Model: v1.1.0
@@ -26,8 +20,10 @@ This project uses **two independent version numbers**:
 ### Added
 - `docs/index.rst` — PyPI, Python version, License, and CI badges to match `README.md`.
 - `ise.models.pretrained.get_model_dir()` prints stderr progress when ISEFlow weights are downloaded from HuggingFace Hub for the first time; stays silent on cached loads (previously could appear to hang during HF metadata sync).
+- Stepwise progress printouts to all `examples/` scripts (`example_ais.py`, `example_gris.py`, `example_absolute_forcings.py`, `process_training_data.py`, `recreate_manuscript_results.py`) so users can follow what the script is doing as it runs.
 
 ### Fixed
+- `tests/ise/data/test_input_classes.py` resolved the AIS/GrIS pretrained directories via the local-only `ISEFlow_AIS_v1_1_0_path` / `ISEFlow_GrIS_v1_1_0_path` constants, which point at the bundled fallback directory (not the HuggingFace cache). The AIS fallback dir does not ship `scaler_X.pkl`, so the 5 AIS comparison tests failed with `FileNotFoundError` whenever weights were served from the HF cache. Switched to `get_model_dir("v1.1.0", "AIS"/"GrIS")` so the test always reads the scaler from the same directory the model loads its weights from. (CI was unaffected because these tests are marked `slow` and skipped there.)
 - `from ise import ISEFlow, ISEFlow_AIS, ISEFlow_GrIS` now works — names were in `__all__` but never imported, raising `ImportError`.
 - `ISEFlowGrISInputs._assign_model_configs` defaulted to the AIS model-configs JSON, so GrIS-only ISM names (e.g. `"AWI-ISSM1"`) raised `ValueError: Model name ... not found`. Added `gris_ismip6_model_configs_path` in `ise/utils/__init__.py` and switched the GrIS dataclass default. Regression test added.
 - Silenced `sklearn.exceptions.InconsistentVersionWarning` package-wide — bundled pretrained scalers were pickled with an older sklearn version but unpickle correctly.
