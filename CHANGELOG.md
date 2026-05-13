@@ -13,35 +13,30 @@ This project uses **two independent version numbers**:
 
 ## [Unreleased]
 
+---
+
+## [1.2.1] — 2026-05-13 (package) | Model: v1.1.0
+
 ### Added
-- `docs/index.rst` — PyPI, Python version, License, and CI badges to match `README.md`. Previously only the ReadTheDocs badge was shown.
-- `ise.models.pretrained.get_model_dir()` now prints a clear stderr message when ISEFlow weights are being downloaded from HuggingFace Hub for the first time (and another when the download finishes). When weights are already cached, the loader stays silent — previously the call could appear to hang while HF metadata sync ran.
+- `docs/index.rst` — PyPI, Python version, License, and CI badges to match `README.md`.
+- `ise.models.pretrained.get_model_dir()` prints stderr progress when ISEFlow weights are downloaded from HuggingFace Hub for the first time; stays silent on cached loads (previously could appear to hang during HF metadata sync).
 
 ### Fixed
-- Silenced `sklearn.exceptions.InconsistentVersionWarning` package-wide. Bundled pretrained scalers were pickled with an older sklearn version but unpickle correctly; the warning was noise on every example run. Filter installed in `ise/__init__.py` next to the existing properscoring escape-sequence filter.
-- `feature_engineer.scale_data()` and `FeatureEngineer.scale_data()` leaked file handles by calling `pickle.load(open(...))` without a context manager — switched to `with open(...) as f` to close deterministically and clear `ResourceWarning` noise.
-- `from ise import ISEFlow, ISEFlow_AIS, ISEFlow_GrIS` now works. The top-level `__all__` listed these names but never imported them, so the imports failed with `ImportError`. Added the imports from `ise.models`.
-- `ISEFlowGrISInputs._assign_model_configs` defaulted to the **AIS** model-configs JSON, so passing a GrIS-only ISM name (e.g. `model_configs="AWI-ISSM1"`) raised `ValueError: Model name ... not found`. Added a new `gris_ismip6_model_configs_path` constant in `ise/utils/__init__.py` pointing at `GrIS_ismip6_model_configs.json` and switched the GrIS dataclass to use it as the default. Regression test added.
-- `unscale_output()` / `unscale_input()` in `ise/utils/functions.py` leaked file handles via `pkl.load(open(...))` — switched to a `with open(...) as f` context manager (same pattern as the recent `feature_engineer` fix).
-- Replaced a bare `except:` clause in `ise.utils.functions.load_ml_data` with `except FileNotFoundError:` so that `KeyboardInterrupt`, `SystemExit`, and `MemoryError` are no longer silently swallowed.
+- `from ise import ISEFlow, ISEFlow_AIS, ISEFlow_GrIS` now works — names were in `__all__` but never imported, raising `ImportError`.
+- `ISEFlowGrISInputs._assign_model_configs` defaulted to the AIS model-configs JSON, so GrIS-only ISM names (e.g. `"AWI-ISSM1"`) raised `ValueError: Model name ... not found`. Added `gris_ismip6_model_configs_path` in `ise/utils/__init__.py` and switched the GrIS dataclass default. Regression test added.
+- Silenced `sklearn.exceptions.InconsistentVersionWarning` package-wide — bundled pretrained scalers were pickled with an older sklearn version but unpickle correctly.
+- Plugged file-handle leaks (`pickle.load(open(...))` → `with open(...) as f`) in `feature_engineer.scale_data()`, `FeatureEngineer.scale_data()`, and `unscale_output()` / `unscale_input()` in `ise/utils/functions.py`.
+- Replaced bare `except:` in `ise.utils.functions.load_ml_data` with `except FileNotFoundError:` so `KeyboardInterrupt`/`SystemExit`/`MemoryError` are no longer swallowed.
 
 ### Changed
-- `ProjectionProcessor` ocean-forcing warnings (AIS and GrIS) now list the directory, the expected NetCDF variable names, and the files that *were* found, instead of an opaque "Directory X does not contain N files." message.
-- Moved the in-body `from scipy.ndimage import uniform_filter1d` to the top of `ise/models/iseflow.py` next to the other module imports (style cleanup; PEP 8 E402).
+- `ProjectionProcessor` ocean-forcing warnings (AIS and GrIS) now list the directory, expected NetCDF variable names, and files actually found, instead of an opaque "Directory X does not contain N files." message.
+- Moved the in-body `from scipy.ndimage import uniform_filter1d` to the top of `ise/models/iseflow.py` (PEP 8 E402).
 
 ### Documentation
-- Full audit pass across `ise/` docstrings. Notable fixes:
-  - `ISEFlow.forward` removed a phantom `smooth_projection` argument that did not exist in the signature.
-  - `ISEFlow.predict` converted a misleading `Raises: Warning` clause into a proper Sphinx `Warns` block and expanded the description of how scaler resolution and smoothing interact.
-  - `ISEFlow.load` removed a stale `Raises: NotImplementedError` claim that no longer matched the implementation.
-  - `NormalizingFlow.fit` documented the previously undocumented `X_val`, `y_val`, `lr`, and `wd` arguments.
-  - `NormalizingFlow.aleatoric` corrected the return-shape claim (per-row std `(N,)`, not `(num_samples,)`).
-  - `LSTM.fit` added the previously undocumented `wandb_run` argument.
-  - `RobustScaler.save/load` and `LogScaler.save/load` gained docstrings (only `StandardScaler` had them).
-  - `unscale_output` / `unscale_input` corrected: they accept any sklearn scaler with `inverse_transform`, not only `MinMaxScaler`.
-- `docs/model_versions.rst`: corrected the GrIS v1.1.0 input list (`aSMB`, `aST`, `sector`, etc. — not the prior `smb_anomaly`, `st_anomaly`, `region` placeholder), and replaced an unverified `aogcm="MIROC6"` example with a real bundled name (`noresm1-m_rcp85`).
-- `.gitignore`: ignore `.bugs.md` (local bug-triage scratchpad produced during the docs audit).
-- `README.md` and `docs/index.rst`: replaced the GitHub Releases pointer with a dedicated **Manuscript code archives** section listing Zenodo DOIs for each publication (Variational LSTM, ISEFlow, and the in-review "Emulator-expanded projections" paper). Reflects the move from per-paper GitHub releases to the maintained `ise-py` package plus frozen Zenodo snapshots.
+- Full docstring audit across `ise/`. Notable fixes: removed phantom `smooth_projection` arg from `ISEFlow.forward`; converted `ISEFlow.predict`'s misleading `Raises: Warning` into a proper Sphinx `Warns` block; removed stale `Raises: NotImplementedError` from `ISEFlow.load`; documented previously-undocumented args (`NormalizingFlow.fit`'s `X_val`/`y_val`/`lr`/`wd`, `LSTM.fit`'s `wandb_run`); corrected `NormalizingFlow.aleatoric` return shape to `(N,)`; added `save/load` docstrings to `RobustScaler` and `LogScaler`; clarified that `unscale_output`/`unscale_input` accept any sklearn scaler with `inverse_transform`, not only `MinMaxScaler`.
+- `docs/model_versions.rst`: corrected the GrIS v1.1.0 input list (`aSMB`, `aST`, `sector`, etc.) and replaced an unverified `aogcm="MIROC6"` example with a real bundled name (`noresm1-m_rcp85`).
+- `README.md` and `docs/index.rst`: replaced the GitHub Releases pointer with a **Manuscript code archives** section listing Zenodo DOIs per publication, reflecting the move from per-paper GitHub releases to the maintained `ise-py` package plus frozen Zenodo snapshots.
+- `.gitignore`: ignore `.bugs.md` (local docs-audit scratchpad).
 
 ---
 
