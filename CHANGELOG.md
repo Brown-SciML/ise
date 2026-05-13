@@ -33,6 +33,7 @@ This project uses **two independent version numbers**:
   - `RobustScaler.save/load` and `LogScaler.save/load` gained docstrings (only `StandardScaler` had them).
   - `unscale_output` / `unscale_input` corrected: they accept any sklearn scaler with `inverse_transform`, not only `MinMaxScaler`.
 - `docs/model_versions.rst`: corrected the GrIS v1.1.0 input list (`aSMB`, `aST`, `sector`, etc. — not the prior `smb_anomaly`, `st_anomaly`, `region` placeholder), and replaced an unverified `aogcm="MIROC6"` example with a real bundled name (`noresm1-m_rcp85`).
+- `.gitignore`: ignore `.bugs.md` (local bug-triage scratchpad produced during the docs audit).
 
 ---
 
