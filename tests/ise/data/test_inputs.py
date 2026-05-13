@@ -263,6 +263,33 @@ class TestISEFlowGrISInputs:
         df = inputs.to_df()
         assert "year" in df.columns
 
+    def test_model_configs_resolves_gris_only_name(self):
+        # "AWI-ISSM1" exists only in GrIS_ismip6_model_configs.json — if the
+        # GrIS dataclass falls back to the AIS file by mistake, this raises
+        # ValueError("Model name AWI-ISSM1 ... not found").
+        kwargs = _gris_kwargs()
+        for field in (
+            "numerics",
+            "ice_flow_model",
+            "initialization",
+            "initial_smb",
+            "velocity",
+            "bedrock_topography",
+            "surface_thickness",
+            "geothermal_heat_flux",
+            "res_min",
+            "res_max",
+            "initial_year",
+        ):
+            kwargs.pop(field, None)
+        kwargs["model_configs"] = "AWI-ISSM1"
+        inputs = ISEFlowGrISInputs(**kwargs)
+        # values are upper-cased by _map_args after assignment
+        assert inputs.numerics == "FE"
+        assert inputs.ice_flow_model == "HO"
+        assert inputs.initialization == "DAV"
+        assert inputs.geothermal_heat_flux == "G"
+
 
 # ---------------------------------------------------------------------------
 # Validation edge cases — guard against silent regressions in _check_inputs

@@ -76,6 +76,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import torch
+from scipy.ndimage import uniform_filter1d
 from sklearn.exceptions import InconsistentVersionWarning
 from torch import nn
 
@@ -1095,9 +1096,6 @@ class ISEFlow_GrIS_NF_v1_0_0(NormalizingFlow):
             output_size=self.output_size,
             num_flow_transforms=self.num_flow_transforms,
         )
-
-
-from scipy.ndimage import uniform_filter1d
 
 
 def smooth_projections(data, window_size, projection_length=86):

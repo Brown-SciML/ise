@@ -186,7 +186,7 @@ def load_ml_data(data_directory: str, time_series: bool = True):
                 test_scenarios = pd.read_csv(
                     f"{data_directory}/ts_test_scenarios.csv"
                 ).values.tolist()
-            except:
+            except FileNotFoundError:
                 raise FileNotFoundError(
                     f'Files not found at {data_directory}. Format must be in format "ts_train_features.csv"'
                 )
@@ -860,7 +860,8 @@ def unscale_output(y, scaler_path):
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
-        scaler = pkl.load(open(scaler_path, "rb"))
+        with open(scaler_path, "rb") as f:
+            scaler = pkl.load(f)
     y = scaler.inverse_transform(y)
     return y
 
@@ -884,7 +885,8 @@ def unscale_input(X, scaler_path):
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
-        scaler = pkl.load(open(scaler_path, "rb"))
+        with open(scaler_path, "rb") as f:
+            scaler = pkl.load(f)
     column_order = X.columns
     cols_to_scale = scaler.get_feature_names_out()
     data_to_scale = X[cols_to_scale]

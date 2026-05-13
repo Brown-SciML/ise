@@ -1287,7 +1287,10 @@ def process_AIS_oceanic_sectors(forcing_directory, grid_file):
 
         files = os.listdir(f"{directory}/1995-2100/")
         if len(files) != 3:
-            warnings.warn(f"Directory {directory} does not contain 3 files.")
+            warnings.warn(
+                f"Skipping {directory}/1995-2100/: expected 3 NetCDF files "
+                f"(thermal_forcing, salinity, temperature), found {len(files)}: {files}"
+            )
 
         thermal_forcing_file = [f for f in files if "thermal_forcing" in f][0]
         salinity_file = [f for f in files if "salinity" in f][0]
@@ -1404,7 +1407,10 @@ def process_GrIS_oceanic_sectors(forcing_directory, grid_file):
 
         files = os.listdir(f"{forcing_directory}/{directory}")
         if len(files) != 2:
-            warnings.warn(f"Directory {directory} does not contain 2 files.")
+            warnings.warn(
+                f"Skipping {forcing_directory}/{directory}: expected 2 NetCDF files "
+                f"(thermalforcing, basinrunoff), found {len(files)}: {files}"
+            )
 
         thermal_forcing_file = [f for f in files if "thermalforcing" in f.lower()][0]
         basin_runoff_file = [f for f in files if "basinrunoff" in f.lower()][0]

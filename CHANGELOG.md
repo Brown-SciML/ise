@@ -21,6 +21,13 @@ This project uses **two independent version numbers**:
 - Silenced `sklearn.exceptions.InconsistentVersionWarning` package-wide. Bundled pretrained scalers were pickled with an older sklearn version but unpickle correctly; the warning was noise on every example run. Filter installed in `ise/__init__.py` next to the existing properscoring escape-sequence filter.
 - `feature_engineer.scale_data()` and `FeatureEngineer.scale_data()` leaked file handles by calling `pickle.load(open(...))` without a context manager — switched to `with open(...) as f` to close deterministically and clear `ResourceWarning` noise.
 - `from ise import ISEFlow, ISEFlow_AIS, ISEFlow_GrIS` now works. The top-level `__all__` listed these names but never imported them, so the imports failed with `ImportError`. Added the imports from `ise.models`.
+- `ISEFlowGrISInputs._assign_model_configs` defaulted to the **AIS** model-configs JSON, so passing a GrIS-only ISM name (e.g. `model_configs="AWI-ISSM1"`) raised `ValueError: Model name ... not found`. Added a new `gris_ismip6_model_configs_path` constant in `ise/utils/__init__.py` pointing at `GrIS_ismip6_model_configs.json` and switched the GrIS dataclass to use it as the default. Regression test added.
+- `unscale_output()` / `unscale_input()` in `ise/utils/functions.py` leaked file handles via `pkl.load(open(...))` — switched to a `with open(...) as f` context manager (same pattern as the recent `feature_engineer` fix).
+- Replaced a bare `except:` clause in `ise.utils.functions.load_ml_data` with `except FileNotFoundError:` so that `KeyboardInterrupt`, `SystemExit`, and `MemoryError` are no longer silently swallowed.
+
+### Changed
+- `ProjectionProcessor` ocean-forcing warnings (AIS and GrIS) now list the directory, the expected NetCDF variable names, and the files that *were* found, instead of an opaque "Directory X does not contain N files." message.
+- Moved the in-body `from scipy.ndimage import uniform_filter1d` to the top of `ise/models/iseflow.py` next to the other module imports (style cleanup; PEP 8 E402).
 
 ### Documentation
 - Full audit pass across `ise/` docstrings. Notable fixes:
