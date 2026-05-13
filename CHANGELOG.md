@@ -15,6 +15,7 @@ This project uses **two independent version numbers**:
 
 ### Added
 - `docs/index.rst` — PyPI, Python version, License, and CI badges to match `README.md`. Previously only the ReadTheDocs badge was shown.
+- `ise.models.pretrained.get_model_dir()` now prints a clear stderr message when ISEFlow weights are being downloaded from HuggingFace Hub for the first time (and another when the download finishes). When weights are already cached, the loader stays silent — previously the call could appear to hang while HF metadata sync ran.
 
 ---
 
