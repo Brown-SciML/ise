@@ -13,6 +13,9 @@ This project uses **two independent version numbers**:
 
 ## [Unreleased]
 
+### Changed
+- `.github/workflows/release.yml`: pass `skip-existing: true` to `pypa/gh-action-pypi-publish` so re-cutting an existing tag (e.g. when fixing changelog/docs after a release) no longer fails the workflow on the PyPI upload step.
+
 ---
 
 ## [1.2.1] — 2026-05-13 (package) | Model: v1.1.0
