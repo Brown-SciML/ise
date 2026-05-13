@@ -13,6 +13,9 @@ This project uses **two independent version numbers**:
 
 ## [Unreleased]
 
+### Added
+- `docs/index.rst` — PyPI, Python version, License, and CI badges to match `README.md`. Previously only the ReadTheDocs badge was shown.
+
 ---
 
 ## [1.2.0] — 2026-05-11 (package) | Model: v1.1.0

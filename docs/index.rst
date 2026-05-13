@@ -3,6 +3,23 @@ ISE Documentation
 
 .. image:: https://readthedocs.org/projects/ise/badge/?version=latest
    :target: https://ise.readthedocs.io/en/latest/
+   :alt: Documentation Status
+
+.. image:: https://badge.fury.io/py/ise-py.svg
+   :target: https://pypi.org/project/ise-py/
+   :alt: PyPI version
+
+.. image:: https://img.shields.io/badge/python-3.11+-blue.svg
+   :target: https://python.org
+   :alt: Python 3.11+
+
+.. image:: https://img.shields.io/badge/License-MIT-yellow.svg
+   :target: https://github.com/Brown-SciML/ise/blob/master/LICENSE.md
+   :alt: License: MIT
+
+.. image:: https://github.com/Brown-SciML/ise/actions/workflows/ci.yml/badge.svg
+   :target: https://github.com/Brown-SciML/ise/actions/workflows/ci.yml
+   :alt: CI
 
 **ISE** (Ice Sheet Emulator) is a Python package for training and running machine
 learning emulators of ice sheet models, with a focus on **ISEFlow** — a hybrid
