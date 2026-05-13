@@ -271,8 +271,10 @@ class FeatureEngineer:
             self.y = self.data[[x for x in self.data.columns if "sle" in x]]
 
         if self.scaler_X_path is not None and self.scaler_y_path is not None:
-            scaler_X = pickle.load(open(self.scaler_X_path, "rb"))
-            scaler_y = pickle.load(open(self.scaler_y_path, "rb"))
+            with open(self.scaler_X_path, "rb") as f:
+                scaler_X = pickle.load(f)
+            with open(self.scaler_y_path, "rb") as f:
+                scaler_y = pickle.load(f)
 
             return scaler_X.transform(self.X), scaler_y.transform(self.y)
         elif self.scaler_X is not None and self.scaler_y is not None:
@@ -522,7 +524,8 @@ def scale_data(data, scaler_path):
     }
     column_order = data.columns
 
-    scaler = pickle.load(open(scaler_path, "rb"))
+    with open(scaler_path, "rb") as f:
+        scaler = pickle.load(f)
     columns_to_scale = scaler.get_feature_names_out()
     columns_not_to_scale = [c for c in data.columns if c not in columns_to_scale]
     data_to_scale = data[columns_to_scale]

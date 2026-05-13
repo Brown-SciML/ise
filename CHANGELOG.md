@@ -17,6 +17,10 @@ This project uses **two independent version numbers**:
 - `docs/index.rst` — PyPI, Python version, License, and CI badges to match `README.md`. Previously only the ReadTheDocs badge was shown.
 - `ise.models.pretrained.get_model_dir()` now prints a clear stderr message when ISEFlow weights are being downloaded from HuggingFace Hub for the first time (and another when the download finishes). When weights are already cached, the loader stays silent — previously the call could appear to hang while HF metadata sync ran.
 
+### Fixed
+- Silenced `sklearn.exceptions.InconsistentVersionWarning` package-wide. Bundled pretrained scalers were pickled with an older sklearn version but unpickle correctly; the warning was noise on every example run. Filter installed in `ise/__init__.py` next to the existing properscoring escape-sequence filter.
+- `feature_engineer.scale_data()` and `FeatureEngineer.scale_data()` leaked file handles by calling `pickle.load(open(...))` without a context manager — switched to `with open(...) as f` to close deterministically and clear `ResourceWarning` noise.
+
 ---
 
 ## [1.2.0] — 2026-05-11 (package) | Model: v1.1.0

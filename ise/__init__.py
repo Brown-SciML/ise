@@ -32,7 +32,19 @@ For questions contact Peter Van Katwyk at pvankatwyk@gmail.com.
 
 import warnings
 
+# Silence noisy third-party warnings that users cannot act on:
+# - properscoring uses an invalid escape sequence in a regex literal; harmless.
+# - sklearn InconsistentVersionWarning: bundled pretrained scalers (scaler_X.pkl,
+#   scaler_y.pkl) were pickled with an older sklearn version. They unpickle
+#   correctly for the linear scalers we use, so the warning is noise for users.
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="properscoring")
+
+try:
+    from sklearn.exceptions import InconsistentVersionWarning as _InconsistentVersionWarning
+
+    warnings.filterwarnings("ignore", category=_InconsistentVersionWarning)
+except ImportError:
+    pass
 
 __all__ = [
     "ISEFlow",
