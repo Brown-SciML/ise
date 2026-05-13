@@ -41,6 +41,7 @@ This project uses **two independent version numbers**:
   - `unscale_output` / `unscale_input` corrected: they accept any sklearn scaler with `inverse_transform`, not only `MinMaxScaler`.
 - `docs/model_versions.rst`: corrected the GrIS v1.1.0 input list (`aSMB`, `aST`, `sector`, etc. — not the prior `smb_anomaly`, `st_anomaly`, `region` placeholder), and replaced an unverified `aogcm="MIROC6"` example with a real bundled name (`noresm1-m_rcp85`).
 - `.gitignore`: ignore `.bugs.md` (local bug-triage scratchpad produced during the docs audit).
+- `README.md` and `docs/index.rst`: replaced the GitHub Releases pointer with a dedicated **Manuscript code archives** section listing Zenodo DOIs for each publication (Variational LSTM, ISEFlow, and the in-review "Emulator-expanded projections" paper). Reflects the move from per-paper GitHub releases to the maintained `ise-py` package plus frozen Zenodo snapshots.
 
 ---
 
